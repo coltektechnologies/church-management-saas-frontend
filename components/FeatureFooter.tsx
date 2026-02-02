@@ -1,34 +1,68 @@
+import Link from 'next/link';
+import { ROUTES } from '@/lib/routes';
+
 export default function FeatureFooter() {
   return (
-    <footer className="bg-[#05273e] px-6 pt-10 pb-6 text-white/80 text-sm">
-      <div className="max-w-6xl mx-auto space-y-6">
-        
-        {/* Top row */}
-        <div className="flex flex-col md:flex-row justify-between gap-6">
-          <div className="flex gap-6 flex-wrap">
-            <button>Home</button>
-            <button>Features</button>
-            <button>Pricing</button>
-            <button>Solutions</button>
+    <footer
+      className="px-6 pt-14 pb-8 text-white"
+      style={{
+        background: 'linear-gradient(to right, #1C3D72, #2EC4B6)',
+      }}
+    >
+      <div className="max-w-6xl mx-auto space-y-10">
+        {/* TOP ROW */}
+        <div className="flex flex-col md:flex-row justify-between gap-8">
+          {/* LEFT NAV LINKS */}
+          <div className="flex gap-4 flex-wrap">
+            <FooterLink href={ROUTES.home}>Home</FooterLink>
+            <FooterLink href={ROUTES.features}>Features</FooterLink>
+            <FooterLink href={ROUTES.pricing}>Pricing</FooterLink>
+            <FooterLink href={ROUTES.solutions}>Solutions</FooterLink>
           </div>
 
-          <div className="flex gap-5">
-            <button>Instagram</button>
-            <button>LinkedIn</button>
-            <button>X</button>
-            <button>Facebook</button>
+          {/* RIGHT SOCIAL LINKS */}
+          <div className="flex gap-4 flex-wrap">
+            <FooterLink href={ROUTES.social.instagram}>Instagram</FooterLink>
+            <FooterLink href={ROUTES.social.linkedin}>LinkedIn</FooterLink>
+            <FooterLink href={ROUTES.social.x}>X</FooterLink>
+            <FooterLink href={ROUTES.social.facebook}>Facebook</FooterLink>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-white/20" />
+        {/* DIVIDER */}
+        <div className="h-px bg-white/30" />
 
-        {/* Bottom row */}
-        <div className="flex justify-between text-xs text-white/60">
+        {/* BOTTOM ROW */}
+        <div className="flex justify-between text-xs text-white/80">
           <span>Established in 2026</span>
-          <span>Privacy Policy</span>
+          <Link href={ROUTES.privacy} className="hover:underline">
+            Privacy Policy
+          </Link>
         </div>
       </div>
     </footer>
+  );
+}
+
+/* --- Reusable footer button --- */
+function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="
+        px-4
+        py-2
+        rounded-lg
+        border
+        border-[#2EC4B6]
+        bg-[#2EC4B6]/10
+        text-[#d6f7f3]
+        text-sm
+        hover:bg-[#2EC4B6]/20
+        transition
+      "
+    >
+      {children}
+    </Link>
   );
 }
