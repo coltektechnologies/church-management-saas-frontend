@@ -1,11 +1,8 @@
 /**
  * LandingHero Component
- * * Main landing section with headline, description, CTA buttons, and hero image.
- * Features a decorative gradient background and responsive layout.
- * * Colors Used:
- * - Background: Navy to Teal Gradient
- * - Text: White (primary-foreground)
- * - Accent: Teal (secondary)
+ * * Purpose: Hero section for the top of the landing page.
+ * Fonts: OV Soge (Main Headline), Outfit (Sub-headline and Buttons)
+ * Responsive: Stacks content vertically on mobile, side-by-side on desktop.
  */
 
 import { Play } from 'lucide-react';
@@ -15,67 +12,76 @@ import heroImage from '@/assets/hero-worship.svg';
 
 const LandingHero = () => {
   return (
-    <section className="hero-section-root relative min-h-screen pt-20 bg-[linear-gradient(to_right,#1C3D72,#2EC4B6)]">
-      <div className="hero-main-container container mx-auto px-4 py-16 lg:py-24">
-        <div className="hero-layout-grid grid lg:grid-cols-2 gap-12 items-center">
-          {/* ===== LEFT CONTENT: HEADLINE & ACTIONS ===== */}
-          <div className="hero-text-content space-y-6">
-            {/* Main Headline */}
-            <h1 className="hero-main-title text-4xl md:text-5xl lg:text-6xl font-display font-bold text-primary-foreground leading-tight">
+    <section className="hero-root relative min-h-screen pt-28 pb-12 bg-[linear-gradient(to_right,#1C3D72,#2EC4B6)] overflow-hidden">
+      <div className="hero-content-wrapper container mx-auto px-4 md:px-6 lg:px-8">
+        <div className="hero-main-grid grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* TEXT CONTENT: Headlines and Call-to-Actions */}
+          <div className="hero-copy-block space-y-8 text-center lg:text-left order-2 lg:order-1">
+            {/* Main Headline - Font: OV Soge */}
+            <h1
+              className="hero-h1 text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1]"
+              style={{ fontFamily: 'OV Soge, sans-serif', letterSpacing: '0.03em' }}
+            >
               Empower Your Ministry.
-              <br />
-              {/* Teal accent text */}
-              <span className="hero-title-highlight text-secondary">Streamline Your Church.</span>
+              <br className="hidden md:block" />
+              <span className="hero-h1-accent text-[#17D7BE]"> Streamline Your Church.</span>
             </h1>
 
-            {/* Tagline - Catchy summary */}
-            <p className="hero-tagline-text text-lg text-primary-foreground/90 max-w-lg">
-              The all-in-one management platform designed for modern congregations.
-            </p>
+            <div className="hero-subtext-container space-y-4">
+              {/* Tagline - Font: Outfit Medium */}
+              <p
+                className="hero-tagline text-xl md:text-2xl text-white font-medium"
+                style={{ fontFamily: 'Outfit, sans-serif' }}
+              >
+                The all-in-one management platform designed for modern congregations.
+              </p>
 
-            {/* Detailed Description */}
-            <p className="hero-sub-description text-primary-foreground/70 max-w-lg">
-              Manage your members, track finances with precision, and coordinate every department
-              from a single, secure dashboard.
-            </p>
+              {/* Description - Font: Outfit Regular */}
+              <p
+                className="hero-desc text-lg text-white/80 max-w-lg mx-auto lg:mx-0 leading-relaxed"
+                style={{ fontFamily: 'Outfit, sans-serif' }}
+              >
+                Manage your members, track finances with precision, and coordinate every department
+                from a single, secure dashboard.
+              </p>
+            </div>
 
-            {/* Call to Action Group */}
-            <div className="hero-actions-row flex flex-wrap gap-4 pt-4">
-              {/* Primary Action - Free Trial */}
-              <Button className="cta-button-primary bg-secondary hover:bg-secondary/90 text-secondary-foreground px-8 py-6 text-lg rounded-full">
+            {/* BUTTON GROUP: Primary CTA and Demo Video Link */}
+            <div className="hero-cta-row flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+              <Button
+                className="hero-btn-primary bg-[#17D7BE] hover:bg-[#17D7BE]/90 text-[#020202] px-10 py-7 text-lg rounded-full w-full sm:w-auto font-medium shadow-lg"
+                style={{ fontFamily: 'Outfit, sans-serif' }}
+              >
                 Start Free Trial
               </Button>
 
-              {/* Secondary Action - Demo Video */}
               <Button
                 variant="outline"
-                className="cta-button-secondary bg-[#002B48] hover:bg-[#002B48]/90 text-[#ffffff] px-8 py-6 text-lg rounded-full border-none"
+                className="hero-btn-secondary bg-[#002B48] hover:bg-[#002B48]/90 text-white px-10 py-7 text-lg rounded-full border-none w-full sm:w-auto shadow-md"
+                style={{ fontFamily: 'Outfit, sans-serif' }}
               >
-                {/* Play icon in circular container */}
-                <div className="play-icon-container bg-primary-foreground/10 rounded-full p-1 mr-2">
-                  <Play className="h-4 w-4 fill-current" />
+                <div className="play-icon-bg bg-white/10 rounded-full p-1 mr-2">
+                  <Play className="play-icon h-4 w-4 fill-current" />
                 </div>
                 Watch Demo Walkthrough
               </Button>
             </div>
           </div>
 
-          {/* ===== RIGHT CONTENT: VISUAL HERO IMAGE ===== */}
-          <div className="hero-visual-wrapper relative">
-            <div className="hero-image-frame rounded-2xl overflow-hidden shadow-2xl">
+          {/* VISUAL CONTENT: Interactive image frame with backdrop effects */}
+          <div className="hero-visual-block relative order-1 lg:order-2 max-w-2xl mx-auto lg:max-w-none w-full">
+            <div className="image-frame rounded-2xl overflow-hidden shadow-2xl relative z-10 border-4 border-white/10">
               <Image
                 src={heroImage}
                 alt="Congregation worshipping"
-                // Using 'priority' for LCP (Largest Contentful Paint) optimization
                 priority
-                width={600}
-                height={500}
-                className="hero-display-image w-full h-auto min-h-[400px] lg:min-h-[500px] object-cover"
+                width={700}
+                height={600}
+                className="hero-img w-full h-auto object-cover min-h-[300px]"
               />
             </div>
-
-            {/* Decorative background element for depth */}
-            <div className="hero-visual-accent absolute -bottom-4 -right-4 w-full h-full bg-gradient-to-br from-secondary/20 to-transparent rounded-2xl -z-10" />
+            {/* Backdrop Decorative Layer */}
+            <div className="image-bg-decoration absolute -bottom-6 -right-6 w-full h-full bg-white/5 rounded-2xl z-0" />
           </div>
         </div>
       </div>

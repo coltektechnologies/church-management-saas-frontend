@@ -1,7 +1,8 @@
 /**
  * LandingFeatureCard Component
- * * Displays an individual feature with an icon, title, and description.
- * Styled with a deep navy background and teal accents.
+ * * Purpose: Displays an individual feature with an icon, title, and description.
+ * Fonts: OV Soge (Title), Poppins (Description)
+ * Responsive: Fluid width with a max-width limit for desktop grid alignment.
  */
 
 import { LucideIcon } from 'lucide-react';
@@ -15,10 +16,10 @@ interface LandingFeatureCardProps {
 const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCardProps) => {
   return (
     <div
-      className="feature-card-wrapper transition-all duration-300 hover:translate-y-[-5px]"
+      className="feature-card-wrapper transition-all duration-300 hover:translate-y-[-5px] w-full mx-auto"
       style={{
-        width: '379px',
-        height: '391px',
+        maxWidth: '379px',
+        minHeight: '391px',
         borderRadius: '34px',
         background: '#002B48',
         boxShadow: '0px 2px 4.6px 1px #002B4875',
@@ -29,12 +30,12 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
         position: 'relative',
       }}
     >
-      {/* ===== FEATURE TITLE (Top Left) ===== */}
+      {/* ===== FEATURE TITLE (Top Left) - Font: OV Soge ===== */}
       <h3
         className="feature-card-title text-white"
         style={{
-          fontFamily: 'Poppins, sans-serif',
-          fontWeight: 400,
+          fontFamily: 'OV Soge, sans-serif',
+          fontWeight: 700,
           fontSize: '24px',
           marginBottom: '20px',
         }}
@@ -43,8 +44,8 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
       </h3>
 
       {/* ===== ICON CONTAINER (Centered Section) ===== */}
-      <div className="icon-section-container flex-grow flex items-center justify-left w-full">
-        {/* Outer Glow Ring */}
+      <div className="icon-section-container flex-grow flex items-center justify-center lg:justify-start w-full">
+        {/* Outer Glow Ring with 5% Opacity */}
         <div
           className="outer-icon-ring relative flex items-center justify-center rounded-full"
           style={{
@@ -53,7 +54,7 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
             background: 'rgba(23, 215, 190, 0.05)',
           }}
         >
-          {/* Inner Circle background */}
+          {/* Inner Circle Background - Solid Deep Navy */}
           <div
             className="inner-icon-bg flex items-center justify-center rounded-full"
             style={{
@@ -70,7 +71,7 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
         </div>
       </div>
 
-      {/* ===== FEATURE DESCRIPTION (Bottom Section) ===== */}
+      {/* ===== FEATURE DESCRIPTION (Bottom Section) - Font: Poppins ===== */}
       <p
         className="feature-card-description"
         style={{
@@ -80,6 +81,7 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
           lineHeight: '1.4',
           color: 'rgba(255, 255, 255, 0.9)',
           marginTop: 'auto',
+          paddingTop: '20px',
         }}
       >
         {description}

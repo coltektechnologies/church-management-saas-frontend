@@ -3,7 +3,7 @@
 /**
  * PricingSection Component
  * * Manages the layout for pricing tiers.
- * Typography matches the font styles in image_72218e.png.
+ * Typography: Poppins
  */
 
 import { useState } from 'react';
@@ -56,20 +56,28 @@ const PricingSection = () => {
   const [isYearly, setIsYearly] = useState(false);
 
   return (
-    <section id="pricing" className="pt-32 py-24 bg-[#FFFFFF]">
+    <section id="pricing" className="py-24 bg-[#FFFFFF]">
       <div className="container mx-auto px-4 max-w-7xl">
-        {/* Header Section from image_72218e.png */}
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-[#00223A] mb-4 tracking-tight">
+          <h2
+            className="text-4xl md:text-5xl font-extrabold text-[#00223A] mb-4 tracking-tight"
+            style={{ fontFamily: 'Poppins, sans-serif' }}
+          >
             Simple Pricing for Every Ministry.
           </h2>
-          <p className="text-xl text-[#00223A]/70 font-medium">
+          <p
+            className="text-xl text-[#00223A]/70 font-medium"
+            style={{ fontFamily: 'Poppins, sans-serif' }}
+          >
             Start with a 14-day free trial. No credit card required.
           </p>
 
           {/* Toggle Switch */}
           <div className="flex items-center justify-center gap-4 mt-10">
-            <span className={`text-sm font-bold ${!isYearly ? 'text-[#00223A]' : 'text-gray-400'}`}>
+            <span
+              className={`text-sm font-bold ${!isYearly ? 'text-[#00223A]' : 'text-gray-400'}`}
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
               Monthly
             </span>
             <button
@@ -81,23 +89,21 @@ const PricingSection = () => {
                 className={`w-5 h-5 bg-[#17D7BE] rounded-full transition-transform duration-300 ${isYearly ? 'translate-x-7' : 'translate-x-0'}`}
               />
             </button>
-            <span className={`text-sm font-bold ${isYearly ? 'text-[#00223A]' : 'text-gray-400'}`}>
+            <span
+              className={`text-sm font-bold ${isYearly ? 'text-[#00223A]' : 'text-gray-400'}`}
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
               Yearly (Save 20%)
             </span>
           </div>
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid lg:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
           {pricingPlans.map((plan, index) => (
             <PricingCard
               key={index}
-              title={plan.title}
-              subtitle={plan.subtitle}
+              {...plan}
               price={isYearly ? String(Math.round(Number(plan.price) * 0.8)) : plan.price}
-              features={plan.features}
-              buttonText={plan.buttonText}
-              isPopular={plan.isPopular}
             />
           ))}
         </div>

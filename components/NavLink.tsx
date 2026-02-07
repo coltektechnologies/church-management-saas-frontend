@@ -1,7 +1,7 @@
 /**
  * NavLink Component
- * * Link to provide 'active' and 'pending' styling states.
- * * Uses 'usePathname' to determine the active route.
+ * * Purpose: A custom link component that handles active navigation states.
+ * Font: Outfit
  */
 
 'use client';
@@ -11,19 +11,17 @@ import { usePathname } from 'next/navigation';
 import { forwardRef, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-// Define the interface for props to include custom styling classes
-interface NavLinkCompatProps extends LinkProps {
+interface NavLinkProps extends LinkProps {
   children: ReactNode;
   className?: string;
   activeClassName?: string;
-  pendingClassName?: string;
 }
 
-const NavLink = forwardRef<HTMLAnchorElement, NavLinkCompatProps>(
-  ({ className, activeClassName, pendingClassName, href, ...props }, ref) => {
+const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(
+  ({ className, activeClassName, href, ...props }, ref) => {
     const pathname = usePathname();
 
-    // Determine if the link is active based on current URL path
+    // Check if current path matches the link destination
     const isActive = pathname === href || (href !== '/' && pathname?.startsWith(href.toString()));
 
     return (
@@ -31,12 +29,12 @@ const NavLink = forwardRef<HTMLAnchorElement, NavLinkCompatProps>(
         ref={ref}
         href={href}
         className={cn(
-          'nav-link-base transition-colors duration-200',
+          'nav-link-item transition-all duration-200 px-4 py-2 font-medium',
           className,
           isActive && activeClassName,
-          // Placeholder for pending state logic if needed in the future
-          false && pendingClassName
+          isActive ? 'opacity-100 text-[#17D7BE]' : 'opacity-80 hover:opacity-100 text-white'
         )}
+        style={{ fontFamily: 'Outfit, sans-serif' }}
         {...props}
       >
         {props.children}
