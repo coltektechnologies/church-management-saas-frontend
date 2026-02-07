@@ -1,33 +1,35 @@
 /**
  * TestimonialsSection Component
- * * Layout: 3-column on desktop, stacks on mobile.
+ * Layout: 3-column on desktop, stacks on mobile.
  * Fonts: OV Soge (Heading), Poppins (Content)
  */
 
-import { Play, Star } from 'lucide-react';
+import { Play } from 'lucide-react';
 import TestimonialCard from './TestimonialCard';
 
 const testimonials = [
   {
-    quote: 'The analytics dashboard has given us a clear view of our growth trends...',
+    quote:
+      'The analytics dashboard has made tracking our growth trends incredibly simple and data-driven.',
     author: 'Pastor Samuel Mensah',
     role: 'Lead Pastor - SDA',
-    rating: 4,
+    rating: 5,
   },
   {
-    quote: 'Recording tithes and managing department expenses is finally automated...',
+    quote:
+      'Recording tithes and expenses is now fully automated. Our financial reporting is finally error-free.',
     author: 'Sister Elena Rodriguez',
     role: 'Church Treasurer - SDA',
-    rating: 3,
+    rating: 5,
   },
   {
-    quote: 'Managing our member directory used to be a manual nightmare...',
+    quote: 'Our member directory updates are now instant. Outreach has never been this organized.',
     author: 'Michael Chen',
     role: 'General Secretary - SDA',
     rating: 4,
   },
   {
-    quote: 'Having a dedicated hub for our department allows us to coordinate events...',
+    quote: 'The department hub allows us to manage our budget and events without any overlaps.',
     author: 'David Okoro',
     role: 'Youth Director - SDA',
     rating: 5,
@@ -38,6 +40,7 @@ const TestimonialsSection = () => {
   return (
     <section id="testimonials" className="testimonials-section py-24 bg-white">
       <div className="container mx-auto px-4 max-w-[1400px]">
+        {/* ===== SECTION HEADER ===== */}
         <div className="testimonials-header text-center mb-16">
           <h2
             className="text-4xl md:text-6xl font-bold text-[#00223A] tracking-tight"
@@ -47,7 +50,7 @@ const TestimonialsSection = () => {
           </h2>
         </div>
 
-        {/* Responsive Grid: 1 col on mobile, 3 cols on desktop */}
+        {/* ===== MAIN CONTENT GRID ===== */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr_1fr] gap-6 items-stretch">
           {/* LEFT COLUMN */}
           <div className="flex flex-col gap-6 order-2 lg:order-1">

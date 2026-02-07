@@ -4,7 +4,7 @@
  * Fonts: Poppins (Regular for quote/role, SemiBold for author)
  */
 
-import { Star } from 'lucide-react';
+import { Star } from 'lucide-react'; // Star is used here!
 
 interface TestimonialCardProps {
   quote: string;
@@ -17,11 +17,14 @@ const TestimonialCard = ({ quote, author, role, rating }: TestimonialCardProps) 
   return (
     <div className="testimonial-card bg-[#002B48] p-8 rounded-[34px] shadow-lg h-full flex flex-col justify-between w-full">
       <div>
+        {/* ===== RATING STARS (Teal) ===== */}
         <div className="rating-stars flex gap-1 mb-6">
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`h-5 w-5 ${i < rating ? 'text-[#17D7BE] fill-[#17D7BE]' : 'text-white/20'}`}
+              className={`h-5 w-5 ${
+                i < rating ? 'text-[#17D7BE] fill-[#17D7BE]' : 'text-white/20'
+              }`}
             />
           ))}
         </div>
