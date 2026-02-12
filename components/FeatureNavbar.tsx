@@ -38,7 +38,7 @@ export default function Navbar() {
             </button>
           </Link>
 
-          <Link href="/get-started">
+          <Link href="/signup">
             <button className="px-5 py-2.5 bg-white text-[#1C3D72] rounded-full text-sm font-semibold hover:bg-gray-100 transition">
               Get Started
             </button>

@@ -71,7 +71,7 @@ const LandingHero = () => {
           <div className="hero-visual-block relative order-1 lg:order-2 max-w-2xl mx-auto lg:max-w-none w-full">
             <div className="image-frame rounded-2xl overflow-hidden shadow-2xl relative z-10 border-4 border-white/10">
               <Image
-                src="/assets/hero-worship.png"
+                src="/assets/hero-worship.webp"
                 alt="Congregation worshipping"
                 priority
                 width={700}
