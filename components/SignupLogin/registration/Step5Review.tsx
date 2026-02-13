@@ -12,7 +12,7 @@ interface StepReviewProps {
   onSubmit: () => void;
 }
 
-const StepReview = ({ data, onBack, onSubmit }: StepReviewProps) => {
+const Step5Review = ({ data, onBack, onSubmit }: StepReviewProps) => {
   const reviewRows = [
     { label: 'Church Name', value: data.churchName },
     { label: 'Subdomain', value: data.subdomain ? `${data.subdomain}.opendoor.com` : '' },

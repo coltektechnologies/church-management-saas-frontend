@@ -22,7 +22,7 @@ interface StepChurchInfoProps {
   onNext: () => void;
 }
 
-const StepChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
+const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
   // Style groups for cleaner JSX and easier maintenance
   const styles = {
     formWrapper: 'space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500',

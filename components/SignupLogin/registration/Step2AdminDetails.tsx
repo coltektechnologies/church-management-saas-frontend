@@ -16,7 +16,7 @@ interface StepAdminDetailsProps {
   onBack: () => void;
 }
 
-const StepAdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsProps) => {
+const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 

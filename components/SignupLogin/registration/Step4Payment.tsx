@@ -20,7 +20,7 @@ const paymentMethods = [
   { id: 'bank-transfer', label: 'Bank Transfer', icon: Building2 },
 ];
 
-const StepPayment = ({ data, onChange, onNext, onBack }: StepPaymentProps) => {
+const Step4Payment = ({ data, onChange, onNext, onBack }: StepPaymentProps) => {
   const selectedMethod = data.paymentMethod || '';
 
   const styles = {

@@ -7,6 +7,9 @@ export const ROUTES = {
   testimonials: '#',
   privacy: '#',
 
+  login: '/login',
+  signup: '/signup',
+
   social: {
     instagram: 'https://www.instagram.com/p/DTks9jUjSqj/?igsh=MXJmbWZ6Y3ZpY3VlbA==',
     linkedin:

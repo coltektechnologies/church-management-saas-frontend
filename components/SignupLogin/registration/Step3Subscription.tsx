@@ -45,7 +45,7 @@ const plans = [
   },
 ];
 
-const StepSubscription = ({ data, onChange, onNext, onBack }: StepSubscriptionProps) => {
+const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionProps) => {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>(
     (data.billing as 'monthly' | 'yearly') || 'monthly'
   );
