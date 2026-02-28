@@ -1,9 +1,7 @@
 /**
  * PricingCard Component
- * * Displays a pricing tier with specific Navy to Dark Navy gradient.
- * Fonts: Poppins (SemiBold for headings/buttons, Medium for features)
+ * Fixed: Removed unselected blurness/opacity.
  */
-
 import { Check, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -15,7 +13,8 @@ interface PricingCardProps {
   period?: string;
   features: string[];
   buttonText: string;
-  isPopular?: boolean;
+  isActive?: boolean;
+  onClick: () => void;
 }
 
 const PricingCard = ({
@@ -23,102 +22,81 @@ const PricingCard = ({
   subtitle,
   price,
   currency = '₵',
-  period = '/Month.',
+  period = '/Year.',
   features,
   buttonText,
-  isPopular = false,
+  isActive = false,
+  onClick,
 }: PricingCardProps) => {
   return (
     <div
-      className={`pricing-card relative flex flex-col p-8 rounded-[34px] transition-all duration-300 shadow-xl overflow-hidden w-full ${
-        isPopular
-          ? 'lg:scale-105 z-10 border-2 border-[#17D7BE] min-h-[550px]'
-          : 'min-h-[510px] mt-0 lg:mt-5'
+      onClick={onClick}
+      className={`pricing-card relative flex flex-col p-8 rounded-[34px] cursor-pointer transition-all duration-500 shadow-xl overflow-hidden w-full border-2 ${
+        isActive
+          ? 'scale-105 z-10 border-[#17D7BE] min-h-[600px]'
+          : 'min-h-[580px] border-transparent'
       }`}
       style={{
         background: 'linear-gradient(135deg, #00223A 0%, #001524 100%)',
         color: '#FFFFFF',
       }}
     >
-      {/* Popular Tag */}
-      {isPopular && (
-        <div
-          className="absolute top-4 right-6 bg-[#17D7BE] text-[#00223A] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          Most Popular
+      {/* Badge: Shows [Plan Name] only */}
+      {isActive && (
+        <div className="absolute top-4 right-6 bg-[#17D7BE] text-[#00223A] px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest animate-in fade-in zoom-in">
+          {title}
         </div>
       )}
 
-      {/* ===== CARD HEADER ===== */}
-      <div className="pricing-header mb-6">
-        <h3
-          className="pricing-title text-2xl mb-1"
-          style={{ color: '#FFFFFF', fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}
-        >
-          {title}
+      {/* HEADER */}
+      <div className="text-center mb-6 pt-4">
+        <h3 className="text-lg font-semibold font-poppins">
+          {title} ({subtitle})
         </h3>
-        <p
-          className="pricing-subtitle text-sm opacity-70"
-          style={{ color: '#FFFFFF', fontFamily: 'Poppins, sans-serif', fontWeight: 400 }}
-        >
-          {subtitle}
-        </p>
       </div>
 
-      {/* ===== PRICE DISPLAY ===== */}
-      <div className="pricing-amount mb-8 flex items-baseline gap-1">
-        <span
-          className="price-value text-5xl font-extrabold"
-          style={{ color: '#17D7BE', fontFamily: 'Poppins, sans-serif' }}
-        >
-          {currency}
-          {price}
-        </span>
-        <span
-          className="price-period text-sm font-medium opacity-60"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          {period}
-        </span>
+      {/* PRICE */}
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center gap-1">
+          <span
+            className="text-5xl font-bold font-poppins"
+            style={{ color: isActive ? '#17D7BE' : '#FFFFFF' }}
+          >
+            {currency}
+            {price}
+          </span>
+          <span className="text-xl font-medium opacity-80">{period}</span>
+        </div>
       </div>
 
-      {/* ===== FEATURES LIST ===== */}
-      <ul className="pricing-features space-y-4 mb-8 flex-grow">
+      {/* BUTTON */}
+      <div className="mb-8">
+        <Button
+          className={`w-full h-[54px] rounded-full font-bold text-lg transition-all duration-300 ${
+            isActive
+              ? 'bg-[#17D7BE] text-[#00223A] hover:bg-[#13b39e]'
+              : 'bg-[#17D7BE] text-[#00223A] hover:opacity-90'
+          }`}
+        >
+          {buttonText}
+        </Button>
+      </div>
+
+      {/* FEATURES */}
+      <ul className="space-y-4 flex-grow border-t border-white/10 pt-6">
         {features.map((feature, index) => (
-          <li key={index} className="feature-item flex items-start gap-3">
-            <div className="icon-container-sm shrink-0 w-5 h-5 rounded-full bg-[#17D7BE] flex items-center justify-center mt-0.5">
-              <Check className="h-3.5 w-3.5 text-[#00223A] stroke-[3]" />
+          <li key={index} className="flex items-start gap-3">
+            <div className="shrink-0 w-5 h-5 rounded-full border border-[#17D7BE] flex items-center justify-center mt-0.5">
+              <Check className="h-3 w-3 text-[#17D7BE]" />
             </div>
-            <span
-              className="feature-text text-sm leading-relaxed opacity-90"
-              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}
-            >
-              {feature}
-            </span>
+            <span className="text-sm font-medium font-poppins">{feature}</span>
           </li>
         ))}
       </ul>
 
-      {/* ===== CTA BUTTON ===== */}
-      <Button
-        className={`pricing-cta w-full py-6 rounded-full transition-all duration-300 ${
-          isPopular
-            ? 'bg-[#17D7BE] hover:bg-[#13b39e] text-[#00223A] shadow-lg shadow-[#17D7BE]/20'
-            : 'bg-transparent border-2 border-[#17D7BE] text-[#17D7BE] hover:bg-[#17D7BE] hover:text-[#00223A]'
-        }`}
-        style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: '1.125rem' }}
-      >
-        {buttonText}
-      </Button>
-
-      {/* ===== SECURITY BADGE ===== */}
-      <div className="pricing-security mt-6 flex items-center justify-center gap-2 opacity-40">
-        <Lock className="security-icon h-3 w-3" />
-        <span
-          className="security-text text-[10px] uppercase tracking-tighter"
-          style={{ fontFamily: 'Poppins, sans-serif', fontStyle: 'italic' }}
-        >
+      <div className="mt-6 flex items-center justify-center gap-2 opacity-50">
+        <Lock className="h-3 w-3" />
+        <span className="text-[10px] italic uppercase tracking-tighter">
           Encrypted data with secure login.
         </span>
       </div>
