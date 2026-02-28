@@ -32,13 +32,13 @@ export default function Navbar() {
         </div>
 
         <div className="flex gap-3 items-center">
-          <Link href="/app/login">
+          <Link href="/login">
             <button className="px-4 py-2 text-sm rounded-full border border-white/40 hover:bg-white/10 transition">
               Login
             </button>
           </Link>
 
-          <Link href="/app/signup">
+          <Link href="/signup">
             <button className="px-5 py-2.5 bg-white text-[#1C3D72] rounded-full text-sm font-semibold hover:bg-gray-100 transition">
               Get Started
             </button>

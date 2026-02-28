@@ -4,9 +4,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
-/* * StepSubscription - Step 3: Subscription Plan
- * Monthly/Yearly toggle + 4 pricing cards (Start Free, Basic, Premium, Enterprise)
- */
 interface StepSubscriptionProps {
   data: Record<string, string>;
   onChange: (field: string, value: string) => void;
@@ -18,30 +15,34 @@ const plans = [
   {
     id: 'free',
     name: 'Start Free',
-    monthlyPrice: 0,
-    yearlyPrice: 0,
+    monthlyPrice: '0',
+    yearlyPrice: '0',
+    subPrice: 'for 14 days',
     description: 'Full access for 14 days to explore Open Door',
   },
   {
     id: 'basic',
     name: 'Basic',
-    monthlyPrice: 14,
-    yearlyPrice: 140,
-    description: 'Finance tracking, SMS clients, and 5 admin accounts.',
+    monthlyPrice: '14',
+    yearlyPrice: '140', // Example: 2 months off for yearly
+    subPrice: 'per month',
+    description: 'Finance tracking, SMS alerts, and 5 admin accounts.',
   },
   {
     id: 'premium',
     name: 'Premium',
-    monthlyPrice: 20,
-    yearlyPrice: 200,
-    description: 'Advanced analytics, unlimited admins and full coordination.',
+    monthlyPrice: '20',
+    yearlyPrice: '200',
+    subPrice: 'per month',
+    description: 'Advanced analytics, unlimited admins and full coordination',
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    monthlyPrice: 30,
-    yearlyPrice: 300,
-    description: 'Custom features, enterprise security, and priority support.',
+    monthlyPrice: '30',
+    yearlyPrice: '300',
+    subPrice: 'per month',
+    description: 'Custom features, enterprise security, and priority support',
   },
 ];
 
@@ -51,42 +52,62 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
   );
 
   const styles = {
-    billingToggle: 'flex justify-center mb-8',
-    toggleWrapper: 'inline-flex bg-gray-100 p-1 rounded-full border border-gray-200',
+    container: 'animate-in fade-in duration-500 font-poppins',
+    billingToggle: 'flex justify-start mb-8',
+    toggleWrapper: 'inline-flex bg-[#F2F2F2] p-1 rounded-full border border-[#BCBDBF]',
     toggleBtn: (active: boolean) =>
       cn(
-        'px-6 py-2 rounded-full text-xs font-bold transition-all',
-        active ? 'bg-white text-black shadow-sm' : 'text-gray-500'
+        'px-6 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200',
+        active ? 'bg-white text-black shadow-[0px_2px_4px_-2px_#00000040]' : 'text-[#666666]'
       ),
-    planGrid: 'grid gap-4 md:grid-cols-2 lg:grid-cols-4',
-    planCard: (selected: boolean) =>
+    planGrid: 'grid gap-4 grid-cols-1 sm:grid-cols-2',
+    // UPDATED: rounded-[10px]
+    card: 'relative overflow-hidden rounded-[10px] border border-[#2FC4B2] flex flex-col h-full bg-white text-left transition-all',
+    cardHeader: (selected: boolean) =>
       cn(
-        'p-5 rounded-2xl border-2 text-left transition-all h-full flex flex-col',
-        selected ? 'border-[#2FC4B2] bg-[#2FC4B2]/5' : 'border-gray-100 hover:border-gray-200'
+        'px-4 py-3 flex justify-between items-center transition-colors duration-200',
+        selected ? 'bg-[#0B2A4A]' : 'bg-[#BFF7EE]'
       ),
-    planTitle: 'text-sm font-bold text-gray-800 mb-2',
-    priceText: 'text-2xl font-bold text-black',
-    priceSub: 'text-[10px] text-gray-400 uppercase',
-    buttonGroup: 'flex justify-end gap-4 pt-10',
-  };
-
-  const handleBilling = (val: 'monthly' | 'yearly') => {
-    setBilling(val);
-    onChange('billing', val);
+    headerTitle: (selected: boolean) =>
+      cn('text-[16px] font-medium leading-[100%]', selected ? 'text-white' : 'text-[#0B2A4A]'),
+    radioOuter: (selected: boolean) =>
+      cn(
+        'w-4 h-4 rounded-full border flex items-center justify-center',
+        selected ? 'border-white' : 'border-[#0B2A4A]'
+      ),
+    radioInner: (selected: boolean) =>
+      cn('w-2 h-2 rounded-full', selected ? 'bg-white' : 'bg-[#0B2A4A]'),
+    content: 'p-4 flex flex-col grow',
+    priceRow: 'flex items-baseline gap-1 mb-2',
+    price: 'text-[30px] font-semibold leading-[100%] text-[#000000]',
+    subPrice: 'text-[12px] font-medium leading-[100%] text-[#1DAA99]',
+    description: 'text-[12px] font-medium leading-[100%] text-[#000000]',
+    buttonGroup: 'flex justify-between gap-4 pt-10', // Changed to justify-between to match previous layouts
+    // UPDATED: rounded-[10px]
+    backBtn:
+      'rounded-[10px] px-10 h-11 bg-[#D9D9D9] hover:bg-gray-300 text-[#000000] font-bold border-none min-w-[140px]',
+    continueBtn:
+      'rounded-[10px] px-10 h-11 bg-[#666666] hover:bg-black text-white font-bold min-w-[140px]',
   };
 
   return (
-    <div className="animate-in fade-in duration-500">
+    <div className={styles.container}>
       <div className={styles.billingToggle}>
         <div className={styles.toggleWrapper}>
           <button
-            onClick={() => handleBilling('monthly')}
+            onClick={() => {
+              setBilling('monthly');
+              onChange('billing', 'monthly');
+            }}
             className={styles.toggleBtn(billing === 'monthly')}
           >
             Monthly
           </button>
           <button
-            onClick={() => handleBilling('yearly')}
+            onClick={() => {
+              setBilling('yearly');
+              onChange('billing', 'yearly');
+            }}
             className={styles.toggleBtn(billing === 'yearly')}
           >
             Yearly
@@ -97,39 +118,41 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
       <div className={styles.planGrid}>
         {plans.map((plan) => {
           const isSelected = data.subscriptionPlan === plan.id;
-          const price = billing === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+          // Calculate dynamic price
+          const displayPrice = billing === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+          const displaySubPrice =
+            plan.id === 'free' ? plan.subPrice : billing === 'monthly' ? 'per month' : 'per year';
+
           return (
             <button
               key={plan.id}
               onClick={() => onChange('subscriptionPlan', plan.id)}
-              className={styles.planCard(isSelected)}
+              className={styles.card}
             >
-              <div className="flex justify-between items-start mb-4">
-                <span className={styles.planTitle}>{plan.name}</span>
-                <div
-                  className={cn(
-                    'w-4 h-4 rounded-full border flex items-center justify-center',
-                    isSelected ? 'border-[#2FC4B2]' : 'border-gray-300'
-                  )}
-                >
-                  {isSelected && <div className="w-2 h-2 bg-[#2FC4B2] rounded-full" />}
+              <div className={styles.cardHeader(isSelected)}>
+                <span className={styles.headerTitle(isSelected)}>{plan.name}</span>
+                <div className={styles.radioOuter(isSelected)}>
+                  {isSelected && <div className={styles.radioInner(isSelected)} />}
                 </div>
               </div>
-              <div className="mb-4">
-                <span className={styles.priceText}>${price}</span>
-                <span className={styles.priceSub}>/{billing === 'yearly' ? 'yr' : 'mo'}</span>
+
+              <div className={styles.content}>
+                <div className={styles.priceRow}>
+                  <span className={styles.price}>${displayPrice}</span>
+                  <span className={styles.subPrice}>{displaySubPrice}</span>
+                </div>
+                <p className={styles.description}>{plan.description}</p>
               </div>
-              <p className="text-[12px] text-gray-500 leading-relaxed">{plan.description}</p>
             </button>
           );
         })}
       </div>
 
       <div className={styles.buttonGroup}>
-        <Button variant="outline" onClick={onBack} className="rounded-full px-8">
+        <Button onClick={onBack} className={styles.backBtn}>
           Back
         </Button>
-        <Button onClick={onNext} className="rounded-full px-10 bg-[#666666] text-white">
+        <Button onClick={onNext} className={styles.continueBtn}>
           Continue
         </Button>
       </div>

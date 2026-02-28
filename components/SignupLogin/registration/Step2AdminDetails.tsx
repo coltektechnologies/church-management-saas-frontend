@@ -6,9 +6,6 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
-/* * StepAdminDetails - Step 2: Primary Admin Details
- * Collects full name, role, email, password, phone, confirm password
- */
 interface StepAdminDetailsProps {
   data: Record<string, string>;
   onChange: (field: string, value: string) => void;
@@ -24,18 +21,20 @@ const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsP
     gridContainer: 'grid gap-5 sm:grid-cols-2',
     fieldStack: 'space-y-2',
     label: 'text-sm font-semibold font-poppins text-gray-700',
-    input: 'h-11 rounded-lg border-gray-200 focus:ring-[#2FC4B2] transition-all',
+    // UPDATED: rounded-[10px]
+    input: 'h-11 rounded-[10px] border-gray-200 focus:ring-[#2FC4B2] transition-all',
     passwordToggle: 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600',
-    buttonGroup: 'flex justify-end gap-4 pt-6 border-t mt-8',
-    backBtn: 'rounded-full px-8 border-gray-200 text-gray-600 font-semibold h-11',
+    buttonGroup: 'flex justify-between gap-4 pt-6 mt-8',
+    // UPDATED: rounded-[10px]
+    backBtn: 'rounded-[10px] px-10 border-gray-200 text-gray-600 font-bold h-11 min-w-[140px]',
+    // UPDATED: rounded-[10px]
     nextBtn:
-      'rounded-full px-10 bg-[#666666] hover:bg-black text-white font-semibold h-11 transition-all',
+      'rounded-[10px] px-10 bg-[#666666] hover:bg-black text-white font-bold h-11 transition-all min-w-[140px]',
   };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="space-y-6">
-        {/* Row: Full name + Role */}
         <div className={styles.gridContainer}>
           <div className={styles.fieldStack}>
             <Label htmlFor="fullName" className={styles.label}>
@@ -63,7 +62,6 @@ const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsP
           </div>
         </div>
 
-        {/* Row: Email + Phone */}
         <div className={styles.gridContainer}>
           <div className={styles.fieldStack}>
             <Label htmlFor="adminEmail" className={styles.label}>
@@ -92,7 +90,6 @@ const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsP
           </div>
         </div>
 
-        {/* Row: Password + Confirm */}
         <div className={styles.gridContainer}>
           <div className={styles.fieldStack}>
             <Label htmlFor="password" className={styles.label}>
@@ -108,6 +105,7 @@ const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsP
                 className={styles.input}
               />
               <button
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className={styles.passwordToggle}
               >
@@ -129,6 +127,7 @@ const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsP
                 className={styles.input}
               />
               <button
+                type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
                 className={styles.passwordToggle}
               >

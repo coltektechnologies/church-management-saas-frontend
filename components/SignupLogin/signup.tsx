@@ -26,7 +26,6 @@ const stepTitles = [
   'Review & Submit',
 ];
 
-// Renamed to PascalCase to fix "Rules of Hooks" error
 const Signup = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Record<string, string>>({});

@@ -11,11 +11,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-/**
- * StepChurchInfo - Step 1: Church Information
- * Collects foundational church data including naming, location, and digital presence.
- * Optimized for Next.js and fully responsive across mobile, tablet, and desktop.
- */
 interface StepChurchInfoProps {
   data: Record<string, string>;
   onChange: (field: string, value: string) => void;
@@ -23,7 +18,6 @@ interface StepChurchInfoProps {
 }
 
 const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
-  // Style groups for cleaner JSX and easier maintenance
   const styles = {
     formWrapper: 'space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500',
     responsiveGrid: 'grid gap-4 sm:grid-cols-2',
@@ -31,18 +25,17 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
     label: 'text-sm font-semibold font-poppins text-gray-700',
     requiredAsterisk: 'text-[#2FC4B2] ml-0.5',
     inputField:
-      'h-11 rounded-lg border-gray-200 focus:ring-[#2FC4B2] focus:border-[#2FC4B2] transition-all',
+      'h-11 rounded-[10px] border-gray-200 focus:ring-[#2FC4B2] focus:border-[#2FC4B2] transition-all',
     subdomainWrapper: 'relative flex items-center',
     subdomainSuffix:
-      'absolute right-3 text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded border',
+      'absolute right-3 text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-[10px] border',
     actionWrapper: 'flex justify-end pt-6',
     continueBtn:
-      'bg-[#666666] hover:bg-black text-white rounded-full px-10 h-12 font-poppins font-semibold transition-all w-full sm:w-auto',
+      'bg-[#666666] hover:bg-black text-white rounded-[10px] px-10 h-12 font-poppins font-semibold transition-all w-full sm:w-auto',
   };
 
   return (
     <div className={styles.formWrapper}>
-      {/* Row 1: Church name + Country */}
       <div className={styles.responsiveGrid}>
         <div className={styles.inputGroup}>
           <Label htmlFor="churchName" className={styles.label}>
@@ -64,19 +57,16 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
             <SelectTrigger className={styles.inputField}>
               <SelectValue placeholder="Select your country" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-[10px]">
               <SelectItem value="ghana">Ghana</SelectItem>
               <SelectItem value="nigeria">Nigeria</SelectItem>
               <SelectItem value="kenya">Kenya</SelectItem>
-              <SelectItem value="south-africa">South Africa</SelectItem>
               <SelectItem value="usa">United States</SelectItem>
-              <SelectItem value="uk">United Kingdom</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {/* Row 2: Church email + Region/City */}
       <div className={styles.responsiveGrid}>
         <div className={styles.inputGroup}>
           <Label htmlFor="churchEmail" className={styles.label}>
@@ -105,7 +95,6 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
         </div>
       </div>
 
-      {/* Row 3: Preferred subdomain + Physical address */}
       <div className={styles.responsiveGrid}>
         <div className={styles.inputGroup}>
           <Label htmlFor="subdomain" className={styles.label}>
@@ -136,45 +125,6 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
         </div>
       </div>
 
-      {/* Row 4: Denomination + Church size */}
-      <div className={styles.responsiveGrid}>
-        <div className={styles.inputGroup}>
-          <Label htmlFor="denomination" className={styles.label}>
-            Denomination/Affiliation
-          </Label>
-          <Select
-            value={data.denomination || ''}
-            onValueChange={(val) => onChange('denomination', val)}
-          >
-            <SelectTrigger className={styles.inputField}>
-              <SelectValue placeholder="Select your denomination" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pentecostal">Pentecostal</SelectItem>
-              <SelectItem value="adventist">Seventh Day Adventist</SelectItem>
-              <SelectItem value="catholic">Catholic</SelectItem>
-              <SelectItem value="methodist">Methodist</SelectItem>
-              <SelectItem value="baptist">Baptist</SelectItem>
-              <SelectItem value="non-denominational">Non-denominational</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className={styles.inputGroup}>
-          <Label htmlFor="churchSize" className={styles.label}>
-            Church size<span className={styles.requiredAsterisk}>*</span>
-          </Label>
-          <Input
-            id="churchSize"
-            placeholder="Enter church size"
-            value={data.churchSize || ''}
-            onChange={(e) => onChange('churchSize', e.target.value)}
-            className={styles.inputField}
-          />
-        </div>
-      </div>
-
-      {/* Form Action */}
       <div className={styles.actionWrapper}>
         <Button onClick={onNext} className={styles.continueBtn}>
           Continue
