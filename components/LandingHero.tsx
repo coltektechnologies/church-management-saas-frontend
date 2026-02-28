@@ -1,22 +1,39 @@
-/**
- * LandingHero Component
- * * Purpose: Hero section for the top of the landing page.
- * Fonts: OV Soge (Main Headline), Outfit (Sub-headline and Buttons)
- * Responsive: Stacks content vertically on mobile, side-by-side on desktop.
- */
+'use client';
 
 import { Play } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import heroWorship from '@/assets/hero-worship.svg';
 
+/**
+ * LandingHero Component */
 const LandingHero = () => {
   return (
-    <section className="hero-root relative min-h-screen pt-28 pb-12 bg-[linear-gradient(to_right,#1C3D72,#2EC4B6)] overflow-hidden">
-      <div className="hero-content-wrapper container mx-auto px-4 md:px-6 lg:px-8">
+    <section
+      className="hero-root relative min-h-screen pt-28 pb-12 overflow-hidden"
+      style={{
+        background: 'linear-gradient(to right, #1C3D72, #2EC4B6)',
+      }}
+    >
+      {/* GRID OVERLAY: 
+          Uses a repeating linear gradient to create 1px lines. 
+          The opacity (white/5) makes it "fuse" into the background.
+      */}
+      <div
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)
+          `,
+          backgroundSize: '80px 80px',
+        }}
+      />
+
+      <div className="hero-content-wrapper container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
         <div className="hero-main-grid grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* TEXT CONTENT: Headlines and Call-to-Actions */}
+          {/* TEXT CONTENT */}
           <div className="hero-copy-block space-y-8 text-center lg:text-left order-2 lg:order-1">
-            {/* Main Headline - Font: OV Soge */}
             <h1
               className="hero-h1 text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1]"
               style={{ fontFamily: 'OV Soge, sans-serif', letterSpacing: '0.03em' }}
@@ -27,7 +44,6 @@ const LandingHero = () => {
             </h1>
 
             <div className="hero-subtext-container space-y-4">
-              {/* Tagline - Font: Outfit Medium */}
               <p
                 className="hero-tagline text-xl md:text-2xl text-white font-medium"
                 style={{ fontFamily: 'Outfit, sans-serif' }}
@@ -35,7 +51,6 @@ const LandingHero = () => {
                 The all-in-one management platform designed for modern congregations.
               </p>
 
-              {/* Description - Font: Outfit Regular */}
               <p
                 className="hero-desc text-lg text-white/80 max-w-lg mx-auto lg:mx-0 leading-relaxed"
                 style={{ fontFamily: 'Outfit, sans-serif' }}
@@ -45,7 +60,6 @@ const LandingHero = () => {
               </p>
             </div>
 
-            {/* BUTTON GROUP: Primary CTA and Demo Video Link */}
             <div className="hero-cta-row flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
               <Button
                 className="hero-btn-primary bg-[#17D7BE] hover:bg-[#17D7BE]/90 text-[#020202] px-10 py-7 text-lg rounded-full w-full sm:w-auto font-medium shadow-lg"
@@ -67,11 +81,11 @@ const LandingHero = () => {
             </div>
           </div>
 
-          {/* VISUAL CONTENT: Interactive image frame with backdrop effects */}
+          {/* VISUAL CONTENT */}
           <div className="hero-visual-block relative order-1 lg:order-2 max-w-2xl mx-auto lg:max-w-none w-full">
             <div className="image-frame rounded-2xl overflow-hidden shadow-2xl relative z-10 border-4 border-white/10">
               <Image
-                src="/assets/hero-worship.webp"
+                src={heroWorship}
                 alt="Congregation worshipping"
                 priority
                 width={700}
@@ -79,7 +93,6 @@ const LandingHero = () => {
                 className="hero-img w-full h-auto object-cover min-h-[300px]"
               />
             </div>
-            {/* Backdrop Decorative Layer */}
             <div className="image-bg-decoration absolute -bottom-6 -right-6 w-full h-full bg-white/5 rounded-2xl z-0" />
           </div>
         </div>

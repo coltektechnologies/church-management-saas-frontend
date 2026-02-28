@@ -1,109 +1,125 @@
 'use client';
 
-/**
- * PricingSection Component
- * * Manages the layout for pricing tiers.
- * Typography: Poppins
- */
-
 import { useState } from 'react';
 import PricingCard from './PricingCard';
 
 const pricingPlans = [
   {
-    title: 'Free Forever',
+    id: 0,
+    title: 'Start Free',
     subtitle: 'The Entry Point',
     price: '0',
-    features: [
-      'Core Member Directory',
-      'Basic Tithe Recording',
-      '1 Administrator only',
-      'Community Support',
-    ],
+    features: ['Core Member Directory', 'Basic Tithe Recording', '1 Administrative User'],
     buttonText: 'Start Free Plan',
-    isPopular: false,
   },
   {
-    title: 'Premium',
-    subtitle: 'The Complete Solution',
-    price: '79',
-    features: [
-      'Everything in Basic Plan',
-      'Advanced Analytics & Reporting',
-      'Unlimited Admins & Staff Files',
-      'Full Coordination Hub',
-      'Priority 24/7 Support',
-    ],
-    buttonText: 'Choose Premium',
-    isPopular: true,
-  },
-  {
+    id: 1,
     title: 'Basic',
     subtitle: 'The Growth Plan',
     price: '29',
     features: [
-      'Everything in Free trial',
+      'Everything in Free Trial',
       'Full Treasury & Expense Tracking',
       '5 Department Admin Accounts',
       'Automated SMS Notifications',
     ],
     buttonText: 'Get Started',
-    isPopular: false,
+  },
+  {
+    id: 2,
+    title: 'Premium',
+    subtitle: 'The Complete Solution',
+    price: '79',
+    features: [
+      'Everything in the Basic Plan',
+      'Advanced Analytics & Reporting',
+      'Unlimited Admin & Staff Roles',
+      'Full Departmental Coordination Hub',
+    ],
+    buttonText: 'Choose Premium',
+  },
+  {
+    id: 3,
+    title: 'Enterprise',
+    subtitle: 'For Large Networks',
+    price: '149',
+    features: [
+      'Multi-Campus Management',
+      'Custom API Integrations',
+      'Dedicated Account Manager',
+      'White-label Mobile App',
+    ],
+    buttonText: 'Contact Sales',
   },
 ];
 
 const PricingSection = () => {
-  const [isYearly, setIsYearly] = useState(false);
+  const [isYearly, setIsYearly] = useState(true);
+  const [selectedIndex, setSelectedIndex] = useState(2);
 
   return (
-    <section id="pricing" className="py-24 bg-[#FFFFFF]">
-      <div className="container mx-auto px-4 max-w-7xl">
+    <section id="pricing" className="py-24 bg-white">
+      <div className="container mx-auto px-4">
+        {/* ===== RESTORED HEADER ===== */}
         <div className="text-center mb-16">
           <h2
-            className="text-4xl md:text-5xl font-extrabold text-[#00223A] mb-4 tracking-tight"
-            style={{ fontFamily: 'Poppins, sans-serif' }}
+            className="mb-4"
+            style={{
+              fontFamily: 'OV Soge, sans-serif',
+              fontWeight: 700,
+              fontSize: '40px',
+              lineHeight: '100%',
+              letterSpacing: '0.03em',
+              color: '#00223A',
+            }}
           >
             Simple Pricing for Every Ministry.
           </h2>
           <p
-            className="text-xl text-[#00223A]/70 font-medium"
-            style={{ fontFamily: 'Poppins, sans-serif' }}
+            style={{
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: 400,
+              fontSize: '20px',
+              lineHeight: '131%',
+              letterSpacing: '0%',
+              color: 'rgba(0, 34, 58, 0.7)',
+            }}
           >
             Start with a 14-day free trial. No credit card required.
           </p>
 
           {/* Toggle Switch */}
-          <div className="flex items-center justify-center gap-4 mt-10">
-            <span
-              className={`text-sm font-bold ${!isYearly ? 'text-[#00223A]' : 'text-gray-400'}`}
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              Monthly
-            </span>
-            <button
-              onClick={() => setIsYearly(!isYearly)}
-              className="relative w-14 h-7 bg-[#00223A] rounded-full p-1 transition-colors duration-300"
-              aria-label="Toggle yearly pricing"
-            >
+          <div className="flex justify-center mt-12">
+            <div className="relative flex items-center bg-[#00223A] rounded-full p-1 w-[280px] h-[60px]">
               <div
-                className={`w-5 h-5 bg-[#17D7BE] rounded-full transition-transform duration-300 ${isYearly ? 'translate-x-7' : 'translate-x-0'}`}
+                className={`absolute h-[50px] w-[135px] bg-[#17D7BE] rounded-full transition-all duration-300 ease-in-out ${isYearly ? 'translate-x-[135px]' : 'translate-x-0'}`}
               />
-            </button>
-            <span
-              className={`text-sm font-bold ${isYearly ? 'text-[#00223A]' : 'text-gray-400'}`}
-              style={{ fontFamily: 'Poppins, sans-serif' }}
-            >
-              Yearly (Save 20%)
-            </span>
+              <button
+                onClick={() => setIsYearly(false)}
+                className={`relative z-10 w-1/2 text-center font-bold text-sm transition-colors ${!isYearly ? 'text-[#00223A]' : 'text-white'}`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setIsYearly(true)}
+                className={`relative z-10 w-1/2 text-center font-bold text-sm transition-colors ${isYearly ? 'text-[#00223A]' : 'text-white'}`}
+              >
+                Yearly
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-center max-w-6xl mx-auto">
-          {pricingPlans.map((plan, index) => (
+        {/* 4 Column Grid - Removed Blurness/Opacity from unselected cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-[1440px] mx-auto items-start">
+          {pricingPlans.map((plan) => (
             <PricingCard
-              key={index}
+              key={plan.id}
               {...plan}
-              price={isYearly ? String(Math.round(Number(plan.price) * 0.8)) : plan.price}
+              isActive={selectedIndex === plan.id}
+              onClick={() => setSelectedIndex(plan.id)}
+              period={isYearly ? '/Year.' : '/Month.'}
+              price={isYearly ? String(Math.round(Number(plan.price) * 10)) : plan.price}
             />
           ))}
         </div>
