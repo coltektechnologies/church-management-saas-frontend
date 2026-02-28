@@ -1,26 +1,23 @@
 'use client';
 
 import { Play } from 'lucide-react';
-import Image from 'next/image';
+import Image, { StaticImageData } from 'next/image';
 import { Button } from '@/components/ui/button';
 import heroWorship from '@/assets/hero-worship.svg';
 
 /**
  * LandingHero Component
- * Updated with a subtle, ultra-thin integrated grid overlay.
  */
 const LandingHero = () => {
   return (
     <section
       className="hero-root relative min-h-screen pt-28 pb-12 overflow-hidden"
       style={{
-        // The base gradient from your code
         background: 'linear-gradient(to right, #1C3D72, #2EC4B6)',
       }}
     >
       {/* GRID OVERLAY: 
           Uses a repeating linear gradient to create 1px lines. 
-          The opacity (white/5) makes it "fuse" into the background.
       */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
@@ -29,7 +26,7 @@ const LandingHero = () => {
             linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)
           `,
-          backgroundSize: '80px 80px', // Adjust size for larger/smaller grid squares
+          backgroundSize: '80px 80px',
         }}
       />
 
@@ -88,7 +85,7 @@ const LandingHero = () => {
           <div className="hero-visual-block relative order-1 lg:order-2 max-w-2xl mx-auto lg:max-w-none w-full">
             <div className="image-frame rounded-2xl overflow-hidden shadow-2xl relative z-10 border-4 border-white/10">
               <Image
-                src={heroWorship}
+                src={heroWorship as StaticImageData}
                 alt="Congregation worshipping"
                 priority
                 width={700}
