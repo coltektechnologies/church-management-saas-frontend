@@ -21,15 +21,13 @@ const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsP
     gridContainer: 'grid gap-5 sm:grid-cols-2',
     fieldStack: 'space-y-2',
     label: 'text-sm font-semibold font-poppins text-gray-700',
-    // UPDATED: rounded-[10px]
-    input: 'h-11 rounded-[10px] border-gray-200 focus:ring-[#2FC4B2] transition-all',
+    input: 'h-11 rounded-[10px] border border-[#2FC4B2] focus:ring-[#2FC4B2] transition-all px-4',
     passwordToggle: 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600',
-    buttonGroup: 'flex justify-between gap-4 pt-6 mt-8',
-    // UPDATED: rounded-[10px]
-    backBtn: 'rounded-[10px] px-10 border-gray-200 text-gray-600 font-bold h-11 min-w-[140px]',
-    // UPDATED: rounded-[10px]
+    buttonGroup: 'flex justify-center gap-2 pt-6 mt-8',
+    backBtn:
+      'w-[229px] h-[44px] rounded-[10px] border border-gray-200 text-gray-600 font-bold transition-all',
     nextBtn:
-      'rounded-[10px] px-10 bg-[#666666] hover:bg-black text-white font-bold h-11 transition-all min-w-[140px]',
+      'w-[229px] h-[44px] rounded-[10px] bg-[#666666] hover:bg-black text-white font-bold transition-all',
   };
 
   return (

@@ -24,7 +24,7 @@ const plans = [
     id: 'basic',
     name: 'Basic',
     monthlyPrice: '14',
-    yearlyPrice: '140', // Example: 2 months off for yearly
+    yearlyPrice: '140',
     subPrice: 'per month',
     description: 'Finance tracking, SMS alerts, and 5 admin accounts.',
   },
@@ -61,7 +61,6 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
         active ? 'bg-white text-black shadow-[0px_2px_4px_-2px_#00000040]' : 'text-[#666666]'
       ),
     planGrid: 'grid gap-4 grid-cols-1 sm:grid-cols-2',
-    // UPDATED: rounded-[10px]
     card: 'relative overflow-hidden rounded-[10px] border border-[#2FC4B2] flex flex-col h-full bg-white text-left transition-all',
     cardHeader: (selected: boolean) =>
       cn(
@@ -82,12 +81,11 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
     price: 'text-[30px] font-semibold leading-[100%] text-[#000000]',
     subPrice: 'text-[12px] font-medium leading-[100%] text-[#1DAA99]',
     description: 'text-[12px] font-medium leading-[100%] text-[#000000]',
-    buttonGroup: 'flex justify-between gap-4 pt-10', // Changed to justify-between to match previous layouts
-    // UPDATED: rounded-[10px]
+    buttonGroup: 'flex justify-center gap-2 pt-10',
     backBtn:
-      'rounded-[10px] px-10 h-11 bg-[#D9D9D9] hover:bg-gray-300 text-[#000000] font-bold border-none min-w-[140px]',
+      'w-[229px] h-[44px] rounded-[10px] bg-[#D9D9D9] hover:bg-gray-300 text-[#000000] font-bold border-none transition-all',
     continueBtn:
-      'rounded-[10px] px-10 h-11 bg-[#666666] hover:bg-black text-white font-bold min-w-[140px]',
+      'w-[229px] h-[44px] rounded-[10px] bg-[#666666] hover:bg-black text-white font-bold transition-all',
   };
 
   return (
@@ -118,7 +116,6 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
       <div className={styles.planGrid}>
         {plans.map((plan) => {
           const isSelected = data.subscriptionPlan === plan.id;
-          // Calculate dynamic price
           const displayPrice = billing === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
           const displaySubPrice =
             plan.id === 'free' ? plan.subPrice : billing === 'monthly' ? 'per month' : 'per year';

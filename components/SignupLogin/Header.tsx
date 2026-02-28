@@ -1,5 +1,6 @@
 'use client';
 
+import logo from '@/assets/logo.svg';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -29,7 +30,7 @@ const Header = () => {
         {/* LOGO SECTION */}
         <Link href="/" className="flex items-center hover:opacity-90 transition-opacity">
           <Image
-            src="/logo.webp"
+            src={logo}
             alt="The Open Door Logo"
             width={240}
             height={50}

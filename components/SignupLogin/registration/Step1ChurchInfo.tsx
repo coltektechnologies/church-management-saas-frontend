@@ -25,13 +25,13 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
     label: 'text-sm font-semibold font-poppins text-gray-700',
     requiredAsterisk: 'text-[#2FC4B2] ml-0.5',
     inputField:
-      'h-11 rounded-[10px] border-gray-200 focus:ring-[#2FC4B2] focus:border-[#2FC4B2] transition-all',
+      'h-11 rounded-[10px] border border-[#2FC4B2] focus:ring-[#2FC4B2] focus:border-[#2FC4B2] transition-all',
     subdomainWrapper: 'relative flex items-center',
     subdomainSuffix:
-      'absolute right-3 text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-[10px] border',
+      'absolute right-3 text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-[10px] border border-[#2FC4B2]',
     actionWrapper: 'flex justify-end pt-6',
     continueBtn:
-      'bg-[#666666] hover:bg-black text-white rounded-[10px] px-10 h-12 font-poppins font-semibold transition-all w-full sm:w-auto',
+      'bg-[#666666] hover:bg-black text-white rounded-[10px] w-[229px] h-[44px] font-poppins font-semibold transition-all',
   };
 
   return (

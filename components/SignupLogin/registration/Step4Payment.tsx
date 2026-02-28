@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, ImagePlus, ShieldCheck, Check, ChevronDown, Loader2 } from 'lucide-react';
+import { X, ImagePlus, Check, ChevronDown, Loader2, ShieldCheck } from 'lucide-react';
 
 /* --- Interfaces --- */
 export interface RegistrationData {
@@ -51,21 +51,6 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
 
   const handlePay = async () => {
     setIsLoading(true);
-
-    /* ============================================================
-        INSERT YOUR API ROUTE HERE 
-        Example: 
-        const response = await fetch('/api/payments/process', {
-          method: 'POST',
-          body: JSON.stringify({ 
-            method: data.paymentMethod, 
-            plan: data.subscriptionPlan,
-            email: data.churchEmail 
-          }),
-        });
-        if (response.ok) { ... }
-        ============================================================ */
-
     setTimeout(() => {
       setIsLoading(false);
       setActiveDialog(null);
@@ -85,7 +70,6 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
 
       <p className="text-base font-bold text-[#0B2A4A] mb-4">Select payment method*</p>
 
-      {/* Payment Selection Cards */}
       <div className="flex flex-col gap-4">
         {paymentMethods.map((method) => {
           const isSelected = data.paymentMethod === method.id;
@@ -93,8 +77,7 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
             <button
               key={method.id}
               onClick={() => handleMethodClick(method.id)}
-              style={{ width: '100%', maxWidth: '492px', height: '70px' }}
-              className={`flex items-center justify-between px-6 rounded-[10px] border-2 transition-all ${
+              className={`flex items-center justify-between px-6 w-full h-[70px] rounded-[10px] border transition-all ${
                 isSelected
                   ? 'bg-[#0B2A4A] border-[#2FC4B2] text-white'
                   : 'bg-transparent border-[#2FC4B2] text-[#0B2A4A] hover:bg-teal-50/10'
@@ -110,9 +93,7 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
                 </div>
               </div>
               <div
-                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                  isSelected ? 'border-white' : 'border-[#2FC4B2]'
-                }`}
+                className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? 'border-white' : 'border-[#2FC4B2]'}`}
               >
                 {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
               </div>
@@ -121,23 +102,22 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
         })}
       </div>
 
-      {/* Main Navigation */}
-      <div className="flex justify-between mt-12">
+      <div className="flex justify-center gap-2 mt-12">
         <button
           onClick={onBack}
-          className="bg-[#D9D9D9] text-black px-12 py-3 rounded-[10px] font-bold text-sm min-w-[140px] hover:bg-gray-300 transition-colors"
+          className="w-[229px] h-[44px] bg-[#D9D9D9] text-black rounded-[10px] font-bold text-sm hover:bg-gray-300 transition-colors"
         >
           Back
         </button>
         <button
           onClick={onNext}
-          className="bg-[#666666] text-white px-12 py-3 rounded-[10px] font-bold text-sm min-w-[140px] hover:bg-[#555555] transition-colors"
+          className="w-[229px] h-[44px] bg-[#666666] text-white rounded-[10px] font-bold text-sm hover:bg-black transition-colors"
         >
           Continue
         </button>
       </div>
 
-      {/* --- Dialogs --- */}
+      {/* Mobile Money Dialog */}
       {activeDialog === 'mobile_money' && (
         <DialogContainer
           onClose={() => setActiveDialog(null)}
@@ -155,20 +135,22 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
               <Input placeholder="Enter your account name" />
             </Field>
             <Field label="Subscription plan">
-              <ReadOnly value={planLabels[data.subscriptionPlan] || 'Basic ($14 per month)'} />
+              <ReadOnly value={planLabels[data.subscriptionPlan] || 'Basic'} />
             </Field>
             <PayButton onClick={handlePay} loading={isLoading} />
+            <EncryptionFooter />
           </div>
         </DialogContainer>
       )}
 
+      {/* Visa/Mastercard Dialog */}
       {activeDialog === 'visa_mastercard' && (
         <DialogContainer
           onClose={() => setActiveDialog(null)}
           title="Payment Details"
           width="max-w-[540px]"
         >
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
             <Field label="Card number*">
               <Input placeholder="080 808 080 000" />
             </Field>
@@ -179,34 +161,33 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
               <Input placeholder="MM/YY" />
             </Field>
             <Field label="Billing country">
-              <Select
-                placeholder="Select your country"
-                options={['Ghana', 'Nigeria', 'UK', 'USA']}
-              />
+              <Select placeholder="Select country" options={['Ghana', 'Nigeria', 'UK', 'USA']} />
             </Field>
             <Field label="CVV">
               <Input placeholder="080" />
             </Field>
             <Field label="Subscription plan">
-              <ReadOnly value={planLabels[data.subscriptionPlan] || 'Basic ($14 per month)'} />
+              <ReadOnly value={planLabels[data.subscriptionPlan] || 'Basic'} />
             </Field>
           </div>
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex flex-col items-center">
             <PayButton onClick={handlePay} loading={isLoading} className="max-w-[320px]" />
+            <EncryptionFooter />
           </div>
         </DialogContainer>
       )}
 
+      {/* Bank Transfer Dialog - Fixed with Scroll and Encryption Footer */}
       {activeDialog === 'bank_transfer' && (
         <DialogContainer
           onClose={() => setActiveDialog(null)}
           title="Payment Details"
-          width="max-w-[420px]"
+          width="max-w-[440px]"
         >
           <div className="flex flex-col gap-4">
             <Field label="Bank name*">
               <Select
-                placeholder="Select your bank"
+                placeholder="Select your bank name"
                 options={['GCB Bank', 'Ecobank', 'Stanbic Bank', 'Absa']}
               />
             </Field>
@@ -214,37 +195,41 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
               <Input placeholder="000 000 000 000" />
             </Field>
             <Field label="Transaction reference">
-              <Input placeholder="Enter transaction reference" />
+              <Input placeholder="Enter bank transaction reference" />
             </Field>
             <Field label="Subscription plan">
-              <ReadOnly value={planLabels[data.subscriptionPlan] || 'Basic ($14 per month)'} />
+              <ReadOnly value={planLabels[data.subscriptionPlan] || 'Basic'} />
             </Field>
             <Field label="Upload Receipt">
-              <label className="flex flex-col items-center justify-center gap-2 w-full py-6 rounded-[10px] border-2 border-dashed border-[#2FC4B2] cursor-pointer hover:bg-teal-50/50 transition-colors">
-                <ImagePlus className="w-8 h-8 text-[#2FC4B2]" />
-                <span className="text-[12px] text-[#2FC4B2] font-medium">
+              <label className="flex flex-col items-center justify-center gap-2 w-full py-6 rounded-[10px] border border-dashed border-[#2FC4B2] cursor-pointer hover:bg-teal-50/20 transition-all">
+                <ImagePlus className="w-10 h-10 text-[#2FC4B2]" />
+                <span className="text-[13px] text-[#2FC4B2] font-medium">
                   Click to upload receipt
                 </span>
                 <input type="file" className="hidden" accept="image/*" />
               </label>
             </Field>
-            <PayButton onClick={handlePay} loading={isLoading} />
+            <div className="pt-2">
+              <PayButton onClick={handlePay} loading={isLoading} />
+            </div>
+            <EncryptionFooter />
           </div>
         </DialogContainer>
       )}
 
+      {/* Success Modal */}
       {showSuccess && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[10px] p-12 max-w-[380px] w-full text-center shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[20px] p-10 max-w-[380px] w-full text-center shadow-2xl">
             <div className="w-20 h-20 rounded-full bg-[#0B2A4A] flex items-center justify-center mx-auto mb-8">
               <Check className="w-10 h-10 text-white stroke-[4px]" />
             </div>
-            <h3 className="text-2xl font-bold text-[#0B2A4A] mb-8">Payment Successful</h3>
+            <h3 className="text-2xl font-bold text-[#0B2A4A] mb-8">Registration Successful</h3>
             <button
               onClick={handleSuccessContinue}
-              className="bg-[#666666] text-white w-full py-3 rounded-[10px] font-bold text-sm hover:bg-[#555555] transition-colors"
+              className="bg-[#666666] text-white w-full py-4 rounded-full font-bold text-sm hover:bg-black transition-colors"
             >
-              Continue
+              Go to Dashboard
             </button>
           </div>
         </div>
@@ -254,20 +239,33 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
 };
 
 /* --- UI Sub-components --- */
+
 const DialogContainer = ({ onClose, title, children, width }: any) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px] px-4">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px] p-4">
     <div
-      className={`bg-white rounded-[10px] p-10 w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 ${width}`}
+      className={`bg-white rounded-[20px] shadow-2xl relative flex flex-col max-h-[95vh] w-full ${width}`}
     >
-      <button
-        onClick={onClose}
-        className="absolute left-6 top-6 w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors"
-      >
-        <X size={16} />
-      </button>
-      <h3 className="text-xl font-bold text-[#0B2A4A] text-center mb-8">{title}</h3>
-      {children}
+      {/* Header Section */}
+      <div className="p-6 pb-0">
+        <button
+          onClick={onClose}
+          className="absolute left-6 top-6 w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors"
+        >
+          <X size={16} />
+        </button>
+        <h3 className="text-xl font-bold text-[#0B2A4A] text-center mb-6">{title}</h3>
+      </div>
+
+      {/* Scrollable Content Section */}
+      <div className="flex-1 overflow-y-auto px-8 pb-8 scrollbar-hide">{children}</div>
     </div>
+  </div>
+);
+
+const EncryptionFooter = () => (
+  <div className="flex items-center justify-center gap-2 text-gray-400 text-[12px] mt-4 pb-2">
+    <ShieldCheck size={16} className="text-gray-400" />
+    <span>All your data are encrypted</span>
   </div>
 );
 
@@ -287,12 +285,12 @@ const Input = (props: any) => (
 
 const Select = ({ placeholder, options }: any) => (
   <div className="relative">
-    <select className="w-full h-11 px-4 rounded-[10px] border border-[#2FC4B2] text-sm outline-none appearance-none bg-white text-gray-500 cursor-pointer">
+    <select className="w-full h-11 px-4 rounded-[10px] border border-[#2FC4B2] text-sm outline-none appearance-none bg-white text-gray-400 cursor-pointer">
       <option value="" disabled selected>
         {placeholder}
       </option>
       {options.map((opt: string) => (
-        <option key={opt} value={opt} className="text-[#0B2A4A]">
+        <option key={opt} value={opt} className="text-black">
           {opt}
         </option>
       ))}
@@ -305,7 +303,7 @@ const Select = ({ placeholder, options }: any) => (
 );
 
 const ReadOnly = ({ value }: { value: string }) => (
-  <div className="w-full h-11 px-4 rounded-[10px] border border-[#2FC4B2] bg-gray-50 flex items-center text-sm text-[#0B2A4A] font-medium">
+  <div className="w-full h-11 px-4 rounded-[10px] border border-[#2FC4B2] bg-white flex items-center text-sm text-[#0B2A4A] font-medium">
     {value}
   </div>
 );
@@ -314,7 +312,7 @@ const PayButton = ({ onClick, loading, className = '' }: any) => (
   <button
     onClick={onClick}
     disabled={loading}
-    className={`w-full h-12 bg-[#666666] text-white rounded-[10px] font-bold text-sm mt-2 hover:bg-[#555555] transition-colors flex items-center justify-center gap-2 ${className} disabled:opacity-70`}
+    className={`w-full h-12 bg-[#666666] text-white rounded-[10px] font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-70 ${className}`}
   >
     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
     {loading ? 'Processing...' : 'Pay now'}
