@@ -4,165 +4,181 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { CountrySelect } from '@/components/SignupLogin/CountrySelect';
+import { Eye, EyeOff } from 'lucide-react';
 
-interface StepChurchInfoProps {
+interface StepAdminDetailsProps {
   data: Record<string, string>;
   onChange: (field: string, value: string) => void;
   onNext: () => void;
+  onBack: () => void;
 }
 
-const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
+// Step 2: Admin Details
+const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsProps) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const styles = {
-    formWrapper: 'relative space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500',
-    responsiveGrid: 'grid gap-4 sm:grid-cols-2',
-    inputGroup: 'space-y-2',
+    formWrapper: 'relative space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500',
+    responsiveGrid: 'grid gap-x-4 gap-y-3 sm:grid-cols-2',
+    inputGroup: 'space-y-1',
     label: 'text-sm font-semibold font-poppins text-gray-700',
     requiredAsterisk: 'text-[#2FC4B2] ml-0.5',
     inputField:
-      'h-11 rounded-[10px] border border-[#2FC4B2] focus:ring-[#2FC4B2] focus:border-[#2FC4B2] transition-all bg-white',
-    errorText: 'text-red-500 text-[10px] mt-1 font-medium',
-    subdomainWrapper: 'relative flex items-center',
-    subdomainSuffix:
-      'absolute right-3 text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-[10px] border border-[#2FC4B2]',
-    actionWrapper: 'flex justify-end pt-6',
+      'h-10 w-full rounded-[10px] border border-[#2FC4B2] focus:ring-[#2FC4B2] focus:border-[#2FC4B2] transition-all bg-white px-3 text-sm',
+    errorText: 'text-red-500 text-[10px] mt-0.5 font-medium',
+    passwordToggle: 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600',
+    actionWrapper: 'flex flex-col sm:flex-row justify-center sm:justify-end gap-3 pt-4',
+    backBtn:
+      'w-full sm:w-[236px] h-[44px] rounded-[10px] border border-gray-200 text-gray-600 font-semibold transition-all hover:bg-gray-50',
     continueBtn:
-      'bg-[#666666] hover:bg-black text-white rounded-[10px] w-full sm:w-[229px] h-[44px] font-poppins font-semibold transition-all',
+      'bg-[#666666] hover:bg-[#444444] text-white rounded-[10px] w-full sm:w-[236px] h-[44px] font-poppins font-semibold transition-all shadow-sm',
   };
 
-  const validateEmail = (email: string) => {
-    return String(email)
-      .toLowerCase()
-      .match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-  };
-
+  // Validation logic for the form fields
   const handleValidation = () => {
-    const newErrors: Record<string, string> = {};
     const requiredFields = [
-      'churchName',
-      'country',
-      'churchEmail',
-      'regionCity',
-      'subdomain',
-      'address',
+      'fullName',
+      'role',
+      'adminEmail',
+      'phone',
+      'password',
+      'confirmPassword',
     ];
+    const newErrors: Record<string, string> = {};
 
+    // Check for empty required fields
     requiredFields.forEach((field) => {
       if (!data[field] || data[field].trim() === '') {
-        newErrors[field] = 'This field is required';
+        newErrors[field] = 'Required';
       }
     });
 
-    if (data.churchEmail && !validateEmail(data.churchEmail)) {
-      newErrors.churchEmail = 'Please enter a valid email address';
+    if (data.password && data.confirmPassword && data.password !== data.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) {
-      return;
+    if (Object.keys(newErrors).length === 0) {
+      onNext();
     }
-
-    onNext();
   };
 
+  // Render the form fields and buttons
   return (
     <div className={styles.formWrapper}>
       <div className={styles.responsiveGrid}>
+        {/* Full Name */}
         <div className={styles.inputGroup}>
-          <Label htmlFor="churchName" className={styles.label}>
-            Church name<span className={styles.requiredAsterisk}>*</span>
+          <Label className={styles.label}>
+            Full name<span className={styles.requiredAsterisk}>*</span>
           </Label>
           <Input
-            id="churchName"
-            placeholder="Enter your church name"
-            value={data.churchName || ''}
-            onChange={(e) => onChange('churchName', e.target.value)}
-            className={`${styles.inputField} ${errors.churchName ? 'border-red-500' : ''}`}
+            placeholder="Enter full name"
+            value={data.fullName || ''}
+            onChange={(e) => onChange('fullName', e.target.value)}
+            className={`${styles.inputField} ${errors.fullName ? 'border-red-500' : ''}`}
           />
-          {errors.churchName && <p className={styles.errorText}>{errors.churchName}</p>}
+          {errors.fullName && <p className={styles.errorText}>{errors.fullName}</p>}
         </div>
 
+        {/* Primary Role */}
         <div className={styles.inputGroup}>
-          <Label htmlFor="country" className={styles.label}>
-            Country<span className={styles.requiredAsterisk}>*</span>
-          </Label>
-          <CountrySelect
-            value={data.country || ''}
-            onValueChange={(val) => onChange('country', val)}
-            className={`${styles.inputField} ${errors.country ? 'border-red-500' : ''}`}
-          />
-          {errors.country && <p className={styles.errorText}>{errors.country}</p>}
-        </div>
-      </div>
-
-      <div className={styles.responsiveGrid}>
-        <div className={styles.inputGroup}>
-          <Label htmlFor="churchEmail" className={styles.label}>
-            Church email<span className={styles.requiredAsterisk}>*</span>
+          <Label className={styles.label}>
+            Primary Role<span className={styles.requiredAsterisk}>*</span>
           </Label>
           <Input
-            id="churchEmail"
+            placeholder="e.g. Administrator"
+            value={data.role || ''}
+            onChange={(e) => onChange('role', e.target.value)}
+            className={`${styles.inputField} ${errors.role ? 'border-red-500' : ''}`}
+          />
+          {errors.role && <p className={styles.errorText}>{errors.role}</p>}
+        </div>
+
+        {/* Admin Email */}
+        <div className={styles.inputGroup}>
+          <Label className={styles.label}>
+            Admin email<span className={styles.requiredAsterisk}>*</span>
+          </Label>
+          <Input
             type="email"
-            placeholder="Enter your church email"
-            value={data.churchEmail || ''}
-            onChange={(e) => onChange('churchEmail', e.target.value)}
-            className={`${styles.inputField} ${errors.churchEmail ? 'border-red-500' : ''}`}
+            placeholder="admin@example.com"
+            value={data.adminEmail || ''}
+            onChange={(e) => onChange('adminEmail', e.target.value)}
+            className={`${styles.inputField} ${errors.adminEmail ? 'border-red-500' : ''}`}
           />
-          {errors.churchEmail && <p className={styles.errorText}>{errors.churchEmail}</p>}
+          {errors.adminEmail && <p className={styles.errorText}>{errors.adminEmail}</p>}
         </div>
 
+        {/* Phone Number */}
         <div className={styles.inputGroup}>
-          <Label htmlFor="regionCity" className={styles.label}>
-            Region/City<span className={styles.requiredAsterisk}>*</span>
+          <Label className={styles.label}>
+            Phone number<span className={styles.requiredAsterisk}>*</span>
           </Label>
           <Input
-            id="regionCity"
-            placeholder="Enter your region/city"
-            value={data.regionCity || ''}
-            onChange={(e) => onChange('regionCity', e.target.value)}
-            className={`${styles.inputField} ${errors.regionCity ? 'border-red-500' : ''}`}
+            placeholder="Enter phone number"
+            value={data.phone || ''}
+            onChange={(e) => onChange('phone', e.target.value)}
+            className={`${styles.inputField} ${errors.phone ? 'border-red-500' : ''}`}
           />
-          {errors.regionCity && <p className={styles.errorText}>{errors.regionCity}</p>}
+          {errors.phone && <p className={styles.errorText}>{errors.phone}</p>}
         </div>
-      </div>
 
-      <div className={styles.responsiveGrid}>
+        {/* Password */}
         <div className={styles.inputGroup}>
-          <Label htmlFor="subdomain" className={styles.label}>
-            Preferred subdomain<span className={styles.requiredAsterisk}>*</span>
+          <Label className={styles.label}>
+            Password<span className={styles.requiredAsterisk}>*</span>
           </Label>
-          <div className={styles.subdomainWrapper}>
+          <div className="relative">
             <Input
-              id="subdomain"
-              placeholder="yourchurchname"
-              value={data.subdomain || ''}
-              onChange={(e) => onChange('subdomain', e.target.value)}
-              className={`${styles.inputField} pr-32 ${errors.subdomain ? 'border-red-500' : ''}`}
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Create password"
+              value={data.password || ''}
+              onChange={(e) => onChange('password', e.target.value)}
+              className={`${styles.inputField} ${errors.password ? 'border-red-500' : ''}`}
             />
-            <span className={styles.subdomainSuffix}>.opendoor.com</span>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className={styles.passwordToggle}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
-          {errors.subdomain && <p className={styles.errorText}>{errors.subdomain}</p>}
+          {errors.password && <p className={styles.errorText}>{errors.password}</p>}
         </div>
 
+        {/* Confirm Password */}
         <div className={styles.inputGroup}>
-          <Label htmlFor="address" className={styles.label}>
-            Physical address<span className={styles.requiredAsterisk}>*</span>
+          <Label className={styles.label}>
+            Confirm Password<span className={styles.requiredAsterisk}>*</span>
           </Label>
-          <Input
-            id="address"
-            placeholder="Enter street code/postal code"
-            value={data.address || ''}
-            onChange={(e) => onChange('address', e.target.value)}
-            className={`${styles.inputField} ${errors.address ? 'border-red-500' : ''}`}
-          />
-          {errors.address && <p className={styles.errorText}>{errors.address}</p>}
+          <div className="relative">
+            <Input
+              type={showConfirm ? 'text' : 'password'}
+              placeholder="Confirm password"
+              value={data.confirmPassword || ''}
+              onChange={(e) => onChange('confirmPassword', e.target.value)}
+              className={`${styles.inputField} ${errors.confirmPassword ? 'border-red-500' : ''}`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirm(!showConfirm)}
+              className={styles.passwordToggle}
+            >
+              {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          {errors.confirmPassword && <p className={styles.errorText}>{errors.confirmPassword}</p>}
         </div>
       </div>
 
       <div className={styles.actionWrapper}>
+        <Button variant="ghost" onClick={onBack} className={styles.backBtn}>
+          Back
+        </Button>
         <Button onClick={handleValidation} className={styles.continueBtn}>
           Continue
         </Button>
@@ -171,4 +187,4 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
   );
 };
 
-export default Step1ChurchInfo;
+export default Step2AdminDetails;
