@@ -1,12 +1,13 @@
 'use client';
 
 import { Play } from 'lucide-react';
-import Image from 'next/image';
+import Image, { StaticImageData } from 'next/image';
 import { Button } from '@/components/ui/button';
 import heroWorship from '@/assets/hero-worship.svg';
 
 /**
- * LandingHero Component */
+ * LandingHero Component
+ */
 const LandingHero = () => {
   return (
     <section
@@ -17,7 +18,6 @@ const LandingHero = () => {
     >
       {/* GRID OVERLAY: 
           Uses a repeating linear gradient to create 1px lines. 
-          The opacity (white/5) makes it "fuse" into the background.
       */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
@@ -85,7 +85,7 @@ const LandingHero = () => {
           <div className="hero-visual-block relative order-1 lg:order-2 max-w-2xl mx-auto lg:max-w-none w-full">
             <div className="image-frame rounded-2xl overflow-hidden shadow-2xl relative z-10 border-4 border-white/10">
               <Image
-                src={heroWorship}
+                src={heroWorship as StaticImageData}
                 alt="Congregation worshipping"
                 priority
                 width={700}
