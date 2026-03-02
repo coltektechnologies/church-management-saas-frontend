@@ -3,6 +3,8 @@
 import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+// Add this import
+import { ChurchProvider } from '@/components/setup/contexts/ChurchContext';
 
 type ProvidersProps = {
   children: ReactNode;
@@ -24,8 +26,11 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster richColors position="top-right" />
+      {/* Wrap children with ChurchProvider to enable the Setup Page logic */}
+      <ChurchProvider>
+        {children}
+        <Toaster richColors position="top-right" />
+      </ChurchProvider>
     </QueryClientProvider>
   );
 }
