@@ -21,7 +21,7 @@ const StepIndicator = ({ currentStep, totalSteps = 5 }: StepIndicatorProps) => {
             key={stepNum}
             className={cn(
               'h-[6px] rounded-full transition-all duration-500 ease-in-out',
-              isDoneOrActive ? 'w-10 bg-[#2FC4B2]' : 'w-10 bg-[#E2E8F0]'
+              isDoneOrActive ? 'w-10 bg-[#666666]' : 'w-10 bg-[#E2E8F0]'
             )}
           />
         );
