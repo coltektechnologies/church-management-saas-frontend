@@ -16,9 +16,8 @@ const LandingHero = () => {
         background: 'linear-gradient(to right, #1C3D72, #2EC4B6)',
       }}
     >
-      {/* GRID OVERLAY: 
-          Uses a repeating linear gradient to create 1px lines. 
-      */}
+      {/* GRID OVERLAY
+       */}
       <div
         className="absolute inset-0 pointer-events-none z-0"
         style={{
@@ -85,7 +84,7 @@ const LandingHero = () => {
           <div className="hero-visual-block relative order-1 lg:order-2 max-w-2xl mx-auto lg:max-w-none w-full">
             <div className="image-frame rounded-2xl overflow-hidden shadow-2xl relative z-10 border-4 border-white/10">
               <Image
-                src={heroWorship as StaticImageData}
+                src={heroWorship}
                 alt="Congregation worshipping"
                 priority
                 width={700}
