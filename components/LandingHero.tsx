@@ -84,14 +84,14 @@ const LandingHero = () => {
           {/* VISUAL CONTENT */}
           <div className="hero-visual-block relative order-1 lg:order-2 max-w-2xl mx-auto lg:max-w-none w-full">
             <div className="image-frame rounded-2xl overflow-hidden shadow-2xl relative z-10 border-4 border-white/10">
-              <Image
-                src={heroWorship as StaticImageData}
-                alt="Congregation worshipping"
-                priority
-                width={700}
-                height={600}
-                className="hero-img w-full h-auto object-cover min-h-[300px]"
-              />
+             <Image
+  src={heroWorship}
+  alt="Congregation worshipping"
+  priority
+  width={700}
+  height={600}
+  className="hero-img w-full h-auto object-cover min-h-[300px]"
+/>
             </div>
             <div className="image-bg-decoration absolute -bottom-6 -right-6 w-full h-full bg-white/5 rounded-2xl z-0" />
           </div>
