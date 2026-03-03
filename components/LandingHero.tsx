@@ -1,7 +1,7 @@
 'use client';
 
 import { Play } from 'lucide-react';
-import Image, { StaticImageData } from 'next/image';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import heroWorship from '@/assets/hero-worship.svg';
 
@@ -86,7 +86,6 @@ const LandingHero = () => {
               <Image
                 src={heroWorship}
                 alt="Congregation worshipping"
-                priority
                 width={700}
                 height={600}
                 className="hero-img w-full h-auto object-cover min-h-[300px]"
