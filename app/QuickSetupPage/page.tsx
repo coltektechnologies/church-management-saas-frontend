@@ -1,6 +1,6 @@
 'use client';
 
-import QuickSetupPage from '@/components/setup/QuickSetupPage';
+import QuickSetupPage from '@/components/quicksetup/QuickSetupPage';
 
 export default function Page() {
   return (

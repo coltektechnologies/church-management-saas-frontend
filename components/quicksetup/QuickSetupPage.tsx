@@ -12,13 +12,17 @@ import {
   UserCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import StepLogoUpload from '@/components/setup/StepLogoUpload';
-import StepTheme, { THEME_PALETTES } from '@/components/setup/StepTheme';
-import StepAdminProfile from '@/components/setup/StepAdminProfile';
-import StepServices, { type ServiceTime } from '@/components/setup/StepServices';
-import StepDepartments, { type Department } from '@/components/setup/StepDepartments';
-import StepFinish from '@/components/setup/StepFinish';
-import { useChurch } from '@/components/setup/contexts/ChurchContext';
+
+/* --- COMPONENTS --- */
+import Header from '@/components/SignupLogin/Header';
+import Footer from '@/components/SignupLogin/Footer';
+import StepLogoUpload from '@/components/quicksetup/StepLogoUpload';
+import StepTheme, { THEME_PALETTES } from '@/components/quicksetup/StepTheme';
+import StepAdminProfile from '@/components/quicksetup/StepAdminProfile';
+import StepServices, { type ServiceTime } from '@/components/quicksetup/StepServices';
+import StepDepartments, { type Department } from '@/components/quicksetup/StepDepartments';
+import StepFinish from '@/components/quicksetup/StepFinish';
+import { useChurch } from '@/components/quicksetup/contexts/ChurchContext';
 
 const STEPS = [
   { num: 1, icon: Church, label: 'Logo' },
@@ -37,11 +41,9 @@ const QuickSetupPage = () => {
   /* --- State Management --- */
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [churchName, setChurchName] = useState('');
-
   const [selectedTheme, setSelectedTheme] = useState(0);
   const [primaryColor, setPrimaryColor] = useState(THEME_PALETTES[0].primary);
   const [accentColor, setAccentColor] = useState(THEME_PALETTES[0].accent);
-
   const [adminFirstName, setAdminFirstName] = useState('');
   const [adminLastName, setAdminLastName] = useState('');
   const [adminRole, setAdminRole] = useState('');
@@ -73,8 +75,9 @@ const QuickSetupPage = () => {
       accentColor,
       services,
       departments,
+      adminName: `${adminFirstName} ${adminLastName}`,
+      email: adminEmail,
     });
-    // Next.js use router.push instead of navigate
     router.push('/dashboard');
   };
 
@@ -115,20 +118,26 @@ const QuickSetupPage = () => {
     setDepartments((prev) => prev.map((d) => (d.id === id ? { ...d, [field]: value } : d)));
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Header and Footer should be in your Layout.tsx usually, but kept here for parity */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8 lg:py-12">
+    /* MAIN CONTAINER: Flex Column ensures Header -> Content -> Footer stack vertically */
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      {/* HEADER: Placed at the very top */}
+      <Header />
+
+      {/* MAIN CONTENT: flex-1 grows to fill all available space, pushing footer down */}
+      <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
-          <div className="bg-card rounded-2xl border border-border p-6 sm:p-10 shadow-sm animate-in fade-in zoom-in-95 duration-500">
-            <h2 className="text-2xl font-bold text-[#0B2A4A] text-center mb-1">
-              Quick Church Setup
-            </h2>
-            <p className="text-sm text-muted-foreground text-center mb-6">
-              Almost done, let&apos;s personalize your workspace.
-            </p>
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-6 sm:p-10 shadow-xl shadow-slate-200/40 animate-in fade-in zoom-in-95 duration-500">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-black text-[#0B2A4A] tracking-tight">
+                Quick Church Setup
+              </h2>
+              <p className="text-sm text-slate-400 font-medium">
+                Almost done, let&apos;s personalize your workspace.
+              </p>
+            </div>
 
             {/* Stepper Header */}
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-10">
               {STEPS.map((step) => {
                 const Icon = step.icon;
                 const isActive = step.num === currentStep;
@@ -146,13 +155,13 @@ const QuickSetupPage = () => {
                           ? 'border-[#2FC4B2] bg-[#2FC4B2] text-white scale-110 shadow-lg shadow-[#2FC4B2]/20'
                           : isDone
                             ? 'border-[#2FC4B2] bg-[#2FC4B2]/10 text-[#2FC4B2]'
-                            : 'border-border text-muted-foreground group-hover:border-[#2FC4B2]/50'
+                            : 'border-slate-100 text-slate-300 group-hover:border-[#2FC4B2]/50'
                       }`}
                     >
                       {isDone ? <Check size={16} strokeWidth={3} /> : <Icon size={16} />}
                     </div>
                     <span
-                      className={`text-[10px] font-bold uppercase tracking-tighter ${isActive ? 'text-[#2FC4B2]' : 'text-muted-foreground'}`}
+                      className={`text-[9px] font-black uppercase tracking-widest ${isActive ? 'text-[#2FC4B2]' : 'text-slate-300'}`}
                     >
                       {step.label}
                     </span>
@@ -162,7 +171,7 @@ const QuickSetupPage = () => {
             </div>
 
             {/* Step Content Area */}
-            <div className="min-h-[300px]">
+            <div className="min-h-[320px]">
               {currentStep === 1 && (
                 <StepLogoUpload
                   logoPreview={logoPreview}
@@ -223,11 +232,11 @@ const QuickSetupPage = () => {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex items-center gap-3 mt-8">
+            <div className="flex items-center gap-3 mt-10">
               {currentStep > 1 && (
                 <button
                   onClick={goBack}
-                  className="flex-1 border border-border text-[#0B2A4A] font-bold rounded-xl py-3 text-sm hover:bg-muted transition-all active:scale-[0.98]"
+                  className="flex-1 border border-slate-100 text-[#0B2A4A] font-bold rounded-2xl py-4 text-sm hover:bg-slate-50 transition-all active:scale-[0.98]"
                 >
                   Back
                 </button>
@@ -235,14 +244,14 @@ const QuickSetupPage = () => {
               {currentStep < totalSteps ? (
                 <button
                   onClick={goNext}
-                  className="flex-1 bg-[#0B2A4A] text-white font-bold rounded-xl py-3 text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg shadow-[#0B2A4A]/20 active:scale-[0.98]"
+                  className="flex-1 bg-[#0B2A4A] text-white font-bold rounded-2xl py-4 text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg shadow-[#0B2A4A]/20 active:scale-[0.98]"
                 >
                   Continue <ChevronRight size={16} />
                 </button>
               ) : (
                 <button
                   onClick={handleFinish}
-                  className="flex-1 bg-[#2FC4B2] text-white font-bold rounded-xl py-3 text-sm flex items-center justify-center gap-2 hover:bg-[#25a898] transition-all shadow-lg shadow-[#2FC4B2]/20 active:scale-[0.98]"
+                  className="flex-1 bg-[#2FC4B2] text-white font-bold rounded-2xl py-4 text-sm flex items-center justify-center gap-2 hover:bg-[#25a898] transition-all shadow-lg shadow-[#2FC4B2]/20 active:scale-[0.98]"
                 >
                   Go to Dashboard <Sparkles size={16} />
                 </button>
@@ -252,7 +261,7 @@ const QuickSetupPage = () => {
             {currentStep < totalSteps && (
               <button
                 onClick={() => setCurrentStep(totalSteps)}
-                className="w-full text-center text-[11px] font-bold text-muted-foreground mt-6 hover:text-[#0B2A4A] transition-colors uppercase tracking-widest"
+                className="w-full text-center text-[10px] font-black text-slate-300 mt-8 hover:text-[#0B2A4A] transition-colors uppercase tracking-[0.2em]"
               >
                 Skip setup for now
               </button>
@@ -260,6 +269,9 @@ const QuickSetupPage = () => {
           </div>
         </div>
       </main>
+
+      {/* FOOTER: Placed at the very bottom */}
+      <Footer />
     </div>
   );
 };

@@ -2,14 +2,28 @@
 
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 
-/* ─── Church setup data shared across the app ─── */
+/* ─── 1. TYPES & INTERFACES ─── */
+export interface AdminProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  profilePic: string | null;
+}
+
 export interface ChurchSetupData {
   churchName: string;
   logoUrl: string | null;
-  primaryColor: string; // stored as hex
-  accentColor: string; // stored as hex
+  primaryColor: string;
+  accentColor: string;
   services: { id: string; day: string; time: string; label: string }[];
   departments: { id: string; name: string; leader: string }[];
+  adminName: string;
+  email: string;
+  website: string;
+  mission: string;
+  admin?: AdminProfile;
 }
 
 interface ChurchContextType {
@@ -18,6 +32,7 @@ interface ChurchContextType {
   resetChurch: () => void;
 }
 
+/* ─── 2. INITIAL STATE ─── */
 const defaultChurch: ChurchSetupData = {
   churchName: 'My Church',
   logoUrl: null,
@@ -25,14 +40,19 @@ const defaultChurch: ChurchSetupData = {
   accentColor: '#0B2A4A',
   services: [],
   departments: [],
+  adminName: '',
+  email: '',
+  website: '',
+  mission: '',
+  admin: undefined,
 };
 
 const ChurchContext = createContext<ChurchContextType | undefined>(undefined);
 
+/* ─── 3. PROVIDER ─── */
 export const ChurchProvider = ({ children }: { children: ReactNode }) => {
   const [church, setChurchState] = useState<ChurchSetupData>(defaultChurch);
 
-  // Memoized to prevent unnecessary re-renders in Client Components
   const setChurch = useCallback((data: Partial<ChurchSetupData>) => {
     setChurchState((prev) => ({ ...prev, ...data }));
   }, []);
@@ -48,6 +68,7 @@ export const ChurchProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+/* ─── 4. CUSTOM HOOK ─── */
 export const useChurch = () => {
   const ctx = useContext(ChurchContext);
   if (!ctx) {

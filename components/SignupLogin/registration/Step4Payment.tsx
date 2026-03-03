@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   ImagePlus,
@@ -34,6 +34,8 @@ export interface RegistrationData {
   subscriptionPlan: string;
   paymentMethod: string;
   bankName?: string;
+  phone?: string;
+  username?: string;
 }
 
 interface Step4Props {
@@ -72,21 +74,18 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
     setActiveDialog(methodId);
   };
 
-  // Triggered by "Pay now" inside the specific payment dialogs
   const handleInitiatePayment = () => {
     setShowConfirmPopup(true);
   };
 
-  // Final confirmation logic
   const handleFinalConfirm = async () => {
     setShowConfirmPopup(false);
     setIsLoading(true);
 
-    // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
       setActiveDialog(null);
-      onNext(); // Proceed directly to Step 5
+      onNext();
     }, 2000);
   };
 
@@ -111,7 +110,7 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
               }`}
             >
               <div className="flex items-center gap-4">
-                <PaymentMethodIcon methodId={method.id} isSelected={isSelected} />
+                <PaymentMethodIcon methodId={method.id} />
                 <div className="text-left">
                   <span className="block text-[16px] font-bold leading-tight">{method.label}</span>
                   <span className={`text-[11px] ${isSelected ? 'text-white/70' : 'text-gray-400'}`}>
@@ -156,7 +155,13 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
               <Select placeholder="Select network" options={mobileProviders} />
             </Field>
             <Field label="Mobile number*">
-              <Input placeholder="+233 80 808 0808" />
+              <Input
+                placeholder="+233 80 808 0808"
+                value={data.phone || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange('phone', e.target.value)
+                }
+              />
             </Field>
             <Field label="Account name">
               <Input placeholder="Enter name" />
@@ -164,7 +169,9 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
             <Field label="Subscription plan">
               <Select
                 value={data.subscriptionPlan}
-                onChange={(e: any) => onChange('subscriptionPlan', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  onChange('subscriptionPlan', e.target.value)
+                }
                 rawOptions={planOptions}
               />
             </Field>
@@ -200,7 +207,9 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
             <Field label="Subscription plan">
               <Select
                 value={data.subscriptionPlan}
-                onChange={(e: any) => onChange('subscriptionPlan', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  onChange('subscriptionPlan', e.target.value)
+                }
                 rawOptions={planOptions}
               />
             </Field>
@@ -276,7 +285,9 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
             <Field label="Subscription plan">
               <Select
                 value={data.subscriptionPlan}
-                onChange={(e: any) => onChange('subscriptionPlan', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  onChange('subscriptionPlan', e.target.value)
+                }
                 rawOptions={planOptions}
               />
             </Field>
@@ -295,25 +306,39 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
         </DialogContainer>
       )}
 
-      {/* Confirmation Review Popup (from Code A) */}
+      {/* Confirmation Review Popup */}
       {showConfirmPopup && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[20px] p-6 max-w-[400px] w-full shadow-2xl animate-in zoom-in-95">
+          <div className="bg-white rounded-[20px] p-6 max-w-[420px] w-full shadow-2xl animate-in zoom-in-95">
             <div className="flex items-center gap-3 mb-4 text-[#0B2A4A]">
               <AlertCircle className="text-[#2FC4B2]" />
               <h3 className="text-lg font-bold">Confirm Your Details</h3>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-6 space-y-2 text-sm">
-              <div className="flex justify-between">
+            <div className="bg-gray-50 rounded-lg p-5 mb-6 space-y-3 text-sm">
+              <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Church:</span>
-                <span className="font-semibold">{data.churchName}</span>
+                <span className="font-semibold text-[#0B2A4A]">{data.churchName}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="text-gray-500">Username:</span>
+                <span className="font-semibold">{data.username || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="text-gray-500">Email:</span>
+                <span className="font-semibold">{data.adminEmail}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="text-gray-500">Phone:</span>
+                <span className="font-semibold">{data.phone || 'Not set'}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="text-gray-500">Role:</span>
+                <span className="font-semibold capitalize">{data.role}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="text-gray-500">Plan:</span>
-                <span className="font-semibold capitalize text-[#2FC4B2]">
-                  {data.subscriptionPlan}
-                </span>
+                <span className="font-bold text-[#2FC4B2] uppercase">{data.subscriptionPlan}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Method:</span>
@@ -323,20 +348,21 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 mb-6 text-center">
-              By clicking "Confirm", you agree to authorize the payment for this subscription.
+            <p className="text-[11px] text-gray-500 mb-6 text-center leading-relaxed">
+              By clicking "Confirm & Pay", you agree to authorize the selected payment method for
+              this subscription.
             </p>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setShowConfirmPopup(false)}
-                className="flex-1 h-11 border border-gray-200 rounded-lg font-bold text-sm hover:bg-gray-50"
+                className="flex-1 h-11 border border-gray-200 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors"
               >
                 Go Back
               </button>
               <button
                 onClick={handleFinalConfirm}
-                className="flex-1 h-11 bg-[#0B2A4A] text-white rounded-lg font-bold text-sm hover:bg-black"
+                className="flex-1 h-11 bg-[#0B2A4A] text-white rounded-lg font-bold text-sm hover:bg-black transition-all active:scale-[0.98]"
               >
                 Confirm & Pay
               </button>
@@ -348,8 +374,15 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
   );
 };
 
-/* --- UI Sub-components --- */
-const DialogContainer = ({ onClose, title, children, width }: any) => (
+/* --- UI Sub-components Types & Implementation --- */
+interface DialogProps {
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  width: string;
+}
+
+const DialogContainer = ({ onClose, title, children, width }: DialogProps) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px] p-4">
     <div
       className={`bg-white rounded-[20px] shadow-2xl relative flex flex-col max-h-[95vh] w-full ${width}`}
@@ -357,7 +390,7 @@ const DialogContainer = ({ onClose, title, children, width }: any) => (
       <div className="p-6 pb-0">
         <button
           onClick={onClose}
-          className="absolute left-6 top-6 w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400"
+          className="absolute left-6 top-6 w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-50 transition-colors"
         >
           <X size={16} />
         </button>
@@ -375,21 +408,29 @@ const EncryptionFooter = () => (
   </div>
 );
 
-const Field = ({ label, children }: any) => (
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[13px] font-bold text-[#0B2A4A]">{label}</label>
     {children}
   </div>
 );
 
-const Input = (props: any) => (
+const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
     {...props}
     className="w-full h-11 px-4 rounded-[10px] border border-[#2FC4B2] text-sm outline-none placeholder:text-gray-300 focus:ring-1 focus:ring-[#2FC4B2]"
   />
 );
 
-const Select = ({ placeholder, options, value, onChange, rawOptions }: any) => (
+interface SelectProps {
+  placeholder?: string;
+  options?: string[];
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  rawOptions?: { value: string; label: string }[];
+}
+
+const Select = ({ placeholder, options, value, onChange, rawOptions }: SelectProps) => (
   <div className="relative">
     <select
       value={value}
@@ -402,12 +443,12 @@ const Select = ({ placeholder, options, value, onChange, rawOptions }: any) => (
         </option>
       )}
       {rawOptions
-        ? rawOptions.map((opt: any) => (
+        ? rawOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
           ))
-        : options.map((opt: string) => (
+        : options?.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
             </option>
@@ -420,7 +461,15 @@ const Select = ({ placeholder, options, value, onChange, rawOptions }: any) => (
   </div>
 );
 
-const PayButton = ({ onClick, loading, className = '' }: any) => (
+const PayButton = ({
+  onClick,
+  loading,
+  className = '',
+}: {
+  onClick: () => void;
+  loading: boolean;
+  className?: string;
+}) => (
   <button
     onClick={onClick}
     disabled={loading}
@@ -431,7 +480,7 @@ const PayButton = ({ onClick, loading, className = '' }: any) => (
   </button>
 );
 
-const PaymentMethodIcon = ({ methodId, isSelected }: { methodId: string; isSelected: boolean }) => {
+const PaymentMethodIcon = ({ methodId }: { methodId: string }) => {
   if (methodId === 'mobile_money') {
     return (
       <div className="flex -space-x-1">

@@ -37,7 +37,7 @@ const StepServices = ({ services, onAdd, onRemove, onUpdate }: StepServicesProps
             onChange={(e) => onUpdate(svc.id, 'day', e.target.value)}
             className="form-input-od text-xs py-2 flex-1 min-w-[100px] cursor-pointer"
           >
-            {/* The fix: Corrected the map syntax here */}
+            {/* the map */}
             {DAYS.map((d) => (
               <option key={d} value={d}>
                 {d}

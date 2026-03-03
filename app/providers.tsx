@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 // Add this import
-import { ChurchProvider } from '@/components/setup/contexts/ChurchContext';
+import { ChurchProvider } from '@/components/quicksetup/contexts/ChurchContext';
 
 type ProvidersProps = {
   children: ReactNode;

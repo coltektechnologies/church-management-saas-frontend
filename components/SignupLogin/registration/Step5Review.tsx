@@ -5,14 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Check, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-// Import Link from next/link
 import Link from 'next/link';
-import QuickSetupPage from '@/components/setup/QuickSetupPage';
 
 interface StepReviewProps {
-  data: Record<string, any>;
+  // Fixed 'any' type by using a specific record or interface
+  data: Record<string, string | undefined>;
   onBack: () => void;
-  onFinish: () => void; // Navigates to /QuickSetupPage
+  onFinish: () => void;
 }
 
 const Step5Review = ({ data, onBack, onFinish }: StepReviewProps) => {
@@ -34,7 +33,6 @@ const Step5Review = ({ data, onBack, onFinish }: StepReviewProps) => {
     if (!agreed) {
       return;
     }
-    // In a real scenario, you'd trigger your API call here to save the user
     setIsSuccess(true);
   };
 
@@ -104,7 +102,7 @@ const Step5Review = ({ data, onBack, onFinish }: StepReviewProps) => {
         </div>
       </div>
 
-      {/* Success Modal - Link to Quick Setup */}
+      {/* Success Modal */}
       {isSuccess && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B2A4A]/70 backdrop-blur-md px-4">
           <div className="bg-white rounded-[32px] p-10 max-w-[440px] w-full text-center shadow-2xl animate-in zoom-in-90 duration-300 border border-white/20">
@@ -124,7 +122,6 @@ const Step5Review = ({ data, onBack, onFinish }: StepReviewProps) => {
             </p>
 
             <div className="space-y-4">
-              {/* linked with next/link to quick setup */}
               <Link href="/QuickSetupPage" className="w-full block">
                 <Button
                   onClick={onFinish}

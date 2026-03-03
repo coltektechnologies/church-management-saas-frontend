@@ -2,16 +2,14 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-/* ─── Universal color picker — supports hex, rgb, rgba, hsl ─── */
 interface ColorPickerProps {
   label: string;
-  value: string; // always stored as hex
+  value: string;
   onChange: (hex: string) => void;
 }
 
 type ColorMode = 'hex' | 'rgb' | 'rgba' | 'hsl';
 
-/* ─── Conversion helpers ─── */
 const hexToRgb = (hex: string) => {
   const h = hex.replace('#', '');
   return {
@@ -87,9 +85,8 @@ const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => {
   const [textInput, setTextInput] = useState(value);
 
   const rgb = hexToRgb(value);
-  const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  // removed: const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b) — was unused
 
-  /* Display value based on active mode */
   const getDisplayValue = useCallback((currentValue: string, currentMode: ColorMode) => {
     const cRgb = hexToRgb(currentValue);
     const cHsl = rgbToHsl(cRgb.r, cRgb.g, cRgb.b);
@@ -106,27 +103,22 @@ const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => {
     }
   }, []);
 
-  // Update text input if value changes from outside (e.g. parent reset)
   useEffect(() => {
     setTextInput(getDisplayValue(value, mode));
   }, [value, mode, getDisplayValue]);
 
-  /* Parse any format to hex */
   const parseInput = (input: string) => {
     const s = input.trim();
 
-    // Hex
     if (/^#?[0-9a-fA-F]{6}$/.test(s)) {
       return s.startsWith('#') ? s : `#${s}`;
     }
 
-    // rgb / rgba
     const rgbMatch = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
     if (rgbMatch) {
       return rgbToHex(+rgbMatch[1], +rgbMatch[2], +rgbMatch[3]);
     }
 
-    // hsl
     const hslMatch = s.match(/hsl\(\s*(\d+)\s*,\s*(\d+)%?\s*,\s*(\d+)%?/);
     if (hslMatch) {
       const { r, g, b } = hslToRgb(+hslMatch[1], +hslMatch[2], +hslMatch[3]);
@@ -152,7 +144,6 @@ const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => {
         <label className="text-xs font-medium text-foreground">{label}</label>
 
         <div className="flex items-center gap-2">
-          {/* Native color swatch */}
           <div className="relative">
             <div
               className="w-10 h-10 rounded-lg border-2 border-border cursor-pointer shadow-sm"
@@ -169,7 +160,6 @@ const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => {
             />
           </div>
 
-          {/* Text input */}
           <input
             type="text"
             value={textInput}
@@ -179,7 +169,6 @@ const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => {
           />
         </div>
 
-        {/* Mode tabs */}
         <div className="flex gap-1">
           {MODES.map((m) => (
             <button
