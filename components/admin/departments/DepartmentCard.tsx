@@ -1,13 +1,37 @@
+import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { Department } from '@/types/Department';
+import { COLOR_MAP, ICON_MAP } from '@/constants/departments';
 
 interface DepartmentCardProps {
   department: Department;
 }
 
 export default function DepartmentCard({ department }: DepartmentCardProps) {
+  const isActive = department.status === 'active';
+
+  const themeClass = COLOR_MAP[department.themeColor] ?? 'bg-gray-700';
+  const iconMap = ICON_MAP;
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden min-h-[360px] flex flex-col">
-      <div className={`${department.themeColor} px-6 py-6 text-white`}>
+    <div
+      className={`
+        bg-white rounded-2xl border border-gray-200 overflow-hidden min-h-[360px] flex flex-col transition-all duration-300
+        ${isActive ? 'hover:shadow-xl hover:-translate-y-1' : 'opacity-70'}
+      `}
+    >
+      {/* Header */}
+      <div className={`${themeClass} px-6 pt-8 pb-6 text-white relative`}>
+        {/* Status Badge */}
+        <span
+          className={`
+           absolute top-3 right-4 text-xs font-semibold px-3 py-1 rounded-full
+            ${isActive ? 'bg-green-500' : 'bg-gray-600'}
+          `}
+        >
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
+
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold leading-tight">{department.name}</h3>
@@ -21,6 +45,8 @@ export default function DepartmentCard({ department }: DepartmentCardProps) {
                 alt="Department Icon"
                 className="h-10 w-10 object-cover rounded-full"
               />
+            ) : iconMap[department.icon] ? (
+              <span className="text-2xl text-white">{iconMap[department.icon]}</span>
             ) : (
               <span className="text-2xl">{department.icon || '🏛️'}</span>
             )}
@@ -28,6 +54,7 @@ export default function DepartmentCard({ department }: DepartmentCardProps) {
         </div>
       </div>
 
+      {/* Body */}
       <div className="flex-1 px-6 py-6 flex flex-col justify-between space-y-6">
         <div className="flex justify-between text-gray-800">
           <div>
@@ -46,19 +73,30 @@ export default function DepartmentCard({ department }: DepartmentCardProps) {
           </div>
         </div>
 
-        <div className="w-full bg-gray-200 h-2.5 rounded-full">
-          <div
-            className="bg-black/30 h-2.5 rounded-full"
-            style={{ width: `${department.budgetUsed}%` }}
-          />
+        {/* Progress Bar */}
+        <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
+          <div className={`${themeClass} h-2.5`} style={{ width: `${department.budgetUsed}%` }} />
         </div>
 
         <p className="text-base text-gray-600 leading-relaxed">{department.description}</p>
 
+        {/* Buttons */}
         <div className="flex gap-4 pt-2">
-          <button className="flex-1 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2">
-            👁️ View Details
-          </button>
+          {isActive ? (
+            <Link
+              href={`/admin/departments/${department.id}`}
+              className="flex-1 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
+            >
+              👁️ View Details
+            </Link>
+          ) : (
+            <button
+              disabled
+              className="flex-1 py-3 rounded-lg bg-gray-400 text-white text-sm font-medium cursor-not-allowed"
+            >
+              Inactive
+            </button>
+          )}
 
           <button className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition">
             Edit

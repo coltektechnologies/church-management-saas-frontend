@@ -1,3 +1,4 @@
+import { ThemeColor } from '@/constants/departments';
 export interface Department {
   id: string;
   name: string;
@@ -7,6 +8,6 @@ export interface Department {
   activities: number;
   budgetUsed: number;
   status: 'active' | 'inactive';
-  themeColor: string;
+  themeColor: ThemeColor;
   icon: string;
 }

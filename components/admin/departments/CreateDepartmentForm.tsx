@@ -1,14 +1,26 @@
-import { RefObject } from 'react';
+import { RefObject, Dispatch, SetStateAction } from 'react';
+import { DEPARTMENT_COLORS, DEPARTMENT_ICONS } from '@/constants/departments';
+
+interface FormData {
+  name: string;
+  code: string;
+  description: string;
+  status: 'active' | 'inactive';
+  themeColor: string;
+  icon: string;
+}
 
 interface Props {
   showCreate: boolean;
   setShowCreate: (value: boolean) => void;
-  formData: any;
-  setFormData: any;
-  handleChange: any;
-  handleIconUpload: any;
+  formData: FormData;
+  setFormData: Dispatch<SetStateAction<FormData>>;
+  handleChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void;
+  handleIconUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleCreateDepartment: () => void;
-  formRef: RefObject<HTMLDivElement>;
+  formRef: RefObject<HTMLDivElement | null>;
 }
 
 export default function CreateDepartmentForm({
@@ -48,7 +60,9 @@ export default function CreateDepartmentForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Department Name */}
           <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium text-gray-700">Department Name</label>
+            <label className="text-sm font-medium text-gray-700">
+              Department Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="name"
@@ -60,7 +74,9 @@ export default function CreateDepartmentForm({
 
           {/* Department Code */}
           <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium text-gray-700">Department Code</label>
+            <label className="text-sm font-medium text-gray-700">
+              Department Code <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="code"
@@ -104,30 +120,29 @@ export default function CreateDepartmentForm({
         <div className="p-5 rounded-xl bg-gray-50 border border-gray-200">
           <div className="mb-4">
             <label className="text-base font-medium text-gray-800 block">
-              Department Color Theme
+              Department Color Theme <span className="text-red-500">*</span>
             </label>
           </div>
 
           <div className="flex flex-wrap gap-4">
-            {[
-              'bg-blue-600',
-              'bg-green-600',
-              'bg-red-600',
-              'bg-purple-600',
-              'bg-yellow-500',
-              'bg-pink-600',
-              'bg-indigo-600',
-            ].map((color, index) => (
+            {DEPARTMENT_COLORS.map((color) => (
               <div
-                key={index}
-                onClick={() => setFormData((prev) => ({ ...prev, themeColor: color }))}
-                className={`w-11 h-11 rounded-full cursor-pointer ${color}
-        ${
-          formData.themeColor === color
-            ? 'ring-2 ring-black scale-110'
-            : 'border-2 border-transparent'
-        } transition`}
-              />
+                key={color.name}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    themeColor: color.name,
+                  }))
+                }
+                className={`
+      w-12 h-12 rounded-full cursor-pointer relative transition
+      ${color.class}
+    `}
+              >
+                {formData.themeColor === color.name && (
+                  <div className="absolute inset-0 rounded-full ring-4 ring-pink-400 ring-offset-2 ring-offset-white" />
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -183,18 +198,25 @@ export default function CreateDepartmentForm({
               formData.icon?.startsWith('data:') ? 'opacity-50 pointer-events-none' : 'opacity-100'
             }`}
           >
-            {['🏛️', '🎵', '🙏', '📖', '💰', '🎤', '🤝', '🧒', '🎨', '🕊️'].map((icon, index) => (
+            {DEPARTMENT_ICONS.map((item) => (
               <div
-                key={index}
-                onClick={() => setFormData((prev) => ({ ...prev, icon }))}
-                className={`flex items-center justify-center h-14 w-14 rounded-xl cursor-pointer text-2xl
-          ${
-            formData.icon === icon
-              ? 'bg-gray-200 border border-black scale-105'
-              : 'border border-gray-300 hover:bg-gray-100'
-          } transition`}
+                key={item.name}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    icon: item.name,
+                  }))
+                }
+                className={`
+      h-14 w-14 flex items-center justify-center rounded-xl text-xl cursor-pointer transition
+      ${
+        formData.icon === item.name
+          ? 'bg-[#0F1C2E] text-white'
+          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+      }
+    `}
               >
-                {icon}
+                {item.icon}
               </div>
             ))}
           </div>
