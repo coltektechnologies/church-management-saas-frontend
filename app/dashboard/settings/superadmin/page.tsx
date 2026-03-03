@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx
+// app/dashboard/page.tsx superadmin setting
 'use client';
 
 import { AppDataProvider } from '@/components/dashboard/contexts/AppDataContext';
