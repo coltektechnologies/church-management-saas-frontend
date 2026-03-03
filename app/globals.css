@@ -166,32 +166,32 @@
   }
 
   .modal-backdrop-in {
-    animation: modalFadeIn 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: modalFadeIn 120ms ease-out forwards;
   }
 
   .modal-content-in {
-    animation: modalSlideIn 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: modalSlideIn 160ms ease-out forwards;
   }
 
   .modal-backdrop-out {
-    animation: modalFadeOut 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: modalFadeOut 100ms ease-in forwards;
   }
 
   .modal-content-out {
-    animation: modalSlideOut 240ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: modalSlideOut 140ms ease-in forwards;
   }
 }
-@keyframes tabFadeIn {
+@keyframes tabSlideInRight {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateX(40px);
   }
   to {
     opacity: 1;
-    transform: translateY(0px);
+    transform: translateX(0);
   }
 }
 
-.tab-animate {
-  animation: tabFadeIn 220ms ease-out;
+.tab-slide {
+  animation: tabSlideInRight 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }

@@ -21,7 +21,7 @@ export default function DepartmentDetailsModal({ department, onClose }: Props) {
 
     setTimeout(() => {
       onClose();
-    }, 240);
+    }, 160);
   };
 
   const themeClass = COLOR_MAP[department.themeColor] ?? 'bg-gray-700';
@@ -72,7 +72,7 @@ export default function DepartmentDetailsModal({ department, onClose }: Props) {
         </div>
 
         {/* CONTENT */}
-        <div key={activeTab} className="p-8 space-y-10 max-h-[70vh] overflow-y-auto tab-animate">
+        <div key={activeTab} className="p-8 space-y-10 max-h-[70vh] overflow-y-auto tab-slide">
           {activeTab === 'overview' && (
             <>
               {/* Info Grid */}
