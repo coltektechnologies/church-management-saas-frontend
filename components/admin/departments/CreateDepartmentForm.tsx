@@ -1,12 +1,13 @@
 import { RefObject, Dispatch, SetStateAction } from 'react';
 import { DEPARTMENT_COLORS, DEPARTMENT_ICONS } from '@/constants/departments';
+import type { ThemeColor } from '@/constants/departments';
 
 interface FormData {
   name: string;
   code: string;
   description: string;
   status: 'active' | 'inactive';
-  themeColor: string;
+  themeColor: ThemeColor;
   icon: string;
 }
 
@@ -14,6 +15,7 @@ interface Props {
   showCreate: boolean;
   setShowCreate: (value: boolean) => void;
   formData: FormData;
+  formError: string | null;
   setFormData: Dispatch<SetStateAction<FormData>>;
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -32,6 +34,7 @@ export default function CreateDepartmentForm({
   handleIconUpload,
   handleCreateDepartment,
   formRef,
+  formError,
 }: Props) {
   if (!showCreate) {
     return null;
@@ -150,7 +153,9 @@ export default function CreateDepartmentForm({
         {/* Icon Picker */}
         <div className="p-5 rounded-xl bg-gray-50 border border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <label className="text-base font-medium text-gray-800">Department Icon</label>
+            <label className="text-base font-medium text-gray-800">
+              Department Icon <span className="text-red-500">*</span>
+            </label>
 
             {/* Upload Button */}
             <label className="text-sm text-blue-600 cursor-pointer hover:underline">
@@ -208,15 +213,17 @@ export default function CreateDepartmentForm({
                   }))
                 }
                 className={`
-      h-14 w-14 flex items-center justify-center rounded-xl text-xl cursor-pointer transition
-      ${
-        formData.icon === item.name
-          ? 'bg-[#0F1C2E] text-white'
-          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-      }
-    `}
+  h-14 w-14 flex items-center justify-center rounded-xl text-xl cursor-pointer relative transition
+  bg-gray-100 text-gray-800 hover:bg-gray-200
+`}
               >
-                {item.icon}
+                {formData.icon === item.name && (
+                  <div className="absolute inset-0 rounded-xl ring-4 ring-pink-400 ring-offset-2 ring-offset-white" />
+                )}
+                <span className="relative z-10">{item.icon}</span>
+                {formData.icon === item.name && (
+                  <div className="absolute inset-0 rounded-xl ring-4 ring-pink-400 ring-offset-2 ring-offset-white" />
+                )}
               </div>
             ))}
           </div>
@@ -237,7 +244,11 @@ export default function CreateDepartmentForm({
           className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
         />
       </div>
-
+      {formError && (
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+          {formError}
+        </div>
+      )}
       {/* Buttons */}
       <div className="flex justify-end space-x-4">
         <button
@@ -249,7 +260,14 @@ export default function CreateDepartmentForm({
 
         <button
           onClick={handleCreateDepartment}
-          className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+          disabled={
+            !formData.name.trim() || !formData.code.trim() || !formData.themeColor || !formData.icon
+          }
+          className={`px-6 py-2 rounded-lg font-medium transition ${
+            !formData.name.trim() || !formData.code.trim() || !formData.themeColor || !formData.icon
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
         >
           + Create Department
         </button>

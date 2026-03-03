@@ -10,4 +10,5 @@ export interface Department {
   status: 'active' | 'inactive';
   themeColor: ThemeColor;
   icon: string;
+  dateEstablished: string;
 }
