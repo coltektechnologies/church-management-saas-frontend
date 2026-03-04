@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/SignupLogin/Header';
 import Footer from '@/components/SignupLogin/Footer';
 import { Input } from '@/components/ui/input';
@@ -12,18 +13,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '@/assets/logo.svg';
 
-/**
- * Login - Login page for Open Door
- * Fix: Added justify-between to wrapper and min-h-screen to ensure Footer visibility.
- */
 const Login = () => {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const styles = {
-    // justify-between ensures Header is at top and Footer is at bottom
     wrapper: 'flex min-h-screen flex-col justify-between bg-[#F8F9FA]',
     main: 'flex flex-1 items-center justify-center px-4 py-10 lg:py-16',
     card: 'w-full max-w-[560px] rounded-[30px] bg-white p-8 md:p-14 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-700',
@@ -47,7 +46,27 @@ const Login = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    console.info('Logging in with:', { email, password, rememberMe });
+    setError('');
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
+    setLoading(true);
+
+    // Persist remember me preference
+    if (rememberMe) {
+      localStorage.setItem('rememberedEmail', email);
+    } else {
+      localStorage.removeItem('rememberedEmail');
+    }
+
+    // TODO: Replace with real auth API call
+    setTimeout(() => {
+      setLoading(false);
+      router.push('/dashboard');
+    }, 800);
   };
 
   return (
@@ -107,6 +126,10 @@ const Login = () => {
               </div>
             </div>
 
+            {error && (
+              <p className="text-red-500 text-[13px] font-medium text-center -mt-2">{error}</p>
+            )}
+
             <div className={styles.helperRow}>
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -119,17 +142,17 @@ const Login = () => {
                   Remember me
                 </Label>
               </div>
-              <Link href="/forgot-password" className={styles.forgotLink}>
+              <Link href="/login/forgetpassword" className={styles.forgotLink}>
                 Forgot Password?
               </Link>
             </div>
 
-            <Button type="submit" className={styles.loginBtn}>
-              Log In
+            <Button type="submit" disabled={loading} className={styles.loginBtn}>
+              {loading ? 'Signing in...' : 'Log In'}
             </Button>
 
             <p className={styles.signupText}>
-              New to THEOPENDOOR
+              New to THEOPENDOOR?
               <Link href="/signup" className={styles.signupLink}>
                 Start a 30-day free trial
               </Link>
