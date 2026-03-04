@@ -99,7 +99,7 @@ export default function DepartmentDetailsModal({
           {['overview', 'members', 'activities', 'budget', 'settings'].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab as typeof activeTab)}
               className={`py-4 capitalize transition-all duration-200 cursor-pointer ${
                 activeTab === tab
                   ? 'border-b-2 border-green-600 text-black font-medium'
