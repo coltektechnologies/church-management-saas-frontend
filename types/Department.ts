@@ -1,4 +1,5 @@
 import { ThemeColor } from '@/constants/departments';
+
 export interface Department {
   id: string;
   name: string;

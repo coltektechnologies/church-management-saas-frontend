@@ -7,7 +7,8 @@ import { Department } from '@/types/Department';
 import SummaryCard from '@/components/admin/departments/SummaryCard';
 import DepartmentCard from '@/components/admin/departments/DepartmentCard';
 import CreateDepartmentForm from '@/components/admin/departments/CreateDepartmentForm';
-import DepartmentDetailsModal from '@/components/admin/departments/DepartmentDetailsModal';
+import DepartmentDetailsModal from '@/components/admin/departments/DepartmentDetailsModal/DepartmentDetailsModal';
+import { Activity } from '@/types/activity';
 
 const mockDepartments: Department[] = [
   {
@@ -59,6 +60,12 @@ export default function DepartmentsPage() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  const [departmentMembersMap, setDepartmentMembersMap] = useState<
+    Record<string, { id: string; name: string; role: string; joinedAt: string }[]>
+  >({});
+  const [departmentActivitiesMap, setDepartmentActivitiesMap] = useState<
+    Record<string, Activity[]>
+  >({});
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,7 +80,7 @@ export default function DepartmentsPage() {
     description: '',
     status: 'active' as 'active' | 'inactive',
     themeColor: 'navy',
-    icon: '🏛️',
+    icon: 'prayer',
   });
 
   const totalDepartments = departments.length;
@@ -266,7 +273,31 @@ export default function DepartmentsPage() {
       {selectedDepartment && (
         <DepartmentDetailsModal
           department={selectedDepartment}
+          departmentMembers={departmentMembersMap[selectedDepartment.id] || []}
+          setDepartmentMembers={(members) => {
+            setDepartmentMembersMap((prev) => ({
+              ...prev,
+              [selectedDepartment.id]:
+                typeof members === 'function'
+                  ? members(prev[selectedDepartment.id] || [])
+                  : members,
+            }));
+          }}
+          activities={departmentActivitiesMap[selectedDepartment.id] || []}
+          onAddActivity={(newActivity) => {
+            setDepartmentActivitiesMap((prev) => ({
+              ...prev,
+              [selectedDepartment.id]: [...(prev[selectedDepartment.id] || []), newActivity],
+            }));
+          }}
           onClose={() => setSelectedDepartment(null)}
+          onUpdateDepartment={(updatedDepartment) => {
+            setDepartments((prev) =>
+              prev.map((dept) => (dept.id === updatedDepartment.id ? updatedDepartment : dept))
+            );
+
+            setSelectedDepartment(updatedDepartment);
+          }}
         />
       )}
     </div>
