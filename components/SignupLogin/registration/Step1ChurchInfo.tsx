@@ -7,32 +7,34 @@ import { Button } from '@/components/ui/button';
 import { CountrySelect } from '@/components/SignupLogin/CountrySelect';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import type { RegistrationData } from './Step4Payment';
 
 interface StepChurchInfoProps {
-  data: Record<string, string>;
-  onChange: (field: string, value: string) => void;
+  data: RegistrationData;
+  onChange: (field: keyof RegistrationData, value: string) => void;
   onNext: () => void;
 }
+
+const presetDenominations = [
+  'Pentecostal',
+  'Baptist',
+  'Catholic',
+  'Methodist',
+  'Anglican',
+  'Presbyterian',
+  'Evangelical',
+  'Charismatic',
+  'Adventist',
+  'Lutheran',
+  'Orthodox',
+];
 
 const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
-
-  const denominations = [
-    { label: 'Pentecostal', value: 'pentecostal' },
-    { label: 'Baptist', value: 'baptist' },
-    { label: 'Catholic', value: 'catholic' },
-    { label: 'Methodist', value: 'methodist' },
-  ];
+  const [denomTyped, setDenomTyped] = useState('');
 
   const styles = {
     formWrapper: 'relative space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500',
@@ -52,31 +54,42 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
   };
 
   const handleValidation = () => {
-    const requiredFields = [
-      'churchName',
-      'country',
-      'churchEmail',
-      'regionCity',
-      'subdomain',
-      'address',
-      'denomination',
-      'churchSize',
-    ];
     const newErrors: Record<string, string> = {};
-    requiredFields.forEach((field) => {
-      if (!data[field] || data[field].trim() === '') {
+    const checks: { field: keyof RegistrationData | string; label: string }[] = [
+      { field: 'churchName', label: 'Church name' },
+      { field: 'country', label: 'Country' },
+      { field: 'churchEmail', label: 'Church email' },
+      { field: 'regionCity', label: 'Region/City' },
+      { field: 'subdomain', label: 'Subdomain' },
+      { field: 'address', label: 'Address' },
+      { field: 'denomination', label: 'Denomination' },
+      { field: 'churchSize', label: 'Church size' },
+    ];
+
+    checks.forEach(({ field }) => {
+      const val = (data as unknown as Record<string, string | undefined>)[field];
+      if (!val || val.trim() === '') {
         newErrors[field] = 'Required';
       }
     });
+
     setErrors(newErrors);
     if (Object.keys(newErrors).length === 0) {
       onNext();
     }
   };
 
+  // Filtered list based on what user has typed
+  const filtered = denomTyped
+    ? presetDenominations.filter((d) => d.toLowerCase().includes(denomTyped.toLowerCase()))
+    : presetDenominations;
+
+  const isCustomValue = data.denomination && !presetDenominations.includes(data.denomination);
+
   return (
     <div className={styles.formWrapper}>
       <div className={styles.responsiveGrid}>
+        {/* Church Name */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Church name<span className={styles.requiredAsterisk}>*</span>
@@ -90,6 +103,7 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
           {errors.churchName && <p className={styles.errorText}>{errors.churchName}</p>}
         </div>
 
+        {/* Country */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Country<span className={styles.requiredAsterisk}>*</span>
@@ -97,11 +111,12 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
           <CountrySelect
             value={data.country || ''}
             onValueChange={(val) => onChange('country', val)}
-            className={`${styles.inputField} ${errors.country ? 'border-red-500' : ''}`}
+            className={errors.country ? 'border-red-500' : ''}
           />
           {errors.country && <p className={styles.errorText}>{errors.country}</p>}
         </div>
 
+        {/* Church Email */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Church email<span className={styles.requiredAsterisk}>*</span>
@@ -116,6 +131,7 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
           {errors.churchEmail && <p className={styles.errorText}>{errors.churchEmail}</p>}
         </div>
 
+        {/* Region/City */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Region/City<span className={styles.requiredAsterisk}>*</span>
@@ -129,6 +145,7 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
           {errors.regionCity && <p className={styles.errorText}>{errors.regionCity}</p>}
         </div>
 
+        {/* Subdomain */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Subdomain<span className={styles.requiredAsterisk}>*</span>
@@ -138,13 +155,14 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
               placeholder="name"
               value={data.subdomain || ''}
               onChange={(e) => onChange('subdomain', e.target.value)}
-              className={`${styles.inputField} pr-24 ${errors.subdomain ? 'border-red-500' : ''}`}
+              className={`${styles.inputField} pr-28 ${errors.subdomain ? 'border-red-500' : ''}`}
             />
             <span className={styles.subdomainSuffix}>.opendoor.com</span>
           </div>
           {errors.subdomain && <p className={styles.errorText}>{errors.subdomain}</p>}
         </div>
 
+        {/* Address */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Address<span className={styles.requiredAsterisk}>*</span>
@@ -158,61 +176,128 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
           {errors.address && <p className={styles.errorText}>{errors.address}</p>}
         </div>
 
+        {/* Denomination */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Denomination<span className={styles.requiredAsterisk}>*</span>
           </Label>
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover
+            open={open}
+            onOpenChange={(v) => {
+              setOpen(v);
+              if (!v) {
+                setDenomTyped('');
+              }
+            }}
+          >
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
-                aria-expanded={open}
                 className={cn(
-                  'justify-between font-normal',
+                  'justify-between font-normal text-sm',
                   styles.inputField,
                   errors.denomination && 'border-red-500'
                 )}
               >
-                {data.denomination || 'Select or type...'}
+                <span className={data.denomination ? 'text-[#0B2A4A]' : 'text-gray-400'}>
+                  {data.denomination || 'Select or type denomination...'}
+                </span>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-              <Command>
-                <CommandInput
-                  placeholder="Search denomination..."
-                  onValueChange={(val) => onChange('denomination', val)}
-                />
-                <CommandList>
-                  <CommandEmpty>No denomination found. Use typed value.</CommandEmpty>
+
+            <PopoverContent
+              className="w-[--radix-popover-trigger-width] p-0 z-[9999]"
+              align="start"
+            >
+              <Command shouldFilter={false}>
+                {/* Single inline input — type to filter or enter custom */}
+                <div className="flex items-center border-b border-gray-100 px-3">
+                  <input
+                    autoFocus
+                    placeholder="Type to search or enter your own..."
+                    value={denomTyped}
+                    onChange={(e) => {
+                      setDenomTyped(e.target.value);
+                      onChange('denomination', e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && denomTyped.trim()) {
+                        onChange('denomination', denomTyped.trim());
+                        setOpen(false);
+                        setDenomTyped('');
+                      }
+                    }}
+                    className="flex-1 py-2.5 text-sm outline-none bg-transparent text-[#0B2A4A] placeholder:text-gray-400"
+                  />
+                </div>
+
+                <CommandList className="max-h-[220px]">
                   <CommandGroup>
-                    {denominations.map((item) => (
+                    {/* Show filtered presets */}
+                    {filtered.map((item) => (
                       <CommandItem
-                        key={item.value}
-                        value={item.value}
-                        onSelect={(currentValue) => {
-                          onChange('denomination', currentValue);
+                        key={item}
+                        value={item}
+                        onSelect={() => {
+                          onChange('denomination', item);
+                          setDenomTyped('');
                           setOpen(false);
                         }}
+                        className="text-sm cursor-pointer"
                       >
                         <Check
                           className={cn(
-                            'mr-2 h-4 w-4',
-                            data.denomination === item.value ? 'opacity-100' : 'opacity-0'
+                            'mr-2 h-4 w-4 shrink-0',
+                            data.denomination === item ? 'opacity-100 text-[#2FC4B2]' : 'opacity-0'
                           )}
                         />
-                        {item.label}
+                        {item}
                       </CommandItem>
                     ))}
+
+                    {/* If typed value is not in list, show "use this" option */}
+                    {denomTyped.trim() &&
+                      !presetDenominations
+                        .map((d) => d.toLowerCase())
+                        .includes(denomTyped.trim().toLowerCase()) && (
+                        <CommandItem
+                          value={denomTyped}
+                          onSelect={() => {
+                            onChange('denomination', denomTyped.trim());
+                            setDenomTyped('');
+                            setOpen(false);
+                          }}
+                          className="text-sm cursor-pointer text-[#2FC4B2] font-medium"
+                        >
+                          <Check className="mr-2 h-4 w-4 opacity-0 shrink-0" />
+                          Use &quot;{denomTyped.trim()}&quot;
+                        </CommandItem>
+                      )}
                   </CommandGroup>
                 </CommandList>
+
+                {/* Bottom hint */}
+                <div className="px-3 py-2 border-t border-gray-100 bg-gray-50">
+                  <p className="text-[10px] text-gray-400">
+                    Not listed? Just type your denomination and press Enter or click &quot;Use&quot;
+                  </p>
+                </div>
               </Command>
             </PopoverContent>
           </Popover>
+
+          {/* Show custom value chip if user typed something not in the list */}
+          {isCustomValue && (
+            <p className="text-[10px] text-[#2FC4B2] mt-1 font-medium">
+              ✓ Custom denomination saved: &quot;{data.denomination}&quot;
+            </p>
+          )}
           {errors.denomination && <p className={styles.errorText}>{errors.denomination}</p>}
         </div>
 
+        {/* Church Size */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Church size<span className={styles.requiredAsterisk}>*</span>

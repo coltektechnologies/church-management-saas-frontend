@@ -11,12 +11,7 @@ import Step3Subscription from '@/components/SignupLogin/registration/Step3Subscr
 import Step4Payment from '@/components/SignupLogin/registration/Step4Payment';
 import Step5Review from '@/components/SignupLogin/registration/Step5Review';
 import { useToast } from '@/hooks/use-toast';
-
-/**
- * Signup - Multi-step registration page (5 steps)
- * Logic: Manages central form state and handles navigation logic between steps.
- * It uses a switch-case pattern to swap out form fragments based on currentStep.
- */
+import type { RegistrationData } from '@/components/SignupLogin/registration/Step4Payment';
 
 const stepTitles = [
   'Church Information',
@@ -26,9 +21,37 @@ const stepTitles = [
   'Review & Submit',
 ];
 
+const defaultFormData: RegistrationData = {
+  // Step 1
+  churchName: '',
+  churchEmail: '',
+  subdomain: '',
+  country: '',
+  regionCity: '',
+  address: '',
+  denomination: '',
+  churchSize: '',
+  // Step 2
+  fullName: '',
+  firstName: '',
+  lastName: '',
+  adminEmail: '',
+  role: '',
+  phone: '',
+  password: '',
+  confirmPassword: '',
+  username: '',
+  // Step 3
+  subscriptionPlan: '',
+  billing: 'monthly',
+  // Step 4
+  paymentMethod: '',
+  bankName: '',
+};
+
 const Signup = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<RegistrationData>(defaultFormData);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -38,7 +61,7 @@ const Signup = () => {
     stepTransition: 'animate-in fade-in slide-in-from-bottom-2 duration-500 w-full',
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: keyof RegistrationData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -61,7 +84,6 @@ const Signup = () => {
       title: 'Account created!',
       description: 'Your Open Door church account has been successfully created.',
     });
-
     router.push('/quick-setup');
   };
 
@@ -100,7 +122,7 @@ const Signup = () => {
                 />
               );
             case 5:
-              return <Step5Review data={formData} onBack={goBack} onSubmit={handleSubmit} />;
+              return <Step5Review data={formData} onBack={goBack} onFinish={handleSubmit} />;
             default:
               return null;
           }
@@ -112,13 +134,11 @@ const Signup = () => {
   return (
     <div className={pageStyles.container}>
       <Header />
-
       <main className={pageStyles.mainContent}>
         <RegistrationLayout currentStep={currentStep} stepTitle={stepTitles[currentStep - 1]}>
           {renderStep()}
         </RegistrationLayout>
       </main>
-
       <Footer />
     </div>
   );
