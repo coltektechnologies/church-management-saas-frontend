@@ -75,19 +75,18 @@ const LandingHero = () => {
           </div>
 
           {/* IMAGE — top on mobile, right on desktop */}
-          <div className="relative order-1 lg:order-2 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-none mx-auto">
-            <div className="rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl relative z-10 border-2 sm:border-4 border-white/10">
-              <Image
-                src={heroWorship}
-                alt="Congregation worshipping"
-                width={700}
-                height={600}
-                className="w-full h-auto object-cover"
-                priority
-              />
-            </div>
-            {/* Decorative shadow behind image */}
-            <div className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 w-full h-full bg-white/5 rounded-xl sm:rounded-2xl z-0" />
+          <div
+            className="order-1 lg:order-2 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-none mx-auto rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl leading-[0] text-[0]"
+            style={{ fontSize: 0, lineHeight: 0 }}
+          >
+            <Image
+              src={heroWorship}
+              alt="Congregation worshipping"
+              width={700}
+              height={600}
+              className="w-full h-auto block"
+              priority
+            />
           </div>
         </div>
       </div>
