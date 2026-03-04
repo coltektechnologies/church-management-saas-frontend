@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { Department } from '@/types/Department';
 import { COLOR_MAP } from '@/constants/departments';
 import AddMemberModal from '@/components/admin/departments/DepartmentDetailsModal/AddMemberModal';
-import MembersTab from '@/components/admin/departments/DepartmentDetailsModal/MembersTab';
-import OverviewTab from '@/components/admin/departments/DepartmentDetailsModal/OverviewTab';
+import MembersTab from '@/components/admin/departments/DepartmentTabs/MembersTab';
+import OverviewTab from '@/components/admin/departments/DepartmentTabs/OverviewTab';
 import ActivitiesTab from '@/components/admin/departments/DepartmentTabs/ActivitiesTab';
 import { Activity } from '@/types/activity';
 
