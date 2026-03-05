@@ -1,13 +1,13 @@
-import Link from 'next/link';
-import type { ReactNode } from 'react';
 import { Department } from '@/types/Department';
 import { COLOR_MAP, ICON_MAP } from '@/constants/departments';
+import { Eye } from 'lucide-react';
 
 interface DepartmentCardProps {
   department: Department;
+  onViewDetails: (department: Department) => void;
 }
 
-export default function DepartmentCard({ department }: DepartmentCardProps) {
+export default function DepartmentCard({ department, onViewDetails }: DepartmentCardProps) {
   const isActive = department.status === 'active';
 
   const themeClass = COLOR_MAP[department.themeColor] ?? 'bg-gray-700';
@@ -83,12 +83,12 @@ export default function DepartmentCard({ department }: DepartmentCardProps) {
         {/* Buttons */}
         <div className="flex gap-4 pt-2">
           {isActive ? (
-            <Link
-              href={`/admin/departments/${department.id}`}
+            <button
+              onClick={() => onViewDetails(department)}
               className="flex-1 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
             >
-              👁️ View Details
-            </Link>
+              <Eye size={16} /> View Details
+            </button>
           ) : (
             <button
               disabled

@@ -1,4 +1,5 @@
 import { ThemeColor } from '@/constants/departments';
+
 export interface Department {
   id: string;
   name: string;
@@ -10,4 +11,5 @@ export interface Department {
   status: 'active' | 'inactive';
   themeColor: ThemeColor;
   icon: string;
+  dateEstablished: string;
 }

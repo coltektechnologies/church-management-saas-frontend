@@ -7,6 +7,8 @@ import { Department } from '@/types/Department';
 import SummaryCard from '@/components/admin/departments/SummaryCard';
 import DepartmentCard from '@/components/admin/departments/DepartmentCard';
 import CreateDepartmentForm from '@/components/admin/departments/CreateDepartmentForm';
+import DepartmentDetailsModal from '@/components/admin/departments/DepartmentDetailsModal/DepartmentDetailsModal';
+import { Activity } from '@/types/activity';
 
 const mockDepartments: Department[] = [
   {
@@ -20,6 +22,7 @@ const mockDepartments: Department[] = [
     status: 'active',
     themeColor: 'navy',
     icon: '📖',
+    dateEstablished: '10/01/2022',
   },
   {
     id: '2',
@@ -32,6 +35,7 @@ const mockDepartments: Department[] = [
     status: 'active',
     themeColor: 'green',
     icon: '💰',
+    dateEstablished: '10/01/2022',
   },
   {
     id: '3',
@@ -44,13 +48,24 @@ const mockDepartments: Department[] = [
     status: 'inactive',
     themeColor: 'purple',
     icon: '🤝',
+    dateEstablished: '10/01/2022',
   },
 ];
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState<Department[]>(mockDepartments);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  const [departmentMembersMap, setDepartmentMembersMap] = useState<
+    Record<string, { id: string; name: string; role: string; joinedAt: string }[]>
+  >({});
+  const [departmentActivitiesMap, setDepartmentActivitiesMap] = useState<
+    Record<string, Activity[]>
+  >({});
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,13 +80,23 @@ export default function DepartmentsPage() {
     description: '',
     status: 'active' as 'active' | 'inactive',
     themeColor: 'navy',
-    icon: '🏛️',
+    icon: 'prayer',
   });
 
   const totalDepartments = departments.length;
   const activeDepartments = departments.filter((d) => d.status === 'active').length;
   const inactiveDepartments = departments.filter((d) => d.status === 'inactive').length;
   const totalMembers = departments.reduce((sum, d) => sum + d.members, 0);
+
+  const filteredDepartments = departments.filter((dept) => {
+    const matchesSearch =
+      dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dept.code.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === 'all' || dept.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -103,22 +128,31 @@ export default function DepartmentsPage() {
   };
 
   const handleCreateDepartment = () => {
-    if (!formData.name || !formData.code) {
-      alert('Name and Code are required');
+    const name = formData.name.trim();
+    const code = formData.code.trim().toUpperCase();
+
+    if (!name || !code || !formData.themeColor || !formData.icon) {
+      setFormError('Fill all required fields.');
+      return;
+    }
+
+    if (departments.some((d) => d.code === code)) {
+      setFormError('A department with this code already exists.');
       return;
     }
 
     const newDepartment: Department = {
       id: Date.now().toString(),
-      name: formData.name,
-      code: formData.code,
-      description: formData.description,
+      name,
+      code,
+      description: formData.description.trim(),
       members: 0,
       activities: 0,
       budgetUsed: 0,
       status: formData.status,
       themeColor: formData.themeColor,
       icon: formData.icon,
+      dateEstablished: new Date().toISOString(),
     };
 
     setDepartments((prev) => [...prev, newDepartment]);
@@ -129,9 +163,10 @@ export default function DepartmentsPage() {
       description: '',
       status: 'active',
       themeColor: 'navy',
-      icon: '',
+      icon: 'prayer',
     });
 
+    setFormError(null);
     setShowCreate(false);
   };
 
@@ -174,7 +209,27 @@ export default function DepartmentsPage() {
         <SummaryCard title="Total Members" value={totalMembers} color="text-orange-600" />
       </div>
 
-      {departments.length === 0 ? (
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <input
+          type="text"
+          placeholder="Search by name or code..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-80 focus:ring-2 focus:ring-blue-500 outline-none"
+        />
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+          className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-48 focus:ring-2 focus:ring-blue-500 outline-none"
+        >
+          <option value="all">All Departments</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+
+      {filteredDepartments.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
           <div className="text-5xl mb-6">🏛️</div>
 
@@ -194,8 +249,12 @@ export default function DepartmentsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {departments.map((dept) => (
-            <DepartmentCard key={dept.id} department={dept} />
+          {filteredDepartments.map((dept) => (
+            <DepartmentCard
+              key={dept.id}
+              department={dept}
+              onViewDetails={(department) => setSelectedDepartment(department)}
+            />
           ))}
         </div>
       )}
@@ -209,7 +268,38 @@ export default function DepartmentsPage() {
         handleIconUpload={handleIconUpload}
         handleCreateDepartment={handleCreateDepartment}
         formRef={formRef}
+        formError={formError}
       />
+      {selectedDepartment && (
+        <DepartmentDetailsModal
+          department={selectedDepartment}
+          departmentMembers={departmentMembersMap[selectedDepartment.id] || []}
+          setDepartmentMembers={(members) => {
+            setDepartmentMembersMap((prev) => ({
+              ...prev,
+              [selectedDepartment.id]:
+                typeof members === 'function'
+                  ? members(prev[selectedDepartment.id] || [])
+                  : members,
+            }));
+          }}
+          activities={departmentActivitiesMap[selectedDepartment.id] || []}
+          onAddActivity={(newActivity) => {
+            setDepartmentActivitiesMap((prev) => ({
+              ...prev,
+              [selectedDepartment.id]: [...(prev[selectedDepartment.id] || []), newActivity],
+            }));
+          }}
+          onClose={() => setSelectedDepartment(null)}
+          onUpdateDepartment={(updatedDepartment) => {
+            setDepartments((prev) =>
+              prev.map((dept) => (dept.id === updatedDepartment.id ? updatedDepartment : dept))
+            );
+
+            setSelectedDepartment(updatedDepartment);
+          }}
+        />
+      )}
     </div>
   );
 }

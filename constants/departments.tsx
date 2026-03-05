@@ -7,6 +7,7 @@ import {
   FaFileAlt,
   FaWrench,
   FaExchangeAlt,
+  FaEye,
 } from 'react-icons/fa';
 import type { ReactNode } from 'react';
 
@@ -28,6 +29,7 @@ export const DEPARTMENT_ICONS: { name: string; icon: ReactNode }[] = [
   { name: 'document', icon: <FaFileAlt /> },
   { name: 'tools', icon: <FaWrench /> },
   { name: 'exchange', icon: <FaExchangeAlt /> },
+  { name: 'eye', icon: <FaEye /> },
 ];
 
 export const COLOR_MAP = Object.fromEntries(DEPARTMENT_COLORS.map((c) => [c.name, c.class]));
