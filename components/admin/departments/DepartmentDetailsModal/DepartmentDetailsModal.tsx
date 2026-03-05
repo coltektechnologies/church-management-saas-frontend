@@ -33,6 +33,7 @@ interface Props {
 
   activities: Activity[];
   onAddActivity: (activity: Activity) => void;
+  onDeleteActivity: (activityId: string) => void;
 }
 
 export default function DepartmentDetailsModal({
@@ -41,6 +42,7 @@ export default function DepartmentDetailsModal({
   setDepartmentMembers,
   activities,
   onAddActivity,
+  onDeleteActivity,
   onClose,
   onUpdateDepartment,
 }: Props) {
@@ -49,8 +51,6 @@ export default function DepartmentDetailsModal({
   >('overview');
 
   const [isClosing, setIsClosing] = useState(false);
-
-  // Local UI members for this modal
 
   const [showAddMember, setShowAddMember] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState('');
@@ -134,6 +134,7 @@ export default function DepartmentDetailsModal({
                   activities: department.activities + 1,
                 });
               }}
+              onDeleteActivity={onDeleteActivity}
             />
           )}
         </div>

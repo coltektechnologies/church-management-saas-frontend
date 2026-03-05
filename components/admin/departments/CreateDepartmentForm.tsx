@@ -52,8 +52,6 @@ export default function CreateDepartmentForm({
         </button>
       </div>
 
-      {/* EVERYTHING ELSE STAYS EXACTLY AS YOU HAD IT */}
-
       {/* BASIC INFORMATION */}
       <div className="space-y-6">
         <h3 className="text-base font-semibold text-gray-800 uppercase tracking-wide">

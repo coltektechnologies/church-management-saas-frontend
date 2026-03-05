@@ -290,6 +290,25 @@ export default function DepartmentsPage() {
               [selectedDepartment.id]: [...(prev[selectedDepartment.id] || []), newActivity],
             }));
           }}
+          onDeleteActivity={(activityId) => {
+            setDepartmentActivitiesMap((prev) => ({
+              ...prev,
+              [selectedDepartment.id]: (prev[selectedDepartment.id] || []).filter(
+                (a) => a.id !== activityId
+              ),
+            }));
+
+            setDepartments((prev) =>
+              prev.map((dept) =>
+                dept.id === selectedDepartment.id
+                  ? {
+                      ...dept,
+                      activities: Math.max(dept.activities - 1, 0),
+                    }
+                  : dept
+              )
+            );
+          }}
           onClose={() => setSelectedDepartment(null)}
           onUpdateDepartment={(updatedDepartment) => {
             setDepartments((prev) =>
