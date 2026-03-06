@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '@/assets/logo.svg';
+import { login as apiLogin } from '@/lib/api';
 
 const Login = () => {
   const router = useRouter();
@@ -44,7 +45,7 @@ const Login = () => {
     signupLink: 'text-[#2FC4B2] font-bold hover:underline ml-1',
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -55,18 +56,22 @@ const Login = () => {
 
     setLoading(true);
 
-    // Persist remember me preference
     if (rememberMe) {
       localStorage.setItem('rememberedEmail', email);
     } else {
       localStorage.removeItem('rememberedEmail');
     }
 
-    // TODO: Replace with real auth API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { user, tokens } = await apiLogin({ email: email.trim(), password });
+      localStorage.setItem('access_token', tokens.access);
+      localStorage.setItem('refresh_token', tokens.refresh);
+      localStorage.setItem('user', JSON.stringify(user));
       router.push('/dashboard');
-    }, 800);
+    } catch (err) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+    }
   };
 
   return (
