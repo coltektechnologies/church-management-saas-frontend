@@ -5,6 +5,9 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import heroWorship from '@/assets/hero-worship.png';
 
+/**
+ * LandingHero Component
+ */
 const LandingHero = () => {
   return (
     <section
