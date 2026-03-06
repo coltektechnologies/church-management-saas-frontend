@@ -8,6 +8,9 @@ import MembersTab from '@/components/admin/departments/DepartmentTabs/MembersTab
 import OverviewTab from '@/components/admin/departments/DepartmentTabs/OverviewTab';
 import ActivitiesTab from '@/components/admin/departments/DepartmentTabs/ActivitiesTab';
 import { Activity } from '@/types/activity';
+import { Expense } from '@/types/expense';
+import BudgetTab from '@/components/admin/departments/DepartmentTabs/BudgetTab';
+import SettingsTab from '@/components/admin/departments/DepartmentTabs/SettingsTab';
 
 type MockChurchMember = {
   id: string;
@@ -33,6 +36,11 @@ interface Props {
 
   activities: Activity[];
   onAddActivity: (activity: Activity) => void;
+  onDeleteActivity: (activityId: string) => void;
+
+  expenses: Expense[];
+  onSubmitExpense: (expense: Expense) => void;
+  onUpdateExpense: (expenseId: string, updatedExpense: Expense) => void;
 }
 
 export default function DepartmentDetailsModal({
@@ -41,16 +49,18 @@ export default function DepartmentDetailsModal({
   setDepartmentMembers,
   activities,
   onAddActivity,
+  onDeleteActivity,
   onClose,
   onUpdateDepartment,
+  expenses,
+  onSubmitExpense,
+  onUpdateExpense,
 }: Props) {
   const [activeTab, setActiveTab] = useState<
     'overview' | 'members' | 'activities' | 'budget' | 'settings'
   >('overview');
 
   const [isClosing, setIsClosing] = useState(false);
-
-  // Local UI members for this modal
 
   const [showAddMember, setShowAddMember] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState('');
@@ -134,7 +144,20 @@ export default function DepartmentDetailsModal({
                   activities: department.activities + 1,
                 });
               }}
+              onDeleteActivity={onDeleteActivity}
             />
+          )}
+          {activeTab === 'budget' && (
+            <BudgetTab
+              department={department}
+              expenses={expenses}
+              onSubmitExpense={onSubmitExpense}
+              onUpdateExpense={onUpdateExpense}
+            />
+          )}
+
+          {activeTab === 'settings' && (
+            <SettingsTab department={department} onUpdateDepartment={onUpdateDepartment} />
           )}
         </div>
       </div>

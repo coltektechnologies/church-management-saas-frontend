@@ -1,5 +1,12 @@
 import { ThemeColor } from '@/constants/departments';
 
+export interface DepartmentSettings {
+  autoApprovalThreshold: number;
+  requiresElderApproval: boolean;
+  weeklySummary: boolean;
+  canSubmitAnnouncements: boolean;
+}
+
 export interface Department {
   id: string;
   name: string;
@@ -8,8 +15,11 @@ export interface Department {
   members: number;
   activities: number;
   budgetUsed: number;
+  annualBudget: number;
   status: 'active' | 'inactive';
   themeColor: ThemeColor;
   icon: string;
   dateEstablished: string;
+
+  settings: DepartmentSettings;
 }
