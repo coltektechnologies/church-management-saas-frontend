@@ -8,6 +8,7 @@ export interface Department {
   members: number;
   activities: number;
   budgetUsed: number;
+  annualBudget: number;
   status: 'active' | 'inactive';
   themeColor: ThemeColor;
   icon: string;

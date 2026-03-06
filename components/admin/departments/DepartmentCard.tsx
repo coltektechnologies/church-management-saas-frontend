@@ -13,6 +13,11 @@ export default function DepartmentCard({ department, onViewDetails }: Department
   const themeClass = COLOR_MAP[department.themeColor] ?? 'bg-gray-700';
   const iconMap = ICON_MAP;
 
+  const budgetPercentage =
+    department.annualBudget === 0
+      ? 0
+      : Math.min((department.budgetUsed / department.annualBudget) * 100, 100);
+
   return (
     <div
       className={`
@@ -68,14 +73,14 @@ export default function DepartmentCard({ department, onViewDetails }: Department
           </div>
 
           <div>
-            <p className="font-semibold text-lg">{department.budgetUsed}%</p>
+            <p className="font-semibold text-lg">{budgetPercentage.toFixed(0)}%</p>
             <p className="text-sm text-gray-500">Budget Used</p>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
-          <div className={`${themeClass} h-2.5`} style={{ width: `${department.budgetUsed}%` }} />
+          <div className={`${themeClass} h-2.5`} style={{ width: `${budgetPercentage}%` }} />
         </div>
 
         <p className="text-base text-gray-600 leading-relaxed">{department.description}</p>

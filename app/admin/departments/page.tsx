@@ -9,6 +9,7 @@ import DepartmentCard from '@/components/admin/departments/DepartmentCard';
 import CreateDepartmentForm from '@/components/admin/departments/CreateDepartmentForm';
 import DepartmentDetailsModal from '@/components/admin/departments/DepartmentDetailsModal/DepartmentDetailsModal';
 import { Activity } from '@/types/activity';
+import { Expense } from '@/types/expense';
 
 const mockDepartments: Department[] = [
   {
@@ -18,7 +19,8 @@ const mockDepartments: Department[] = [
     description: 'Records, communication, documentation management',
     members: 5,
     activities: 12,
-    budgetUsed: 48,
+    budgetUsed: 5000,
+    annualBudget: 10000,
     status: 'active',
     themeColor: 'navy',
     icon: '📖',
@@ -31,7 +33,8 @@ const mockDepartments: Department[] = [
     description: 'Financial oversight and budget control',
     members: 4,
     activities: 8,
-    budgetUsed: 35,
+    budgetUsed: 3000,
+    annualBudget: 10000,
     status: 'active',
     themeColor: 'green',
     icon: '💰',
@@ -44,7 +47,8 @@ const mockDepartments: Department[] = [
     description: 'Community welfare and support',
     members: 6,
     activities: 10,
-    budgetUsed: 60,
+    budgetUsed: 6000,
+    annualBudget: 10000,
     status: 'inactive',
     themeColor: 'purple',
     icon: '🤝',
@@ -66,6 +70,7 @@ export default function DepartmentsPage() {
   const [departmentActivitiesMap, setDepartmentActivitiesMap] = useState<
     Record<string, Activity[]>
   >({});
+  const [departmentExpensesMap, setDepartmentExpensesMap] = useState<Record<string, Expense[]>>({});
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -149,6 +154,7 @@ export default function DepartmentsPage() {
       members: 0,
       activities: 0,
       budgetUsed: 0,
+      annualBudget: 10000,
       status: formData.status,
       themeColor: formData.themeColor,
       icon: formData.icon,
@@ -308,6 +314,34 @@ export default function DepartmentsPage() {
                   : dept
               )
             );
+          }}
+          expenses={departmentExpensesMap[selectedDepartment.id] || []}
+          onSubmitExpense={(expense) => {
+            setDepartmentExpensesMap((prev) => ({
+              ...prev,
+              [selectedDepartment.id]: [...(prev[selectedDepartment.id] || []), expense],
+            }));
+          }}
+          onUpdateExpense={(expenseId, updatedExpense) => {
+            setDepartmentExpensesMap((prev) => ({
+              ...prev,
+              [selectedDepartment.id]: (prev[selectedDepartment.id] || []).map((exp) =>
+                exp.id === expenseId ? updatedExpense : exp
+              ),
+            }));
+
+            if (updatedExpense.status === 'approved') {
+              setDepartments((prev) =>
+                prev.map((dept) =>
+                  dept.id === selectedDepartment.id
+                    ? {
+                        ...dept,
+                        budgetUsed: dept.budgetUsed + updatedExpense.amount,
+                      }
+                    : dept
+                )
+              );
+            }
           }}
           onClose={() => setSelectedDepartment(null)}
           onUpdateDepartment={(updatedDepartment) => {
