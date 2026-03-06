@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 
 import { Department } from '@/types/Department';
 
@@ -9,6 +10,8 @@ interface Props {
 
 export default function SettingsTab({ department, onUpdateDepartment }: Props) {
   const settings = department.settings;
+  const [isEditing, setIsEditing] = useState(false);
+  const [threshold, setThreshold] = useState(settings.autoApprovalThreshold);
 
   const handleArchive = () => {
     onUpdateDepartment({
@@ -24,7 +27,16 @@ export default function SettingsTab({ department, onUpdateDepartment }: Props) {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
           <p className="text-sm text-gray-500">Auto-approval Threshold</p>
-          <p className="text-lg font-semibold">GHS {settings.autoApprovalThreshold}</p>
+          {isEditing ? (
+            <input
+              type="number"
+              value={threshold}
+              onChange={(e) => setThreshold(Number(e.target.value))}
+              className="border rounded px-2 py-1 w-24"
+            />
+          ) : (
+            <p className="text-lg font-semibold">GHS {settings.autoApprovalThreshold}</p>
+          )}
           <p className="text-xs text-gray-500 mt-2">
             Expense requests below this amount are automatically approved.
           </p>
@@ -47,8 +59,23 @@ export default function SettingsTab({ department, onUpdateDepartment }: Props) {
       </div>
 
       <div className="flex gap-4 pt-6">
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition">
-          Edit Settings
+        <button
+          onClick={() => {
+            if (isEditing) {
+              onUpdateDepartment({
+                ...department,
+                settings: {
+                  ...settings,
+                  autoApprovalThreshold: threshold,
+                },
+              });
+            }
+
+            setIsEditing(!isEditing);
+          }}
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
+        >
+          {isEditing ? 'Save Settings' : 'Edit Settings'}
         </button>
 
         <button

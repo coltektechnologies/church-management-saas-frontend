@@ -84,6 +84,7 @@ export default function DepartmentsPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   const [showCreate, setShowCreate] = useState(false);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
   const [departmentMembersMap, setDepartmentMembersMap] = useState<
     Record<string, { id: string; name: string; role: string; joinedAt: string }[]>
@@ -162,34 +163,52 @@ export default function DepartmentsPage() {
       return;
     }
 
-    if (departments.some((d) => d.code === code)) {
+    if (departments.some((d) => d.code === code && d.id !== editingDepartment?.id)) {
       setFormError('A department with this code already exists.');
       return;
     }
 
-    const newDepartment: Department = {
-      id: Date.now().toString(),
-      name,
-      code,
-      description: formData.description.trim(),
-      members: 0,
-      activities: 0,
-      budgetUsed: 0,
-      annualBudget: 10000,
-      status: formData.status,
-      themeColor: formData.themeColor,
-      icon: formData.icon,
-      dateEstablished: new Date().toISOString(),
+    if (editingDepartment) {
+      const updatedDepartment: Department = {
+        ...editingDepartment,
+        name,
+        code,
+        description: formData.description.trim(),
+        status: formData.status,
+        themeColor: formData.themeColor,
+        icon: formData.icon,
+      };
 
-      settings: {
-        autoApprovalThreshold: 5,
-        requiresElderApproval: true,
-        weeklySummary: true,
-        canSubmitAnnouncements: true,
-      },
-    };
+      setDepartments((prev) =>
+        prev.map((d) => (d.id === editingDepartment.id ? updatedDepartment : d))
+      );
 
-    setDepartments((prev) => [...prev, newDepartment]);
+      setEditingDepartment(null);
+    } else {
+      const newDepartment: Department = {
+        id: Date.now().toString(),
+        name,
+        code,
+        description: formData.description.trim(),
+        members: 0,
+        activities: 0,
+        budgetUsed: 0,
+        annualBudget: 10000,
+        status: formData.status,
+        themeColor: formData.themeColor,
+        icon: formData.icon,
+        dateEstablished: new Date().toISOString(),
+
+        settings: {
+          autoApprovalThreshold: 5,
+          requiresElderApproval: true,
+          weeklySummary: true,
+          canSubmitAnnouncements: true,
+        },
+      };
+
+      setDepartments((prev) => [...prev, newDepartment]);
+    }
 
     setFormData({
       name: '',
@@ -288,6 +307,20 @@ export default function DepartmentsPage() {
               key={dept.id}
               department={dept}
               onViewDetails={(department) => setSelectedDepartment(department)}
+              onEdit={(department) => {
+                setEditingDepartment(department);
+
+                setFormData({
+                  name: department.name,
+                  code: department.code,
+                  description: department.description,
+                  status: department.status,
+                  themeColor: department.themeColor,
+                  icon: department.icon,
+                });
+
+                setShowCreate(true);
+              }}
             />
           ))}
         </div>
@@ -303,6 +336,7 @@ export default function DepartmentsPage() {
         handleCreateDepartment={handleCreateDepartment}
         formRef={formRef}
         formError={formError}
+        editingDepartment={!!editingDepartment}
       />
       {selectedDepartment && (
         <DepartmentDetailsModal
@@ -382,25 +416,35 @@ export default function DepartmentsPage() {
             }
           }}
           onUpdateExpense={(expenseId, updatedExpense) => {
-            setDepartmentExpensesMap((prev) => ({
-              ...prev,
-              [selectedDepartment.id]: (prev[selectedDepartment.id] || []).map((exp) =>
+            setDepartmentExpensesMap((prev) => {
+              const updatedList = (prev[selectedDepartment.id] || []).map((exp) =>
                 exp.id === expenseId ? updatedExpense : exp
-              ),
-            }));
+              );
 
-            if (updatedExpense.status === 'approved') {
-              setDepartments((prev) =>
-                prev.map((dept) =>
-                  dept.id === selectedDepartment.id
-                    ? {
-                        ...dept,
-                        budgetUsed: dept.budgetUsed + updatedExpense.amount,
-                      }
-                    : dept
+              const totalApproved = updatedList
+                .filter((e) => e.status === 'approved')
+                .reduce((sum, e) => sum + e.amount, 0);
+
+              setDepartments((deps) =>
+                deps.map((d) =>
+                  d.id === selectedDepartment.id ? { ...d, budgetUsed: totalApproved } : d
                 )
               );
-            }
+
+              setSelectedDepartment((prevDept) =>
+                prevDept
+                  ? {
+                      ...prevDept,
+                      budgetUsed: totalApproved,
+                    }
+                  : prevDept
+              );
+
+              return {
+                ...prev,
+                [selectedDepartment.id]: updatedList,
+              };
+            });
           }}
           onClose={() => setSelectedDepartment(null)}
           onUpdateDepartment={(updatedDepartment) => {

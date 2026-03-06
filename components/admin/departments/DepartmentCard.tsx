@@ -5,9 +5,10 @@ import { Eye } from 'lucide-react';
 interface DepartmentCardProps {
   department: Department;
   onViewDetails: (department: Department) => void;
+  onEdit: (department: Department) => void;
 }
 
-export default function DepartmentCard({ department, onViewDetails }: DepartmentCardProps) {
+export default function DepartmentCard({ department, onViewDetails, onEdit }: DepartmentCardProps) {
   const isActive = department.status === 'active';
 
   const themeClass = COLOR_MAP[department.themeColor] ?? 'bg-gray-700';
@@ -103,7 +104,10 @@ export default function DepartmentCard({ department, onViewDetails }: Department
             </button>
           )}
 
-          <button className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition">
+          <button
+            onClick={() => onEdit(department)}
+            className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
+          >
             Edit
           </button>
         </div>

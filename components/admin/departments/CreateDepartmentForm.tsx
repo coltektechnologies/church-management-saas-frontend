@@ -23,6 +23,7 @@ interface Props {
   handleIconUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleCreateDepartment: () => void;
   formRef: RefObject<HTMLDivElement | null>;
+  editingDepartment?: boolean;
 }
 
 export default function CreateDepartmentForm({
@@ -35,6 +36,7 @@ export default function CreateDepartmentForm({
   handleCreateDepartment,
   formRef,
   formError,
+  editingDepartment,
 }: Props) {
   if (!showCreate) {
     return null;
@@ -267,7 +269,7 @@ export default function CreateDepartmentForm({
               : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
-          + Create Department
+          {editingDepartment ? 'Update Department' : '+ Create Department'}
         </button>
       </div>
     </div>
