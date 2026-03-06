@@ -25,6 +25,13 @@ const mockDepartments: Department[] = [
     themeColor: 'navy',
     icon: '📖',
     dateEstablished: '10/01/2022',
+
+    settings: {
+      autoApprovalThreshold: 5,
+      requiresElderApproval: true,
+      weeklySummary: true,
+      canSubmitAnnouncements: true,
+    },
   },
   {
     id: '2',
@@ -39,6 +46,13 @@ const mockDepartments: Department[] = [
     themeColor: 'green',
     icon: '💰',
     dateEstablished: '10/01/2022',
+
+    settings: {
+      autoApprovalThreshold: 5,
+      requiresElderApproval: true,
+      weeklySummary: true,
+      canSubmitAnnouncements: true,
+    },
   },
   {
     id: '3',
@@ -53,6 +67,13 @@ const mockDepartments: Department[] = [
     themeColor: 'purple',
     icon: '🤝',
     dateEstablished: '10/01/2022',
+
+    settings: {
+      autoApprovalThreshold: 5,
+      requiresElderApproval: true,
+      weeklySummary: true,
+      canSubmitAnnouncements: true,
+    },
   },
 ];
 
@@ -159,6 +180,13 @@ export default function DepartmentsPage() {
       themeColor: formData.themeColor,
       icon: formData.icon,
       dateEstablished: new Date().toISOString(),
+
+      settings: {
+        autoApprovalThreshold: 5,
+        requiresElderApproval: true,
+        weeklySummary: true,
+        canSubmitAnnouncements: true,
+      },
     };
 
     setDepartments((prev) => [...prev, newDepartment]);
@@ -317,10 +345,41 @@ export default function DepartmentsPage() {
           }}
           expenses={departmentExpensesMap[selectedDepartment.id] || []}
           onSubmitExpense={(expense) => {
+            const department = departments.find((d) => d.id === selectedDepartment.id);
+
+            const threshold = department?.settings.autoApprovalThreshold ?? 0;
+
+            const updatedExpense: Expense =
+              expense.amount <= threshold
+                ? { ...expense, status: 'approved', reviewedAt: new Date().toISOString() }
+                : { ...expense };
+
             setDepartmentExpensesMap((prev) => ({
               ...prev,
-              [selectedDepartment.id]: [...(prev[selectedDepartment.id] || []), expense],
+              [selectedDepartment.id]: [...(prev[selectedDepartment.id] ?? []), updatedExpense],
             }));
+
+            if (updatedExpense.status === 'approved') {
+              setDepartments((prev) =>
+                prev.map((dept) =>
+                  dept.id === selectedDepartment.id
+                    ? {
+                        ...dept,
+                        budgetUsed: dept.budgetUsed + updatedExpense.amount,
+                      }
+                    : dept
+                )
+              );
+
+              setSelectedDepartment((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      budgetUsed: prev.budgetUsed + updatedExpense.amount,
+                    }
+                  : prev
+              );
+            }
           }}
           onUpdateExpense={(expenseId, updatedExpense) => {
             setDepartmentExpensesMap((prev) => ({

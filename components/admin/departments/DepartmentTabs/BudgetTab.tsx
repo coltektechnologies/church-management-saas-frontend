@@ -9,9 +9,15 @@ interface Props {
   department: Department;
   expenses: Expense[];
   onSubmitExpense: (expense: Expense) => void;
+  onUpdateExpense: (expenseId: string, updatedExpense: Expense) => void;
 }
 
-export default function BudgetTab({ department, expenses, onSubmitExpense }: Props) {
+export default function BudgetTab({
+  department,
+  expenses,
+  onSubmitExpense,
+  onUpdateExpense,
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
@@ -105,7 +111,15 @@ export default function BudgetTab({ department, expenses, onSubmitExpense }: Pro
               <div className="text-right space-y-2">
                 <div className="text-lg font-semibold">GHS {expense.amount.toLocaleString()}</div>
 
-                <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                <span
+                  className={`text-xs px-2 py-1 rounded-full capitalize ${
+                    expense.status === 'approved'
+                      ? 'bg-green-100 text-green-700'
+                      : expense.status === 'rejected'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                  }`}
+                >
                   {expense.status}
                 </span>
               </div>

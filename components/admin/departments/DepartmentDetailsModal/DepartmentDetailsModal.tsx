@@ -10,6 +10,7 @@ import ActivitiesTab from '@/components/admin/departments/DepartmentTabs/Activit
 import { Activity } from '@/types/activity';
 import { Expense } from '@/types/expense';
 import BudgetTab from '@/components/admin/departments/DepartmentTabs/BudgetTab';
+import SettingsTab from '@/components/admin/departments/DepartmentTabs/SettingsTab';
 
 type MockChurchMember = {
   id: string;
@@ -151,7 +152,12 @@ export default function DepartmentDetailsModal({
               department={department}
               expenses={expenses}
               onSubmitExpense={onSubmitExpense}
+              onUpdateExpense={onUpdateExpense}
             />
+          )}
+
+          {activeTab === 'settings' && (
+            <SettingsTab department={department} onUpdateDepartment={onUpdateDepartment} />
           )}
         </div>
       </div>
