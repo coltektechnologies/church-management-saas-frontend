@@ -61,14 +61,13 @@ export default function DepartmentDetailsModal({
   >('overview');
 
   const [isClosing, setIsClosing] = useState(false);
-
   const [showAddMember, setShowAddMember] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedRole, setSelectedRole] = useState('Member');
+  const [addMemberError, setAddMemberError] = useState('');
 
   const handleClose = () => {
     setIsClosing(true);
-
     setTimeout(() => {
       onClose();
     }, 160);
@@ -123,7 +122,9 @@ export default function DepartmentDetailsModal({
 
         {/* CONTENT */}
         <div key={activeTab} className="p-8 space-y-10 max-h-[70vh] overflow-y-auto tab-slide">
-          {activeTab === 'overview' && <OverviewTab department={department} />}
+          {activeTab === 'overview' && (
+            <OverviewTab department={department} departmentMembers={departmentMembers} />
+          )}
           {activeTab === 'members' && (
             <MembersTab
               department={department}
@@ -155,27 +156,39 @@ export default function DepartmentDetailsModal({
               onUpdateExpense={onUpdateExpense}
             />
           )}
-
           {activeTab === 'settings' && (
             <SettingsTab department={department} onUpdateDepartment={onUpdateDepartment} />
           )}
         </div>
       </div>
+
       <AddMemberModal
         show={showAddMember}
-        onClose={() => setShowAddMember(false)}
+        onClose={() => {
+          setShowAddMember(false);
+          setAddMemberError('');
+        }}
         mockChurchMembers={mockChurchMembers}
         selectedMemberId={selectedMemberId}
-        setSelectedMemberId={setSelectedMemberId}
+        setSelectedMemberId={(id) => {
+          setSelectedMemberId(id);
+          setAddMemberError('');
+        }}
         selectedRole={selectedRole}
         setSelectedRole={setSelectedRole}
+        error={addMemberError}
         onAdd={() => {
           if (!selectedMemberId) {
             return;
           }
 
-          const member = mockChurchMembers.find((m) => m.id === selectedMemberId);
+          // Duplicate guard with error message
+          if (departmentMembers.some((m) => m.id === selectedMemberId)) {
+            setAddMemberError('This member has already been added to this department.');
+            return;
+          }
 
+          const member = mockChurchMembers.find((m) => m.id === selectedMemberId);
           if (!member) {
             return;
           }
@@ -198,6 +211,7 @@ export default function DepartmentDetailsModal({
           setShowAddMember(false);
           setSelectedMemberId('');
           setSelectedRole('Member');
+          setAddMemberError('');
         }}
       />
     </div>

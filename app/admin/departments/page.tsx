@@ -8,91 +8,31 @@ import SummaryCard from '@/components/admin/departments/SummaryCard';
 import DepartmentCard from '@/components/admin/departments/DepartmentCard';
 import CreateDepartmentForm from '@/components/admin/departments/CreateDepartmentForm';
 import DepartmentDetailsModal from '@/components/admin/departments/DepartmentDetailsModal/DepartmentDetailsModal';
-import { Activity } from '@/types/activity';
-import { Expense } from '@/types/expense';
-
-const mockDepartments: Department[] = [
-  {
-    id: '1',
-    name: 'Secretariat',
-    code: 'SEC-001',
-    description: 'Records, communication, documentation management',
-    members: 5,
-    activities: 12,
-    budgetUsed: 5000,
-    annualBudget: 10000,
-    status: 'active',
-    themeColor: 'navy',
-    icon: '📖',
-    dateEstablished: '10/01/2022',
-
-    settings: {
-      autoApprovalThreshold: 5,
-      requiresElderApproval: true,
-      weeklySummary: true,
-      canSubmitAnnouncements: true,
-    },
-  },
-  {
-    id: '2',
-    name: 'Treasury',
-    code: 'TRD-002',
-    description: 'Financial oversight and budget control',
-    members: 4,
-    activities: 8,
-    budgetUsed: 3000,
-    annualBudget: 10000,
-    status: 'active',
-    themeColor: 'green',
-    icon: '💰',
-    dateEstablished: '10/01/2022',
-
-    settings: {
-      autoApprovalThreshold: 5,
-      requiresElderApproval: true,
-      weeklySummary: true,
-      canSubmitAnnouncements: true,
-    },
-  },
-  {
-    id: '3',
-    name: 'Deaconry',
-    code: 'DCN-003',
-    description: 'Community welfare and support',
-    members: 6,
-    activities: 10,
-    budgetUsed: 6000,
-    annualBudget: 10000,
-    status: 'inactive',
-    themeColor: 'purple',
-    icon: '🤝',
-    dateEstablished: '10/01/2022',
-
-    settings: {
-      autoApprovalThreshold: 5,
-      requiresElderApproval: true,
-      weeklySummary: true,
-      canSubmitAnnouncements: true,
-    },
-  },
-];
+import { useDepartments } from '@/context/DepartmentsContext';
 
 export default function DepartmentsPage() {
-  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
+  // ── All department state now comes from context ──
+  const {
+    departments,
+    setDepartments,
+    updateDepartment,
+    departmentMembersMap,
+    setDepartmentMembersMap,
+    departmentActivitiesMap,
+    addActivity,
+    deleteActivity,
+    departmentExpensesMap,
+    submitExpense,
+    updateExpense,
+  } = useDepartments();
+
+  // ── UI state stays local to this page ──
   const [formError, setFormError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-
   const [showCreate, setShowCreate] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
-  const [departmentMembersMap, setDepartmentMembersMap] = useState<
-    Record<string, { id: string; name: string; role: string; joinedAt: string }[]>
-  >({});
-  const [departmentActivitiesMap, setDepartmentActivitiesMap] = useState<
-    Record<string, Activity[]>
-  >({});
-  const [departmentExpensesMap, setDepartmentExpensesMap] = useState<Record<string, Expense[]>>({});
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,29 +50,30 @@ export default function DepartmentsPage() {
     icon: 'prayer',
   });
 
+  // ── Derived stats ──
   const totalDepartments = departments.length;
   const activeDepartments = departments.filter((d) => d.status === 'active').length;
   const inactiveDepartments = departments.filter((d) => d.status === 'inactive').length;
   const totalMembers = departments.reduce((sum, d) => sum + d.members, 0);
 
+  const totalDepartmentHeads = Object.values(departmentMembersMap)
+    .flat()
+    .filter((m) => m.role === 'Leader').length;
+
   const filteredDepartments = departments.filter((dept) => {
     const matchesSearch =
       dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       dept.code.toLowerCase().includes(searchQuery.toLowerCase());
-
     const matchesStatus = statusFilter === 'all' || dept.status === statusFilter;
-
     return matchesSearch && matchesStatus;
   });
 
+  // ── Form handlers ──
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,17 +81,10 @@ export default function DepartmentsPage() {
     if (!file) {
       return;
     }
-
     const reader = new FileReader();
-
     reader.onloadend = () => {
-      const imageUrl = reader.result as string;
-      setFormData((prev) => ({
-        ...prev,
-        icon: imageUrl,
-      }));
+      setFormData((prev) => ({ ...prev, icon: reader.result as string }));
     };
-
     reader.readAsDataURL(file);
   };
 
@@ -169,7 +103,7 @@ export default function DepartmentsPage() {
     }
 
     if (editingDepartment) {
-      const updatedDepartment: Department = {
+      updateDepartment({
         ...editingDepartment,
         name,
         code,
@@ -177,12 +111,7 @@ export default function DepartmentsPage() {
         status: formData.status,
         themeColor: formData.themeColor,
         icon: formData.icon,
-      };
-
-      setDepartments((prev) =>
-        prev.map((d) => (d.id === editingDepartment.id ? updatedDepartment : d))
-      );
-
+      });
       setEditingDepartment(null);
     } else {
       const newDepartment: Department = {
@@ -193,12 +122,11 @@ export default function DepartmentsPage() {
         members: 0,
         activities: 0,
         budgetUsed: 0,
-        annualBudget: 10000,
+        annualBudget: 0,
         status: formData.status,
         themeColor: formData.themeColor,
         icon: formData.icon,
         dateEstablished: new Date().toISOString(),
-
         settings: {
           autoApprovalThreshold: 5,
           requiresElderApproval: true,
@@ -206,7 +134,6 @@ export default function DepartmentsPage() {
           canSubmitAnnouncements: true,
         },
       };
-
       setDepartments((prev) => [...prev, newDepartment]);
     }
 
@@ -218,7 +145,6 @@ export default function DepartmentsPage() {
       themeColor: 'navy',
       icon: 'prayer',
     });
-
     setFormError(null);
     setShowCreate(false);
   };
@@ -235,7 +161,6 @@ export default function DepartmentsPage() {
             <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 tracking-tight">
               Church Departments
             </h1>
-
             <p className="mt-3 text-lg text-gray-600 max-w-2xl leading-relaxed">
               Manage and coordinate all ministry departments in your church.
             </p>
@@ -258,7 +183,11 @@ export default function DepartmentsPage() {
           value={inactiveDepartments}
           color="text-red-600"
         />
-        <SummaryCard title="Department Heads" value={12} color="text-purple-600" />
+        <SummaryCard
+          title="Department Heads"
+          value={totalDepartmentHeads}
+          color="text-purple-600"
+        />
         <SummaryCard title="Total Members" value={totalMembers} color="text-orange-600" />
       </div>
 
@@ -270,7 +199,6 @@ export default function DepartmentsPage() {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-80 focus:ring-2 focus:ring-blue-500 outline-none"
         />
-
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
@@ -285,14 +213,11 @@ export default function DepartmentsPage() {
       {filteredDepartments.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
           <div className="text-5xl mb-6">🏛️</div>
-
           <h3 className="text-2xl font-semibold text-gray-800 mb-3">No Departments Yet</h3>
-
           <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            You haven’t created any church departments yet. Start by creating your first department
+            You haven't created any church departments yet. Start by creating your first department
             to begin managing ministries.
           </p>
-
           <button
             onClick={() => setShowCreate(true)}
             className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition"
@@ -309,7 +234,6 @@ export default function DepartmentsPage() {
               onViewDetails={(department) => setSelectedDepartment(department)}
               onEdit={(department) => {
                 setEditingDepartment(department);
-
                 setFormData({
                   name: department.name,
                   code: department.code,
@@ -318,7 +242,6 @@ export default function DepartmentsPage() {
                   themeColor: department.themeColor,
                   icon: department.icon,
                 });
-
                 setShowCreate(true);
               }}
             />
@@ -338,6 +261,7 @@ export default function DepartmentsPage() {
         formError={formError}
         editingDepartment={!!editingDepartment}
       />
+
       {selectedDepartment && (
         <DepartmentDetailsModal
           department={selectedDepartment}
@@ -352,106 +276,16 @@ export default function DepartmentsPage() {
             }));
           }}
           activities={departmentActivitiesMap[selectedDepartment.id] || []}
-          onAddActivity={(newActivity) => {
-            setDepartmentActivitiesMap((prev) => ({
-              ...prev,
-              [selectedDepartment.id]: [...(prev[selectedDepartment.id] || []), newActivity],
-            }));
-          }}
-          onDeleteActivity={(activityId) => {
-            setDepartmentActivitiesMap((prev) => ({
-              ...prev,
-              [selectedDepartment.id]: (prev[selectedDepartment.id] || []).filter(
-                (a) => a.id !== activityId
-              ),
-            }));
-
-            setDepartments((prev) =>
-              prev.map((dept) =>
-                dept.id === selectedDepartment.id
-                  ? {
-                      ...dept,
-                      activities: Math.max(dept.activities - 1, 0),
-                    }
-                  : dept
-              )
-            );
-          }}
+          onAddActivity={(newActivity) => addActivity(selectedDepartment.id, newActivity)}
+          onDeleteActivity={(activityId) => deleteActivity(selectedDepartment.id, activityId)}
           expenses={departmentExpensesMap[selectedDepartment.id] || []}
-          onSubmitExpense={(expense) => {
-            const department = departments.find((d) => d.id === selectedDepartment.id);
-
-            const threshold = department?.settings.autoApprovalThreshold ?? 0;
-
-            const updatedExpense: Expense =
-              expense.amount <= threshold
-                ? { ...expense, status: 'approved', reviewedAt: new Date().toISOString() }
-                : { ...expense };
-
-            setDepartmentExpensesMap((prev) => ({
-              ...prev,
-              [selectedDepartment.id]: [...(prev[selectedDepartment.id] ?? []), updatedExpense],
-            }));
-
-            if (updatedExpense.status === 'approved') {
-              setDepartments((prev) =>
-                prev.map((dept) =>
-                  dept.id === selectedDepartment.id
-                    ? {
-                        ...dept,
-                        budgetUsed: dept.budgetUsed + updatedExpense.amount,
-                      }
-                    : dept
-                )
-              );
-
-              setSelectedDepartment((prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      budgetUsed: prev.budgetUsed + updatedExpense.amount,
-                    }
-                  : prev
-              );
-            }
-          }}
-          onUpdateExpense={(expenseId, updatedExpense) => {
-            setDepartmentExpensesMap((prev) => {
-              const updatedList = (prev[selectedDepartment.id] || []).map((exp) =>
-                exp.id === expenseId ? updatedExpense : exp
-              );
-
-              const totalApproved = updatedList
-                .filter((e) => e.status === 'approved')
-                .reduce((sum, e) => sum + e.amount, 0);
-
-              setDepartments((deps) =>
-                deps.map((d) =>
-                  d.id === selectedDepartment.id ? { ...d, budgetUsed: totalApproved } : d
-                )
-              );
-
-              setSelectedDepartment((prevDept) =>
-                prevDept
-                  ? {
-                      ...prevDept,
-                      budgetUsed: totalApproved,
-                    }
-                  : prevDept
-              );
-
-              return {
-                ...prev,
-                [selectedDepartment.id]: updatedList,
-              };
-            });
-          }}
+          onSubmitExpense={(expense) => submitExpense(selectedDepartment.id, expense)}
+          onUpdateExpense={(expenseId, updatedExpense) =>
+            updateExpense(selectedDepartment.id, expenseId, updatedExpense)
+          }
           onClose={() => setSelectedDepartment(null)}
           onUpdateDepartment={(updatedDepartment) => {
-            setDepartments((prev) =>
-              prev.map((dept) => (dept.id === updatedDepartment.id ? updatedDepartment : dept))
-            );
-
+            updateDepartment(updatedDepartment);
             setSelectedDepartment(updatedDepartment);
           }}
         />
