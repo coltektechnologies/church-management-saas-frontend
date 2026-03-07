@@ -20,7 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <TopNavbar onMenuClick={() => setSidebarOpen(true)} />
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto">{children}</main>
+          <main className="flex-1 overflow-y-auto p-6">{children}</main>
         </div>
       </div>
     </DepartmentsProvider>

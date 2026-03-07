@@ -11,7 +11,6 @@ import DepartmentDetailsModal from '@/components/admin/departments/DepartmentDet
 import { useDepartments } from '@/context/DepartmentsContext';
 
 export default function DepartmentsPage() {
-  // ── All department state now comes from context ──
   const {
     departments,
     setDepartments,
@@ -26,13 +25,17 @@ export default function DepartmentsPage() {
     updateExpense,
   } = useDepartments();
 
-  // ── UI state stays local to this page ──
   const [formError, setFormError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [showCreate, setShowCreate] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
-  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
+  const selectedDepartment = selectedDepartmentId
+    ? (departments.find((d) => d.id === selectedDepartmentId) ?? null)
+    : null;
+
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -231,7 +234,7 @@ export default function DepartmentsPage() {
             <DepartmentCard
               key={dept.id}
               department={dept}
-              onViewDetails={(department) => setSelectedDepartment(department)}
+              onViewDetails={(department) => setSelectedDepartmentId(department.id)}
               onEdit={(department) => {
                 setEditingDepartment(department);
                 setFormData({
@@ -283,10 +286,9 @@ export default function DepartmentsPage() {
           onUpdateExpense={(expenseId, updatedExpense) =>
             updateExpense(selectedDepartment.id, expenseId, updatedExpense)
           }
-          onClose={() => setSelectedDepartment(null)}
+          onClose={() => setSelectedDepartmentId(null)}
           onUpdateDepartment={(updatedDepartment) => {
             updateDepartment(updatedDepartment);
-            setSelectedDepartment(updatedDepartment);
           }}
         />
       )}
