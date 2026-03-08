@@ -16,7 +16,13 @@ interface StepReviewProps {
   isSuccess?: boolean;
 }
 
-const Step5Review = ({ data, onBack, onFinish, loading = false, isSuccess = false }: StepReviewProps) => {
+const Step5Review = ({
+  data,
+  onBack,
+  onFinish,
+  loading = false,
+  isSuccess = false,
+}: StepReviewProps) => {
   const [agreed, setAgreed] = useState(false);
 
   // Mapping the data for a clean display
