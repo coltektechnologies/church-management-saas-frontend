@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, XCircle } from 'lucide-react';
@@ -38,7 +38,7 @@ function getInitialState(reference: string | null): {
   return { status: 'loading', message: '' };
 }
 
-export default function SignupSuccessPage() {
+function SignupSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -114,5 +114,20 @@ export default function SignupSuccessPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8F9FA] px-4">
+          <Loader2 className="w-12 h-12 text-[#2FC4B2] animate-spin mb-6" />
+          <p className="text-[#0B2A4A] font-semibold">Loading...</p>
+        </div>
+      }
+    >
+      <SignupSuccessContent />
+    </Suspense>
   );
 }
