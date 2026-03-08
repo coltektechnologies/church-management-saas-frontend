@@ -208,9 +208,7 @@ export interface RegistrationCompleteResult {
 }
 
 /** Step 4: Initialize payment. For FREE/TRIAL completes registration (201). For paid returns authorization_url (200). */
-export async function registrationInitializePayment(
-  sessionId: string
-): Promise<
+export async function registrationInitializePayment(sessionId: string): Promise<
   | {
       requires_payment: false;
       user: LoginUser;
@@ -249,6 +247,340 @@ export async function registrationInitializePayment(
 }
 
 /** Verify payment and complete registration (paid plans). */
+/** Get stored access token for authenticated API calls. */
+export function getAccessToken(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return localStorage.getItem('access_token');
+}
+
+// ---------------------------------------------------------------------------
+// Members
+// ---------------------------------------------------------------------------
+
+export interface CreateMemberPayload {
+  title: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  gender: 'MALE' | 'FEMALE';
+  date_of_birth: string;
+  marital_status: 'SINGLE' | 'MARRIED' | 'WIDOWED' | 'DIVORCED';
+  national_id: string;
+  phone_number: string;
+  email?: string;
+  occupation: string;
+  residential_address: string;
+  city: string;
+  region: string;
+  custom_region?: string;
+  emergency_contact: {
+    full_name: string;
+    relationship: string;
+    phone_number: string;
+  };
+  member_since: string;
+  membership_status: 'ACTIVE' | 'TRANSFER' | 'NEW_CONVERT' | 'VISITOR' | 'INACTIVE';
+  baptism_status?: 'BAPTISED' | 'NOT_BAPTISED';
+  education_level: 'PRIMARY' | 'SECONDARY' | 'TERTIARY' | 'GRADUATE' | 'POSTGRADUATE';
+  interested_departments: string[];
+  admin_notes?: string;
+  send_credentials_via_email?: boolean;
+  send_credentials_via_sms?: boolean;
+}
+
+export interface CreateMemberResponse {
+  id: string;
+  full_name: string;
+  member_id: string;
+  message: string;
+  system_access_created?: boolean;
+  email?: string;
+  email_sent?: boolean;
+  sms_sent?: boolean;
+}
+
+/** Create a new member. Requires authenticated user with church context. */
+export async function createMember(payload: CreateMemberPayload): Promise<CreateMemberResponse> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be logged in to add a member');
+  }
+
+  const res = await fetch(`${base}/members/members/create/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+
+  if (!res.ok) {
+    const msg =
+      (typeof data?.detail === 'string' ? data.detail : null) ||
+      (data && typeof data === 'object'
+        ? Object.values(data)
+            .flat()
+            .filter((v): v is string => typeof v === 'string')[0]
+        : undefined) ||
+      'Failed to create member';
+    throw new Error(msg);
+  }
+
+  return data as CreateMemberResponse;
+}
+
+export interface MemberListItem {
+  id: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  membership_status: string;
+  member_since: string;
+  gender?: string;
+  location?: {
+    phone_primary?: string;
+    email?: string;
+    address?: string;
+    city?: string;
+    region?: string;
+  };
+  [key: string]: unknown;
+}
+
+/** Get list of members for the current church. */
+export async function getMembers(): Promise<MemberListItem[]> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return [];
+  }
+  const res = await fetch(`${base}/members/members/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    return [];
+  }
+  const data = (await res.json().catch(() => [])) as MemberListItem[];
+  return Array.isArray(data) ? data : [];
+}
+
+export interface MemberDetail extends MemberListItem {
+  title?: string;
+  middle_name?: string;
+  date_of_birth?: string;
+  marital_status?: string;
+  national_id?: string;
+  baptism_status?: string;
+  education_level?: string;
+  occupation?: string;
+  employer?: string;
+  notes?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  emergency_contact_relationship?: string;
+}
+
+/** Get member details by ID. */
+export async function getMember(id: string): Promise<MemberDetail | null> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return null;
+  }
+  const res = await fetch(`${base}/members/members/${id}/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    return null;
+  }
+  return (await res.json().catch(() => null)) as MemberDetail;
+}
+
+/** Update member. */
+export async function updateMember(id: string, data: Partial<MemberDetail>): Promise<MemberDetail> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be logged in to update a member');
+  }
+  const res = await fetch(`${base}/members/members/${id}/`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  const result = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    const msg =
+      (typeof result?.detail === 'string' ? result.detail : null) || 'Failed to update member';
+    throw new Error(msg);
+  }
+  return result as MemberDetail;
+}
+
+/** Delete member (soft delete). */
+export async function deleteMember(id: string): Promise<void> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be logged in to delete a member');
+  }
+  const res = await fetch(`${base}/members/members/${id}/`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    const msg =
+      (typeof data?.detail === 'string' ? data.detail : null) || 'Failed to delete member';
+    throw new Error(msg);
+  }
+}
+
+export interface MemberStats {
+  total_members: number;
+  total_change_percent: number;
+  active_members: number;
+  active_change_percent: number;
+  inactive_members: number;
+  inactive_change_percent: number;
+  new_members_this_month: number;
+  new_members_change_percent: number;
+  pending_approvals: number;
+}
+
+const emptyMemberStats: MemberStats = {
+  total_members: 0,
+  total_change_percent: 0,
+  active_members: 0,
+  active_change_percent: 0,
+  inactive_members: 0,
+  inactive_change_percent: 0,
+  new_members_this_month: 0,
+  new_members_change_percent: 0,
+  pending_approvals: 0,
+};
+
+/** Get member statistics for the current church. */
+export interface TitheOfferingStats {
+  monthly_trend: { month: string; tithe: number; offering: number }[];
+  this_month: {
+    tithe_total: string;
+    offering_total: string;
+    tithe_by_week: { name: string; value: number }[];
+    offering_by_week: { name: string; value: number }[];
+  };
+}
+
+/** Get tithe and offering statistics for the current church. */
+export async function getTitheOfferingStats(periodMonths = 9): Promise<TitheOfferingStats> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return {
+      monthly_trend: [],
+      this_month: {
+        tithe_total: '0',
+        offering_total: '0',
+        tithe_by_week: [
+          { name: 'W1', value: 0 },
+          { name: 'W2', value: 0 },
+          { name: 'W3', value: 0 },
+          { name: 'W4', value: 0 },
+        ],
+        offering_by_week: [
+          { name: 'W1', value: 0 },
+          { name: 'W2', value: 0 },
+          { name: 'W3', value: 0 },
+          { name: 'W4', value: 0 },
+        ],
+      },
+    };
+  }
+
+  const res = await fetch(
+    `${base}/analytics/finance/tithe-offerings/?period_months=${periodMonths}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+
+  if (!res.ok) {
+    return {
+      monthly_trend: [],
+      this_month: {
+        tithe_total: '0',
+        offering_total: '0',
+        tithe_by_week: [
+          { name: 'W1', value: 0 },
+          { name: 'W2', value: 0 },
+          { name: 'W3', value: 0 },
+          { name: 'W4', value: 0 },
+        ],
+        offering_by_week: [
+          { name: 'W1', value: 0 },
+          { name: 'W2', value: 0 },
+          { name: 'W3', value: 0 },
+          { name: 'W4', value: 0 },
+        ],
+      },
+    };
+  }
+
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const trend = (data.monthly_trend as TitheOfferingStats['monthly_trend']) ?? [];
+  const tm = (data.this_month as TitheOfferingStats['this_month']) ?? {
+    tithe_total: '0',
+    offering_total: '0',
+    tithe_by_week: [],
+    offering_by_week: [],
+  };
+  return {
+    monthly_trend: trend,
+    this_month: {
+      tithe_total: String(tm.tithe_total ?? '0'),
+      offering_total: String(tm.offering_total ?? '0'),
+      tithe_by_week: Array.isArray(tm.tithe_by_week) ? tm.tithe_by_week : [],
+      offering_by_week: Array.isArray(tm.offering_by_week) ? tm.offering_by_week : [],
+    },
+  };
+}
+
+export async function getMemberStats(): Promise<MemberStats> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return emptyMemberStats;
+  }
+
+  const res = await fetch(`${base}/analytics/members/stats/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    return emptyMemberStats;
+  }
+
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  return {
+    total_members: (data.total_members as number) ?? 0,
+    total_change_percent: (data.total_change_percent as number) ?? 0,
+    active_members: (data.active_members as number) ?? 0,
+    active_change_percent: (data.active_change_percent as number) ?? 0,
+    inactive_members: (data.inactive_members as number) ?? 0,
+    inactive_change_percent: (data.inactive_change_percent as number) ?? 0,
+    new_members_this_month: (data.new_members_this_month as number) ?? 0,
+    new_members_change_percent: (data.new_members_change_percent as number) ?? 0,
+    pending_approvals: (data.pending_approvals as number) ?? 0,
+  };
+}
+
 export async function registrationVerifyPayment(
   sessionId: string,
   reference: string

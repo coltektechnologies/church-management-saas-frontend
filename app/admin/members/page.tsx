@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Home, Users, UserCheck, UserX, UserPlus } from 'lucide-react';
 import StatsCard from '@/components/admin/membership/StatsCard';
@@ -7,8 +8,45 @@ import MonthlyTrendChart from '@/components/admin/membership/MonthlyTrendChart';
 import TithingOfferingsChart from '@/components/admin/membership/TithingOfferingsChart';
 import MemberFilters from '@/components/admin/membership/MemberFilters';
 import MembersTable from '@/components/admin/membership/MembersTable';
+import { getMemberStats, getTitheOfferingStats } from '@/lib/api';
+
+function formatChange(pct: number): string {
+  if (pct > 0) {
+    return `+${pct}%`;
+  }
+  if (pct < 0) {
+    return `${pct}%`;
+  }
+  return '0%';
+}
 
 export default function MembershipDashboardPage() {
+  const [stats, setStats] = useState({
+    total_members: 0,
+    total_change_percent: 0,
+    active_members: 0,
+    active_change_percent: 0,
+    inactive_members: 0,
+    inactive_change_percent: 0,
+    new_members_this_month: 0,
+    new_members_change_percent: 0,
+  });
+
+  const [titheStats, setTitheStats] = useState({
+    monthly_trend: [] as { month: string; tithe: number; offering: number }[],
+    this_month: {
+      tithe_total: '0',
+      offering_total: '0',
+      tithe_by_week: [] as { name: string; value: number }[],
+      offering_by_week: [] as { name: string; value: number }[],
+    },
+  });
+
+  useEffect(() => {
+    getMemberStats().then(setStats);
+    getTitheOfferingStats(9).then(setTitheStats);
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* Header & Breadcrumb */}
@@ -49,40 +87,48 @@ export default function MembershipDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatsCard
           icon={<Users className="h-6 w-6" />}
-          value="2,450"
+          value={stats.total_members.toLocaleString()}
           label="Total Members"
-          change="+5.2%"
+          change={formatChange(stats.total_change_percent)}
+          changePositive={stats.total_change_percent >= 0}
           borderTopColor="#0B2A4A"
         />
         <StatsCard
           icon={<UserCheck className="h-6 w-6" />}
-          value="1,850"
+          value={stats.active_members.toLocaleString()}
           label="Active Members"
-          change="+2.1%"
+          change={formatChange(stats.active_change_percent)}
+          changePositive={stats.active_change_percent >= 0}
           borderTopColor="#105BA9"
         />
         <StatsCard
           icon={<UserX className="h-6 w-6" />}
-          value="285"
+          value={stats.inactive_members.toLocaleString()}
           label="Inactive"
-          change="-1.3%"
-          changePositive={false}
+          change={formatChange(stats.inactive_change_percent)}
+          changePositive={stats.inactive_change_percent >= 0}
           iconColor="gray"
           borderTopColor="#C4CBD2"
         />
         <StatsCard
           icon={<UserPlus className="h-6 w-6" />}
-          value="42"
+          value={stats.new_members_this_month.toLocaleString()}
           label="New This Month"
-          change="+5.2%"
+          change={formatChange(stats.new_members_change_percent)}
+          changePositive={stats.new_members_change_percent >= 0}
           borderTopColor="#1387FF"
         />
       </div>
 
       {/* Charts */}
       <div className="flex flex-wrap gap-[66px]">
-        <MonthlyTrendChart />
-        <TithingOfferingsChart />
+        <MonthlyTrendChart data={titheStats.monthly_trend} />
+        <TithingOfferingsChart
+          titheTotal={titheStats.this_month.tithe_total}
+          offeringTotal={titheStats.this_month.offering_total}
+          titheByWeek={titheStats.this_month.tithe_by_week}
+          offeringByWeek={titheStats.this_month.offering_by_week}
+        />
       </div>
 
       {/* Filters */}

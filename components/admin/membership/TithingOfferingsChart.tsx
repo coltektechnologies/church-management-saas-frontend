@@ -2,24 +2,31 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts';
 
-const titheData = [
-  { name: 'W1', value: 40 },
-  { name: 'W2', value: 65 },
-  { name: 'W3', value: 55 },
-  { name: 'W4', value: 80 },
-];
-
-const offeringData = [
-  { name: 'W1', value: 30 },
-  { name: 'W2', value: 45 },
-  { name: 'W3', value: 50 },
-  { name: 'W4', value: 60 },
-];
-
 const TITHE_COLOR = '#14b8a6';
 const OFFERING_COLOR = '#1e3a5f';
 
-export default function TithingOfferingsChart() {
+const defaultWeekData = [
+  { name: 'W1', value: 0 },
+  { name: 'W2', value: 0 },
+  { name: 'W3', value: 0 },
+  { name: 'W4', value: 0 },
+];
+
+interface TithingOfferingsChartProps {
+  titheTotal?: string;
+  offeringTotal?: string;
+  titheByWeek?: { name: string; value: number }[];
+  offeringByWeek?: { name: string; value: number }[];
+}
+
+export default function TithingOfferingsChart({
+  titheTotal = '0',
+  offeringTotal = '0',
+  titheByWeek = defaultWeekData,
+  offeringByWeek = defaultWeekData,
+}: TithingOfferingsChartProps) {
+  const titheData = titheByWeek.length ? titheByWeek : defaultWeekData;
+  const offeringData = offeringByWeek.length ? offeringByWeek : defaultWeekData;
   return (
     <div
       className="p-6 flex flex-col"
@@ -36,7 +43,9 @@ export default function TithingOfferingsChart() {
         <div className="flex flex-col h-full">
           <div className="flex items-baseline gap-2 mb-4 flex-wrap">
             <span className="text-sm text-gray-500">Tithing</span>
-            <span className="text-2xl font-bold text-gray-900">250,025,222</span>
+            <span className="text-2xl font-bold text-gray-900">
+              {Number(titheTotal).toLocaleString()}
+            </span>
           </div>
           <div className="h-[140px] flex-1 min-h-[140px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -61,7 +70,9 @@ export default function TithingOfferingsChart() {
         <div className="flex flex-col h-full">
           <div className="flex items-baseline gap-2 mb-4 flex-wrap">
             <span className="text-sm text-gray-500">Offerings</span>
-            <span className="text-2xl font-bold text-gray-900">250,025</span>
+            <span className="text-2xl font-bold text-gray-900">
+              {Number(offeringTotal).toLocaleString()}
+            </span>
           </div>
           <div className="h-[140px] flex-1 min-h-[140px]">
             <ResponsiveContainer width="100%" height="100%">

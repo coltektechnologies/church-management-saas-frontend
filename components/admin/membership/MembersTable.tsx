@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -20,10 +22,15 @@ import {
   LayoutList,
   ChevronLeft,
   ChevronRight,
+  Mail,
+  Download,
+  RefreshCw,
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { getMembers, deleteMember, type MemberListItem } from '@/lib/api';
 
-interface Member {
+interface MemberRow {
   id: string;
   name: string;
   memberId: string;
@@ -32,77 +39,8 @@ interface Member {
   department: string;
   role: string;
   status: string;
-  memberSince: Date;
+  memberSince: string;
 }
-
-const mockMembers: Member[] = [
-  {
-    id: '1',
-    name: 'Pastor Owusu William',
-    memberId: 'SDA2026-014',
-    phone: '+233 596 038 258',
-    email: 'owusuwilliam2344@gmail.com',
-    department: 'Treasury, Adventist Youth Sabbath School',
-    role: 'Admin',
-    status: 'Active',
-    memberSince: new Date(2026, 0, 9),
-  },
-  {
-    id: '2',
-    name: 'Elder Kofi Mensah',
-    memberId: 'SDA2026-015',
-    phone: '+233 550 123 456',
-    email: 'kofimensah@gmail.com',
-    department: 'Treasury, Adventist Youth Sabbath School',
-    role: 'Core Admin',
-    status: 'Pending',
-    memberSince: new Date(2026, 0, 10),
-  },
-  {
-    id: '3',
-    name: 'Sis Abena Osei',
-    memberId: 'SDA2026-016',
-    phone: '+233 244 789 012',
-    email: 'abenaosei@gmail.com',
-    department: 'Treasury, Adventist Youth Sabbath School',
-    role: 'Member',
-    status: 'Active',
-    memberSince: new Date(2026, 0, 8),
-  },
-  {
-    id: '4',
-    name: 'Bro Kwame Asante',
-    memberId: 'SDA2026-017',
-    phone: '+233 554 321 098',
-    email: 'kwameasante@gmail.com',
-    department: 'Treasury, Adventist Youth Sabbath School',
-    role: 'Department Head',
-    status: 'Active',
-    memberSince: new Date(2025, 11, 15),
-  },
-  {
-    id: '5',
-    name: 'Sis Grace Addo',
-    memberId: 'SDA2026-018',
-    phone: '+233 201 456 789',
-    email: 'graceaddo@gmail.com',
-    department: 'Treasury, Adventist Youth Sabbath School',
-    role: 'Core Admin',
-    status: 'Pending',
-    memberSince: new Date(2026, 0, 11),
-  },
-  {
-    id: '6',
-    name: 'Elder Daniel Tetteh',
-    memberId: 'SDA2026-019',
-    phone: '+233 577 654 321',
-    email: 'danieltetteh@gmail.com',
-    department: 'Treasury, Adventist Youth Sabbath School',
-    role: 'Core Admin',
-    status: 'Active',
-    memberSince: new Date(2025, 10, 20),
-  },
-];
 
 const roleStyles: Record<string, string> = {
   Admin: 'bg-red-100 text-red-800',
@@ -112,25 +50,222 @@ const roleStyles: Record<string, string> = {
 };
 
 const statusStyles: Record<string, string> = {
-  Active: 'border-green-500 text-green-600 bg-white',
-  Pending: 'border-amber-500 text-amber-600 bg-white',
+  ACTIVE: 'border-green-500 text-green-600 bg-white',
+  INACTIVE: 'border-gray-400 text-gray-600 bg-gray-50',
+  PENDING: 'border-amber-500 text-amber-600 bg-white',
+  TRANSFER: 'border-blue-500 text-blue-600 bg-white',
+  NEW_CONVERT: 'border-teal-500 text-teal-600 bg-white',
 };
+
+function mapToRow(m: MemberListItem): MemberRow {
+  const loc = m.location as { phone_primary?: string; email?: string } | undefined;
+  return {
+    id: m.id,
+    name: m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || '—',
+    memberId: m.id.slice(0, 8).toUpperCase(),
+    phone: loc?.phone_primary || (m as { phone_primary?: string }).phone_primary || '—',
+    email: loc?.email || (m as { email?: string }).email || '—',
+    department: '—',
+    role: 'Member',
+    status: m.membership_status || 'ACTIVE',
+    memberSince: m.member_since || '',
+  };
+}
 
 function getInitials(name: string) {
   return name
     .split(' ')
     .map((n) => n[0])
     .join('')
-    .slice(0, 2);
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 export default function MembersTable() {
+  const router = useRouter();
+  const [members, setMembers] = useState<MemberRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const totalPages = 3;
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getMembers()
+      .then((data) => setMembers(data.map(mapToRow)))
+      .catch(() => setMembers([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalPages = Math.max(1, Math.ceil(members.length / perPage));
+  const paginated = members.slice((page - 1) * perPage, page * perPage);
+  const selectedCount = selectedIds.size;
+  const isAllSelected = paginated.length > 0 && paginated.every((m) => selectedIds.has(m.id));
+  const isSomeSelected = selectedIds.size > 0;
+  const selectedMemberId = selectedCount === 1 ? Array.from(selectedIds)[0] : null;
+
+  const toggleMember = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginated.map((m) => m.id)));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleView = (id: string) => router.push(`/admin/members/${id}`);
+  const handleEdit = (id: string) => router.push(`/admin/members/${id}/edit`);
+  const handleSendMessage = (id: string) => {
+    const m = members.find((x) => x.id === id);
+    if (m?.phone || m?.email) {
+      window.location.href = m.phone ? `sms:${m.phone}` : `mailto:${m.email}`;
+    }
+  };
+  const handleDelete = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!confirm('Are you sure you want to delete this member?')) {
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await deleteMember(id);
+      setMembers((prev) => prev.filter((m) => m.id !== id));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    } catch {
+      alert('Failed to delete member');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleBulkView = () => {
+    if (selectedMemberId) {
+      router.push(`/admin/members/${selectedMemberId}`);
+    }
+  };
+  const handleBulkEdit = () => {
+    if (selectedMemberId) {
+      router.push(`/admin/members/${selectedMemberId}/edit`);
+    }
+  };
+  const handleBulkSendMessage = () => {
+    const ids = Array.from(selectedIds);
+    const m = members.find((x) => x.id === ids[0]);
+    if (m?.phone || m?.email) {
+      window.location.href = m.phone ? `sms:${m.phone}` : `mailto:${m.email}`;
+    }
+  };
+  const handleBulkSendEmail = () => {
+    const ids = Array.from(selectedIds);
+    const m = members.find((x) => x.id === ids[0]);
+    if (m?.email) {
+      window.location.href = `mailto:${m.email}`;
+    }
+  };
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedCount} member(s)? This cannot be undone.`)) {
+      return;
+    }
+    for (const id of selectedIds) {
+      try {
+        await deleteMember(id);
+        setMembers((prev) => prev.filter((m) => m.id !== id));
+      } catch {
+        // continue
+      }
+    }
+    clearSelection();
+  };
 
   return (
     <div className="space-y-4">
+      {/* Dynamic action bar when members are selected */}
+      {selectedCount > 0 && (
+        <div
+          className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm"
+          style={{ width: 1112 }}
+        >
+          <span className="text-sm font-medium text-gray-700">
+            {selectedCount} member{selectedCount !== 1 ? 's' : ''} selected
+          </span>
+          <div className="flex items-center gap-2">
+            {selectedMemberId && (
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleBulkView}>
+                <Eye className="h-4 w-4" />
+                View
+              </Button>
+            )}
+            {selectedMemberId && (
+              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleBulkEdit}>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={handleBulkSendMessage}
+            >
+              <MessageCircle className="h-4 w-4" />
+              Send Message
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={handleBulkSendEmail}
+            >
+              <Mail className="h-4 w-4" />
+              Send Email
+            </Button>
+            <Button size="sm" className="h-8 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+              <Download className="h-4 w-4" />
+              Export Selected
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+              <RefreshCw className="h-4 w-4" />
+              Update Status
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
+              onClick={handleBulkDelete}
+            >
+              <UserMinus className="h-4 w-4" />
+              Delete
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-gray-600 hover:text-gray-800"
+              onClick={clearSelection}
+            >
+              <X className="h-4 w-4" />
+              Clear
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div
         className="flex items-center justify-between px-4"
         style={{
@@ -176,7 +311,17 @@ export default function MembersTable() {
               style={{ height: 56, background: '#F6F8FA' }}
             >
               <TableHead className="w-12">
-                <input type="checkbox" className="rounded-none border-gray-300" />
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 min-w-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) {
+                      el.indeterminate = isSomeSelected && !isAllSelected;
+                    }
+                  }}
+                  onChange={toggleAll}
+                />
               </TableHead>
               <TableHead className="font-semibold text-gray-900">Member</TableHead>
               <TableHead className="font-semibold text-gray-900">Contact</TableHead>
@@ -190,92 +335,122 @@ export default function MembersTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockMembers.map((member) => (
-              <TableRow
-                key={member.id}
-                className="border-gray-200"
-                style={{ height: 70, borderBottom: '1px solid #e5e7eb' }}
-              >
-                <TableCell>
-                  <input type="checkbox" className="rounded-none border-gray-300" />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 bg-green-100">
-                      <AvatarFallback className="bg-green-100 text-green-700 text-sm">
-                        {getInitials(member.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium text-gray-900">{member.name}</p>
-                      <p className="text-sm text-gray-500">{member.memberId}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className="min-w-[140px] max-w-[180px] break-words whitespace-normal leading-tight">
-                  <div>
-                    <p className="font-medium text-gray-900">{member.phone}</p>
-                    <p className="text-sm text-gray-500">{member.email}</p>
-                  </div>
-                </TableCell>
-                <TableCell className="text-gray-700 min-w-[180px] max-w-[200px] break-words whitespace-normal leading-tight">
-                  {member.department}
-                </TableCell>
-                <TableCell className="min-w-[120px]">
-                  <span
-                    className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${
-                      roleStyles[member.role] || 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {member.role}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${
-                      statusStyles[member.status] || ''
-                    }`}
-                  >
-                    {member.status}
-                  </span>
-                </TableCell>
-                <TableCell className="text-gray-600">
-                  {format(member.memberSince, 'MMM d, yyyy')}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-500 hover:text-gray-700"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-500 hover:text-gray-700"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-500 hover:text-gray-700"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-500 hover:text-gray-700"
-                    >
-                      <UserMinus className="h-4 w-4" />
-                    </Button>
-                  </div>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="py-12 text-center text-gray-500">
+                  Loading members...
                 </TableCell>
               </TableRow>
-            ))}
+            ) : paginated.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="py-12 text-center text-gray-500">
+                  No members found
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginated.map((member) => (
+                <TableRow
+                  key={member.id}
+                  className="border-gray-200"
+                  style={{ height: 70, borderBottom: '1px solid #e5e7eb' }}
+                >
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 min-w-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                      checked={selectedIds.has(member.id)}
+                      onChange={() => toggleMember(member.id)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10 bg-green-100">
+                        <AvatarFallback className="bg-green-100 text-green-700 text-sm">
+                          {getInitials(member.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-gray-900">{member.name}</p>
+                        <p className="text-sm text-gray-500">{member.memberId}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="min-w-[140px] max-w-[180px] break-words whitespace-normal leading-tight">
+                    <div>
+                      <p className="font-medium text-gray-900">{member.phone}</p>
+                      <p className="text-sm text-gray-500">{member.email}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-gray-700 min-w-[180px] max-w-[200px] break-words whitespace-normal leading-tight">
+                    {member.department}
+                  </TableCell>
+                  <TableCell className="min-w-[120px]">
+                    <span
+                      className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${
+                        roleStyles[member.role] || 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {member.role}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${
+                        statusStyles[member.status] || 'border-gray-300 text-gray-600'
+                      }`}
+                    >
+                      {member.status?.replace(/_/g, ' ')}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-gray-600">
+                    {member.memberSince ? format(new Date(member.memberSince), 'MMM d, yyyy') : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/admin/members/${member.id}`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-gray-500 hover:text-gray-700"
+                          title="View"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link href={`/admin/members/${member.id}/edit`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-gray-500 hover:text-gray-700"
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-500 hover:text-gray-700"
+                        title="Send Message"
+                        onClick={() => handleSendMessage(member.id)}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
+                        title="Delete"
+                        onClick={(e) => handleDelete(member.id, e)}
+                        disabled={deletingId === member.id}
+                      >
+                        <UserMinus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
