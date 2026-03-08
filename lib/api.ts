@@ -332,7 +332,7 @@ export async function createMember(payload: CreateMemberPayload): Promise<Create
     throw new Error(msg);
   }
 
-  return data as CreateMemberResponse;
+  return data as unknown as CreateMemberResponse;
 }
 
 export interface MemberListItem {
