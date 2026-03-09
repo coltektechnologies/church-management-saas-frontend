@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
 import { useAnnouncementStore } from '@/store/useAnnouncementStore';
 import { AnnouncementsGrid } from '@/components/announcements/AnnouncementsGrid';
 import { FloatingActions } from '@/components/announcements/FloatingActions';
 import { QuickCreateModal } from '@/components/announcements/QuickCreateModal';
+import { TemplatesModal } from '@/components/announcements/TemplatesModal';
+import { CreateAnnouncementPayload } from '@/services/announcementService';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -37,10 +40,24 @@ const categories = [
 export default function AnnouncementsPage() {
   const { filters, setFilters, toggleStatus, resetFilters } = useAnnouncementStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [templatePayload, setTemplatePayload] = useState<
+    Partial<CreateAnnouncementPayload> | undefined
+  >();
 
   const { data: announcements = [], isLoading } = useAnnouncements(filters);
 
-  const statusOptions = ['Pending', 'Approved', 'Rejected', 'Scheduled', 'Archived'];
+  // Status configuration with custom icons
+  const statuses = [
+    { label: 'Pending', value: 'Pending', icon: '/announcements/pending.svg' },
+    { label: 'Approved', value: 'Approved', icon: '/announcements/approved.svg' },
+    { label: 'Rejected', value: 'Rejected', icon: '/announcements/rejected.svg' },
+    { label: 'Scheduled', value: 'Scheduled', icon: '/announcements/scheduled.svg' },
+    { label: 'Archived', value: 'Archived', icon: '/announcements/archived.svg' },
+  ];
+
+  const pendingCount = 1; // Can be computed based on stats API in the future
+  const isAllActive = !filters.status || filters.status.length === 0;
 
   const handleDateChange = (type: 'from' | 'to', value: string) => {
     const current = filters.dateRange || { from: '', to: '' };
@@ -136,38 +153,55 @@ export default function AnnouncementsPage() {
           <div className="w-full h-px bg-border my-1" />
 
           {/* Secondary Filters (Status Toggles) */}
-          <div className="flex items-center gap-5 overflow-x-auto shrink-0 pb-1">
-            <span className="text-sm font-medium flex items-center gap-2 whitespace-nowrap text-[var(--color-success)]">
-              <span className="flex size-4 items-center justify-center rounded text-[var(--color-success)]">
-                ✓
-              </span>{' '}
-              Status Filter
-            </span>
-            <div className="w-px h-4 bg-border hidden sm:block" />
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto shrink-0 pb-1 hide-scrollbar">
+            <button
+              onClick={() => setFilters({ status: [] })}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all whitespace-nowrap text-sm ${
+                isAllActive
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-muted-foreground hover:bg-muted font-medium'
+              }`}
+            >
+              <div className="relative size-[18px]">
+                <Image
+                  src="/announcements/all-annuncements.svg"
+                  alt="All"
+                  fill
+                  className={isAllActive ? 'opacity-100' : 'opacity-60'}
+                />
+              </div>
+              All Announcements
+            </button>
 
-            {statusOptions.map((status) => {
-              const isActive = (filters.status || []).includes(status as any);
+            <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+
+            {statuses.map((item) => {
+              const isActive = (filters.status || []).includes(item.value as any);
               return (
-                <label
-                  key={status}
-                  className="flex items-center gap-2 cursor-pointer whitespace-nowrap text-sm hover:text-foreground transition-colors group"
+                <button
+                  key={item.value}
+                  onClick={() => toggleStatus(item.value as any)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all whitespace-nowrap text-sm ${
+                    isActive
+                      ? 'bg-primary/10 text-primary font-semibold'
+                      : 'text-muted-foreground hover:bg-muted font-medium'
+                  }`}
                 >
-                  <div
-                    className={`size-4 rounded-full border flex items-center justify-center transition-colors ${
-                      isActive
-                        ? 'bg-foreground border-foreground'
-                        : 'border-muted-foreground/30 group-hover:border-foreground/50'
-                    }`}
-                    onClick={() => toggleStatus(status as any)}
-                  >
-                    {isActive && <div className="size-1.5 bg-background rounded-full" />}
+                  <div className="relative size-[18px]">
+                    <Image
+                      src={item.icon}
+                      alt={item.label}
+                      fill
+                      className={isActive ? 'opacity-100' : 'opacity-60'}
+                    />
                   </div>
-                  <span
-                    className={isActive ? 'font-medium text-foreground' : 'text-muted-foreground'}
-                  >
-                    {status}
-                  </span>
-                </label>
+                  <span>{item.label}</span>
+                  {item.value === 'Pending' && (
+                    <span className="flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full size-5 ml-1 leading-none pb-[1px]">
+                      {pendingCount}
+                    </span>
+                  )}
+                </button>
               );
             })}
           </div>
@@ -185,9 +219,28 @@ export default function AnnouncementsPage() {
         </div>
       </div>
 
-      <FloatingActions onOpenCreate={() => setIsModalOpen(true)} />
+      <FloatingActions
+        onOpenCreate={() => {
+          setTemplatePayload(undefined);
+          setIsModalOpen(true);
+        }}
+        onOpenTemplates={() => setIsTemplatesOpen(true)}
+      />
 
-      <QuickCreateModal open={isModalOpen} onOpenChange={setIsModalOpen} />
+      <QuickCreateModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        initialData={templatePayload}
+      />
+
+      <TemplatesModal
+        open={isTemplatesOpen}
+        onOpenChange={setIsTemplatesOpen}
+        onSelectTemplate={(payload) => {
+          setTemplatePayload(payload);
+          setIsModalOpen(true); // Open the create modal immediately after selecting simple template
+        }}
+      />
     </div>
   );
 }

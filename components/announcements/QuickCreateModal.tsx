@@ -36,11 +36,12 @@ import { useCreateAnnouncement } from '@/hooks/useCreateAnnouncement';
 interface QuickCreateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialData?: Partial<CreateAnnouncementPayload>;
 }
 
 const steps = [1, 2, 3, 4];
 
-export function QuickCreateModal({ open, onOpenChange }: QuickCreateModalProps) {
+export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreateModalProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<Partial<CreateAnnouncementPayload>>({
     category: 'General Church',
@@ -51,6 +52,35 @@ export function QuickCreateModal({ open, onOpenChange }: QuickCreateModalProps) 
     status: 'Pending',
     scheduledDate: '',
   });
+
+  // Sync incoming initialData if present when modal opens
+  React.useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFormData({
+          category: initialData.category || 'General Church',
+          priority: initialData.priority || 'Medium',
+          title: initialData.title || '',
+          content: initialData.content || '',
+          audience: initialData.audience || ['All Members'],
+          status: initialData.status || 'Pending',
+          scheduledDate: initialData.scheduledDate || '',
+        });
+      } else {
+        // Reset to default if no explicit template was passed
+        setFormData({
+          category: 'General Church',
+          priority: 'Medium',
+          title: '',
+          content: '',
+          audience: ['All Members'],
+          status: 'Pending',
+          scheduledDate: '',
+        });
+      }
+      setStep(1);
+    }
+  }, [open, initialData]);
 
   const [attachments, setAttachments] = useState<File[]>([]);
 
