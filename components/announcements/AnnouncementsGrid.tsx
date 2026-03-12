@@ -1,4 +1,3 @@
-import React from 'react';
 import { Announcement } from '@/services/announcementService';
 import { AnnouncementCard } from './AnnouncementCard';
 
@@ -8,6 +7,10 @@ interface AnnouncementsGridProps {
   onShare: (id: string) => void;
   onDelete: (id: string) => void;
   onView: (id: string) => void;
+  /** Present Mode selection props */
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 export function AnnouncementsGrid({
@@ -16,6 +19,9 @@ export function AnnouncementsGrid({
   onShare,
   onDelete,
   onView,
+  selectable = false,
+  selectedIds,
+  onToggleSelect,
 }: AnnouncementsGridProps) {
   if (isLoading) {
     return (
@@ -47,6 +53,9 @@ export function AnnouncementsGrid({
           onShare={onShare}
           onDelete={onDelete}
           onView={onView}
+          selectable={selectable}
+          selected={selectedIds?.has(announcement.id)}
+          onToggleSelect={onToggleSelect}
         />
       ))}
     </div>

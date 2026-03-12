@@ -136,8 +136,11 @@ export default function TreasuryPage() {
           <PendingExpenseRequests
             data={expenseRequests}
             isLoading={loadingRequests}
+            // eslint-disable-next-line no-console
             onApprove={(id) => console.log('Approve', id)}
+            // eslint-disable-next-line no-console
             onReject={(id) => console.log('Reject', id)}
+            // eslint-disable-next-line no-console
             onView={(id) => console.log('View', id)}
           />
         </TabsContent>

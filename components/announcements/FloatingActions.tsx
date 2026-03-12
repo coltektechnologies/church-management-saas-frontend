@@ -1,13 +1,22 @@
-import React from 'react';
 import { Plus, FileText, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FloatingActionsProps {
   onOpenCreate: () => void;
   onOpenTemplates: () => void;
+  /** When true, hide floating buttons (present mode takes focus) */
+  hidden?: boolean;
 }
 
-export function FloatingActions({ onOpenCreate, onOpenTemplates }: FloatingActionsProps) {
+export function FloatingActions({
+  onOpenCreate,
+  onOpenTemplates,
+  hidden = false,
+}: FloatingActionsProps) {
+  if (hidden) {
+    return null;
+  }
+
   return (
     <div className="fixed bottom-8 right-8 flex flex-col items-center gap-4 z-40">
       <div className="relative group">

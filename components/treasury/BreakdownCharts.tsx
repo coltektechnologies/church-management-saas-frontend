@@ -13,12 +13,12 @@ interface BreakdownChartsProps {
 
 function DonutChart({
   title,
-  totalLabel,
+  _totalLabel,
   data,
   isLoading,
 }: {
   title: string;
-  totalLabel: string;
+  _totalLabel: string;
   data?: { name: string; value: number; color: string }[];
   isLoading: boolean;
 }) {
@@ -92,13 +92,13 @@ export function BreakdownCharts({ incomeData, expenseData, isLoading }: Breakdow
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <DonutChart
         title="💰 Income Breakdown"
-        totalLabel="Total Income"
+        _totalLabel="Total Income"
         data={incomeData}
         isLoading={isLoading}
       />
       <DonutChart
         title="💸 Expense Breakdown"
-        totalLabel="Total Expenses"
+        _totalLabel="Total Expenses"
         data={expenseData}
         isLoading={isLoading}
       />

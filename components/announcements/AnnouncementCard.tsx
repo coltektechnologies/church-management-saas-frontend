@@ -1,14 +1,8 @@
-import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Share2, Eye, Trash2, Calendar, User, Users, Pencil } from 'lucide-react';
-import {
-  Announcement,
-  AnnouncementCategory,
-  PriorityLevel,
-  AnnouncementStatus,
-} from '@/services/announcementService';
+import { Share2, Eye, Trash2, Calendar, User, Users, Pencil, Check } from 'lucide-react';
+import { Announcement, AnnouncementCategory, PriorityLevel } from '@/services/announcementService';
 import { format } from 'date-fns';
 
 interface AnnouncementCardProps {
@@ -17,6 +11,10 @@ interface AnnouncementCardProps {
   onDelete?: (id: string) => void;
   onView?: (id: string) => void;
   onEdit?: (id: string) => void;
+  /** Present Mode props */
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 const categoryColors: Record<AnnouncementCategory | 'All', string> = {
@@ -47,14 +45,41 @@ export function AnnouncementCard({
   onDelete,
   onView,
   onEdit,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }: AnnouncementCardProps) {
   const catColor = categoryColors[announcement.category] || categoryColors.All;
 
+  const handleCardClick = () => {
+    if (selectable && onToggleSelect) {
+      onToggleSelect(announcement.id);
+    }
+  };
+
   return (
     <Card
-      className="relative overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-md group flex flex-col h-full border-l-4"
+      className={`relative overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-md group flex flex-col h-full border-l-4 ${
+        selectable ? 'cursor-pointer' : ''
+      } ${selected ? 'ring-2 ring-primary shadow-md' : ''}`}
       style={{ borderLeftColor: catColor }}
+      onClick={selectable ? handleCardClick : undefined}
     >
+      {/* Selection checkbox overlay */}
+      {selectable && (
+        <div className="absolute top-3 right-3 z-10">
+          <div
+            className={`flex items-center justify-center size-6 rounded-md border-2 transition-all duration-200 ${
+              selected
+                ? 'bg-primary border-primary text-primary-foreground'
+                : 'border-muted-foreground/40 bg-background hover:border-primary'
+            }`}
+          >
+            {selected && <Check className="size-3.5" strokeWidth={3} />}
+          </div>
+        </div>
+      )}
+
       <CardHeader className="pb-3 flex-row justify-between items-start space-y-0">
         <div className="flex flex-col gap-1">
           <span
@@ -67,9 +92,11 @@ export function AnnouncementCard({
             {announcement.title}
           </h3>
         </div>
-        <Badge variant="outline" className={priorityStyles[announcement.priority]}>
-          {announcement.priority}
-        </Badge>
+        {!selectable && (
+          <Badge variant="outline" className={priorityStyles[announcement.priority]}>
+            {announcement.priority}
+          </Badge>
+        )}
       </CardHeader>
 
       <CardContent className="flex-grow pb-4">
@@ -91,47 +118,59 @@ export function AnnouncementCard({
         </div>
       </CardContent>
 
-      <CardFooter className="pt-0 justify-between items-center border-t px-6 py-3 mt-auto bg-muted/20">
-        <span className="text-xs font-medium text-foreground">{announcement.status}</span>
-        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 focus-within:opacity-100 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={() => onView?.(announcement.id)}
-            title="View"
-          >
-            <Eye className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 text-primary hover:text-primary hover:bg-primary/10"
-            onClick={() => onEdit?.(announcement.id)}
-            title="Edit"
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={() => onShare?.(announcement.id)}
-            title="Share"
-          >
-            <Share2 className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => onDelete?.(announcement.id)}
-            title="Delete"
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      </CardFooter>
+      {!selectable && (
+        <CardFooter className="pt-0 justify-between items-center border-t px-6 py-3 mt-auto bg-muted/20">
+          <span className="text-xs font-medium text-foreground">{announcement.status}</span>
+          <div className="flex items-center gap-1 opacity-100 sm:opacity-0 focus-within:opacity-100 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={() => onView?.(announcement.id)}
+              title="View"
+            >
+              <Eye className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-primary hover:text-primary hover:bg-primary/10"
+              onClick={() => onEdit?.(announcement.id)}
+              title="Edit"
+            >
+              <Pencil className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={() => onShare?.(announcement.id)}
+              title="Share"
+            >
+              <Share2 className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => onDelete?.(announcement.id)}
+              title="Delete"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        </CardFooter>
+      )}
+
+      {/* In selectable mode, show a simpler footer */}
+      {selectable && (
+        <CardFooter className="pt-0 justify-between items-center border-t px-6 py-3 mt-auto bg-muted/20">
+          <span className="text-xs font-medium text-foreground">{announcement.status}</span>
+          <Badge variant="outline" className={priorityStyles[announcement.priority]}>
+            {announcement.priority}
+          </Badge>
+        </CardFooter>
+      )}
     </Card>
   );
 }
