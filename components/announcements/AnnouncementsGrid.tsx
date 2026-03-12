@@ -6,6 +6,7 @@ interface AnnouncementsGridProps {
   isLoading: boolean;
   onShare: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit?: (id: string) => void;
   onView: (id: string) => void;
   /** Present Mode selection props */
   selectable?: boolean;
@@ -18,6 +19,7 @@ export function AnnouncementsGrid({
   isLoading,
   onShare,
   onDelete,
+  onEdit,
   onView,
   selectable = false,
   selectedIds,
@@ -52,6 +54,7 @@ export function AnnouncementsGrid({
           announcement={announcement}
           onShare={onShare}
           onDelete={onDelete}
+          onEdit={onEdit}
           onView={onView}
           selectable={selectable}
           selected={selectedIds?.has(announcement.id)}

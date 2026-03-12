@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCreateAnnouncement } from '@/hooks/useCreateAnnouncement';
+import { useUpdateAnnouncement } from '@/hooks/useUpdateAnnouncement';
 
 interface QuickCreateModalProps {
   open: boolean;
@@ -43,7 +44,7 @@ const steps = [1, 2, 3, 4];
 
 export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreateModalProps) {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<Partial<CreateAnnouncementPayload>>({
+  const [formData, setFormData] = useState<Partial<CreateAnnouncementPayload> & { id?: string }>({
     category: 'General Church',
     priority: 'Medium',
     title: '',
@@ -58,13 +59,21 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
     if (open) {
       if (initialData) {
         setFormData({
+          id: (initialData as any).id,
           category: initialData.category || 'General Church',
           priority: initialData.priority || 'Medium',
           title: initialData.title || '',
           content: initialData.content || '',
           audience: initialData.audience || ['All Members'],
           status: initialData.status || 'Pending',
+          scheduleType: initialData.scheduleType || 'Instant',
           scheduledDate: initialData.scheduledDate || '',
+          displayDurationType: initialData.displayDurationType || 'OneTime',
+          displayDurationDays: initialData.displayDurationDays || 12,
+          targetDepartments: initialData.targetDepartments || [],
+          includeVisitors: initialData.includeVisitors || false,
+          sendSms: initialData.sendSms || false,
+          sendEmail: initialData.sendEmail || false,
         });
       } else {
         // Reset to default if no explicit template was passed
@@ -75,7 +84,14 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
           content: '',
           audience: ['All Members'],
           status: 'Pending',
+          scheduleType: 'Instant',
           scheduledDate: '',
+          displayDurationType: 'OneTime',
+          displayDurationDays: 12,
+          targetDepartments: [],
+          includeVisitors: false,
+          sendSms: false,
+          sendEmail: false,
         });
       }
       setStep(1);
@@ -85,6 +101,7 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
   const [attachments, setAttachments] = useState<File[]>([]);
 
   const createMutation = useCreateAnnouncement();
+  const updateMutation = useUpdateAnnouncement();
 
   const handleNext = () => {
     if (step < 4) {
@@ -107,19 +124,40 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
       content: '',
       audience: ['All Members'],
       status: 'Pending',
+      scheduleType: 'Instant',
       scheduledDate: '',
+      displayDurationType: 'OneTime',
+      displayDurationDays: 12,
+      targetDepartments: [],
+      includeVisitors: false,
+      sendSms: false,
+      sendEmail: false,
     });
     setAttachments([]);
   };
 
   const handleSubmit = (status: AnnouncementStatus) => {
-    const finalData = { ...formData, status } as CreateAnnouncementPayload;
-    createMutation.mutate(finalData, {
-      onSuccess: () => {
-        onOpenChange(false);
-        handleReset();
-      },
-    });
+    const finalData = { ...formData, status };
+    const { id, ...payload } = finalData;
+
+    if (id) {
+      updateMutation.mutate(
+        { id, payload },
+        {
+          onSuccess: () => {
+            onOpenChange(false);
+            handleReset();
+          },
+        }
+      );
+    } else {
+      createMutation.mutate(payload as CreateAnnouncementPayload, {
+        onSuccess: () => {
+          onOpenChange(false);
+          handleReset();
+        },
+      });
+    }
   };
 
   const isStep1Valid =
@@ -138,7 +176,7 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
       <DialogContent className="sm:max-w-[700px] h-[90vh] sm:h-auto max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle className="text-xl md:text-2xl text-[var(--color-success)]">
-            Create New Announcement
+            {formData.id ? 'Edit Announcement' : 'Create New Announcement'}
           </DialogTitle>
         </DialogHeader>
 
@@ -265,38 +303,165 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
             )}
 
             {step === 2 && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="space-y-2">
-                  <Label>Audience / Recipients</Label>
-                  <Select
-                    value={formData.audience?.[0]}
-                    onValueChange={(val) => setFormData({ ...formData, audience: [val] })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Audience" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All Members">All Members</SelectItem>
-                      <SelectItem value="Pastors">Pastors</SelectItem>
-                      <SelectItem value="Leaders">Church Leaders</SelectItem>
-                      <SelectItem value="Youth">Youth Group</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Select who should see this announcement on their dashboard.
-                  </p>
+              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 pb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Schedule Settings */}
+                  <div className="space-y-4">
+                    <Label className="text-base">Schedule Settings</Label>
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-3 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="scheduleType"
+                          className="size-4 accent-primary"
+                          checked={formData.scheduleType === 'Instant'}
+                          onChange={() => setFormData({ ...formData, scheduleType: 'Instant' })}
+                        />
+                        Instant Announce
+                      </label>
+                      <label className="flex items-center gap-3 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="scheduleType"
+                          className="size-4 accent-primary"
+                          checked={formData.scheduleType === 'SpecificDate'}
+                          onChange={() =>
+                            setFormData({ ...formData, scheduleType: 'SpecificDate' })
+                          }
+                        />
+                        Schedule for specific date/time
+                      </label>
+                      {formData.scheduleType === 'SpecificDate' && (
+                        <div className="pl-7 pt-1">
+                          <Input
+                            type="datetime-local"
+                            value={formData.scheduledDate || ''}
+                            onChange={(e) =>
+                              setFormData({ ...formData, scheduledDate: e.target.value })
+                            }
+                            className="h-9"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Display Duration */}
+                  <div className="space-y-4">
+                    <Label className="text-base">Display Duration</Label>
+                    <div className="space-y-3">
+                      <label className="flex items-center gap-3 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="durationType"
+                          className="size-4 accent-primary"
+                          checked={formData.displayDurationType === 'OneTime'}
+                          onChange={() =>
+                            setFormData({ ...formData, displayDurationType: 'OneTime' })
+                          }
+                        />
+                        One time only
+                      </label>
+                      <label className="flex items-center gap-3 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="durationType"
+                          className="size-4 accent-primary"
+                          checked={formData.displayDurationType === 'Duration'}
+                          onChange={() =>
+                            setFormData({ ...formData, displayDurationType: 'Duration' })
+                          }
+                        />
+                        Display for
+                        <Input
+                          type="number"
+                          className="w-16 h-8 text-center px-1"
+                          value={formData.displayDurationDays || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              displayDurationDays: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          disabled={formData.displayDurationType !== 'Duration'}
+                        />
+                        days
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Scheduling (Optional)</Label>
-                  <Input
-                    type="datetime-local"
-                    value={formData.scheduledDate || ''}
-                    onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Leave blank to publish immediately upon approval.
-                  </p>
+                {/* Target Audience */}
+                <div className="space-y-4">
+                  <Label className="text-base">Target Audience</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <label className="flex items-center gap-3 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary rounded-sm"
+                        checked={formData.audience?.includes('All Members')}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData({
+                            ...formData,
+                            audience: checked ? ['All Members'] : [],
+                          });
+                        }}
+                      />
+                      All Members
+                    </label>
+                    <label className="flex items-center gap-3 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary rounded-sm"
+                        checked={(formData.targetDepartments || []).length > 0}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setFormData({
+                            ...formData,
+                            targetDepartments: checked ? ['Workers', 'Choir'] : [],
+                          });
+                        }}
+                      />
+                      Specific Departments
+                    </label>
+                    <label className="flex items-center gap-3 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary rounded-sm"
+                        checked={formData.includeVisitors}
+                        onChange={(e) =>
+                          setFormData({ ...formData, includeVisitors: e.target.checked })
+                        }
+                      />
+                      Include Visitors
+                    </label>
+                  </div>
+                </div>
+
+                {/* Notification Settings */}
+                <div className="space-y-4">
+                  <Label className="text-base">Notification Settings</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <label className="flex items-center gap-3 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary rounded-sm"
+                        checked={formData.sendSms}
+                        onChange={(e) => setFormData({ ...formData, sendSms: e.target.checked })}
+                      />
+                      Send SMS Notification
+                    </label>
+                    <label className="flex items-center gap-3 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary rounded-sm"
+                        checked={formData.sendEmail}
+                        onChange={(e) => setFormData({ ...formData, sendEmail: e.target.checked })}
+                      />
+                      Send Email Notification
+                    </label>
+                  </div>
                 </div>
               </div>
             )}
@@ -325,16 +490,38 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">Audience</span>
-                    <p className="text-sm">{formData.audience?.join(', ')}</p>
+                    <p className="text-sm">
+                      {formData.audience?.join(', ')}
+                      {formData.includeVisitors && ' (+ Visitors)'}
+                    </p>
                   </div>
-                  {formData.scheduledDate && (
+                  <div>
+                    <span className="text-xs text-muted-foreground">Schedule</span>
+                    <p className="text-sm font-medium">
+                      {formData.scheduleType === 'Instant'
+                        ? 'Instant Announce'
+                        : `Scheduled for: ${new Date(formData.scheduledDate || '').toLocaleString()}`}
+                    </p>
+                  </div>
+                  <div className="flex justify-between items-start">
                     <div>
-                      <span className="text-xs text-muted-foreground">Scheduled For</span>
-                      <p className="text-sm font-medium text-warning">
-                        {new Date(formData.scheduledDate).toLocaleString()}
+                      <span className="text-xs text-muted-foreground">Duration</span>
+                      <p className="text-sm text-foreground/80">
+                        {formData.displayDurationType === 'OneTime'
+                          ? 'One time only'
+                          : `Display for ${formData.displayDurationDays} days`}
                       </p>
                     </div>
-                  )}
+                    {/* Notifications */}
+                    <div className="text-right">
+                      <span className="text-xs text-muted-foreground">Notifications</span>
+                      <p className="text-sm text-foreground/80">
+                        {[formData.sendSms && 'SMS', formData.sendEmail && 'Email']
+                          .filter(Boolean)
+                          .join(', ') || 'None'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -431,16 +618,16 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
                   <Button
                     variant="outline"
                     onClick={() => handleSubmit('Pending')}
-                    disabled={createMutation.isPending}
+                    disabled={createMutation.isPending || updateMutation.isPending}
                   >
                     Save Draft
                   </Button>
                   <Button
                     onClick={() => handleSubmit('Approved')}
-                    disabled={createMutation.isPending}
+                    disabled={createMutation.isPending || updateMutation.isPending}
                     className="bg-[var(--color-success)] hover:bg-[var(--color-success)]/90 text-primary"
                   >
-                    Publish
+                    {formData.id ? 'Save Changes' : 'Publish'}
                   </Button>
                 </>
               )}

@@ -5,7 +5,11 @@ import React, { useState, useEffect, useCallback, useRef, useMemo, Suspense } fr
 import { useSearchParams } from 'next/navigation';
 import { AnnouncementSlide, GroupHeaderSlide } from '@/components/announcements/AnnouncementSlide';
 import { getDisplayTemplate, DISPLAY_TEMPLATES } from '@/services/displayTemplates';
-import { announcementService, type Announcement } from '@/services/announcementService';
+import {
+  announcementService,
+  type Announcement,
+  type AnnouncementStatus,
+} from '@/services/announcementService';
 import type {
   TransitionStyle,
   GroupingOrder,
@@ -118,7 +122,10 @@ export function PresentationClient() {
   // Fetch announcements
   useEffect(() => {
     async function load() {
-      const all = await announcementService.fetchAnnouncements({ status: ['Approved'] });
+      // If ids are provided, fetch all so we don't accidentally filter out selected non-approved ones
+      const fetchParams = idsParam ? {} : { status: ['Approved'] as AnnouncementStatus[] };
+      const all = await announcementService.fetchAnnouncements(fetchParams);
+
       let selected: Announcement[];
       if (idsParam) {
         const ids = idsParam.split(',');
@@ -221,6 +228,37 @@ export function PresentationClient() {
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
+  // Wheel events (debounced to avoid rapid scrolling)
+  const wheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      resetControlsTimer();
+      // Only process wheel events if we are not currently debouncing
+      if (wheelTimer.current) {
+        return;
+      }
+
+      // Simple debounce for 800ms
+      wheelTimer.current = setTimeout(() => {
+        wheelTimer.current = null;
+      }, 800);
+
+      if (e.deltaY > 0 || e.deltaX > 0) {
+        setCurrentIndex((prev) => Math.min(prev + 1, slides.length - 1));
+      } else if (e.deltaY < 0 || e.deltaX < 0) {
+        setCurrentIndex((prev) => Math.max(prev - 1, 0));
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      if (wheelTimer.current) {
+        clearTimeout(wheelTimer.current);
+      }
+    };
+  }, [slides.length, resetControlsTimer]);
+
   const goNext = () => setCurrentIndex((prev) => Math.min(prev + 1, slides.length - 1));
   const goPrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
 
@@ -243,176 +281,261 @@ export function PresentationClient() {
 
   if (slides.length === 0) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center bg-background">
+      <div className="w-screen h-screen flex items-center justify-center bg-zinc-950 text-white">
         <div className="text-center">
-          <div className="size-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-            <Layers className="size-6 text-muted-foreground" />
+          <div className="size-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+            <Layers className="size-6 text-white/60" />
           </div>
           <h2 className="text-xl font-semibold mb-2">Loading Presentation...</h2>
-          <p className="text-muted-foreground text-sm">Preparing your slides</p>
+          <p className="text-white/60 text-sm">Preparing your slides</p>
         </div>
       </div>
     );
   }
 
-  // const currentSlide = slides[currentIndex];
-
   return (
     <div
       ref={containerRef}
-      className="relative w-screen h-screen overflow-hidden bg-black select-none"
+      className={`flex bg-zinc-950 text-white overflow-hidden select-none ${
+        isFullscreen ? 'w-screen h-screen' : 'w-full h-full'
+      }`}
       onMouseMove={resetControlsTimer}
       onClick={resetControlsTimer}
     >
-      {/* Slides container */}
-      {transition === 'fade' ? (
-        /* Fade mode: stack all slides, only show current */
-        <div className="relative w-full h-full">
-          {slides.map((slide, i) => (
-            <div
-              key={i}
-              className="absolute inset-0 transition-opacity duration-700 ease-in-out"
-              style={{ opacity: i === clampedIndex ? 1 : 0, zIndex: i === clampedIndex ? 1 : 0 }}
-            >
-              {slide.type === 'group-header' ? (
-                <GroupHeaderSlide
-                  label={slide.groupLabel!}
-                  count={slide.groupCount!}
-                  template={template}
-                  fullscreen
-                />
-              ) : (
-                <AnnouncementSlide
-                  announcement={slide.announcement!}
-                  template={template}
-                  groupLabel={grouping !== 'none' ? slide.groupLabel : undefined}
-                  fullscreen
-                />
-              )}
-            </div>
-          ))}
+      {/* Thumbnails Sidebar (only outside fullscreen) */}
+      {!isFullscreen && (
+        <div className="w-72 shrink-0 border-r border-white/10 flex flex-col bg-zinc-900 z-10 hidden md:flex">
+          <div className="p-4 border-b border-white/10 font-semibold text-sm flex items-center justify-between">
+            <span>Presentation Setup</span>
+            <span className="text-xs text-white/50 bg-white/10 px-2 py-0.5 rounded-full">
+              {slides.length} slides
+            </span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            {slides.map((slide, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentIndex(i)}
+                className={`w-full text-left group transition-all`}
+              >
+                <div className="flex items-center justify-between mb-1.5 px-1">
+                  <span className="text-xs font-medium text-white/60 group-hover:text-white transition-colors">
+                    {i + 1}
+                  </span>
+                  {slide.type === 'group-header' && (
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-primary">
+                      Header
+                    </span>
+                  )}
+                </div>
+                <div
+                  className={`w-full aspect-video rounded-lg overflow-hidden border-2 transition-all relative ${
+                    i === clampedIndex
+                      ? 'border-primary ring-4 ring-primary/20 scale-[1.02]'
+                      : 'border-white/10 group-hover:border-white/30'
+                  }`}
+                >
+                  {/* Miniature Slide Preview */}
+                  <div className="absolute inset-0 bg-black">
+                    <div className="w-[400%] h-[400%] origin-top-left scale-[0.25] pointer-events-none">
+                      {slide.type === 'group-header' ? (
+                        <GroupHeaderSlide
+                          label={slide.groupLabel!}
+                          count={slide.groupCount!}
+                          template={template}
+                          fullscreen
+                        />
+                      ) : (
+                        <AnnouncementSlide
+                          announcement={slide.announcement!}
+                          template={template}
+                          groupLabel={grouping !== 'none' ? slide.groupLabel : undefined}
+                          fullscreen
+                        />
+                      )}
+                    </div>
+                  </div>
+                  {/* Overlay for inactive slides to make them look faded */}
+                  {i !== clampedIndex && (
+                    <div className="absolute inset-0 bg-black/40 transition-opacity group-hover:bg-black/20" />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        /* Horizontal / Vertical scroll mode */
+      )}
+
+      {/* Main Slide Area */}
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+        {/* Aspect Ratio Container for Main Presentation Area */}
         <div
-          className="flex h-full"
+          className="relative bg-black shrink-0 overflow-hidden shadow-2xl"
+          style={
+            isFullscreen
+              ? { width: '100%', height: '100%' }
+              : {
+                  width: '100%',
+                  maxWidth: 'calc(100vh * 16 / 9)',
+                  aspectRatio: '16/9',
+                  borderRadius: '0.75rem',
+                }
+          }
+        >
+          {/* Slides container */}
+          {transition === 'fade' ? (
+            /* Fade mode: stack all slides, only show current */
+            <div className="relative w-full h-full">
+              {slides.map((slide, i) => (
+                <div
+                  key={i}
+                  className="absolute inset-0 transition-opacity duration-700 ease-in-out"
+                  style={{
+                    opacity: i === clampedIndex ? 1 : 0,
+                    zIndex: i === clampedIndex ? 1 : 0,
+                  }}
+                >
+                  {slide.type === 'group-header' ? (
+                    <GroupHeaderSlide
+                      label={slide.groupLabel!}
+                      count={slide.groupCount!}
+                      template={template}
+                      fullscreen
+                    />
+                  ) : (
+                    <AnnouncementSlide
+                      announcement={slide.announcement!}
+                      template={template}
+                      groupLabel={grouping !== 'none' ? slide.groupLabel : undefined}
+                      fullscreen
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Horizontal / Vertical scroll mode */
+            <div
+              className={`flex w-full h-full ${transition === 'vertical' ? 'flex-col' : 'flex-row'}`}
+              style={getTransitionStyle()}
+            >
+              {slides.map((slide, i) => (
+                <div key={i} className="shrink-0 w-full h-full relative">
+                  {slide.type === 'group-header' ? (
+                    <GroupHeaderSlide
+                      label={slide.groupLabel!}
+                      count={slide.groupCount!}
+                      template={template}
+                      fullscreen
+                    />
+                  ) : (
+                    <AnnouncementSlide
+                      announcement={slide.announcement!}
+                      template={template}
+                      groupLabel={grouping !== 'none' ? slide.groupLabel : undefined}
+                      fullscreen
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Presenter controls toolbar */}
+        <div
+          className="absolute bottom-6 left-0 right-0 z-50 transition-all duration-300 flex justify-center"
           style={{
-            ...(transition === 'vertical' ? { flexDirection: 'column' } : {}),
-            ...getTransitionStyle(),
-            width: transition === 'horizontal' ? `${slides.length * 100}vw` : '100vw',
-            height: transition === 'vertical' ? `${slides.length * 100}vh` : '100vh',
+            opacity: showControls ? 1 : 0,
+            transform: showControls ? 'translateY(0)' : 'translateY(20px)',
           }}
         >
-          {slides.map((slide, i) => (
-            <div
-              key={i}
-              className="shrink-0"
-              style={{
-                width: '100vw',
-                height: '100vh',
-              }}
-            >
-              {slide.type === 'group-header' ? (
-                <GroupHeaderSlide
-                  label={slide.groupLabel!}
-                  count={slide.groupCount!}
-                  template={template}
-                  fullscreen
-                />
-              ) : (
-                <AnnouncementSlide
-                  announcement={slide.announcement!}
-                  template={template}
-                  groupLabel={grouping !== 'none' ? slide.groupLabel : undefined}
-                  fullscreen
-                />
+          <div className="flex items-center justify-between gap-4 px-3 py-2 rounded-2xl bg-black/70 backdrop-blur-lg border border-white/10 text-white shadow-2xl">
+            {/* Left: nav arrows */}
+            <div className="flex items-center gap-1">
+              <button
+                title="Go Previous"
+                onClick={goPrev}
+                disabled={clampedIndex === 0}
+                className="p-2 rounded-xl hover:bg-white/10 disabled:opacity-30 transition-all"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <span className="text-sm font-medium px-3 tabular-nums w-20 text-center">
+                {clampedIndex + 1} / {slides.length}
+              </span>
+              <button
+                title="Go Next"
+                onClick={goNext}
+                disabled={clampedIndex === slides.length - 1}
+                className="p-2 rounded-xl hover:bg-white/10 disabled:opacity-30 transition-all"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </div>
+
+            {/* Center: play/pause + template */}
+            <div className="flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
+              <button
+                onClick={() => setIsPlaying((p) => !p)}
+                className="p-2 rounded-xl hover:bg-white/10 transition-all"
+                title={isPlaying ? 'Pause auto-play' : 'Start auto-play'}
+              >
+                {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+              </button>
+
+              <select
+                title="Select Template"
+                value={currentTemplateId}
+                onChange={(e) => setCurrentTemplateId(e.target.value)}
+                className="bg-white/10 border-none text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-white/30 cursor-pointer"
+              >
+                {DISPLAY_TEMPLATES.map((t) => (
+                  <option key={t.id} value={t.id} className="bg-gray-900">
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Right: fullscreen + close */}
+            <div className="flex items-center gap-1 border-l border-white/10 pl-4 ml-2">
+              <button
+                onClick={toggleFullscreen}
+                className="p-2 rounded-xl hover:bg-white/10 transition-all"
+                title="Toggle fullscreen (F)"
+              >
+                {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
+              </button>
+              {!isFullscreen && (
+                <button
+                  onClick={() => window.close()}
+                  className="p-2 rounded-xl hover:bg-red-500/20 text-red-400 transition-all"
+                  title="Close presentation"
+                >
+                  <X className="size-4" />
+                </button>
               )}
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Presenter controls toolbar */}
-      <div
-        className="absolute bottom-0 left-0 right-0 z-50 transition-all duration-300"
-        style={{
-          opacity: showControls ? 1 : 0,
-          transform: showControls ? 'translateY(0)' : 'translateY(100%)',
-        }}
-      >
-        <div className="flex items-center justify-between gap-4 mx-auto max-w-3xl mb-6 px-3 py-2 rounded-2xl bg-black/70 backdrop-blur-lg border border-white/10 text-white shadow-2xl">
-          {/* Left: nav arrows */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={goPrev}
-              disabled={clampedIndex === 0}
-              className="p-2 rounded-xl hover:bg-white/10 disabled:opacity-30 transition-all"
-            >
-              <ChevronLeft className="size-5" />
-            </button>
-            <span className="text-sm font-medium px-3 tabular-nums">
-              {clampedIndex + 1} / {slides.length}
-            </span>
-            <button
-              onClick={goNext}
-              disabled={clampedIndex === slides.length - 1}
-              className="p-2 rounded-xl hover:bg-white/10 disabled:opacity-30 transition-all"
-            >
-              <ChevronRight className="size-5" />
-            </button>
-          </div>
-
-          {/* Center: play/pause + template */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsPlaying((p) => !p)}
-              className="p-2 rounded-xl hover:bg-white/10 transition-all"
-              title={isPlaying ? 'Pause auto-play' : 'Start auto-play'}
-            >
-              {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-            </button>
-
-            <select
-              value={currentTemplateId}
-              onChange={(e) => setCurrentTemplateId(e.target.value)}
-              className="bg-white/10 border-none text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-white/30"
-            >
-              {DISPLAY_TEMPLATES.map((t) => (
-                <option key={t.id} value={t.id} className="bg-gray-900">
-                  {t.icon} {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Right: fullscreen + close */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 rounded-xl hover:bg-white/10 transition-all"
-              title="Toggle fullscreen (F)"
-            >
-              {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
-            </button>
-            <button
-              onClick={() => window.close()}
-              className="p-2 rounded-xl hover:bg-white/10 text-red-400 transition-all"
-              title="Close presentation"
-            >
-              <X className="size-4" />
-            </button>
           </div>
         </div>
+
+        {/* Keyboard hints (shown briefly) */}
+        {showControls && (
+          <div className="absolute top-4 right-4 z-50 text-white/40 text-xs space-y-1 select-none text-right">
+            <p className="flex items-center justify-end gap-2">
+              Navigate <span className="bg-white/10 px-1 rounded">←</span>{' '}
+              <span className="bg-white/10 px-1 rounded">→</span>
+            </p>
+            <p className="flex items-center justify-end gap-2">
+              Fullscreen <span className="bg-white/10 px-1 rounded">F</span>
+            </p>
+            <p className="flex items-center justify-end gap-2">
+              Play/Pause <span className="bg-white/10 px-1 rounded">P</span>
+            </p>
+          </div>
+        )}
       </div>
-
-      {/* Keyboard hints (shown briefly) */}
-      {showControls && (
-        <div className="absolute top-4 right-4 z-50 text-white/40 text-xs space-y-1 select-none">
-          <p>← → Navigate</p>
-          <p>F Fullscreen</p>
-          <p>P Play/Pause</p>
-        </div>
-      )}
     </div>
   );
 }

@@ -28,6 +28,15 @@ export interface Announcement {
   authorRole: string;
   date: string; // ISO String or readable string based on mock
   audience: string[];
+  // New Management Fields
+  scheduleType?: 'Instant' | 'SpecificDate';
+  scheduledDate?: string; // specific go-live date when 'SpecificDate' is used
+  displayDurationType?: 'OneTime' | 'Duration';
+  displayDurationDays?: number; // active length when 'Duration' is used
+  targetDepartments?: string[];
+  includeVisitors?: boolean;
+  sendSms?: boolean;
+  sendEmail?: boolean;
 }
 
 export const MOCK_ANNOUNCEMENTS: Announcement[] = [

@@ -23,7 +23,14 @@ export interface CreateAnnouncementPayload {
   content: string;
   audience: string[];
   status: AnnouncementStatus;
+  scheduleType?: 'Instant' | 'SpecificDate';
   scheduledDate?: string;
+  displayDurationType?: 'OneTime' | 'Duration';
+  displayDurationDays?: number;
+  targetDepartments?: string[];
+  includeVisitors?: boolean;
+  sendSms?: boolean;
+  sendEmail?: boolean;
 }
 
 // TODO: Backend Dev - Set this to false to use real endpoints.
@@ -136,6 +143,23 @@ class AnnouncementService {
       existing[index].status = newStatus;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
       return existing[index];
+    }
+    throw new Error('Real API not yet implemented');
+  }
+
+  async updateAnnouncement(id: string, payload: Partial<Announcement>): Promise<Announcement> {
+    if (USE_MOCK) {
+      await delay(400);
+      const existing = getStoredAnnouncements();
+      const index = existing.findIndex((a) => a.id === id);
+      if (index === -1) {
+        throw new Error('Announcement not found');
+      }
+
+      const updated = { ...existing[index], ...payload };
+      existing[index] = updated;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+      return updated;
     }
     throw new Error('Real API not yet implemented');
   }

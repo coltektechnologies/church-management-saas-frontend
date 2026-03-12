@@ -22,11 +22,11 @@ export function AnnouncementSlide({
 }: AnnouncementSlideProps) {
   const { styles } = template;
 
-  const containerClass = fullscreen ? 'w-screen h-screen' : 'w-full aspect-video max-w-full';
+  const containerClass = fullscreen ? 'w-full h-full' : 'w-full aspect-video max-w-full';
 
   return (
     <div
-      className={`${containerClass} relative overflow-hidden flex flex-col`}
+      className={`${containerClass} relative overflow-hidden flex flex-col `}
       style={{ background: styles.background }}
     >
       {/* Decoration overlay */}
@@ -135,7 +135,7 @@ export function GroupHeaderSlide({
   fullscreen = false,
 }: GroupHeaderSlideProps) {
   const { styles } = template;
-  const containerClass = fullscreen ? 'w-screen h-screen' : 'w-full aspect-video max-w-full';
+  const containerClass = fullscreen ? 'w-full h-full' : 'w-full aspect-video max-w-full';
 
   return (
     <div

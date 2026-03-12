@@ -14,6 +14,8 @@ import {
   PresentationSetupModal,
   type PresentationConfig,
 } from '@/components/announcements/PresentationSetupModal';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { useDeleteAnnouncement } from '@/hooks/useDeleteAnnouncement';
 import { SavedPresetsSection } from '@/components/announcements/SavedPresetsSection';
 import type {
   CreateAnnouncementPayload,
@@ -73,6 +75,81 @@ export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('announcements');
 
   const { data: announcements = [], isLoading } = useAnnouncements(filters);
+  const deleteMutation = useDeleteAnnouncement();
+
+  // Delete & Edit Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
+
+  const handleEdit = useCallback(
+    (id: string) => {
+      const ann = announcements.find((a) => a.id === id);
+      if (ann) {
+        setTemplatePayload({
+          id: ann.id,
+          category: ann.category,
+          priority: ann.priority,
+          title: ann.title,
+          content: ann.content,
+          audience: ann.audience,
+          status: ann.status,
+          scheduleType: ann.scheduleType,
+          scheduledDate: ann.scheduledDate,
+          displayDurationType: ann.displayDurationType,
+          displayDurationDays: ann.displayDurationDays,
+          targetDepartments: ann.targetDepartments,
+          includeVisitors: ann.includeVisitors,
+          sendSms: ann.sendSms,
+          sendEmail: ann.sendEmail,
+        } as Partial<CreateAnnouncementPayload> & { id: string });
+        setIsModalOpen(true);
+      }
+    },
+    [announcements]
+  );
+
+  const confirmDelete = useCallback((id: string) => {
+    setAnnouncementToDelete(id);
+    setIsDeleteModalOpen(true);
+  }, []);
+
+  const handleDelete = useCallback(() => {
+    if (announcementToDelete) {
+      deleteMutation.mutate(announcementToDelete, {
+        onSuccess: () => {
+          setIsDeleteModalOpen(false);
+          setAnnouncementToDelete(null);
+        },
+      });
+    }
+  }, [announcementToDelete, deleteMutation]);
+
+  const handleShare = useCallback(
+    (id: string) => {
+      const ann = announcements.find((a) => a.id === id);
+      if (!ann) {
+        return;
+      }
+
+      // In a real app, this would use the Web Share API if available
+      if (navigator.share) {
+        navigator
+          .share({
+            title: ann.title,
+            text: ann.content,
+            url: window.location.href, // Or a specific public link for the announcement
+          })
+          .catch(console.error);
+      } else {
+        // Fallback: Copy to clipboard
+        navigator.clipboard.writeText(`${ann.title}\n\n${ann.content}`).then(() => {
+          // Could show a toast here using sonner, but leaving simple for demo
+          alert('Announcement copied to clipboard!');
+        });
+      }
+    },
+    [announcements]
+  );
 
   // Status configuration with custom icons
   const statuses = [
@@ -375,12 +452,9 @@ export default function AnnouncementsPage() {
               <AnnouncementsGrid
                 announcements={announcements}
                 isLoading={isLoading}
-                onShare={(_id) => {
-                  /* TODO: implement share */
-                }}
-                onDelete={(_id) => {
-                  /* TODO: implement delete */
-                }}
+                onShare={handleShare}
+                onDelete={confirmDelete}
+                onEdit={handleEdit}
                 onView={handleView}
                 selectable={isPresentMode}
                 selectedIds={selectedIds}
@@ -457,6 +531,19 @@ export default function AnnouncementsPage() {
         onOpenChange={setIsSetupModalOpen}
         selectedAnnouncements={selectedAnnouncements}
         onLaunchPresentation={handleLaunchPresentation}
+      />
+
+      {/* Confirmation Modal for Deletion */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Announcement"
+        description="Are you sure you want to delete this announcement? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDelete}
+        variant="destructive"
+        isLoading={deleteMutation.isPending}
       />
     </div>
   );

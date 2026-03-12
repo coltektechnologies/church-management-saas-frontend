@@ -1,9 +1,27 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Share2, Eye, Trash2, Calendar, User, Users, Pencil, Check } from 'lucide-react';
+import {
+  Share2,
+  Eye,
+  Trash2,
+  Calendar,
+  User,
+  Users,
+  Pencil,
+  Check,
+  Mail,
+  MessageSquare,
+  Smartphone,
+} from 'lucide-react';
 import { Announcement, AnnouncementCategory, PriorityLevel } from '@/services/announcementService';
 import { format } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface AnnouncementCardProps {
   announcement: Announcement;
@@ -140,15 +158,27 @@ export function AnnouncementCard({
             >
               <Pencil className="size-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              onClick={() => onShare?.(announcement.id)}
-              title="Share"
-            >
-              <Share2 className="size-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-8" title="Share">
+                  <Share2 className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onShare?.(announcement.id)}>
+                  <Mail className="size-4 mr-2" />
+                  Email to Members
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onShare?.(announcement.id)}>
+                  <Smartphone className="size-4 mr-2" />
+                  Send via SMS
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onShare?.(announcement.id)}>
+                  <MessageSquare className="size-4 mr-2" />
+                  Share to WhatsApp
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="ghost"
               size="icon"
