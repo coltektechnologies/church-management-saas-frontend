@@ -1,25 +1,31 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import PricingCard from './PricingCard';
 
-// Pricing plans data with "Start [Plan Name]" buttons
-const pricingPlans = [
+export const PRICING_PLANS = [
   {
-    id: 0,
+    id: 'free',
     title: 'Start Free',
     subtitle: 'The Entry Point',
-    price: '0',
-    features: ['Core Member Directory', 'Basic Tithe Recording', '1 Administrative User'],
+    monthlyPrice: '0',
+    yearlyPrice: '0',
+    features: [
+      'Core Member Directory',
+      'Basic Tithe Recording',
+      '1 Administrative User',
+      'Full access for 14 days',
+    ],
     buttonText: 'Start a Free Plan',
   },
   {
-    id: 1,
+    id: 'basic',
     title: 'Basic',
     subtitle: 'The Growth Plan',
-    price: '29',
+    monthlyPrice: '14',
+    yearlyPrice: '140',
     features: [
-      'Everything in Free Trial',
+      'Everything in Free Plan',
       'Full Treasury & Expense Tracking',
       '5 Department Admin Accounts',
       'Automated SMS Notifications',
@@ -27,12 +33,13 @@ const pricingPlans = [
     buttonText: 'Start a Basic Plan',
   },
   {
-    id: 2,
+    id: 'premium',
     title: 'Premium',
     subtitle: 'The Complete Solution',
-    price: '79',
+    monthlyPrice: '20',
+    yearlyPrice: '200',
     features: [
-      'Everything in the Basic Plan',
+      'Everything in Basic Plan',
       'Advanced Analytics & Reporting',
       'Unlimited Admin & Staff Roles',
       'Full Departmental Coordination Hub',
@@ -40,10 +47,11 @@ const pricingPlans = [
     buttonText: 'Start a Premium Plan',
   },
   {
-    id: 3,
+    id: 'enterprise',
     title: 'Enterprise',
     subtitle: 'For Large Networks',
-    price: '149',
+    monthlyPrice: '30',
+    yearlyPrice: '300',
     features: [
       'Multi-Campus Management',
       'Custom API Integrations',
@@ -54,37 +62,72 @@ const pricingPlans = [
   },
 ];
 
+const DEFAULT_PRIMARY = '#00223A';
+const DEFAULT_ACCENT = '#17D7BE';
+
+// Read colors from localStorage once at module-init time (client only)
+const readStoredColors = (): { primaryColor: string; accentColor: string } => {
+  if (typeof window === 'undefined') {
+    return { primaryColor: DEFAULT_PRIMARY, accentColor: DEFAULT_ACCENT };
+  }
+  try {
+    const raw = localStorage.getItem('church_profile_v1');
+    if (raw) {
+      const p = JSON.parse(raw) as { primaryColor?: string; accentColor?: string };
+      return {
+        primaryColor: p.primaryColor || DEFAULT_PRIMARY,
+        accentColor: p.accentColor || DEFAULT_ACCENT,
+      };
+    }
+  } catch {
+    /* ignore */
+  }
+  return { primaryColor: DEFAULT_PRIMARY, accentColor: DEFAULT_ACCENT };
+};
+
 const PricingSection = () => {
   const [isYearly, setIsYearly] = useState(true);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(2);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  // Close active card immediately when clicking outside
+  // Fix: lazy initialisers read localStorage synchronously — no setState in effect
+  const [primaryColor, setPrimaryColor] = useState(() => readStoredColors().primaryColor);
+  const [accentColor, setAccentColor] = useState(() => readStoredColors().accentColor);
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sectionRef.current && (event.target as HTMLElement).id === 'pricing-container') {
+    const handler = (e: MouseEvent) => {
+      if (sectionRef.current && (e.target as HTMLElement).id === 'pricing-container') {
         setSelectedIndex(null);
       }
     };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+  // Keep colours in sync if the user changes their theme while on this page
+  useEffect(() => {
+    const onStorage = () => {
+      const { primaryColor: pc, accentColor: ac } = readStoredColors();
+      setPrimaryColor(pc);
+      setAccentColor(ac);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   return (
-    <section id="pricing" ref={sectionRef} className="py-24 bg-white">
+    <section id="pricing" ref={sectionRef} className="py-24 bg-white dark:bg-[#071629]">
       <div id="pricing-container" className="container mx-auto px-4">
-        {/* ===== HEADER ===== */}
-        <div className="text-center mb-16 pointer-events-none">
+        <div className="text-center mb-16">
           <h2
             className="mb-4"
             style={{
               fontFamily: 'OV Soge, sans-serif',
               fontWeight: 700,
-              fontSize: '40px',
-              lineHeight: '100%',
+              fontSize: 'clamp(28px, 4vw, 40px)',
+              lineHeight: '110%',
               letterSpacing: '0.03em',
-              color: '#00223A',
+              color: primaryColor,
             }}
           >
             Simple Pricing for Every Ministry.
@@ -93,29 +136,42 @@ const PricingSection = () => {
             style={{
               fontFamily: 'Poppins, sans-serif',
               fontWeight: 400,
-              fontSize: '20px',
-              lineHeight: '131%',
-              color: 'rgba(0, 34, 58, 0.7)',
+              fontSize: '18px',
+              color: primaryColor,
             }}
           >
             Start with a 14-day free trial. No credit card required.
           </p>
 
-          {/* Toggle Switch */}
-          <div className="flex justify-center mt-12 pointer-events-auto">
-            <div className="relative flex items-center bg-[#00223A] rounded-full p-1 w-[280px] h-[60px]">
+          <div className="flex justify-center mt-10">
+            <div
+              className="relative flex items-center rounded-full p-1 w-[260px] h-[56px]"
+              style={{ backgroundColor: primaryColor }}
+            >
               <div
-                className={`absolute h-[50px] w-[135px] bg-[#17D7BE] rounded-full transition-all duration-300 ease-in-out ${isYearly ? 'translate-x-[135px]' : 'translate-x-0'}`}
+                className="absolute h-[46px] w-[126px] rounded-full transition-all duration-300 ease-in-out"
+                style={{
+                  backgroundColor: accentColor,
+                  transform: isYearly ? 'translateX(126px)' : 'translateX(2px)',
+                }}
               />
               <button
                 onClick={() => setIsYearly(false)}
-                className={`relative z-10 w-1/2 text-center font-bold text-sm transition-colors ${!isYearly ? 'text-[#00223A]' : 'text-white'}`}
+                className="relative z-10 w-1/2 text-center font-bold text-sm transition-colors"
+                style={{
+                  color: !isYearly ? primaryColor : '#fff',
+                  fontFamily: 'Poppins, sans-serif',
+                }}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setIsYearly(true)}
-                className={`relative z-10 w-1/2 text-center font-bold text-sm transition-colors ${isYearly ? 'text-[#00223A]' : 'text-white'}`}
+                className="relative z-10 w-1/2 text-center font-bold text-sm transition-colors"
+                style={{
+                  color: isYearly ? primaryColor : '#fff',
+                  fontFamily: 'Poppins, sans-serif',
+                }}
               >
                 Yearly
               </button>
@@ -123,19 +179,26 @@ const PricingSection = () => {
           </div>
         </div>
 
-        {/* 4 Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-[1440px] mx-auto items-start">
-          {pricingPlans.map((plan) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-[1440px] mx-auto items-stretch">
+          {PRICING_PLANS.map((plan, i) => (
             <PricingCard
               key={plan.id}
-              {...plan}
-              isActive={selectedIndex === plan.id}
+              planId={plan.id}
+              title={plan.title}
+              subtitle={plan.subtitle}
+              features={plan.features}
+              buttonText={plan.buttonText}
+              isActive={selectedIndex === i}
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedIndex(plan.id);
+                setSelectedIndex(i);
+                localStorage.setItem('selected_plan_id', plan.id);
               }}
               period={isYearly ? '/Year.' : '/Month.'}
-              price={isYearly ? String(Math.round(Number(plan.price) * 10)) : plan.price}
+              price={isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+              currency="₵"
+              primaryColor={primaryColor}
+              accentColor={accentColor}
             />
           ))}
         </div>

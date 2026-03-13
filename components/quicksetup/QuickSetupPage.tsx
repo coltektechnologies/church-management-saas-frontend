@@ -12,8 +12,6 @@ import {
   UserCircle,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-
-/* --- COMPONENTS --- */
 import Header from '@/components/SignupLogin/Header';
 import Footer from '@/components/SignupLogin/Footer';
 import StepLogoUpload from '@/components/quicksetup/StepLogoUpload';
@@ -23,6 +21,7 @@ import StepServices, { type ServiceTime } from '@/components/quicksetup/StepServ
 import StepDepartments, { type Department } from '@/components/quicksetup/StepDepartments';
 import StepFinish from '@/components/quicksetup/StepFinish';
 import { useChurch } from '@/components/quicksetup/contexts/ChurchContext';
+import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
 
 const STEPS = [
   { num: 1, icon: Church, label: 'Logo' },
@@ -36,9 +35,9 @@ const STEPS = [
 const QuickSetupPage = () => {
   const router = useRouter();
   const { setChurch } = useChurch();
-  const [currentStep, setCurrentStep] = useState(1);
+  const { updateProfile } = useChurchProfile();
 
-  /* --- State Management --- */
+  const [currentStep, setCurrentStep] = useState(1);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [churchName, setChurchName] = useState('');
   const [selectedTheme, setSelectedTheme] = useState(0);
@@ -63,25 +62,42 @@ const QuickSetupPage = () => {
 
   const totalSteps = 6;
 
-  /* --- Navigation Logic --- */
   const goNext = () => setCurrentStep((s) => Math.min(s + 1, totalSteps));
   const goBack = () => setCurrentStep((s) => Math.max(s - 1, 1));
 
   const handleFinish = () => {
+    const fullName = `${adminFirstName} ${adminLastName}`.trim();
+    const name = churchName.trim() || 'My Church';
+
+    // 1 — Write to QuickSetup ChurchContext (existing)
     setChurch({
-      churchName: churchName || 'My Church',
+      churchName: name,
       logoUrl: logoPreview,
       primaryColor,
       accentColor,
       services,
       departments,
-      adminName: `${adminFirstName} ${adminLastName}`,
+      adminName: fullName,
       email: adminEmail,
     });
-    router.push('/dashboard');
+
+    // 2 — Write to ChurchProfileContext → sidebar + topbar update live
+    //     This is what makes the dashboard personalised per user
+    updateProfile({
+      churchName,
+      logoUrl: logoPreview, // base64 data URL — shows immediately
+      primaryColor,
+      accentColor,
+      adminName: fullName,
+      adminEmail,
+      adminRole,
+      adminPhone,
+      avatarUrl: adminPic, // base64 data URL — shows immediately
+    });
+
+    router.push('/admin');
   };
 
-  /* --- Image Helpers --- */
   const handleLogoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -100,30 +116,25 @@ const QuickSetupPage = () => {
     }
   }, []);
 
-  /* --- Service/Dept Helpers --- */
   const addService = () =>
-    setServices((prev) => [
-      ...prev,
+    setServices((p) => [
+      ...p,
       { id: Date.now().toString(), day: 'Sunday', time: '09:00', label: '' },
     ]);
-  const removeService = (id: string) => setServices((prev) => prev.filter((s) => s.id !== id));
+  const removeService = (id: string) => setServices((p) => p.filter((s) => s.id !== id));
   const updateService = (id: string, field: keyof ServiceTime, value: string) =>
-    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+    setServices((p) => p.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
 
   const addDepartment = () =>
-    setDepartments((prev) => [...prev, { id: Date.now().toString(), name: '', leader: '' }]);
-  const removeDepartment = (id: string) =>
-    setDepartments((prev) => prev.filter((d) => d.id !== id));
+    setDepartments((p) => [...p, { id: Date.now().toString(), name: '', leader: '' }]);
+  const removeDepartment = (id: string) => setDepartments((p) => p.filter((d) => d.id !== id));
   const updateDepartment = (id: string, field: keyof Department, value: string) =>
-    setDepartments((prev) => prev.map((d) => (d.id === id ? { ...d, [field]: value } : d)));
+    setDepartments((p) => p.map((d) => (d.id === id ? { ...d, [field]: value } : d)));
 
   return (
-    /* MAIN CONTAINER: Flex Column ensures Header -> Content -> Footer stack vertically */
     <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* HEADER: Placed at the very top */}
       <Header />
 
-      {/* MAIN CONTENT: flex-1 grows to fill all available space, pushing footer down */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-6 sm:p-10 shadow-xl shadow-slate-200/40 animate-in fade-in zoom-in-95 duration-500">
@@ -136,7 +147,7 @@ const QuickSetupPage = () => {
               </p>
             </div>
 
-            {/* Stepper Header */}
+            {/* Stepper */}
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-10">
               {STEPS.map((step) => {
                 const Icon = step.icon;
@@ -170,7 +181,7 @@ const QuickSetupPage = () => {
               })}
             </div>
 
-            {/* Step Content Area */}
+            {/* Step content */}
             <div className="min-h-[320px]">
               {currentStep === 1 && (
                 <StepLogoUpload
@@ -231,7 +242,7 @@ const QuickSetupPage = () => {
               {currentStep === 6 && <StepFinish />}
             </div>
 
-            {/* Navigation Buttons */}
+            {/* Nav buttons */}
             <div className="flex items-center gap-3 mt-10">
               {currentStep > 1 && (
                 <button
@@ -270,7 +281,6 @@ const QuickSetupPage = () => {
         </div>
       </main>
 
-      {/* FOOTER: Placed at the very bottom */}
       <Footer />
     </div>
   );

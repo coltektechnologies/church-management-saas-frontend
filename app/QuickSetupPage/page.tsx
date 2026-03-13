@@ -1,11 +1,10 @@
-'use client';
-
+import { ChurchProfileProvider } from '@/components/admin/contexts/ChurchProfileContext';
 import QuickSetupPage from '@/components/quicksetup/QuickSetupPage';
 
 export default function Page() {
   return (
-    <main>
+    <ChurchProfileProvider>
       <QuickSetupPage />
-    </main>
+    </ChurchProfileProvider>
   );
 }

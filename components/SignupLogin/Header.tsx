@@ -28,7 +28,7 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b border-[#E2E8F0] bg-white">
       <div className="container mx-auto flex h-[80px] items-center justify-between px-4 md:px-6">
         {/* LOGO SECTION */}
-        <Link href="/" className="flex items-center hover:opacity-90 transition-opacity">
+        <Link href="/home" className="flex items-center hover:opacity-90 transition-opacity">
           <Image
             src={logo}
             alt="The Open Door Logo"
