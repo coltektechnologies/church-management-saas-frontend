@@ -17,12 +17,14 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { RegistrationData } from './Step4Payment';
 import { CountryCodeInput } from '@/components/SignupLogin/CountryCodeInput';
+import { ClientOnly } from '@/components/ClientOnly';
 
 interface StepAdminDetailsProps {
   data: RegistrationData;
   onChange: (field: keyof RegistrationData, value: string) => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   onBack: () => void;
+  loading?: boolean;
 }
 
 const roles = [
@@ -32,7 +34,13 @@ const roles = [
   { label: 'Accountant', value: 'Accountant' },
 ];
 
-const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsProps) => {
+const Step2AdminDetails = ({
+  data,
+  onChange,
+  onNext,
+  onBack,
+  loading = false,
+}: StepAdminDetailsProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -108,66 +116,77 @@ const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsP
           {errors.firstName && <p className={styles.errorText}>{errors.firstName}</p>}
         </div>
 
-        {/* Role */}
+        {/* Role — ClientOnly to avoid Radix hydration mismatch */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Role<span className={styles.requiredAsterisk}>*</span>
           </Label>
-          <Popover open={openRole} onOpenChange={setOpenRole}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={openRole}
-                className={cn(styles.inputField, 'font-normal', errors.role && 'border-red-500')}
-              >
-                {data.role || 'Select or type role...'}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-              <Command>
-                <CommandInput
-                  placeholder="Search or type new role..."
-                  onValueChange={(val) => setRoleSearch(val)}
-                />
-                <CommandList>
-                  <CommandEmpty className="p-2">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-xs italic"
-                      onClick={() => {
-                        onChange('role', roleSearch);
-                        setOpenRole(false);
-                      }}
-                    >
-                      Use &quot;{roleSearch}&quot; as role
-                    </Button>
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {roles.map((role) => (
-                      <CommandItem
-                        key={role.value}
-                        value={role.value}
-                        onSelect={(v) => {
-                          onChange('role', v);
+          <ClientOnly
+            fallback={
+              <Input
+                readOnly
+                value={data.role || ''}
+                placeholder="Select or type role..."
+                className={cn(styles.inputField, errors.role && 'border-red-500')}
+              />
+            }
+          >
+            <Popover open={openRole} onOpenChange={setOpenRole}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openRole}
+                  className={cn(styles.inputField, 'font-normal', errors.role && 'border-red-500')}
+                >
+                  {data.role || 'Select or type role...'}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                  <CommandInput
+                    placeholder="Search or type new role..."
+                    onValueChange={(val) => setRoleSearch(val)}
+                  />
+                  <CommandList>
+                    <CommandEmpty className="p-2">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-xs italic"
+                        onClick={() => {
+                          onChange('role', roleSearch);
                           setOpenRole(false);
                         }}
                       >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            data.role === role.value ? 'opacity-100' : 'opacity-0'
-                          )}
-                        />
-                        {role.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                        Use &quot;{roleSearch}&quot; as role
+                      </Button>
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {roles.map((role) => (
+                        <CommandItem
+                          key={role.value}
+                          value={role.value}
+                          onSelect={(v) => {
+                            onChange('role', v);
+                            setOpenRole(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              data.role === role.value ? 'opacity-100' : 'opacity-0'
+                            )}
+                          />
+                          {role.label}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </ClientOnly>
           {errors.role && <p className={styles.errorText}>{errors.role}</p>}
         </div>
 
@@ -283,8 +302,9 @@ const Step2AdminDetails = ({ data, onChange, onNext, onBack }: StepAdminDetailsP
         <Button
           onClick={handleValidation}
           className="w-full sm:w-[236px] h-[44px] bg-[#666666] hover:bg-[#444444] text-white rounded-[10px] font-poppins font-semibold transition-all shadow-sm"
+          disabled={loading}
         >
-          Continue
+          {loading ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>

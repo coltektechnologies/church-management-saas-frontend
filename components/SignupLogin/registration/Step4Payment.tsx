@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import {
   X,
-  ImagePlus,
   Check,
   ChevronDown,
   Loader2,
@@ -54,8 +53,9 @@ export interface RegistrationData {
 interface Step4Props {
   data: RegistrationData;
   onChange: (field: keyof RegistrationData, value: string) => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   onBack: () => void;
+  loading?: boolean;
 }
 
 interface UploadedFile {
@@ -79,9 +79,16 @@ const paymentMethods = [
   { id: 'mobile_money', label: 'Mobile Money', description: 'MTN, Telecel, AirtelTigo' },
   { id: 'visa_mastercard', label: 'Visa / Mastercard', description: 'Credit or debit card' },
   { id: 'bank_transfer', label: 'Bank Transfer', description: 'Direct bank payment' },
+  { id: 'paystack', label: 'Paystack', description: 'Card, mobile money & bank — secure redirect' },
 ];
 
-const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => {
+const Step4PaymentDetails = ({
+  data,
+  onChange,
+  onNext,
+  onBack,
+  loading: parentLoading = false,
+}: Step4Props) => {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -254,15 +261,18 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
       <div className="flex flex-col-reverse sm:flex-row justify-center gap-2 mt-12">
         <button
           onClick={onBack}
-          className="w-full sm:w-[229px] h-[44px] bg-[#D9D9D9] text-black rounded-[10px] font-bold text-sm"
+          disabled={parentLoading}
+          className="w-full sm:w-[229px] h-[44px] bg-[#D9D9D9] text-black rounded-[10px] font-bold text-sm disabled:opacity-50"
         >
           Back
         </button>
         <button
-          onClick={onNext}
-          className="w-full sm:w-[229px] h-[44px] bg-[#666666] text-white rounded-[10px] font-bold text-sm"
+          onClick={() => void onNext()}
+          disabled={parentLoading}
+          className="w-full sm:w-[229px] h-[44px] bg-[#666666] text-white rounded-[10px] font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
         >
-          Continue
+          {parentLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {parentLoading ? 'Redirecting...' : 'Continue'}
         </button>
       </div>
 
@@ -535,6 +545,7 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
                             <FileText className="w-5 h-5 text-red-400" />
                           </div>
                         ) : (
+                          // eslint-disable-next-line @next/next/no-img-element -- blob URLs from file uploads
                           <img
                             src={file.url}
                             alt={file.name}
@@ -585,7 +596,7 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
                 { label: 'Phone', value: data.phone || 'Not set' },
                 { label: 'Role', value: data.role },
                 { label: 'Plan', value: data.subscriptionPlan?.toUpperCase() },
-                { label: 'Method', value: data.paymentMethod.replace('_', ' ') },
+                { label: 'Method', value: data.paymentMethod?.replace(/_/g, ' ') ?? '—' },
               ].map((row, i, arr) => (
                 <div
                   key={row.label}
@@ -765,6 +776,15 @@ const PaymentMethodIcon = ({ methodId }: { methodId: string }) => {
         </div>
         <div className="bg-[#EB001B] text-white text-[9px] font-black px-1.5 py-0.5 rounded-[4px]">
           MC
+        </div>
+      </div>
+    );
+  }
+  if (methodId === 'paystack') {
+    return (
+      <div className="flex items-center gap-1.5">
+        <div className="bg-[#00C3F7] text-white text-[9px] font-black px-1.5 py-0.5 rounded-[4px]">
+          Paystack
         </div>
       </div>
     );
