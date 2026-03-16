@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 // import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SummaryCards } from '@/components/treasury/SummaryCards';
