@@ -3,5 +3,6 @@ export interface Activity {
   title: string;
   description: string;
   scheduledAt: string; // ISO string
+  scheduledAt: string;
   createdAt: string;
 }

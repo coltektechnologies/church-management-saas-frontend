@@ -39,7 +39,7 @@ export const PRICING_PLANS = [
     monthlyPrice: '20',
     yearlyPrice: '200',
     features: [
-      'Everything in Basic Plan',
+      'Everything in the Basic Plan',
       'Advanced Analytics & Reporting',
       'Unlimited Admin & Staff Roles',
       'Full Departmental Coordination Hub',

@@ -8,6 +8,7 @@ import {
 import { AppDataProvider } from '@/components/admin/dashboard/contexts/AppDataContext';
 import AdminSidebar from '@/components/admin/adminSidebar';
 import TopNavbar from '@/components/admin/TopNavbar';
+import { DepartmentsProvider } from '@/context/DepartmentsContext';
 
 // Inner wrapper — reads context and injects CSS variables
 function AdminShell({ children }: { children: ReactNode }) {
@@ -31,7 +32,7 @@ function AdminShell({ children }: { children: ReactNode }) {
         <TopNavbar />
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">{children}</main>
       </div>
-    </div>
+    </DepartmentsProvider>
   );
 }
 
