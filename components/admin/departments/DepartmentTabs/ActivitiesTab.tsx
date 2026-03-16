@@ -7,16 +7,95 @@ import ScheduleActivityModal from '../DepartmentDetailsModal/ScheduleActivityMod
 interface Props {
   activities: Activity[];
   onAddActivity: (activity: Activity) => void;
+  onDeleteActivity: (id: string) => void;
 }
 
-export default function ActivitiesTab({ activities, onAddActivity }: Props) {
+export default function ActivitiesTab({ activities, onAddActivity, onDeleteActivity }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const getStatus = (scheduledAt: string) => {
+    const now = new Date();
+    const activityDate = new Date(scheduledAt);
+
+    return activityDate > now ? 'Upcoming' : 'Completed';
+  };
+
+  const sortedActivities = [...activities].sort(
+    (a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+  );
+
+  const formatRelativeDate = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+
+    const diffMs = date.getTime() - now.getTime();
+    const diffSeconds = Math.round(diffMs / 1000);
+    const diffMinutes = Math.round(diffSeconds / 60);
+    const diffHours = Math.round(diffMinutes / 60);
+    const diffDays = Math.round(diffHours / 24);
+
+    if (Math.abs(diffDays) >= 1) {
+      if (diffDays > 0) {
+        return `in ${diffDays} day${diffDays > 1 ? 's' : ''}`;
+      }
+      return `${Math.abs(diffDays)} day${Math.abs(diffDays) > 1 ? 's' : ''} ago`;
+    }
+
+    if (Math.abs(diffHours) >= 1) {
+      if (diffHours > 0) {
+        return `in ${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+      }
+      return `${Math.abs(diffHours)} hour${Math.abs(diffHours) > 1 ? 's' : ''} ago`;
+    }
+
+    if (Math.abs(diffMinutes) >= 1) {
+      if (diffMinutes > 0) {
+        return `in ${diffMinutes} min`;
+      }
+      return `${Math.abs(diffMinutes)} min ago`;
+    }
+
+    return 'Just now';
+  };
+
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed'>('all');
+
+  const filteredActivities = sortedActivities.filter((activity) => {
+    const status = getStatus(activity.scheduledAt);
+
+    if (filter === 'all') {
+      return true;
+    }
+    if (filter === 'upcoming') {
+      return status === 'Upcoming';
+    }
+    if (filter === 'completed') {
+      return status === 'Completed';
+    }
+
+    return true;
+  });
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <h3 className="text-lg font-semibold">Recent Activities</h3>
+        <div className="flex gap-2">
+          {['all', 'upcoming', 'completed'].map((type) => (
+            <button
+              key={type}
+              onClick={() => setFilter(type as any)}
+              className={`px-3 py-1 text-sm rounded-full transition ${
+                filter === type
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </button>
+          ))}
+        </div>
 
         <button
           onClick={() => setIsOpen(true)}
@@ -28,22 +107,72 @@ export default function ActivitiesTab({ activities, onAddActivity }: Props) {
 
       {/* Activity List */}
       <div className="space-y-4">
-        {activities.length === 0 && (
-          <div className="text-gray-500 text-sm">No activities scheduled yet.</div>
+        {filteredActivities.length === 0 && (
+          <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-10 text-center">
+            <div className="text-4xl mb-4">📅</div>
+
+            <h4 className="text-lg font-semibold text-gray-800">No Activities Scheduled</h4>
+
+            <p className="text-gray-500 text-sm mt-2 max-w-md mx-auto">
+              Schedule your first department activity to start organizing events.
+            </p>
+
+            <button
+              onClick={() => setIsOpen(true)}
+              className="mt-6 bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              Schedule First Activity
+            </button>
+          </div>
         )}
 
-        {activities.map((activity) => (
-          <div key={activity.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-sm transition">
-            <div className="flex justify-between">
-              <h4 className="font-semibold">{activity.title}</h4>
-              <span className="text-sm text-gray-500">
-                {new Date(activity.scheduledAt).toLocaleString()}
-              </span>
-            </div>
+        {filteredActivities.map((activity) => {
+          const status = getStatus(activity.scheduledAt);
 
-            <p className="text-gray-600 text-sm mt-1">{activity.description}</p>
-          </div>
-        ))}
+          return (
+            <div
+              key={activity.id}
+              className="bg-white border border-gray-200 p-5 rounded-xl hover:shadow-md transition-all duration-200 group"
+            >
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-gray-900 text-lg">{activity.title}</h4>
+
+                  <p className="text-gray-600 text-sm">{activity.description}</p>
+
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-gray-500">
+                      <div className="flex flex-col text-sm text-gray-500">
+                        <span>{formatRelativeDate(activity.scheduledAt)}</span>
+                        <span className="text-xs">
+                          {new Date(activity.scheduledAt).toLocaleString()}
+                        </span>
+                      </div>
+                    </span>
+
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        status === 'Upcoming'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Delete button */}
+                <button
+                  onClick={() => onDeleteActivity(activity.id)}
+                  className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <ScheduleActivityModal

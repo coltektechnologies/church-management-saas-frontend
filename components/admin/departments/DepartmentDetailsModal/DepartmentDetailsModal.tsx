@@ -8,6 +8,9 @@ import MembersTab from '@/components/admin/departments/DepartmentTabs/MembersTab
 import OverviewTab from '@/components/admin/departments/DepartmentTabs/OverviewTab';
 import ActivitiesTab from '@/components/admin/departments/DepartmentTabs/ActivitiesTab';
 import { Activity } from '@/types/activity';
+import { Expense } from '@/types/expense';
+import BudgetTab from '@/components/admin/departments/DepartmentTabs/BudgetTab';
+import SettingsTab from '@/components/admin/departments/DepartmentTabs/SettingsTab';
 
 type MockChurchMember = {
   id: string;
@@ -30,9 +33,11 @@ interface Props {
   >;
   onClose: () => void;
   onUpdateDepartment: (updated: Department) => void;
-
   activities: Activity[];
   onAddActivity: (activity: Activity) => void;
+  onDeleteActivity: (activityId: string) => void;
+  expenses: Expense[];
+  onSubmitExpense: (expense: Expense) => void;
 }
 
 export default function DepartmentDetailsModal({
@@ -41,24 +46,24 @@ export default function DepartmentDetailsModal({
   setDepartmentMembers,
   activities,
   onAddActivity,
+  onDeleteActivity,
   onClose,
   onUpdateDepartment,
+  expenses,
+  onSubmitExpense,
 }: Props) {
   const [activeTab, setActiveTab] = useState<
     'overview' | 'members' | 'activities' | 'budget' | 'settings'
   >('overview');
 
   const [isClosing, setIsClosing] = useState(false);
-
-  // Local UI members for this modal
-
   const [showAddMember, setShowAddMember] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedRole, setSelectedRole] = useState('Member');
+  const [addMemberError, setAddMemberError] = useState('');
 
   const handleClose = () => {
     setIsClosing(true);
-
     setTimeout(() => {
       onClose();
     }, 160);
@@ -76,7 +81,7 @@ export default function DepartmentDetailsModal({
         }`}
       />
 
-      {/* Modal Content */}
+      {/* Modal */}
       <div
         className={`relative bg-white w-full h-full md:h-auto md:w-[95%] md:max-w-6xl rounded-none md:rounded-2xl overflow-hidden shadow-2xl ${
           isClosing ? 'modal-content-out' : 'modal-content-in'
@@ -85,7 +90,6 @@ export default function DepartmentDetailsModal({
         <div className={`${themeClass} px-8 pt-10 pb-8 text-white relative`}>
           <h2 className="text-3xl font-bold">{department.name}</h2>
           <p className="text-lg opacity-90 mt-1">{department.code}</p>
-
           <button
             onClick={handleClose}
             className="absolute top-6 right-6 bg-white/30 hover:bg-white/50 w-10 h-10 rounded-full flex items-center justify-center"
@@ -94,7 +98,7 @@ export default function DepartmentDetailsModal({
           </button>
         </div>
 
-        {/* TABS */}
+        {/* Tabs */}
         <div className="flex gap-10 px-8 border-b border-gray-200">
           {['overview', 'members', 'activities', 'budget', 'settings'].map((tab) => (
             <button
@@ -111,9 +115,11 @@ export default function DepartmentDetailsModal({
           ))}
         </div>
 
-        {/* CONTENT */}
+        {/* Content */}
         <div key={activeTab} className="p-8 space-y-10 max-h-[70vh] overflow-y-auto tab-slide">
-          {activeTab === 'overview' && <OverviewTab department={department} />}
+          {activeTab === 'overview' && (
+            <OverviewTab department={department} departmentMembers={departmentMembers} />
+          )}
           {activeTab === 'members' && (
             <MembersTab
               department={department}
@@ -129,34 +135,51 @@ export default function DepartmentDetailsModal({
               activities={activities}
               onAddActivity={(newActivity) => {
                 onAddActivity(newActivity);
-                onUpdateDepartment({
-                  ...department,
-                  activities: department.activities + 1,
-                });
+                onUpdateDepartment({ ...department, activities: department.activities + 1 });
               }}
+              onDeleteActivity={onDeleteActivity}
             />
+          )}
+          {activeTab === 'budget' && (
+            <BudgetTab
+              department={department}
+              expenses={expenses}
+              onSubmitExpense={onSubmitExpense}
+            />
+          )}
+          {activeTab === 'settings' && (
+            <SettingsTab department={department} onUpdateDepartment={onUpdateDepartment} />
           )}
         </div>
       </div>
+
       <AddMemberModal
         show={showAddMember}
-        onClose={() => setShowAddMember(false)}
+        onClose={() => {
+          setShowAddMember(false);
+          setAddMemberError('');
+        }}
         mockChurchMembers={mockChurchMembers}
         selectedMemberId={selectedMemberId}
-        setSelectedMemberId={setSelectedMemberId}
+        setSelectedMemberId={(id) => {
+          setSelectedMemberId(id);
+          setAddMemberError('');
+        }}
         selectedRole={selectedRole}
         setSelectedRole={setSelectedRole}
+        error={addMemberError}
         onAdd={() => {
           if (!selectedMemberId) {
             return;
           }
-
+          if (departmentMembers.some((m) => m.id === selectedMemberId)) {
+            setAddMemberError('This member has already been added to this department.');
+            return;
+          }
           const member = mockChurchMembers.find((m) => m.id === selectedMemberId);
-
           if (!member) {
             return;
           }
-
           setDepartmentMembers((prev) => [
             ...prev,
             {
@@ -166,15 +189,11 @@ export default function DepartmentDetailsModal({
               joinedAt: new Date().toISOString(),
             },
           ]);
-
-          onUpdateDepartment({
-            ...department,
-            members: departmentMembers.length + 1,
-          });
-
+          onUpdateDepartment({ ...department, members: departmentMembers.length + 1 });
           setShowAddMember(false);
           setSelectedMemberId('');
           setSelectedRole('Member');
+          setAddMemberError('');
         }}
       />
     </div>
