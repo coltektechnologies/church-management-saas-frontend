@@ -21,7 +21,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function Sidebar({ isOpen, onClose }: Props) {
+export default function Sidebar({ isOpen = true, onClose = () => {} }: Props) {
   const pathname = usePathname();
 
   return (
@@ -40,6 +40,7 @@ export default function Sidebar({ isOpen, onClose }: Props) {
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-gray-800">Admin Dashboard</h1>
           <button
+            title="close sidebar"
             onClick={onClose}
             className="md:hidden text-gray-500 hover:text-gray-800 transition"
           >

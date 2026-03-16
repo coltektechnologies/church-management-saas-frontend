@@ -29,6 +29,7 @@ export interface TreasurySummary {
   totalIncomeAllTime: number;
   incomeChangePercent: number;
   expenseChangePercent: number;
+  totalIncomeAllTimeChangePercent?: number;
 }
 
 export interface MonthlyTrend {
@@ -69,6 +70,8 @@ export interface MemberContribution {
   id: string;
   name: string;
   avatar: string;
+  phone: string;
+  status: 'ACTIVE' | 'INACTIVE';
   totalAmount: number;
   lastDate: string;
   contributions: ContributionEntry[];

@@ -1,3 +1,5 @@
+'use client';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CreateAnnouncementPayload } from '@/services/announcementService';
 import { ANNOUNCEMENT_TEMPLATES } from '@/services/announcementTemplates';

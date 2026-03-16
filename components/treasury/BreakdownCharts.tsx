@@ -43,9 +43,9 @@ function DonutChart({
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={45}
-                outerRadius={70}
-                paddingAngle={3}
+                innerRadius={50}
+                outerRadius={80}
+                paddingAngle={0}
                 dataKey="value"
                 stroke="none"
               >
@@ -66,19 +66,14 @@ function DonutChart({
           </ResponsiveContainer>
         </div>
 
-        <div className="flex-1 space-y-2 w-full">
+        <div className="flex-1 space-y-3 w-full ml-4">
           {data.map((item) => (
-            <div key={item.name} className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 min-w-0">
-                <span
-                  className="size-3 rounded-full shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-muted-foreground truncate">{item.name}</span>
-              </div>
-              <span className="font-medium text-foreground whitespace-nowrap ml-2">
-                {formatCurrency(item.value)}
-              </span>
+            <div key={item.name} className="flex items-center gap-3 text-sm">
+              <span
+                className="w-8 h-4 shrink-0 rounded-[2px]"
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-muted-foreground truncate text-[13px]">{item.name}</span>
             </div>
           ))}
         </div>
@@ -91,13 +86,13 @@ export function BreakdownCharts({ incomeData, expenseData, isLoading }: Breakdow
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <DonutChart
-        title="💰 Income Breakdown"
+        title="Income Breakdown"
         _totalLabel="Total Income"
         data={incomeData}
         isLoading={isLoading}
       />
       <DonutChart
-        title="💸 Expense Breakdown"
+        title="Expense Breakdown"
         _totalLabel="Total Expenses"
         data={expenseData}
         isLoading={isLoading}

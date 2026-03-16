@@ -62,27 +62,24 @@ export function PendingExpenseRequests({
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 size="sm"
-                variant="outline"
-                className="h-7 px-2.5 text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800 cursor-pointer"
+                className="h-7 px-3 text-[11px] font-medium bg-[#10b981] hover:bg-[#10b981]/90 text-white cursor-pointer rounded"
                 onClick={() => onApprove?.(req.id)}
               >
-                <Check className="size-3 mr-1" /> Approve
+                Approve
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                className="h-7 px-2.5 text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800 cursor-pointer"
+                className="h-7 px-3 text-[11px] font-medium bg-[#9ca3af] hover:bg-[#9ca3af]/90 text-white cursor-pointer rounded"
                 onClick={() => onView?.(req.id)}
               >
-                <Eye className="size-3 mr-1" /> View
+                View
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                className="h-7 px-2.5 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 cursor-pointer"
+                className="h-7 px-3 text-[11px] font-medium bg-[#ef4444] hover:bg-[#ef4444]/90 text-white cursor-pointer rounded"
                 onClick={() => onReject?.(req.id)}
               >
-                <X className="size-3 mr-1" /> Reject
+                Reject
               </Button>
             </div>
           </div>

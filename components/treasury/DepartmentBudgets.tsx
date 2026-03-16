@@ -40,7 +40,7 @@ export function DepartmentBudgets({ data, isLoading }: DepartmentBudgetsProps) {
               </div>
 
               {/* Progress bar */}
-              <div className="h-2 bg-muted rounded-full overflow-hidden mb-3">
+              <div className="h-[6px] bg-muted/50 rounded-full overflow-hidden mb-3">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${utilPercent}%`, backgroundColor: dept.color }}
@@ -52,11 +52,11 @@ export function DepartmentBudgets({ data, isLoading }: DepartmentBudgetsProps) {
                   <span className="text-muted-foreground">Allocated</span>
                   <span className="font-medium">{formatCurrency(dept.allocated)}</span>
                 </div>
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-[11px]">
                   <span className="text-muted-foreground">Utilized</span>
                   <span className="font-medium">{formatCurrency(dept.utilized)}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground text-right">
+                <p className="text-[10px] text-[#10b981] font-medium pt-1">
                   {utilPercent}% utilized
                 </p>
               </div>

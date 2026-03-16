@@ -19,47 +19,43 @@ interface SummaryCardsProps {
 const cards = [
   {
     key: 'totalIncome',
-    label: 'Total Income',
-    subtitle: 'current income (GH₵)',
-    icon: TrendingUp,
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-    iconBg: 'bg-emerald-500',
-    textColor: 'text-emerald-600 dark:text-emerald-400',
+    label: 'Total income (MTs)',
+    icon: Wallet,
+    bg: 'bg-white border-l-4 border-l-[#10b981] shadow-sm',
+    iconBg: 'bg-[#10b981]',
+    textColor: 'text-foreground',
     changeKey: 'incomeChangePercent' as const,
-    positive: true,
+    changeType: 'percent',
   },
   {
     key: 'netBalance',
     label: 'Net Balance',
-    subtitle: 'net balance',
     icon: Wallet,
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    iconBg: 'bg-blue-500',
-    textColor: 'text-blue-600 dark:text-blue-400',
-    changeKey: null,
-    positive: true,
+    bg: 'bg-white border-l-4 border-l-[#3b82f6] shadow-sm',
+    iconBg: 'bg-[#3b82f6]',
+    textColor: 'text-foreground',
+    changeKey: 'incomeChangePercent' as const,
+    changeType: 'percent',
   },
   {
     key: 'totalExpenses',
-    label: 'Total Expenses',
-    subtitle: 'total expenses (GH₵)',
-    icon: TrendingDown,
-    bg: 'bg-red-50 dark:bg-red-950/30',
-    iconBg: 'bg-red-500',
-    textColor: 'text-red-600 dark:text-red-400',
+    label: 'Total Expense (MTs)',
+    icon: Wallet,
+    bg: 'bg-white border-l-4 border-l-[#ef4444] shadow-sm',
+    iconBg: 'bg-[#ef4444]',
+    textColor: 'text-foreground',
     changeKey: 'expenseChangePercent' as const,
-    positive: false,
+    changeType: 'percent',
   },
   {
     key: 'totalIncomeAllTime',
-    label: 'Total Income (Total)',
-    subtitle: 'total income (total)',
-    icon: DollarSign,
-    bg: 'bg-slate-50 dark:bg-slate-800/40',
-    iconBg: 'bg-slate-700',
-    textColor: 'text-slate-700 dark:text-slate-300',
-    changeKey: null,
-    positive: true,
+    label: 'Total income (MTs)',
+    icon: Wallet,
+    bg: 'bg-white border-l-4 border-l-[#f59e0b] shadow-sm',
+    iconBg: 'bg-[#f59e0b]',
+    textColor: 'text-foreground',
+    changeKey: 'totalIncomeAllTimeChangePercent' as const,
+    changeType: 'numeric',
   },
 ] as const;
 
@@ -80,33 +76,45 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
         const amount = data[card.key as keyof TreasurySummary] as number;
         const changePercent = card.changeKey ? (data[card.changeKey] as number) : null;
 
+        let formattedAmount = formatCurrency(amount);
+        if (card.key === 'totalIncomeAllTime') {
+          formattedAmount = amount.toString();
+        }
+
         return (
           <div
             key={card.key}
-            className={`${card.bg} rounded-xl p-4 border border-border/50 flex items-center gap-4 transition-shadow hover:shadow-md`}
+            className={`${card.bg} rounded-[20px] p-5 border border-border/50 flex flex-col justify-center gap-3 transition-shadow hover:shadow-md min-h-[140px] relative`}
           >
-            <div
-              className={`${card.iconBg} size-12 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm`}
-            >
-              <card.icon className="size-6" />
+            <div className="flex justify-between items-start">
+              <div
+                className={`${card.iconBg} size-[42px] rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm`}
+              >
+                <card.icon className="size-5" />
+              </div>
+
+              {/* Change Indicator / Badge inside card top right equivalent area but placed below amount traditionally, adjusting to match mock layout below */}
             </div>
-            <div className="min-w-0">
-              <p className={`text-xl font-bold ${card.textColor} truncate`}>
-                {formatCurrency(amount)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5 capitalize">{card.subtitle}</p>
-              {changePercent !== null && (
-                <span
-                  className={`inline-flex items-center gap-0.5 text-xs font-medium mt-1 ${changePercent >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
-                >
-                  {changePercent >= 0 ? (
-                    <ArrowUpRight className="size-3" />
-                  ) : (
-                    <ArrowDownRight className="size-3" />
-                  )}
-                  {Math.abs(changePercent)}%
-                </span>
-              )}
+
+            <div className="flex flex-col gap-1 mt-1">
+              <div className="flex items-center gap-2">
+                <p className={`text-2xl font-bold ${card.textColor} tracking-tight`}>
+                  {formattedAmount}
+                </p>
+                {changePercent !== null && (
+                  <span
+                    className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                      changePercent >= 0
+                        ? 'bg-[#10b981]/15 text-[#10b981]'
+                        : 'bg-[#ef4444]/15 text-[#ef4444]'
+                    }`}
+                  >
+                    {changePercent > 0 ? '+' : ''}
+                    {changePercent} {card.changeType === 'percent' ? '%' : ''}
+                  </span>
+                )}
+              </div>
+              <p className="text-[13px] font-medium text-muted-foreground">{card.label}</p>
             </div>
           </div>
         );
