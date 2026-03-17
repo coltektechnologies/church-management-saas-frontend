@@ -195,12 +195,11 @@ export default function MembersTable() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* Dynamic action bar when members are selected */}
       {selectedCount > 0 && (
         <div
-          className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm"
-          style={{ width: 1112 }}
+          className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm w-full"
         >
           <span className="text-sm font-medium text-gray-700">
             {selectedCount} member{selectedCount !== 1 ? 's' : ''} selected
@@ -267,9 +266,8 @@ export default function MembersTable() {
       )}
 
       <div
-        className="flex items-center justify-between px-4"
+        className="flex items-center justify-between px-4 w-full"
         style={{
-          width: 1090,
           height: 67,
           borderTopLeftRadius: 8,
           borderTopRightRadius: 8,
@@ -279,8 +277,8 @@ export default function MembersTable() {
       >
         <h3 className="text-lg font-bold text-gray-900">All Members</h3>
         <div
-          className="flex items-center justify-end gap-2 ml-auto rounded-[5px]"
-          style={{ width: 357, height: 32 }}
+          className="flex items-center justify-end gap-2 ml-auto rounded-[5px] shrink-0"
+          style={{ height: 32 }}
         >
           <Button variant="outline" size="sm" className="rounded-[5px] h-8">
             <LayoutGrid className="h-4 w-4" />
@@ -301,8 +299,7 @@ export default function MembersTable() {
       </div>
 
       <div
-        className="rounded-2xl border border-gray-200 overflow-hidden bg-white"
-        style={{ width: 1112 }}
+        className="rounded-2xl border border-gray-200 overflow-hidden bg-white w-full overflow-x-auto"
       >
         <Table>
           <TableHeader>

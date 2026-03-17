@@ -21,10 +21,8 @@ export default function StatsCard({
 }: StatsCardProps) {
   return (
     <div
-      className="flex flex-col p-4"
+      className="flex flex-col p-4 w-full max-w-[232px] min-h-[135px] min-w-0 shrink-0"
       style={{
-        width: 232,
-        height: 135,
         background: '#FFFFFF',
         borderRadius: 10,
         borderTop: `3px solid ${borderTopColor}`,

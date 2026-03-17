@@ -48,7 +48,7 @@ export default function MembershipDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="w-full max-w-7xl mx-auto space-y-8">
       {/* Header & Breadcrumb */}
       <div>
         <h1
@@ -83,8 +83,8 @@ export default function MembershipDashboardPage() {
         </nav>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Stats Cards — same line as charts/search/table: start at left, New This Month ends at right */}
+      <div className="flex flex-wrap gap-3 w-full lg:flex-nowrap lg:justify-between">
         <StatsCard
           icon={<Users className="h-6 w-6" />}
           value={stats.total_members.toLocaleString()}
@@ -120,15 +120,19 @@ export default function MembershipDashboardPage() {
         />
       </div>
 
-      {/* Charts */}
-      <div className="flex flex-wrap gap-[66px]">
-        <MonthlyTrendChart data={titheStats.monthly_trend} />
-        <TithingOfferingsChart
-          titheTotal={titheStats.this_month.tithe_total}
-          offeringTotal={titheStats.this_month.offering_total}
-          titheByWeek={titheStats.this_month.tithe_by_week}
-          offeringByWeek={titheStats.this_month.offering_by_week}
-        />
+      {/* Charts — full width row, same line as stats cards; wrap on small screens */}
+      <div className="flex flex-wrap gap-4 w-full min-w-0">
+        <div className="flex-1 min-w-[280px] min-h-[281px]">
+          <MonthlyTrendChart data={titheStats.monthly_trend} />
+        </div>
+        <div className="flex-1 min-w-[280px] min-h-[281px]">
+          <TithingOfferingsChart
+            titheTotal={titheStats.this_month.tithe_total}
+            offeringTotal={titheStats.this_month.offering_total}
+            titheByWeek={titheStats.this_month.tithe_by_week}
+            offeringByWeek={titheStats.this_month.offering_by_week}
+          />
+        </div>
       </div>
 
       {/* Filters */}

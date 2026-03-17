@@ -29,9 +29,8 @@ export default function TithingOfferingsChart({
   const offeringData = offeringByWeek.length ? offeringByWeek : defaultWeekData;
   return (
     <div
-      className="p-6 flex flex-col"
+      className="p-6 flex flex-col w-full min-h-[281px]"
       style={{
-        width: 389,
         height: 281,
         borderRadius: 8,
         border: '1px solid #2FC4B2',

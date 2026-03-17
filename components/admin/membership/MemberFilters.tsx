@@ -8,9 +8,8 @@ import { Search, Plus } from 'lucide-react';
 export default function MemberFilters() {
   return (
     <div
-      className="flex items-center justify-center"
+      className="flex items-center justify-center w-full"
       style={{
-        width: 1090,
         height: 80,
         border: '1px solid #D9DADC',
         background: '#FFFFFF',
@@ -18,15 +17,14 @@ export default function MemberFilters() {
       }}
     >
       <div
-        className="flex items-center justify-between rounded-none px-3 shrink-0"
+        className="flex items-center justify-between rounded-none px-3 flex-1 min-w-0"
         style={{
-          width: 858,
           height: 42,
           background: '#FFFFFF',
           color: '#2B2B2C',
         }}
       >
-        <div className="relative w-[200px] shrink-0">
+        <div className="relative w-full max-w-[200px] min-w-[120px] shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search member..."
