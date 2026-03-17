@@ -126,8 +126,8 @@ export default function MembersTable() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const handleView = (id: string) => router.push(`/admin/members/${id}`);
-  const handleEdit = (id: string) => router.push(`/admin/members/${id}/edit`);
+  const _handleView = (id: string) => router.push(`/admin/members/${id}`);
+  const _handleEdit = (id: string) => router.push(`/admin/members/${id}/edit`);
   const handleSendMessage = (id: string) => {
     const m = members.find((x) => x.id === id);
     if (m?.phone || m?.email) {
@@ -198,9 +198,7 @@ export default function MembersTable() {
     <div className="space-y-4 w-full">
       {/* Dynamic action bar when members are selected */}
       {selectedCount > 0 && (
-        <div
-          className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm w-full"
-        >
+        <div className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm w-full">
           <span className="text-sm font-medium text-gray-700">
             {selectedCount} member{selectedCount !== 1 ? 's' : ''} selected
           </span>
@@ -298,9 +296,7 @@ export default function MembersTable() {
         </div>
       </div>
 
-      <div
-        className="rounded-2xl border border-gray-200 overflow-hidden bg-white w-full overflow-x-auto"
-      >
+      <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white w-full overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow
