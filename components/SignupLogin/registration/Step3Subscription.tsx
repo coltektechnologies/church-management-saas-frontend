@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { RegistrationData } from './Step4Payment';
 
 interface StepSubscriptionProps {
@@ -12,39 +12,38 @@ interface StepSubscriptionProps {
   onBack: () => void;
 }
 
-// Prices MUST match PricingSection/PRICING_PLANS exactly
 const plans = [
   {
     id: 'free',
     name: 'Start Free',
     monthlyPrice: '0',
     yearlyPrice: '0',
-    description: 'Full access for 14 days to explore Open Door',
     subPrice: 'for 14 days',
+    description: 'Full access for 14 days to explore Open Door',
   },
   {
     id: 'basic',
     name: 'Basic',
     monthlyPrice: '14',
     yearlyPrice: '140',
-    description: 'Finance tracking, SMS alerts, and 5 admin accounts.',
     subPrice: 'per month',
+    description: 'Finance tracking, SMS alerts, and 5 admin accounts.',
   },
   {
     id: 'premium',
     name: 'Premium',
     monthlyPrice: '20',
     yearlyPrice: '200',
-    description: 'Advanced analytics, unlimited admins and full coordination',
     subPrice: 'per month',
+    description: 'Advanced analytics, unlimited admins and full coordination',
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
     monthlyPrice: '30',
     yearlyPrice: '300',
-    description: 'Custom features, enterprise security, and priority support',
     subPrice: 'per month',
+    description: 'Custom features, enterprise security, and priority support',
   },
 ];
 
@@ -53,16 +52,6 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
     (data.billing as 'monthly' | 'yearly') || 'monthly'
   );
   const [planError, setPlanError] = useState(false);
-
-  // On mount: if user came from PricingSection, pre-select that plan then clear it
-  useEffect(() => {
-    const preselected = localStorage.getItem('selected_plan_id');
-    if (preselected) {
-      onChange('subscriptionPlan', preselected);
-      localStorage.removeItem('selected_plan_id');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handlePlanClick = (planId: string) => {
     if (data.subscriptionPlan === planId) {
@@ -155,7 +144,7 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
               </div>
               <div className="p-4 flex flex-col grow">
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-[30px] font-semibold text-[#000000]">₵{displayPrice}</span>
+                  <span className="text-[30px] font-semibold text-[#000000]">${displayPrice}</span>
                   <span className="text-[12px] font-medium text-[#1DAA99]">{displaySubPrice}</span>
                 </div>
                 <p className="text-[12px] font-medium text-[#000000]">{plan.description}</p>
@@ -165,6 +154,7 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
         })}
       </div>
 
+      {/* Error prompt */}
       {planError && (
         <div className="mt-4 flex items-center gap-2 bg-red-50 border border-red-200 rounded-[10px] px-4 py-3">
           <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center shrink-0">
@@ -176,6 +166,7 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
         </div>
       )}
 
+      {/* Buttons — Continue first on mobile */}
       <div className="flex flex-col-reverse sm:flex-row justify-center gap-3 pt-10">
         <Button
           onClick={onBack}
