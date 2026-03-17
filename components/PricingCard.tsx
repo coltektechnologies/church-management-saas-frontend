@@ -4,10 +4,12 @@
  * Fonts: Poppins (SemiBold for headings/buttons, Medium for features)
  */
 
+import Link from 'next/link';
 import { Check, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface PricingCardProps {
+  planId: string;
   title: string;
   subtitle: string;
   price: string;
@@ -15,10 +17,14 @@ interface PricingCardProps {
   period?: string;
   features: string[];
   buttonText: string;
-  isPopular?: boolean;
+  isActive?: boolean;
+  onClick: (e: React.MouseEvent) => void;
+  primaryColor?: string;
+  accentColor?: string;
 }
 
 const PricingCard = ({
+  planId: _planId,
   title,
   subtitle,
   price,
@@ -26,29 +32,32 @@ const PricingCard = ({
   period = '/Month.',
   features,
   buttonText,
-  isPopular = false,
+  isActive = false,
+  onClick,
 }: PricingCardProps) => {
   return (
     <div
-      className={`pricing-card relative flex flex-col p-8 rounded-[34px] transition-all duration-300 shadow-xl overflow-hidden w-full ${
-        isPopular
-          ? 'lg:scale-105 z-10 border-2 border-[#17D7BE] min-h-[550px]'
-          : 'min-h-[510px] mt-0 lg:mt-5'
-      }`}
+      onClick={onClick}
+      className={`pricing-card group relative flex flex-col p-8 rounded-[34px] cursor-pointer shadow-xl overflow-hidden w-full border-2 transition-all duration-500 ease-in-out 
+        min-h-[580px] scale-100 hover:scale-105 hover:min-h-[600px] hover:z-10 hover:border-[#17D7BE] active:scale-95
+        ${
+          isActive
+            ? 'border-[#17D7BE] bg-[#001524] shadow-[0_20px_40px_rgba(23,215,190,0.15)]'
+            : 'border-transparent'
+        }`}
       style={{
         background: 'linear-gradient(135deg, #00223A 0%, #001524 100%)',
         color: '#FFFFFF',
       }}
     >
-      {/* Popular Tag */}
-      {isPopular && (
-        <div
-          className="absolute top-4 right-6 bg-[#17D7BE] text-[#00223A] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          Most Popular
-        </div>
-      )}
+      {/* Badge: Shows if active OR on hover */}
+      <div
+        className={`absolute top-4 right-6 bg-[#17D7BE] text-[#00223A] px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest animate-in fade-in zoom-in transition-opacity duration-300 ${
+          isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
+      >
+        {title}
+      </div>
 
       {/* ===== CARD HEADER ===== */}
       <div className="pricing-header mb-6">
@@ -66,25 +75,37 @@ const PricingCard = ({
         </p>
       </div>
 
-      {/* ===== PRICE DISPLAY ===== */}
-      <div className="pricing-amount mb-8 flex items-baseline gap-1">
-        <span
-          className="price-value text-5xl font-extrabold"
-          style={{ color: '#17D7BE', fontFamily: 'Poppins, sans-serif' }}
-        >
-          {currency}
-          {price}
-        </span>
-        <span
-          className="price-period text-sm font-medium opacity-60"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          {period}
-        </span>
+      {/* PRICE */}
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center gap-1">
+          <span
+            className="text-5xl font-bold font-poppins transition-colors duration-300 group-hover:text-[#17D7BE]"
+            style={{ color: isActive ? '#17D7BE' : '#FFFFFF' }}
+          >
+            {currency}
+            {price}
+          </span>
+          <span className="text-xl font-medium opacity-100">{period}</span>
+        </div>
       </div>
 
-      {/* ===== FEATURES LIST ===== */}
-      <ul className="pricing-features space-y-4 mb-8 flex-grow">
+      {/* BUTTON: Linked to Signup */}
+      <div className="mb-8">
+        <Link href="/signup" className="w-full block" onClick={(e) => e.stopPropagation()}>
+          <Button
+            className={`w-full h-[54px] rounded-full font-bold text-lg transition-all duration-300 ${
+              isActive
+                ? 'bg-[#17D7BE] text-[#00223A] hover:bg-[#13b39e] shadow-[0_0_20px_rgba(23,215,190,0.3)]'
+                : 'bg-[#17D7BE] text-[#00223A] hover:bg-[#13b39e] group-hover:shadow-[0_0_20px_rgba(23,215,190,0.3)]'
+            }`}
+          >
+            {buttonText}
+          </Button>
+        </Link>
+      </div>
+
+      {/* FEATURES */}
+      <ul className="space-y-4 flex-grow border-t border-white/10 pt-6">
         {features.map((feature, index) => (
           <li key={index} className="feature-item flex items-start gap-3">
             <div className="icon-container-sm shrink-0 w-5 h-5 rounded-full bg-[#17D7BE] flex items-center justify-center mt-0.5">

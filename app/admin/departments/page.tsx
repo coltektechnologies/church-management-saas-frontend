@@ -22,7 +22,6 @@ export default function DepartmentsPage() {
     deleteActivity,
     departmentExpensesMap,
     submitExpense,
-    updateExpense,
   } = useDepartments();
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -283,9 +282,6 @@ export default function DepartmentsPage() {
           onDeleteActivity={(activityId) => deleteActivity(selectedDepartment.id, activityId)}
           expenses={departmentExpensesMap[selectedDepartment.id] || []}
           onSubmitExpense={(expense) => submitExpense(selectedDepartment.id, expense)}
-          onUpdateExpense={(expenseId, updatedExpense) =>
-            updateExpense(selectedDepartment.id, expenseId, updatedExpense)
-          }
           onClose={() => setSelectedDepartmentId(null)}
           onUpdateDepartment={(updatedDepartment) => {
             updateDepartment(updatedDepartment);
