@@ -1,19 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { X } from 'lucide-react';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
-
-const getContrastColor = (hex: string) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? '#0B2A4A' : '#F8FAFC';
-};
 
 const menuItems = [
   { name: 'Dashboard', href: '/admin' },
@@ -34,35 +23,6 @@ interface Props {
 
 export default function Sidebar({ isOpen, onClose }: Props) {
   const pathname = usePathname();
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const { profile, isReady } = useChurchProfile();
-
-  const primaryColor = profile.primaryColor || '#0B2A4A';
-  const accentColor = profile.accentColor || '#2FC4B2';
-  // FIXED: Set default sidebar background to white
-  const sidebarBg = profile.sidebarColor || '#FFFFFF';
-  const mainBg = profile.backgroundColor || '#FFFFFF';
-
-  const sidebarText = getContrastColor(sidebarBg);
-  const isLightSidebar = sidebarText === '#0B2A4A';
-  const borderColor = isLightSidebar ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)';
-  const mutedText = isLightSidebar ? 'rgba(11,42,74,0.55)' : 'rgba(255,255,255,0.45)';
-
-  const churchName = profile.churchName || 'Your Church';
-  const tagline = profile.tagline || "You don't have to have it all figured out to come to church.";
-  const adminName = profile.adminName || 'Admin User';
-  const adminRole = profile.adminRole || 'Admin';
-  const initials = adminName
-    .split(' ')
-    .filter(Boolean)
-    .map((w: string) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
-  const isActive = (item: (typeof menuItems)[0]) =>
-    pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
 
   return (
     <>

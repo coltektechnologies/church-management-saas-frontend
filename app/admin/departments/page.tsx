@@ -22,7 +22,6 @@ export default function DepartmentsPage() {
     deleteActivity,
     departmentExpensesMap,
     submitExpense,
-    updateExpense,
   } = useDepartments();
 
   const [formError, setFormError] = useState<string | null>(null);

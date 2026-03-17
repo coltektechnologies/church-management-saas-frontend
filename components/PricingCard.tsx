@@ -1,11 +1,13 @@
 /**
  * PricingCard Component
+ * * Displays a pricing tier with specific Navy to Dark Navy gradient.
+ * Fonts: Poppins (SemiBold for headings/buttons, Medium for features)
  */
+
+import Link from 'next/link';
 import { Check, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
-// Props for the PricingCard component
 interface PricingCardProps {
   planId: string;
   title: string;
@@ -27,7 +29,7 @@ const PricingCard = ({
   subtitle,
   price,
   currency = '₵',
-  period = '/Year.',
+  period = '/Month.',
   features,
   buttonText,
   isActive = false,
@@ -57,11 +59,20 @@ const PricingCard = ({
         {title}
       </div>
 
-      {/* HEADER */}
-      <div className="text-center mb-6 pt-4">
-        <h3 className="text-lg font-semibold font-poppins">
-          {title} ({subtitle})
+      {/* ===== CARD HEADER ===== */}
+      <div className="pricing-header mb-6">
+        <h3
+          className="pricing-title text-2xl mb-1"
+          style={{ color: '#FFFFFF', fontFamily: 'Poppins, sans-serif', fontWeight: 600 }}
+        >
+          {title}
         </h3>
+        <p
+          className="pricing-subtitle text-sm opacity-70"
+          style={{ color: '#FFFFFF', fontFamily: 'Poppins, sans-serif', fontWeight: 400 }}
+        >
+          {subtitle}
+        </p>
       </div>
 
       {/* PRICE */}
@@ -96,19 +107,39 @@ const PricingCard = ({
       {/* FEATURES */}
       <ul className="space-y-4 flex-grow border-t border-white/10 pt-6">
         {features.map((feature, index) => (
-          <li key={index} className="flex items-start gap-3">
-            <div className="shrink-0 w-5 h-5 rounded-full border border-[#17D7BE] flex items-center justify-center mt-0.5">
-              <Check className="h-3 w-3 text-[#17D7BE]" />
+          <li key={index} className="feature-item flex items-start gap-3">
+            <div className="icon-container-sm shrink-0 w-5 h-5 rounded-full bg-[#17D7BE] flex items-center justify-center mt-0.5">
+              <Check className="h-3.5 w-3.5 text-[#00223A] stroke-[3]" />
             </div>
-            <span className="text-sm font-medium font-poppins text-white">{feature}</span>
+            <span
+              className="feature-text text-sm leading-relaxed opacity-90"
+              style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}
+            >
+              {feature}
+            </span>
           </li>
         ))}
       </ul>
 
-      {/* FOOTER ENCRYPTION TAG */}
-      <div className="mt-6 flex items-center justify-center gap-2 opacity-60">
-        <Lock className="h-3 w-3" />
-        <span className="text-[10px] italic uppercase tracking-tighter">
+      {/* ===== CTA BUTTON ===== */}
+      <Button
+        className={`pricing-cta w-full py-6 rounded-full transition-all duration-300 ${
+          isActive
+            ? 'bg-[#17D7BE] hover:bg-[#13b39e] text-[#00223A] shadow-lg shadow-[#17D7BE]/20'
+            : 'bg-transparent border-2 border-[#17D7BE] text-[#17D7BE] hover:bg-[#17D7BE] hover:text-[#00223A]'
+        }`}
+        style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: '1.125rem' }}
+      >
+        {buttonText}
+      </Button>
+
+      {/* ===== SECURITY BADGE ===== */}
+      <div className="pricing-security mt-6 flex items-center justify-center gap-2 opacity-40">
+        <Lock className="security-icon h-3 w-3" />
+        <span
+          className="security-text text-[10px] uppercase tracking-tighter"
+          style={{ fontFamily: 'Poppins, sans-serif', fontStyle: 'italic' }}
+        >
           Encrypted data with secure login.
         </span>
       </div>

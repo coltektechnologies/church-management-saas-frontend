@@ -30,7 +30,8 @@ export const PRICING_PLANS = [
       '5 Department Admin Accounts',
       'Automated SMS Notifications',
     ],
-    buttonText: 'Start a Basic Plan',
+    buttonText: 'Start Free Plan',
+    isPopular: false,
   },
   {
     id: 'premium',
@@ -41,10 +42,12 @@ export const PRICING_PLANS = [
     features: [
       'Everything in Basic Plan',
       'Advanced Analytics & Reporting',
-      'Unlimited Admin & Staff Roles',
-      'Full Departmental Coordination Hub',
+      'Unlimited Admins & Staff Files',
+      'Full Coordination Hub',
+      'Priority 24/7 Support',
     ],
-    buttonText: 'Start a Premium Plan',
+    buttonText: 'Choose Premium',
+    isPopular: true,
   },
   {
     id: 'enterprise',
@@ -53,12 +56,13 @@ export const PRICING_PLANS = [
     monthlyPrice: '30',
     yearlyPrice: '300',
     features: [
-      'Multi-Campus Management',
-      'Custom API Integrations',
-      'Dedicated Account Manager',
-      'White-label Mobile App',
+      'Everything in Free trial',
+      'Full Treasury & Expense Tracking',
+      '5 Department Admin Accounts',
+      'Automated SMS Notifications',
     ],
-    buttonText: 'Start an Enterprise Plan',
+    buttonText: 'Get Started',
+    isPopular: false,
   },
 ];
 

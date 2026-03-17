@@ -21,8 +21,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import type { AdminUser } from './AdminManagementTab';
 
-// Define a concrete interface for the admin data payload
-interface AdminPayload {
+// Define a concrete interface for the admin data payload (exported for parent type alignment)
+export interface AdminPayload {
   first_name: string;
   last_name: string;
   email: string;
