@@ -124,7 +124,7 @@ const PricingCard = ({
       {/* ===== CTA BUTTON ===== */}
       <Button
         className={`pricing-cta w-full py-6 rounded-full transition-all duration-300 ${
-          isPopular
+          isActive
             ? 'bg-[#17D7BE] hover:bg-[#13b39e] text-[#00223A] shadow-lg shadow-[#17D7BE]/20'
             : 'bg-transparent border-2 border-[#17D7BE] text-[#17D7BE] hover:bg-[#17D7BE] hover:text-[#00223A]'
         }`}

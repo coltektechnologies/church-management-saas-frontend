@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Users } from 'lucide-react';
-import AddAdminModal from './AddAdminModal';
+import AddAdminModal, { type AdminPayload } from './AddAdminModal';
 import { toast } from 'sonner';
 
 export interface AdminUser {
@@ -42,9 +42,14 @@ const AdminManagementTab = () => {
   ]);
   const [showAdd, setShowAdd] = useState(false);
 
-  const handleAdd = (admin: Omit<AdminUser, 'id' | 'status'>) => {
-    setAdmins((prev) => [...prev, { ...admin, id: crypto.randomUUID(), status: 'Active' }]);
-    toast.success(`${admin.name} added successfully`);
+  const handleAdd = (admin: AdminPayload) => {
+    const name =
+      [admin.first_name, admin.last_name].filter(Boolean).join(' ').trim() || admin.email;
+    setAdmins((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name, email: admin.email, role: admin.role, status: 'Active' },
+    ]);
+    toast.success(`${name} added successfully`);
     setShowAdd(false);
   };
 
