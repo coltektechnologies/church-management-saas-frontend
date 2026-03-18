@@ -44,6 +44,9 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
 }
 
 :root {
@@ -79,6 +82,9 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  --success: oklch(0.627 0.175 149.214);
+  --warning: oklch(0.769 0.188 70.08);
+  --info: oklch(0.6 0.118 184.704);
 }
 
 .dark {
@@ -113,6 +119,9 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --success: oklch(0.5 0.15 150);
+  --warning: oklch(0.6 0.15 70);
+  --info: oklch(0.5 0.1 185);
 }
 
 @layer base {
@@ -194,4 +203,107 @@
 
 .tab-slide {
   animation: tabSlideInRight 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Presentation Template Decorations ── */
+
+.template-classic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 8px solid rgba(234, 179, 8, 0.08);
+  border-radius: 0;
+}
+
+.template-bold-gradient::after {
+  content: '';
+  position: absolute;
+  bottom: -40%;
+  right: -20%;
+  width: 60%;
+  height: 80%;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.template-warm::before {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border: 2px solid rgba(234, 179, 8, 0.15);
+  border-radius: 16px;
+}
+
+.template-minimal-dark::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.2), transparent);
+}
+
+.template-royal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(251, 191, 36, 0.06) 0%, transparent 50%);
+}
+
+.template-nature::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
+  background: linear-gradient(180deg, transparent 0%, rgba(34, 197, 94, 0.04) 100%);
+}
+
+.template-celebration::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -30%;
+  width: 60%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.06) 0%, transparent 60%);
+  border-radius: 50%;
+}
+
+.template-celebration::after {
+  content: '';
+  position: absolute;
+  bottom: -50%;
+  left: -30%;
+  width: 60%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
+  border-radius: 50%;
+}
+
+.template-urgent::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px solid rgba(239, 68, 68, 0.15);
+}
+
+.template-urgent::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(239, 68, 68, 0.6),
+    rgba(239, 68, 68, 0.2),
+    rgba(239, 68, 68, 0.6)
+  );
 }

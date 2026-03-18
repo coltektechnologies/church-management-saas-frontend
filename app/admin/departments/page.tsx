@@ -202,6 +202,7 @@ export default function DepartmentsPage() {
           className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-80 focus:ring-2 focus:ring-blue-500 outline-none"
         />
         <select
+          title="Department type"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
           className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-48 focus:ring-2 focus:ring-blue-500 outline-none"
