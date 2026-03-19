@@ -21,7 +21,6 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import type { AdminUser } from './AdminManagementTab';
 
-// Define a concrete interface for the admin data payload (exported for parent type alignment)
 export interface AdminPayload {
   first_name: string;
   last_name: string;
@@ -37,43 +36,74 @@ export interface AdminPayload {
 interface Props {
   open: boolean;
   onClose: () => void;
-  // Explicitly typing this helps prevent the 'never' type error in parent components
   onAdd: (admin: AdminPayload) => void;
 }
 
 const AddAdminModal = ({ open, onClose, onAdd }: Props) => {
-  // Existing state with default values
-  const [firstName, setFirstName] = useState('Collins');
-  const [lastName, setLastName] = useState('Doe');
-  const [email, setEmail] = useState('kyerematengcollins93@gmail.com');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [role, setRole] = useState<AdminUser['role']>('Admin');
-
-  // New state from your data merge
-  const [phone, setPhone] = useState('+233549361771');
-  const [username, setUsername] = useState('Taken');
+  const [phone, setPhone] = useState('');
+  const [username, setUsername] = useState('');
   const [notifPref, setNotifPref] = useState('both');
   const [sendCredentials, setSendCredentials] = useState(true);
-  const [churchGroups] = useState(['b10d4fc2-6666-405a-8d7b-41d1ab5ac396']);
+  const [churchGroups] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!firstName.trim()) {
+      e.firstName = 'Required';
+    }
+    if (!lastName.trim()) {
+      e.lastName = 'Required';
+    }
+    if (!email.trim()) {
+      e.email = 'Required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      e.email = 'Invalid email';
+    }
+    if (!username.trim()) {
+      e.username = 'Required';
+    }
+    return e;
+  };
 
   const handleSubmit = () => {
-    // Validation check
-    if (!firstName.trim() || !email.trim() || !lastName.trim()) {
+    const e = validate();
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
       return;
     }
+    setErrors({});
 
-    // Constructing the payload exactly as the backend expects
     onAdd({
       first_name: firstName.trim(),
       last_name: lastName.trim(),
       email: email.trim(),
       phone: phone.trim(),
       username: username.trim(),
-      role: role,
+      role,
       notification_preference: notifPref,
       send_credentials: sendCredentials,
       church_groups: churchGroups,
     });
 
+    // Reset form
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPhone('');
+    setUsername('');
+    setRole('Admin');
+    setNotifPref('both');
+    setSendCredentials(true);
+    onClose();
+  };
+
+  const handleClose = () => {
+    setErrors({});
     onClose();
   };
 
@@ -82,7 +112,7 @@ const AddAdminModal = ({ open, onClose, onAdd }: Props) => {
       open={open}
       onOpenChange={(o) => {
         if (!o) {
-          onClose();
+          handleClose();
         }
       }}
     >
@@ -95,41 +125,55 @@ const AddAdminModal = ({ open, onClose, onAdd }: Props) => {
           {/* First Name */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">
-              First Name
+              First Name <span className="text-red-400">*</span>
             </Label>
             <Input
-              className="h-12 rounded-xl bg-slate-50 border-none font-bold"
+              className={`h-12 rounded-xl bg-slate-50 border-none font-bold ${errors.firstName ? 'ring-1 ring-red-400' : ''}`}
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Collins"
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                setErrors((p) => ({ ...p, firstName: '' }));
+              }}
+              placeholder="e.g. Collins"
             />
+            {errors.firstName && (
+              <p className="text-[10px] text-red-400 ml-1">{errors.firstName}</p>
+            )}
           </div>
 
           {/* Last Name */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">
-              Last Name
+              Last Name <span className="text-red-400">*</span>
             </Label>
             <Input
-              className="h-12 rounded-xl bg-slate-50 border-none font-bold"
+              className={`h-12 rounded-xl bg-slate-50 border-none font-bold ${errors.lastName ? 'ring-1 ring-red-400' : ''}`}
               value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Doe"
+              onChange={(e) => {
+                setLastName(e.target.value);
+                setErrors((p) => ({ ...p, lastName: '' }));
+              }}
+              placeholder="e.g. Doe"
             />
+            {errors.lastName && <p className="text-[10px] text-red-400 ml-1">{errors.lastName}</p>}
           </div>
 
           {/* Email */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">
-              Email Address
+              Email Address <span className="text-red-400">*</span>
             </Label>
             <Input
               type="email"
-              className="h-12 rounded-xl bg-slate-50 border-none font-bold"
+              className={`h-12 rounded-xl bg-slate-50 border-none font-bold ${errors.email ? 'ring-1 ring-red-400' : ''}`}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="kyerematengcollins93@gmail.com"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setErrors((p) => ({ ...p, email: '' }));
+              }}
+              placeholder="e.g. admin@church.com"
             />
+            {errors.email && <p className="text-[10px] text-red-400 ml-1">{errors.email}</p>}
           </div>
 
           {/* Phone */}
@@ -141,17 +185,25 @@ const AddAdminModal = ({ open, onClose, onAdd }: Props) => {
               className="h-12 rounded-xl bg-slate-50 border-none font-bold"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. +233xxxxxxxxx "
             />
           </div>
 
           {/* Username */}
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">Username</Label>
+            <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">
+              Username <span className="text-red-400">*</span>
+            </Label>
             <Input
-              className="h-12 rounded-xl bg-slate-50 border-none font-bold"
+              className={`h-12 rounded-xl bg-slate-50 border-none font-bold ${errors.username ? 'ring-1 ring-red-400' : ''}`}
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                setErrors((p) => ({ ...p, username: '' }));
+              }}
+              placeholder="e.g. collins_admin"
             />
+            {errors.username && <p className="text-[10px] text-red-400 ml-1">{errors.username}</p>}
           </div>
 
           {/* Permission Level */}
@@ -188,7 +240,7 @@ const AddAdminModal = ({ open, onClose, onAdd }: Props) => {
             </Select>
           </div>
 
-          {/* Credentials Checkbox */}
+          {/* Send credentials */}
           <div className="flex items-center space-x-2 pt-6">
             <Checkbox
               id="credentials"
@@ -205,7 +257,7 @@ const AddAdminModal = ({ open, onClose, onAdd }: Props) => {
         </div>
 
         <DialogFooter className="gap-2 mt-4">
-          <Button variant="ghost" onClick={onClose} className="rounded-xl font-bold">
+          <Button variant="ghost" onClick={handleClose} className="rounded-xl font-bold">
             Cancel
           </Button>
           <Button

@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useRef } from 'react';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { User, ShieldCheck, CheckCircle, XCircle } from 'lucide-react';
 
 export default function PendingApprovals() {

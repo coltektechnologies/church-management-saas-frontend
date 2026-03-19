@@ -1,17 +1,26 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { LucideIcon } from 'lucide-react';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
   icon: LucideIcon;
-  /** @deprecated icon background is now derived from primaryColor — kept for backwards compat */
+  /** @deprecated kept for backwards compat */
   iconBgClass?: string;
   onViewDetail?: () => void;
   empty?: boolean;
+}
+
+function useIsMounted(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 }
 
 const StatCard = ({
@@ -19,46 +28,95 @@ const StatCard = ({
   value,
   subtitle = 'Last month',
   icon: Icon,
-  // iconBgClass is intentionally unused — colour comes from context
   onViewDetail,
   empty = false,
 }: StatCardProps) => {
   const { profile } = useChurchProfile();
   const pc = profile.primaryColor || '#0B2A4A';
 
+  const mounted = useIsMounted();
+  const dark = mounted ? (profile.darkMode ?? false) : false;
+
+  const cardBg = dark ? '#112240' : '#FDFEFE';
+  const txtMain = dark ? '#FFFFFF' : '#0B2A4A';
+  const txtMuted = dark ? 'rgba(255,255,255,0.45)' : 'rgba(11,42,74,0.55)';
+  const hrColor = dark ? 'rgba(255,255,255,0.1)' : 'rgba(11,42,74,0.12)';
+  const iconColor = dark ? '#FFFFFF' : '#1E124A';
+
   return (
     <button
       onClick={onViewDetail}
-      className="bg-card rounded-xl border border-border p-4 flex items-start justify-between min-w-0 text-left
-                 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group w-full"
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = `${pc}66`;
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = '';
+      className="flex flex-col min-w-0 text-left hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group w-full"
+      style={{
+        backgroundColor: cardBg,
+        border: dark ? '1px solid rgba(255,255,255,0.1)' : 'none',
+        boxShadow: dark ? '0px 1px 6px 0px rgba(0,0,0,0.4)' : '0px 0px 0.5px 0px #2FC4B2',
+        borderRadius: '5px',
+        outline: 'none',
+        padding: '16px',
       }}
     >
-      <div className="min-w-0">
-        <p className="text-[10px] sm:text-xs font-semibold text-muted-foreground tracking-wide uppercase">
+      {/* Title + icon */}
+      <div className="flex items-center justify-between w-full">
+        <p
+          style={{
+            fontFamily: 'OV Soge, sans-serif',
+            fontWeight: 500,
+            fontSize: '14px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            color: txtMain,
+          }}
+        >
           {title}
         </p>
-        <p
-          className={`text-xl sm:text-2xl font-bold mt-1 ${empty ? 'text-muted-foreground/30' : 'text-foreground'}`}
-        >
-          {value}
-        </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-[10px] text-muted-foreground">{subtitle}</span>
-          <span className="text-[10px] font-medium group-hover:underline" style={{ color: pc }}>
-            View detail
-          </span>
-        </div>
+        <Icon
+          size={20}
+          strokeWidth={2}
+          style={{ color: iconColor, opacity: empty ? 0.35 : 1, flexShrink: 0 }}
+        />
       </div>
-      <div
-        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center shrink-0 transition-opacity ${empty ? 'opacity-40' : 'opacity-100'}`}
-        style={{ backgroundColor: `${pc}18` }}
+
+      {/* Full-width divider */}
+      <div className="-mx-4 my-3" style={{ borderBottom: `1px solid ${hrColor}` }} />
+
+      {/* Value */}
+      <p
+        style={{
+          fontFamily: 'OV Soge, sans-serif',
+          fontWeight: 600,
+          fontSize: '22px',
+          lineHeight: '1.2',
+          color: txtMain,
+          opacity: empty ? 0.3 : 1,
+        }}
       >
-        <Icon size={18} style={{ color: pc }} />
+        {value}
+      </p>
+
+      {/* Subtitle + view detail */}
+      <div className="flex items-center justify-between mt-2">
+        <span
+          style={{
+            fontFamily: 'OV Soge, sans-serif',
+            fontWeight: 400,
+            fontSize: '11px',
+            color: txtMuted,
+          }}
+        >
+          {subtitle}
+        </span>
+        <span
+          className="group-hover:underline"
+          style={{
+            fontFamily: 'OV Soge, sans-serif',
+            fontWeight: 500,
+            fontSize: '11px',
+            color: pc,
+          }}
+        >
+          View detail
+        </span>
       </div>
     </button>
   );

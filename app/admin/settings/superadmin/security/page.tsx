@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import {
   ArrowLeft,
   Shield,

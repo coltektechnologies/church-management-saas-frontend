@@ -3,21 +3,37 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
-import { ChevronLeft, ChevronRight, CalendarPlus } from 'lucide-react';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CATEGORY_COLORS = ['#2FC4B2', '#0B2A4A', '#8B5CF6', '#F59E0B', '#10B981', '#EC4899'];
-
 const PAGE_SIZE = 4;
+
+// Ghost card shown when there are no events — maintains layout, fades out the design
+function GhostEventCard() {
+  return (
+    <div
+      className="rounded-lg p-3 animate-pulse"
+      style={{ backgroundColor: '#2FC4B208', borderRadius: '8px' }}
+    >
+      <div className="flex items-start gap-2.5">
+        <div className="w-10 h-10 rounded-lg shrink-0" style={{ backgroundColor: '#2FC4B215' }} />
+        <div className="flex-1 space-y-2 pt-1">
+          <div className="h-3 rounded-full bg-current opacity-10 w-3/4" />
+          <div className="h-2.5 rounded-full bg-current opacity-[0.06] w-1/2" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function LatestEvents() {
   const router = useRouter();
   const { events, departments } = useAppData();
   const { profile } = useChurchProfile();
 
-  // ── Theme & church name from context ──
   const pc = profile.primaryColor || '#0B2A4A';
-  const churchName = profile.churchName || 'Church'; // <-- from account settings
+  const churchName = profile.churchName || 'Church';
 
   const [filterDept, setFilterDept] = useState('All');
   const [page, setPage] = useState(0);
@@ -32,13 +48,14 @@ export default function LatestEvents() {
   const currentPage = Math.min(page, totalPages - 1);
   const paged = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
+  const isEmpty = paged.length === 0;
+
   return (
     <div className="bg-card rounded-xl border border-border p-5 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
           <h3 className="text-base font-bold text-foreground">Latest Events</h3>
-          {/* Church name from account settings via ChurchProfileContext */}
           <p className="text-[10px] text-muted-foreground mt-0.5">{churchName}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -77,18 +94,19 @@ export default function LatestEvents() {
 
       {/* Events list */}
       <div className="space-y-3 flex-1">
-        {paged.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-              <CalendarPlus size={18} className="text-muted-foreground/40" />
-            </div>
-            <p className="text-xs font-medium text-muted-foreground">
+        {isEmpty ? (
+          // Faded ghost cards — maintains layout, communicates "no data" without hiding the design
+          <div className="space-y-3 opacity-40 pointer-events-none select-none">
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+              <GhostEventCard key={i} />
+            ))}
+            <p className="text-center text-xs text-muted-foreground pt-1">
               {filterDept === 'All' ? 'No events yet' : `No events for ${filterDept}`}
             </p>
             <button
               onClick={() => router.push('/admin/secretary')}
-              className="mt-1 text-[10px] sm:text-xs text-white px-4 py-1.5 rounded-full font-medium hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: pc }}
+              className="pointer-events-auto mx-auto block mt-1 text-[10px] sm:text-xs text-white px-4 py-1.5 rounded-full font-medium hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: pc, opacity: 1 }}
             >
               Add Event
             </button>
@@ -105,8 +123,8 @@ export default function LatestEvents() {
             return (
               <div
                 key={event.id}
-                className="rounded-lg p-3 cursor-pointer hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: `${dotColor}12` }}
+                className="p-3 cursor-pointer hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#2FC4B208', borderRadius: '8px' }}
                 onClick={() => router.push('/admin/secretary')}
               >
                 <div className="flex items-start gap-2.5">

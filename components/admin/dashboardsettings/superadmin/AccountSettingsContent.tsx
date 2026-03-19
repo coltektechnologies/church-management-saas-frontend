@@ -25,7 +25,7 @@ import NotificationTab from './NotificationTab';
 import SecurityTab from './SecurityTab';
 import SystemPreferencesTab from './SystemPreferencesTab';
 import ColorThemeSettings from './ColorThemeSettings';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 
 // --- Contrast Utility for Readability ---
 const getContrastColor = (hex: string) => {

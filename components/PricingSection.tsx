@@ -30,8 +30,7 @@ export const PRICING_PLANS = [
       '5 Department Admin Accounts',
       'Automated SMS Notifications',
     ],
-    buttonText: 'Start Free Plan',
-    isPopular: false,
+    buttonText: 'Start a Basic Plan',
   },
   {
     id: 'premium',
@@ -40,14 +39,12 @@ export const PRICING_PLANS = [
     monthlyPrice: '20',
     yearlyPrice: '200',
     features: [
-      'Everything in Basic Plan',
+      'Everything in the Basic Plan',
       'Advanced Analytics & Reporting',
-      'Unlimited Admins & Staff Files',
-      'Full Coordination Hub',
-      'Priority 24/7 Support',
+      'Unlimited Admin & Staff Roles',
+      'Full Departmental Coordination Hub',
     ],
-    buttonText: 'Choose Premium',
-    isPopular: true,
+    buttonText: 'Start a Premium Plan',
   },
   {
     id: 'enterprise',
@@ -56,47 +53,67 @@ export const PRICING_PLANS = [
     monthlyPrice: '30',
     yearlyPrice: '300',
     features: [
-      'Everything in Free trial',
-      'Full Treasury & Expense Tracking',
-      '5 Department Admin Accounts',
-      'Automated SMS Notifications',
+      'Multi-Campus Management',
+      'Custom API Integrations',
+      'Dedicated Account Manager',
+      'White-label Mobile App',
     ],
-    buttonText: 'Get Started',
-    isPopular: false,
+    buttonText: 'Start an Enterprise Plan',
   },
 ];
 
-const DEFAULT_PRIMARY = '#00223A';
-const DEFAULT_ACCENT = '#17D7BE';
-
-// Read colors from localStorage once at module-init time (client only)
-const readStoredColors = (): { primaryColor: string; accentColor: string } => {
-  if (typeof window === 'undefined') {
-    return { primaryColor: DEFAULT_PRIMARY, accentColor: DEFAULT_ACCENT };
-  }
-  try {
-    const raw = localStorage.getItem('church_profile_v1');
-    if (raw) {
-      const p = JSON.parse(raw) as { primaryColor?: string; accentColor?: string };
-      return {
-        primaryColor: p.primaryColor || DEFAULT_PRIMARY,
-        accentColor: p.accentColor || DEFAULT_ACCENT,
-      };
-    }
-  } catch {
-    /* ignore */
-  }
-  return { primaryColor: DEFAULT_PRIMARY, accentColor: DEFAULT_ACCENT };
-};
+// Canonical defaults
+const DEFAULT_PRIMARY = '#0B2A4A';
+const DEFAULT_ACCENT = '#2FC4B2';
 
 const PricingSection = () => {
   const [isYearly, setIsYearly] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [primaryColor, setPrimaryColor] = useState(DEFAULT_PRIMARY);
+  const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT);
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  // Fix: lazy initialisers read localStorage synchronously — no setState in effect
-  const [primaryColor, setPrimaryColor] = useState(() => readStoredColors().primaryColor);
-  const [accentColor, setAccentColor] = useState(() => readStoredColors().accentColor);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      try {
+        const raw = localStorage.getItem('church_profile_v1');
+        if (raw) {
+          const p = JSON.parse(raw) as { primaryColor?: string; accentColor?: string };
+          if (p.primaryColor) {
+            setPrimaryColor(p.primaryColor);
+          }
+          if (p.accentColor) {
+            setAccentColor(p.accentColor);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Sync colours when theme changes on another tab
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== 'church_profile_v1') {
+        return;
+      }
+      try {
+        const p = JSON.parse(e.newValue ?? '') as { primaryColor?: string; accentColor?: string };
+        if (p.primaryColor) {
+          setPrimaryColor(p.primaryColor);
+        }
+        if (p.accentColor) {
+          setAccentColor(p.accentColor);
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -106,17 +123,6 @@ const PricingSection = () => {
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  // Keep colours in sync if the user changes their theme while on this page
-  useEffect(() => {
-    const onStorage = () => {
-      const { primaryColor: pc, accentColor: ac } = readStoredColors();
-      setPrimaryColor(pc);
-      setAccentColor(ac);
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   return (

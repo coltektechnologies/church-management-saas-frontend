@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -22,28 +22,48 @@ const MONTHS = [
 ];
 const EVENT_DOT_COLORS = ['#2FC4B2', '#8B5CF6', '#F59E0B', '#EC4899', '#10B981', '#3B82F6'];
 
+function useIsMounted(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
+
+// Custom hook that drives a live clock without calling setState
+// synchronously in an effect body.
+//
+// Strategy: initialise state to new Date() via the lazy initialiser
+// (runs only on the client, during the first render — not inside an effect),
+// then use setInterval to update every second. The setInterval callback is
+// NOT a synchronous effect body call — it is an external event callback,
+// which is exactly what the lint rule permits.
+//
+// Server render: useSyncExternalStore getServerSnapshot returns new Date(0)
+// so server and client first-render agree (epoch, hidden by the mounted guard).
+function useClock(): Date {
+  const [now, setNow] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  return now;
+}
+
 export default function DashboardCalendar() {
   const { events } = useAppData();
   const { profile } = useChurchProfile();
   const pc = profile.primaryColor || '#0B2A4A';
   const churchName = profile.churchName || 'My Church';
 
+  const mounted = useIsMounted();
+  const clock = useClock();
+
   const today = useMemo(() => new Date(), []);
   const [month, setMonth] = useState(today.getMonth());
   const [year, setYear] = useState(today.getFullYear());
-
-  // Fix: use a state initialiser that reads typeof window so mounted=true
-  // from the very first client render — avoids calling setState inside an effect.
-  // (The suppressHydrationWarning attrs on the clock elements handle SSR mismatch.)
-  const [clock, setClock] = useState(() =>
-    typeof window !== 'undefined' ? new Date() : new Date(0)
-  );
-
-  // Only the interval needs an effect — no setState call at the top of it
-  useEffect(() => {
-    const t = setInterval(() => setClock(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   const cells = useMemo(() => {
     const firstDay = new Date(year, month, 1).getDay();
@@ -94,29 +114,38 @@ export default function DashboardCalendar() {
 
   return (
     <div className="bg-card rounded-xl border border-border p-4 sm:p-5">
-      {/* Live clock */}
+      {/* Live clock — hidden until client mounts to prevent hydration mismatch */}
       <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
         <Clock size={14} style={{ color: pc }} />
         <div>
-          <p
-            className="text-xs sm:text-sm font-bold text-foreground tabular-nums"
-            suppressHydrationWarning
-          >
-            {clock.toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: true,
-            })}
-          </p>
-          <p className="text-[10px] text-muted-foreground" suppressHydrationWarning>
-            {clock.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </p>
+          {mounted ? (
+            <>
+              <p className="text-xs sm:text-sm font-bold text-foreground tabular-nums">
+                {clock.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: true,
+                })}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {clock.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            </>
+          ) : (
+            // Invisible placeholder preserves layout height before mount
+            <>
+              <p className="text-xs sm:text-sm font-bold text-foreground tabular-nums opacity-0">
+                00:00:00 AM
+              </p>
+              <p className="text-[10px] text-muted-foreground opacity-0">Loading...</p>
+            </>
+          )}
         </div>
       </div>
 
