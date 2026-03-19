@@ -42,22 +42,14 @@ const AdminManagementTab = () => {
   ]);
   const [showAdd, setShowAdd] = useState(false);
 
-  // handleAdd receives an AdminPayload (whatever AddAdminModal provides).
-  // We derive the display name from email if the payload has no name field,
-  // so the component compiles regardless of whether AdminPayload includes name.
-  const handleAdd = (payload: AdminPayload) => {
-    const newAdmin: AdminUser = {
-      id: crypto.randomUUID(),
-      name:
-        'name' in payload && typeof payload.name === 'string'
-          ? payload.name
-          : payload.email.split('@')[0],
-      email: payload.email,
-      role: payload.role as AdminUser['role'],
-      status: 'Active',
-    };
-    setAdmins((prev) => [...prev, newAdmin]);
-    toast.success(`${newAdmin.name} added successfully`);
+  const handleAdd = (admin: AdminPayload) => {
+    const name =
+      [admin.first_name, admin.last_name].filter(Boolean).join(' ').trim() || admin.email;
+    setAdmins((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name, email: admin.email, role: admin.role, status: 'Active' },
+    ]);
+    toast.success(`${name} added successfully`);
     setShowAdd(false);
   };
 

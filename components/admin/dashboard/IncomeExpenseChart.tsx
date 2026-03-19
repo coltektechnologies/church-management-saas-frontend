@@ -74,6 +74,7 @@ export default function IncomeExpenseChart() {
     if (!hasData) {
       return [];
     }
+
     if (rangeMode === 'custom') {
       const from = customFrom ? new Date(customFrom) : null;
       const to = customTo ? new Date(customTo) : null;
@@ -92,6 +93,8 @@ export default function IncomeExpenseChart() {
         return true;
       });
     }
+
+    // Preset
     const now = new Date();
     const days: Record<string, number | null> = {
       all: null,
@@ -101,15 +104,19 @@ export default function IncomeExpenseChart() {
       year: 365,
     };
     const d = days[presetRange] ?? null;
-    return transactions.filter(
-      (t) => !d || (now.getTime() - new Date(t.date).getTime()) / 86400000 <= d
-    );
+    return transactions.filter((t) => {
+      if (!d) {
+        return true;
+      }
+      return (now.getTime() - new Date(t.date).getTime()) / 86400000 <= d;
+    });
   }, [transactions, rangeMode, presetRange, customFrom, customTo, hasData]);
 
   const chartData = useMemo(() => {
     if (!hasData) {
       return PLACEHOLDER_DATA;
     }
+
     if (xAxis === 'category') {
       const cats = [...new Set(filteredTxns.map((t) => t.category))];
       return cats.map((cat) => ({
@@ -122,6 +129,7 @@ export default function IncomeExpenseChart() {
           .reduce((s, t) => s + t.amount, 0),
       }));
     }
+
     const monthMap: Record<string, { income: number; expenses: number }> = {};
     filteredTxns.forEach((t) => {
       const key = new Date(t.date).toLocaleString('default', { month: 'short', year: '2-digit' });
@@ -174,6 +182,7 @@ export default function IncomeExpenseChart() {
         </PieChart>
       );
     }
+
     if (chartType === 'bar') {
       return (
         <BarChart {...common}>
@@ -227,6 +236,7 @@ export default function IncomeExpenseChart() {
         </BarChart>
       );
     }
+
     if (chartType === 'area') {
       return (
         <AreaChart {...common}>
@@ -254,6 +264,7 @@ export default function IncomeExpenseChart() {
         </AreaChart>
       );
     }
+
     return (
       <LineChart {...common}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -284,15 +295,14 @@ export default function IncomeExpenseChart() {
   };
 
   return (
-    // border/shadow/radius applied by wrapper in DashboardPage
-    <div className="bg-card p-3 sm:p-4 lg:p-5 h-full flex flex-col">
-      {/* ── Card title + controls ── */}
-      <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
+    <div className="bg-card rounded-xl border border-border p-3 sm:p-4 lg:p-5">
+      {/* Header + controls */}
+      <div className="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
         <h3 className="text-xs sm:text-sm lg:text-base font-bold text-foreground">
           Income vs Expense
         </h3>
         <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-          {/* Range mode */}
+          {/* Range mode selector */}
           <div className="relative">
             <select
               value={rangeMode}
@@ -300,7 +310,7 @@ export default function IncomeExpenseChart() {
               className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
             >
               <option value="preset">Preset</option>
-              <option value="custom">Date Range</option>
+              <option value="custom">Custom days</option>
             </select>
             <ChevronDown
               size={10}
@@ -308,6 +318,7 @@ export default function IncomeExpenseChart() {
             />
           </div>
 
+          {/* Preset options OR custom date inputs */}
           {rangeMode === 'preset' ? (
             <div className="relative">
               <select
@@ -327,24 +338,25 @@ export default function IncomeExpenseChart() {
               />
             </div>
           ) : (
+            /* Custom: two date inputs inline */
             <div className="flex items-center gap-1">
               <input
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground w-[110px] sm:w-[130px]"
+                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground cursor-pointer w-[110px] sm:w-[130px]"
               />
               <span className="text-[9px] text-muted-foreground">to</span>
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground w-[110px] sm:w-[130px]"
+                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground cursor-pointer w-[110px] sm:w-[130px]"
               />
             </div>
           )}
 
-          {/* X-axis */}
+          {/* X-axis grouping */}
           <div className="relative">
             <select
               value={xAxis}
@@ -378,6 +390,7 @@ export default function IncomeExpenseChart() {
               </div>
               <span className="hidden sm:inline">Colors</span>
             </button>
+
             {showColorPicker && (
               <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-lg p-3 shadow-lg z-20 min-w-[180px]">
                 <label className="text-[10px] font-medium text-foreground flex items-center justify-between gap-2 mb-1.5">
@@ -398,6 +411,7 @@ export default function IncomeExpenseChart() {
                     className="w-6 h-6 rounded cursor-pointer border-0"
                   />
                 </label>
+
                 {selectedBar && (
                   <div className="mt-3 pt-2 border-t border-border">
                     <p className="text-[10px] font-semibold text-foreground mb-1">
@@ -435,6 +449,7 @@ export default function IncomeExpenseChart() {
                     </div>
                   </div>
                 )}
+
                 {(Object.keys(barIncomeColors).length > 0 ||
                   Object.keys(barExpenseColors).length > 0) && (
                   <button
@@ -473,16 +488,13 @@ export default function IncomeExpenseChart() {
         </div>
       </div>
 
-      {/* ── Horizontal rule after title + controls ── */}
-      <div className="mt-3 mb-3 shrink-0" style={{ borderBottom: '1px solid #A9A9A9' }} />
-
-      {/* ── Chart fills remaining height ── */}
-      <div className="relative flex-1 min-h-0">
+      {/* Chart area */}
+      <div className="relative h-[180px] sm:h-[220px] lg:h-[260px]">
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
         </ResponsiveContainer>
         {!hasData && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/60">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/60 rounded-lg">
             <TrendingUp size={28} className="text-muted-foreground/30 mb-2" />
             <p className="text-xs text-muted-foreground font-medium">No transaction data yet</p>
             <p className="text-[10px] text-muted-foreground/60 mt-0.5">
@@ -493,7 +505,7 @@ export default function IncomeExpenseChart() {
       </div>
 
       {/* Footer */}
-      <div className="flex justify-between items-center mt-2 shrink-0">
+      <div className="flex justify-between items-center mt-2">
         <button
           onClick={() => setShowTable(!showTable)}
           className="text-[10px] sm:text-xs text-muted-foreground font-medium hover:underline"
@@ -510,7 +522,7 @@ export default function IncomeExpenseChart() {
 
       {/* Inline data table */}
       {showTable && (
-        <div className="mt-3 border border-border rounded-lg overflow-hidden max-h-[140px] overflow-y-auto shrink-0">
+        <div className="mt-3 border border-border rounded-lg overflow-hidden max-h-[200px] overflow-y-auto">
           <Table>
             <TableHeader>
               <TableRow>

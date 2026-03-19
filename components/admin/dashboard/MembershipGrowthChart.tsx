@@ -22,7 +22,7 @@ import {
 } from 'recharts';
 import { ChevronDown, BarChart3, Plus, Trash2 } from 'lucide-react';
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
-import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
 
 const CHART_TYPES = [
   { id: 'bar', label: 'Bar' },
@@ -71,6 +71,7 @@ export default function MembershipGrowthChart() {
     if (!hasData) {
       return [];
     }
+
     if (rangeMode === 'custom') {
       const from = customFrom ? new Date(customFrom) : null;
       const to = customTo ? new Date(customTo) : null;
@@ -89,6 +90,7 @@ export default function MembershipGrowthChart() {
         return true;
       });
     }
+
     const now = new Date();
     const days: Record<string, number | null> = {
       all: null,
@@ -98,21 +100,26 @@ export default function MembershipGrowthChart() {
       year: 365,
     };
     const d = days[presetRange] ?? null;
-    return members.filter(
-      (m) => !d || (now.getTime() - new Date(m.joinedDate).getTime()) / 86400000 <= d
-    );
+    return members.filter((m) => {
+      if (!d) {
+        return true;
+      }
+      return (now.getTime() - new Date(m.joinedDate).getTime()) / 86400000 <= d;
+    });
   }, [members, rangeMode, presetRange, customFrom, customTo, hasData]);
 
   const chartData = useMemo(() => {
     if (!hasData) {
       return PLACEHOLDER_DATA;
     }
+
     if (plotType === 'departments') {
       return departments.map((d) => ({
         name: d.name,
         members: members.filter((m) => m.department === d.name).length || d.members,
       }));
     }
+
     const monthMap: Record<string, number> = {};
     filteredMembers.forEach((m) => {
       const key = new Date(m.joinedDate).toLocaleString('default', {
@@ -181,6 +188,7 @@ export default function MembershipGrowthChart() {
         </PieChart>
       );
     }
+
     if (chartType === 'line') {
       return (
         <LineChart {...common}>
@@ -200,6 +208,7 @@ export default function MembershipGrowthChart() {
         </LineChart>
       );
     }
+
     if (chartType === 'area') {
       return (
         <AreaChart {...common}>
@@ -225,6 +234,8 @@ export default function MembershipGrowthChart() {
         </AreaChart>
       );
     }
+
+    // Bar (default)
     return (
       <BarChart {...common}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -254,10 +265,9 @@ export default function MembershipGrowthChart() {
   };
 
   return (
-    // border/shadow/radius applied by wrapper in DashboardPage
-    <div className="bg-card p-3 sm:p-4 lg:p-5 h-full flex flex-col">
-      {/* ── Card title + controls ── */}
-      <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
+    <div className="bg-card rounded-xl border border-border p-3 sm:p-4 lg:p-5">
+      {/* Controls */}
+      <div className="flex items-center justify-between mb-3 sm:mb-4 flex-wrap gap-2">
         <h3 className="text-xs sm:text-sm lg:text-base font-bold text-foreground">
           Membership Growth
         </h3>
@@ -270,7 +280,7 @@ export default function MembershipGrowthChart() {
               className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
             >
               <option value="preset">Preset</option>
-              <option value="custom">Date Range</option>
+              <option value="custom">Custom days</option>
             </select>
             <ChevronDown
               size={10}
@@ -278,6 +288,7 @@ export default function MembershipGrowthChart() {
             />
           </div>
 
+          {/* Preset options OR custom date inputs */}
           {rangeMode === 'preset' ? (
             <div className="relative">
               <select
@@ -302,14 +313,14 @@ export default function MembershipGrowthChart() {
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground w-[110px] sm:w-[130px]"
+                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground cursor-pointer w-[110px] sm:w-[130px]"
               />
               <span className="text-[9px] text-muted-foreground">to</span>
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground w-[110px] sm:w-[130px]"
+                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground cursor-pointer w-[110px] sm:w-[130px]"
               />
             </div>
           )}
@@ -445,16 +456,13 @@ export default function MembershipGrowthChart() {
         </div>
       </div>
 
-      {/* ── Horizontal rule after title + controls ── */}
-      <div className="mt-3 mb-3 shrink-0" style={{ borderBottom: '1px solid #A9A9A9' }} />
-
-      {/* ── Chart fills remaining height ── */}
-      <div className="relative flex-1 min-h-0">
+      {/* Chart */}
+      <div className="relative h-[180px] sm:h-[220px] lg:h-[260px]">
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
         </ResponsiveContainer>
         {!hasData && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/60">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/60 rounded-lg">
             <BarChart3 size={28} className="text-muted-foreground/30 mb-2" />
             <p className="text-xs text-muted-foreground font-medium">No membership data yet</p>
             <p className="text-[10px] text-muted-foreground/60 mt-0.5">
@@ -465,7 +473,7 @@ export default function MembershipGrowthChart() {
       </div>
 
       {selectedBar !== null && hasData && (
-        <p className="text-[10px] text-muted-foreground mt-2 text-center shrink-0">
+        <p className="text-[10px] text-muted-foreground mt-2 text-center">
           Selected:{' '}
           <span className="font-medium text-foreground">{chartData[selectedBar]?.name}</span> —
           click bar to change its color

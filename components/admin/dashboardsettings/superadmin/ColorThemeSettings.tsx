@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Save, Sun, Moon, RotateCcw } from 'lucide-react';
-import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DEFAULT_COLORS = {
