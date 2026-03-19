@@ -40,10 +40,13 @@ export default function ActivityFeed() {
   const { activityLog } = useAppData();
 
   return (
-    <div className="bg-card rounded-xl border border-border p-4 sm:p-5 flex flex-col h-full">
-      <h3 className="text-sm sm:text-base font-bold text-foreground mb-4 shrink-0">
-        Activity Feed
-      </h3>
+    // border/shadow/radius applied by wrapper in DashboardPage
+    <div className="bg-card p-4 sm:p-5 flex flex-col h-full">
+      {/* ── Card title ── */}
+      <h3 className="text-sm sm:text-base font-bold text-foreground shrink-0">Activity Feed</h3>
+
+      {/* ── Horizontal rule after card title ── */}
+      <div className="mt-3 mb-3 shrink-0" style={{ borderBottom: '1px solid #A9A9A9' }} />
 
       {activityLog.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-2 py-8 text-center">
@@ -68,15 +71,12 @@ export default function ActivityFeed() {
                 key={entry.id}
                 className="flex items-start gap-3 py-2.5 px-2 rounded-lg hover:bg-muted/50 transition-colors"
               >
-                {/* Icon dot */}
                 <div
                   className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5"
                   style={{ backgroundColor: `${cfg.color}18` }}
                 >
                   <Icon size={13} style={{ color: cfg.color }} />
                 </div>
-
-                {/* Text */}
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] sm:text-xs font-semibold text-foreground leading-snug truncate">
                     {entry.title}
@@ -85,8 +85,6 @@ export default function ActivityFeed() {
                     {entry.subtitle}
                   </p>
                 </div>
-
-                {/* Timestamp */}
                 <span className="text-[9px] sm:text-[10px] text-muted-foreground/60 shrink-0 mt-0.5">
                   {relativeTime(entry.timestamp)}
                 </span>

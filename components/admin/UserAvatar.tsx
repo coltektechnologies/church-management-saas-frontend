@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useChurchProfile } from '@/components/admin/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { User } from 'lucide-react';
 
 interface UserAvatarProps {
@@ -34,10 +34,16 @@ const UserAvatar = ({
   if (avatarUrl) {
     return (
       <div
-        className="relative shrink-0 rounded-full overflow-hidden"
+        className="relative shrink-0 rounded-full overflow-hidden border border-slate-100 shadow-sm"
         style={{ width: size, height: size }}
       >
-        <Image src={avatarUrl} alt={name || 'User'} fill className="object-cover" unoptimized />
+        <Image
+          src={avatarUrl}
+          alt={name || 'User'}
+          fill
+          className="object-cover"
+          unoptimized={avatarUrl.startsWith('data:') || avatarUrl.includes('dicebear')}
+        />
       </div>
     );
   }
@@ -45,7 +51,7 @@ const UserAvatar = ({
   if (initials) {
     return (
       <div
-        className="shrink-0 rounded-full flex items-center justify-center text-white font-bold select-none"
+        className="shrink-0 rounded-full flex items-center justify-center text-white font-bold select-none shadow-sm"
         style={{ width: size, height: size, backgroundColor: primaryColor, fontSize: size * 0.35 }}
       >
         {initials}
