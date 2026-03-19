@@ -2,24 +2,15 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Save, Sun, Moon, RotateCcw } from 'lucide-react';
-import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DEFAULT_COLORS = {
   primary: '#0B2A4A',
   accent: '#2FC4B2',
-  sidebar: '#ffffff',
-  bg: '#FFFFFF',
+  sidebar: '#0B2A4A',
+  bg: '#F8FAFC',
 };
-
-// ── Extended profile type to avoid `any` casts ─────────────────────────────────
-interface ExtendedProfile {
-  primaryColor?: string;
-  accentColor?: string;
-  sidebarColor?: string;
-  backgroundColor?: string;
-  darkMode?: boolean;
-}
 
 // ── Utilities ──────────────────────────────────────────────────────────────────
 const hexToRgb = (hex: string) => {
@@ -64,6 +55,17 @@ const getBestTextColor = (bgHex: string): string => {
   return L > 0.179 ? '#0B2A4A' : '#FFFFFF';
 };
 
+// Darken a hex colour by `amount` (0–1) for hover/active states in the preview
+const darkenHex = (hex: string, amount: number): string => {
+  const { r, g, b } = hexToRgb(hex);
+  const d = 1 - amount;
+  const toHex = (v: number) =>
+    Math.round(v * d)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
 // ── Advanced Color Picker ──────────────────────────────────────────────────────
 const AdvancedColorPicker = ({
   label,
@@ -100,7 +102,6 @@ const AdvancedColorPicker = ({
       <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
         {label}
       </label>
-
       <div className="flex items-center gap-2">
         <div className="relative shrink-0">
           <div
@@ -121,7 +122,6 @@ const AdvancedColorPicker = ({
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
           />
         </div>
-
         <input
           type="text"
           value={textInput}
@@ -133,19 +133,13 @@ const AdvancedColorPicker = ({
           }}
           className="flex-1 min-w-0 font-mono text-xs py-2 px-3 rounded-md border border-slate-200 bg-white dark:bg-white/5 dark:border-white/10 dark:text-white"
         />
-
         <div
           className="shrink-0 px-2 py-1 rounded-md text-[9px] font-black border"
-          style={{
-            backgroundColor: value,
-            color: textColor,
-            borderColor: 'rgba(0,0,0,0.10)',
-          }}
+          style={{ backgroundColor: value, color: textColor, borderColor: 'rgba(0,0,0,0.10)' }}
         >
           {textColor === '#FFFFFF' ? 'Light' : 'Dark'}
         </div>
       </div>
-
       <div className="flex gap-1">
         {(['hex', 'rgb', 'hsl'] as const).map((m) => (
           <button
@@ -165,82 +159,291 @@ const AdvancedColorPicker = ({
   );
 };
 
+// ── Dashboard Preview ──────────────────────────────────────────────────────────
+// Renders a faithful mini-replica of the actual admin layout using the live
+// colour values. Dark mode no longer overrides the chosen colours — instead
+// it applies a dark tint on top of the chosen colours so the user can see
+// exactly what their palette will look like in both modes.
+const DashboardPreview = ({
+  colors,
+  isDark,
+}: {
+  colors: { primary: string; accent: string; sidebar: string; bg: string };
+  isDark: boolean;
+}) => {
+  // ── Derive preview tokens from the ACTUAL chosen colours ────────────────
+  //
+  // Light mode: use colours as-is.
+  // Dark mode:  darken the bg and sidebar by 30–40% so the preview reflects
+  //             how dark mode blends with the chosen palette — but the hue
+  //             still comes from the user's chosen colours, not hardcoded values.
+  //
+  const previewBg = isDark ? darkenHex(colors.bg, 0.45) : colors.bg;
+  const previewSidebar = isDark ? darkenHex(colors.sidebar, 0.35) : colors.sidebar;
+  const previewNavbar = isDark ? darkenHex(colors.bg, 0.38) : '#FFFFFF';
+  const previewCard = isDark ? darkenHex(colors.bg, 0.3) : '#FFFFFF';
+  const previewBorder = isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB';
+
+  const sidebarText = getBestTextColor(previewSidebar);
+  const bgText = getBestTextColor(previewBg);
+
+  const NAV_ITEMS = ['Dashboard', 'Members', 'Treasury', 'Reports', 'Settings'];
+
+  return (
+    <div
+      className="rounded-xl border overflow-hidden flex h-[360px] w-full transition-all duration-300"
+      style={{ backgroundColor: previewBg, borderColor: previewBorder }}
+    >
+      {/* ── Sidebar ── */}
+      <div
+        className="hidden sm:flex flex-col w-36 md:w-44 h-full shrink-0 transition-all duration-300"
+        style={{ backgroundColor: previewSidebar }}
+      >
+        {/* Logo area */}
+        <div
+          className="px-4 py-4 flex items-center gap-2"
+          style={{
+            borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+          }}
+        >
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${colors.primary}30` }}
+          >
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: colors.primary }} />
+          </div>
+          <div className="space-y-1 flex-1">
+            <div
+              className="h-1.5 w-16 rounded-full"
+              style={{ backgroundColor: `${sidebarText}50` }}
+            />
+            <div
+              className="h-1 w-10 rounded-full"
+              style={{ backgroundColor: `${sidebarText}25` }}
+            />
+          </div>
+        </div>
+
+        {/* Nav items */}
+        <div className="p-2 space-y-0.5 flex-1">
+          {NAV_ITEMS.map((label, i) => {
+            const active = i === 0;
+            return (
+              <div
+                key={label}
+                className="flex items-center gap-2 px-2 py-2 transition-colors"
+                style={{
+                  backgroundColor: active ? colors.primary : 'transparent',
+                  borderLeft: `3px solid ${active ? colors.accent : 'transparent'}`,
+                  borderRadius: active ? '0 6px 6px 0' : '6px',
+                }}
+              >
+                <div
+                  className="w-2.5 h-2.5 rounded-sm shrink-0"
+                  style={{ backgroundColor: active ? '#FFFFFF' : `${sidebarText}50` }}
+                />
+                <div
+                  className="h-1.5 rounded-full flex-1"
+                  style={{ backgroundColor: active ? 'rgba(255,255,255,0.8)' : `${sidebarText}35` }}
+                />
+                {active && (
+                  <div
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: colors.accent }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* User footer */}
+        <div
+          className="p-3 flex items-center gap-2"
+          style={{
+            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+          }}
+        >
+          <div
+            className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-white"
+            style={{ backgroundColor: colors.accent, fontSize: '8px', fontWeight: 800 }}
+          >
+            AD
+          </div>
+          <div className="space-y-1 flex-1 min-w-0">
+            <div
+              className="h-1.5 w-12 rounded-full"
+              style={{ backgroundColor: `${sidebarText}60` }}
+            />
+            <div className="h-1 w-8 rounded-full" style={{ backgroundColor: `${sidebarText}30` }} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main area ── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top navbar */}
+        <div
+          className="px-4 py-2.5 flex items-center justify-between shrink-0"
+          style={{ backgroundColor: previewNavbar, borderBottom: `1px solid ${previewBorder}` }}
+        >
+          <div className="h-2 w-20 rounded-full" style={{ backgroundColor: `${bgText}25` }} />
+          <div className="flex items-center gap-2">
+            {/* Dark mode toggle replica */}
+            <div
+              className="w-8 h-4 rounded-full flex items-center px-0.5"
+              style={{ backgroundColor: isDark ? colors.primary : '#E5E7EB' }}
+            >
+              <div
+                className="w-3 h-3 rounded-full bg-white shadow transition-all duration-300"
+                style={{ marginLeft: isDark ? 'auto' : '0' }}
+              />
+            </div>
+            {/* Bell */}
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: `${bgText}08` }}
+            >
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: `${bgText}40` }} />
+            </div>
+            {/* Avatar */}
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white"
+              style={{ backgroundColor: colors.primary, fontSize: '7px', fontWeight: 800 }}
+            >
+              AD
+            </div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <div className="flex-1 p-3 md:p-4 space-y-3 overflow-hidden">
+          {/* Hero / stat banner */}
+          <div
+            className="rounded-xl px-4 py-3 flex items-center justify-between"
+            style={{
+              background: `linear-gradient(120deg, ${colors.primary} 0%, ${darkenHex(colors.primary, 0.2)} 100%)`,
+            }}
+          >
+            <div className="space-y-1.5">
+              <div className="h-1.5 w-14 rounded-full bg-white/30" />
+              <div className="h-2.5 w-20 rounded-full bg-white/70" />
+            </div>
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+            >
+              <div className="w-4 h-4 rounded-sm bg-white/60" />
+            </div>
+          </div>
+
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {[colors.primary, colors.accent, colors.primary, colors.accent].map((c, i) => (
+              <div
+                key={i}
+                className="rounded-lg p-2.5 space-y-2"
+                style={{
+                  backgroundColor: previewCard,
+                  border: `1px solid ${previewBorder}`,
+                }}
+              >
+                <div className="flex justify-between items-start">
+                  <div
+                    className="h-1.5 w-8 rounded-full"
+                    style={{ backgroundColor: `${bgText}20` }}
+                  />
+                  <div
+                    className="w-4 h-4 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: `${c}20` }}
+                  >
+                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: c }} />
+                  </div>
+                </div>
+                <div className="h-2 w-12 rounded-full" style={{ backgroundColor: `${bgText}35` }} />
+                <div
+                  className="h-1 rounded-full"
+                  style={{ backgroundColor: `${c}30`, width: `${50 + i * 12}%` }}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Accent bar */}
+          <div
+            className="rounded-lg px-3 py-2 flex items-center gap-2"
+            style={{
+              backgroundColor: `${colors.accent}15`,
+              border: `1px solid ${colors.accent}30`,
+            }}
+          >
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.accent }} />
+            <div
+              className="h-1.5 w-24 rounded-full"
+              style={{ backgroundColor: `${colors.accent}50` }}
+            />
+            <div
+              className="ml-auto h-1.5 w-12 rounded-full"
+              style={{ backgroundColor: `${colors.accent}30` }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 export default function ColorThemeSettings() {
-  const { profile, updateProfile, toggleDarkMode, isReady } = useChurchProfile();
+  const { profile, updateProfile, toggleDarkMode } = useChurchProfile();
 
-  // Cast once to extended type — avoids repeated `any` casts throughout
-  const extProfile = profile as ExtendedProfile | null;
-
-  // Derive initial colors directly from profile so we never need setState in an effect
+  // Derive initial colours directly from the profile that is already in the
+  // context. By the time this component mounts, ChurchProfileProvider has
+  // already read localStorage synchronously via readStoredProfile(), so
+  // profile values are final — no effect + setState sync needed.
   const [colors, setColors] = useState(() => ({
-    primary: extProfile?.primaryColor || DEFAULT_COLORS.primary,
-    accent: extProfile?.accentColor || DEFAULT_COLORS.accent,
-    sidebar: extProfile?.sidebarColor || DEFAULT_COLORS.sidebar,
-    bg: extProfile?.backgroundColor || DEFAULT_COLORS.bg,
+    primary: profile.primaryColor || DEFAULT_COLORS.primary,
+    accent: profile.accentColor || DEFAULT_COLORS.accent,
+    sidebar: profile.sidebarColor || DEFAULT_COLORS.sidebar,
+    bg: profile.backgroundColor || DEFAULT_COLORS.bg,
   }));
 
   const [saved, setSaved] = useState(false);
 
-  // Sync when the profile finishes loading (isReady transitions false → true)
-  // We only run this once on ready, so the dependency array is intentionally [isReady]
-  useEffect(() => {
-    if (!isReady || !extProfile) {
-      return;
-    }
-    setColors({
-      primary: extProfile.primaryColor || DEFAULT_COLORS.primary,
-      accent: extProfile.accentColor || DEFAULT_COLORS.accent,
-      sidebar: extProfile.sidebarColor || DEFAULT_COLORS.sidebar,
-      bg: extProfile.backgroundColor || DEFAULT_COLORS.bg,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady]);
+  const isDark = profile.darkMode ?? false;
 
-  const isDark = extProfile?.darkMode ?? false;
-
-  const previewData = useMemo(() => {
-    const bg = isDark ? '#0A1628' : colors.bg;
-    const sidebar = isDark ? '#0B2A4A' : colors.sidebar;
-    const textColor = isDark ? '#FFFFFF' : getBestTextColor(colors.bg);
-    const subColor = isDark
-      ? 'rgba(255,255,255,0.35)'
-      : getBestTextColor(colors.bg) === '#FFFFFF'
-        ? 'rgba(255,255,255,0.45)'
-        : '#9CA3AF';
-    return { bg, sidebar, textColor, subColor };
-  }, [isDark, colors.bg, colors.sidebar]);
-
-  const { bg: previewBg, sidebar: previewSidebar, subColor: previewSub } = previewData;
-
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     updateProfile({
       primaryColor: colors.primary,
       accentColor: colors.accent,
       sidebarColor: colors.sidebar,
       backgroundColor: colors.bg,
-    } as ExtendedProfile);
+    });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  };
+  }, [colors, updateProfile]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setColors({ ...DEFAULT_COLORS });
     updateProfile({
       primaryColor: DEFAULT_COLORS.primary,
       accentColor: DEFAULT_COLORS.accent,
       sidebarColor: DEFAULT_COLORS.sidebar,
       backgroundColor: DEFAULT_COLORS.bg,
-    } as ExtendedProfile);
-  };
+    });
+  }, [updateProfile]);
+
+  // Memoize so the preview only re-renders when colours or dark mode actually change
+  const previewColors = useMemo(() => colors, [colors]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 p-2 md:p-0">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-[#112240] p-6 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm gap-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-[#253347] p-6 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#0B2A4A] dark:text-white">Dashboard Appearance</h2>
           <p className="text-slate-500 dark:text-white/40 text-sm">
-            Customise colours for the entire platform.
+            Customise colours for the entire platform. Preview updates live.
           </p>
         </div>
         <div className="flex w-full md:w-auto gap-3">
@@ -261,7 +464,8 @@ export default function ColorThemeSettings() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-4 space-y-6 bg-white dark:bg-[#112240] p-6 rounded-2xl border border-slate-100 dark:border-white/10 h-fit">
+        {/* ── Left: colour pickers + mode toggle ── */}
+        <div className="lg:col-span-4 space-y-6 bg-white dark:bg-[#253347] p-6 rounded-2xl border border-slate-100 dark:border-white/10 h-fit">
           <AdvancedColorPicker
             label="Primary Colour"
             value={colors.primary}
@@ -311,113 +515,33 @@ export default function ColorThemeSettings() {
                 />
               </div>
             </button>
+
+            {/* Helpful note so users understand preview intent */}
+            <p className="mt-2 text-[10px] text-slate-400 dark:text-white/25 leading-relaxed">
+              {isDark
+                ? 'Dark mode darkens your chosen colours. The preview shows how your palette looks at night.'
+                : 'Light mode uses your colours as-is. Toggle dark mode above to preview the night palette.'}
+            </p>
           </div>
         </div>
 
-        <div className="lg:col-span-8 bg-white dark:bg-[#112240] p-6 rounded-2xl border border-slate-100 dark:border-white/10">
+        {/* ── Right: live preview ── */}
+        <div className="lg:col-span-8 bg-white dark:bg-[#253347] p-6 rounded-2xl border border-slate-100 dark:border-white/10">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest">
-              Live Preview
-            </h3>
+            <div>
+              <h3 className="text-xs font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest">
+                Live Preview
+              </h3>
+              <p className="text-[10px] text-slate-300 dark:text-white/20 mt-0.5">
+                {isDark ? 'Dark mode' : 'Light mode'} · colours update as you pick
+              </p>
+            </div>
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold bg-green-50 text-green-600 border border-green-100">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Live
             </div>
           </div>
 
-          <div
-            className="rounded-xl border border-slate-200 overflow-hidden flex h-[350px] w-full transition-colors duration-300"
-            style={{ backgroundColor: previewBg }}
-          >
-            <div
-              className="hidden sm:flex flex-col w-32 md:w-40 h-full shrink-0 transition-colors duration-300"
-              style={{ backgroundColor: previewSidebar }}
-            >
-              <div className="px-4 py-4 border-b border-white/10">
-                <div className="h-3 w-20 rounded-full bg-white/30" />
-              </div>
-              <div className="p-3 space-y-1.5 flex-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 px-2 py-1.5"
-                    style={{
-                      backgroundColor: i === 1 ? 'rgba(0,0,0,0.1)' : 'transparent',
-                      borderRadius: i === 1 ? '0px' : '8px',
-                    }}
-                  >
-                    <div
-                      className="w-3 h-3 rounded-sm shrink-0"
-                      style={{ backgroundColor: i === 1 ? colors.accent : '#0B2A4A' }}
-                    />
-                    <div
-                      className="h-1.5 rounded-full flex-1"
-                      style={{ backgroundColor: i === 1 ? colors.accent : '#0B2A4A' }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div
-                className="px-4 py-2.5 border-b flex items-center justify-between shrink-0"
-                style={{
-                  backgroundColor: isDark ? '#112240' : '#FFFFFF',
-                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB',
-                }}
-              >
-                <div className="h-2 w-20 rounded-full" style={{ backgroundColor: previewSub }} />
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-5 h-5 rounded-full"
-                    style={{ backgroundColor: previewSub + '50' }}
-                  />
-                  <div
-                    className="w-6 h-6 rounded-full"
-                    style={{ backgroundColor: colors.primary }}
-                  />
-                </div>
-              </div>
-              <div className="flex-1 p-4 md:p-5 space-y-3 overflow-hidden">
-                <div
-                  className="rounded-xl px-4 py-3 flex items-center justify-between"
-                  style={{
-                    background: `linear-gradient(120deg, ${colors.primary} 0%, ${colors.primary}CC 100%)`,
-                  }}
-                >
-                  <div className="space-y-1">
-                    <div className="h-1.5 w-16 rounded-full bg-white/30" />
-                    <div className="h-2.5 w-24 rounded-full bg-white/70" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {[colors.primary, colors.accent, colors.primary, colors.accent].map((c, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg p-2.5 flex flex-col gap-1.5"
-                      style={{
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF',
-                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#E5E7EB'}`,
-                      }}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div
-                          className="h-1.5 w-8 rounded-full"
-                          style={{ backgroundColor: previewSub + '60' }}
-                        />
-                        <div
-                          className="w-4 h-4 rounded-md flex items-center justify-center"
-                          style={{ backgroundColor: `${c}20` }}
-                        >
-                          <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: c }} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <DashboardPreview colors={previewColors} isDark={isDark} />
         </div>
       </div>
     </div>

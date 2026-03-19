@@ -121,18 +121,6 @@ const PricingCard = ({
         ))}
       </ul>
 
-      {/* ===== CTA BUTTON ===== */}
-      <Button
-        className={`pricing-cta w-full py-6 rounded-full transition-all duration-300 ${
-          isActive
-            ? 'bg-[#17D7BE] hover:bg-[#13b39e] text-[#00223A] shadow-lg shadow-[#17D7BE]/20'
-            : 'bg-transparent border-2 border-[#17D7BE] text-[#17D7BE] hover:bg-[#17D7BE] hover:text-[#00223A]'
-        }`}
-        style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, fontSize: '1.125rem' }}
-      >
-        {buttonText}
-      </Button>
-
       {/* ===== SECURITY BADGE ===== */}
       <div className="pricing-security mt-6 flex items-center justify-center gap-2 opacity-40">
         <Lock className="security-icon h-3 w-3" />

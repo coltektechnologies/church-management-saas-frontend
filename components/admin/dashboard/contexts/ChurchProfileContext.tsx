@@ -7,6 +7,7 @@ import {
   useLayoutEffect,
   useEffect,
   useCallback,
+  useSyncExternalStore,
   type ReactNode,
 } from 'react';
 
@@ -77,37 +78,32 @@ const applyGlobalStyles = (p: ChurchProfile) => {
   root.classList.toggle('dark', p.theme === 'dark' || !!p.darkMode);
 };
 
-export const ChurchProfileProvider = ({ children }: { children: ReactNode }) => {
-  // Lazy initialiser reads localStorage synchronously — no setState in useEffect needed
-  const [profile, setProfile] = useState<ChurchProfile>(() => {
-    if (typeof window === 'undefined') {
-      return DEFAULT;
-    }
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        return { ...DEFAULT, ...JSON.parse(raw) };
-      }
-    } catch {
-      /* ignore */
-    }
+const readStoredProfile = (): ChurchProfile => {
+  if (typeof window === 'undefined') {
     return DEFAULT;
-  });
+  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      return { ...DEFAULT, ...JSON.parse(raw) };
+    }
+  } catch {}
+  return DEFAULT;
+};
 
-  const [isReady, setIsReady] = useState(false);
+export const ChurchProfileProvider = ({ children }: { children: ReactNode }) => {
+  const [profile, setProfile] = useState<ChurchProfile>(readStoredProfile);
 
-  // Apply global CSS vars + dark class before first paint.
-  // useLayoutEffect only runs on the client, so setState here is safe —
-  // it avoids the server/client mismatch that useEffect would cause.
-  // The eslint-disable is intentional: we only want this to run once on mount.
-  // Re-applying styles on profile change is handled by the useEffect below.
+  const isReady = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
   useLayoutEffect(() => {
     applyGlobalStyles(profile);
-    setIsReady(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally omit `profile` — only needs to run once on mount
+  }, [profile]);
 
-  // Re-apply whenever profile changes after save / toggleDarkMode
   useEffect(() => {
     applyGlobalStyles(profile);
   }, [profile]);

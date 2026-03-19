@@ -19,9 +19,8 @@ import {
   Church,
   LogOut,
 } from 'lucide-react';
-import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts';
 
-// useSyncExternalStore: server=false, client=true — no setState, no effects
 function useIsMounted(): boolean {
   return useSyncExternalStore(
     () => () => {},
@@ -47,27 +46,13 @@ export default function AdminSidebar() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const { profile, isReady } = useChurchProfile();
-
-  // mounted: false on server, true on client.
-  // ALL values that differ between light/dark must be gated behind this so the
-  // server render and the first client render produce identical HTML.
   const mounted = useIsMounted();
 
   const primaryColor = profile.primaryColor || '#0B2A4A';
   const accentColor = profile.accentColor || '#2FC4B2';
-
   const dark = mounted ? (profile.darkMode ?? false) : false;
 
-  // ── Light mode ──────────────────────────────────────────────────────────
-  //   Sidebar bg:   #FFFFFF  |  shadow: 0px 4px 5.9px 5px #0000001A
-  //   Text: #000000  |  Icons: #0B2A4A
-  //   Active: bg #0B2A4A, text #FFFFFF, border-left 4px solid #2FC4B2
-  // ── Dark mode ───────────────────────────────────────────────────────────
-  //   Sidebar bg: primaryColor  |  Text/icons: #FFFFFF
-  //   Active: rgba(255,255,255,0.12), text #FFFFFF, border-left 4px solid #2FC4B2
-  // ─────────────────────────────────────────────────────────────────────────
-
-  // Server always renders light defaults; client swaps to dark after mount if needed
+  // ── Sidebar chrome colours ──────────────────────────────────────────────
   const sidebarBg = mounted ? (dark ? primaryColor : '#FFFFFF') : '#FFFFFF';
   const sidebarShadow = mounted
     ? dark
@@ -75,7 +60,7 @@ export default function AdminSidebar() {
       : '0px 4px 5.9px 5px #0000001A'
     : '0px 4px 5.9px 5px #0000001A';
   const navText = mounted ? (dark ? '#FFFFFF' : '#000000') : '#000000';
-  const navIconColor = mounted ? (dark ? '#FFFFFF' : '#0B2A4A') : '#0B2A4A';
+  const navIconColor = mounted ? (dark ? '#FFFFFF' : primaryColor) : primaryColor;
   const mutedText = mounted
     ? dark
       ? 'rgba(255,255,255,0.5)'
@@ -86,17 +71,28 @@ export default function AdminSidebar() {
       ? 'rgba(255,255,255,0.1)'
       : 'rgba(0,0,0,0.06)'
     : 'rgba(0,0,0,0.06)';
-  const hoverBg = mounted
-    ? dark
-      ? 'rgba(255,255,255,0.06)'
-      : 'rgba(11,42,74,0.04)'
-    : 'rgba(11,42,74,0.04)';
-  const activeItemBg = mounted ? (dark ? 'rgba(255,255,255,0.12)' : '#0B2A4A') : '#0B2A4A';
 
-  // Mobile hamburger bg must also be stable on server — use white, which is
-  // the sidebar colour in light mode, so it visually matches from first paint.
+  // ── Hover colours ───────────────────────────────────────────────────────
+  // Inactive items: subtle tinted hover
+  // Active items:   slightly deeper shade of the active bg so they never go
+  //                 "whitish" — we use a separate CSS class per state so the
+  //                 scoped <style> can target them independently.
+  const inactiveHoverBg = mounted
+    ? dark
+      ? 'rgba(255,255,255,0.10)'
+      : `${primaryColor}18` // soft brand tint
+    : `${primaryColor}18`;
+
+  const activeHoverBg = mounted
+    ? dark
+      ? 'rgba(255,255,255,0.20)'
+      : `${primaryColor}DD` // slightly brighter/deeper active
+    : `${primaryColor}DD`;
+
+  // ── Active item background ──────────────────────────────────────────────
+  const activeItemBg = mounted ? (dark ? 'rgba(255,255,255,0.15)' : primaryColor) : primaryColor;
+
   const hamburgerBg = mounted ? (dark ? primaryColor : '#FFFFFF') : '#FFFFFF';
-  const hamburgerBorder = `${primaryColor}20`;
 
   const churchName = profile.churchName || 'Your Church';
   const tagline = profile.tagline || "You don't have to have it all figured out.";
@@ -118,11 +114,11 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile hamburger — uses stable server-safe values */}
+      {/* Mobile hamburger */}
       <button
         onClick={() => setOpen(true)}
         className="fixed top-4 left-4 z-50 lg:hidden rounded-xl p-2.5 border shadow-lg"
-        style={{ backgroundColor: hamburgerBg, borderColor: hamburgerBorder }}
+        style={{ backgroundColor: hamburgerBg, borderColor: `${primaryColor}20` }}
       >
         <Menu size={20} style={{ color: primaryColor }} />
       </button>
@@ -160,7 +156,9 @@ export default function AdminSidebar() {
               ) : (
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: dark ? 'rgba(255,255,255,0.15)' : `${primaryColor}12` }}
+                  style={{
+                    backgroundColor: dark ? 'rgba(255,255,255,0.15)' : `${primaryColor}12`,
+                  }}
                 >
                   <Church size={20} style={{ color: navIconColor }} />
                 </div>
@@ -202,7 +200,9 @@ export default function AdminSidebar() {
                 key={item.key}
                 href={item.href}
                 onClick={close}
-                className="sidebar-nav-link flex items-center gap-3 py-2.5 pr-4 transition-colors duration-150"
+                // Two separate class names so the scoped <style> below can
+                // target active and inactive hover independently.
+                className={`sidebar-nav-link ${active ? 'sidebar-nav-active' : 'sidebar-nav-inactive'} flex items-center gap-3 py-2.5 pr-4 transition-colors duration-150`}
                 style={{
                   paddingLeft: '14px',
                   borderLeft: `4px solid ${active ? accentColor : 'transparent'}`,
@@ -239,7 +239,9 @@ export default function AdminSidebar() {
         <div className="p-3 space-y-1" style={{ borderTop: `1px solid ${divider}` }}>
           <div
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-            style={{ backgroundColor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(11,42,74,0.04)' }}
+            style={{
+              backgroundColor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(11,42,74,0.04)',
+            }}
           >
             {isReady && profile.avatarUrl ? (
               <div className="relative w-9 h-9 shrink-0">
@@ -291,10 +293,19 @@ export default function AdminSidebar() {
         </div>
       </aside>
 
-      {/* Scoped hover — pure CSS, no JS handlers, keyed so it updates on mode change */}
+      {/*
+        Scoped hover rules — keyed so they regenerate when dark mode toggles.
+
+        sidebar-nav-inactive:hover  →  subtle brand-tinted hover, never white
+        sidebar-nav-active:hover    →  deepened active colour, never goes pale
+        Both keep white text so readability is preserved at all times.
+      */}
       <style key={`sidebar-${String(dark)}`}>{`
-        .sidebar-nav-link:hover {
-          background-color: ${hoverBg} !important;
+        .sidebar-nav-inactive:hover {
+          background-color: ${inactiveHoverBg} !important;
+        }
+        .sidebar-nav-active:hover {
+          background-color: ${activeHoverBg} !important;
         }
       `}</style>
     </>
