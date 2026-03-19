@@ -19,13 +19,9 @@ import {
   CreditCard,
   ChevronRight,
 } from 'lucide-react';
-import {
-  useChurchProfile,
-  type SubscriptionStatus,
-} from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { useChurchProfile, type SubscriptionStatus } from '@/components/admin/dashboard/contexts';
 import { mockNotifications, type MockNotification } from '@/components/admin/mock/mockData';
 
-// useSyncExternalStore: server=false, client=true — no setState, no effects, zero lint violations
 function useIsMounted(): boolean {
   return useSyncExternalStore(
     () => () => {},
@@ -183,11 +179,6 @@ export default function TopNavbar() {
   const adminRole = profile.adminRole || 'Admin';
   const statusKey = profile.subscriptionStatus || 'trial';
 
-  // ── CRITICAL: gate dark behind useIsMounted so server and client agree on the
-  // first render. Server always gets false (light). Client reads the real value
-  // only after hydration. Without this guard the subscription badge and the
-  // dark-mode toggle button produce mismatched styles and React throws a
-  // hydration error.
   const mounted = useIsMounted();
   const dark = mounted ? (profile.darkMode ?? false) : false;
   const statusStyle = STATUS_STYLES[statusKey];
@@ -271,7 +262,6 @@ export default function TopNavbar() {
     setNotifs((p) => p.filter((n) => String(n.id) !== String(id)));
   };
 
-  // Sun/Moon only renders on client (mounted=true) — no mismatch possible
   const DarkIcon = mounted ? (
     dark ? (
       <Moon size={10} className="text-[#0B2A4A]" />
@@ -288,7 +278,7 @@ export default function TopNavbar() {
   ) : null;
 
   return (
-    <header className="h-14 md:h-16 bg-white dark:bg-[#0B2A4A] border-b border-gray-200 dark:border-white/10 flex items-center justify-between px-3 md:px-6 sticky top-0 z-20 transition-colors duration-300 gap-2">
+    <header className="h-14 md:h-16 bg-white dark:bg-[#253347] border-b border-gray-200 dark:border-white/10 flex items-center justify-between px-3 md:px-6 sticky top-0 z-20 transition-colors duration-300 gap-2">
       {/* Page title */}
       <div className="flex items-center gap-2 min-w-0">
         <div className="w-9 lg:hidden shrink-0" />
@@ -321,8 +311,6 @@ export default function TopNavbar() {
                 CHURCH SPACE
               </p>
             </div>
-            {/* mounted guard prevents the server rendering a dark background when
-                the client has dark mode saved — this was the source of the hydration error */}
             {mounted && (
               <span
                 className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 hidden md:inline"
@@ -341,7 +329,7 @@ export default function TopNavbar() {
           </button>
 
           {statusOpen && (
-            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-52 bg-white dark:bg-[#112240] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-52 bg-white dark:bg-[#253347] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
               <p className="px-4 pt-3 pb-1 text-gray-400 uppercase text-[10px] font-semibold tracking-widest">
                 Subscription
               </p>
@@ -383,8 +371,7 @@ export default function TopNavbar() {
 
       {/* Right controls */}
       <div className="flex items-center gap-0.5 md:gap-1 shrink-0">
-        {/* Dark mode toggle — backgroundColor depends on dark, so render with
-            a neutral default on server, then apply the real color after mount */}
+        {/* Dark mode toggle */}
         <button
           onClick={toggleDarkMode}
           aria-label="Toggle dark mode"
