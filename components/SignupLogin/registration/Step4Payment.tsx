@@ -57,6 +57,7 @@ interface Step4Props {
   onChange: (field: keyof RegistrationData, value: string) => void;
   onNext: () => void;
   onBack: () => void;
+  loading?: boolean; // ← added: passed from signup.tsx, used to disable Continue while submitting
 }
 
 interface UploadedFile {
@@ -82,7 +83,7 @@ const paymentMethods = [
   { id: 'bank_transfer', label: 'Bank Transfer', description: 'Direct bank payment' },
 ];
 
-const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => {
+const Step4PaymentDetails = ({ data, onChange, onNext, onBack, loading }: Step4Props) => {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -292,19 +293,22 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
       <div className="flex flex-col-reverse sm:flex-row justify-center gap-2 mt-12">
         <button
           onClick={onBack}
-          className="w-full sm:w-[229px] h-[44px] bg-[#D9D9D9] text-black rounded-[10px] font-bold text-sm"
+          disabled={loading}
+          className="w-full sm:w-[229px] h-[44px] bg-[#D9D9D9] text-black rounded-[10px] font-bold text-sm disabled:opacity-50"
         >
           Back
         </button>
         <button
           onClick={handleContinue}
-          className={`w-full sm:w-[229px] h-[44px] rounded-[10px] font-bold text-sm transition-all ${
+          disabled={loading}
+          className={`w-full sm:w-[229px] h-[44px] rounded-[10px] font-bold text-sm transition-all flex items-center justify-center gap-2 ${
             data.paymentCompleted
-              ? 'bg-[#0B2A4A] text-white hover:bg-black'
+              ? 'bg-[#0B2A4A] text-white hover:bg-black disabled:opacity-50'
               : 'bg-[#666666] text-white cursor-pointer'
           }`}
         >
-          Continue
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {loading ? 'Processing...' : 'Continue'}
         </button>
       </div>
 
