@@ -11,56 +11,73 @@ import DocumentsStep from '@/components/admin/budgetWizard/DocumentsStep';
 import ReviewStep from '@/components/admin/budgetWizard/ReviewStep';
 import BudgetDashboardHeader from '@/components/admin/budgetWizard/BudgetDashboardHeader';
 import { useDepartments } from '@/context/DepartmentsContext';
+import { useAuth } from '@/context/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const STEPS = ['Basic Info', 'Budget Items', 'Justification', 'Documents', 'Review'];
 
+function loadDraft(departmentId: string): Partial<BudgetFormData> {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+  try {
+    const saved = localStorage.getItem(`budget_draft_${departmentId}`);
+    return saved ? JSON.parse(saved) : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function BudgetWizardPage() {
   const { departments, budgetRequests, submitBudgetRequest } = useDepartments();
+  const { role } = useAuth();
+  const { can } = usePermissions();
   const params = useParams();
   const router = useRouter();
 
   const departmentId = params.id as string;
-  const currentDepartment = departments.find((d) => d.id === departmentId);
 
+  // ── ALL hooks declared before any early return ──
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [stepError, setStepError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
 
-  const [formData, setFormData] = useState<BudgetFormData>({
-    title: '',
-    fiscalYear: '',
-    departmentId: departmentId ?? '',
-    departmentHead: '',
-    phoneNumber: '',
-    emailAddress: '',
-    overview: '',
-    personnel: [],
-    programs: [],
-    equipment: [],
-    training: [],
-    strategicObjectives: '',
-    expectedImpact: '',
-    ministryBenefits: '',
-    previousYearComparison: '',
-    numberOfBeneficiaries: '',
-    implementationTimeline: '',
-    justification: '',
-    documents: [],
+  // Lazy initializer — reads draft from localStorage once on mount, no useEffect needed
+  const [formData, setFormData] = useState<BudgetFormData>(() => {
+    const { documents: _ignored, ...draft } = loadDraft(departmentId);
+    return {
+      title: '',
+      fiscalYear: '',
+      departmentId: departmentId ?? '',
+      departmentHead: '',
+      phoneNumber: '',
+      emailAddress: '',
+      overview: '',
+      personnel: [],
+      programs: [],
+      equipment: [],
+      training: [],
+      strategicObjectives: '',
+      expectedImpact: '',
+      ministryBenefits: '',
+      previousYearComparison: '',
+      numberOfBeneficiaries: '',
+      implementationTimeline: '',
+      justification: '',
+      documents: [],
+      ...draft,
+    };
   });
 
-  const [draftLoaded, setDraftLoaded] = useState(false);
-  if (typeof window !== 'undefined' && !draftLoaded) {
-    const saved = localStorage.getItem(`budget_draft_${departmentId}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setFormData((prev) => ({ ...prev, ...parsed, documents: [] }));
-      } catch {}
-    }
-    setDraftLoaded(true);
+  // ── Route guard — AFTER all hooks ──
+  if (!can('canAssignBudget')) {
+    router.replace(`/${role}/departments`);
+    return null;
   }
+
+  const currentDepartment = departments.find((d) => d.id === departmentId);
 
   const categoryTotal = (items: BudgetFormData['personnel']) =>
     items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
@@ -135,8 +152,6 @@ export default function BudgetWizardPage() {
     if (!currentDepartment) {
       return;
     }
-
-    // Create a pending budget request
     const request: BudgetRequest = {
       id: crypto.randomUUID(),
       departmentId: currentDepartment.id,
@@ -151,7 +166,6 @@ export default function BudgetWizardPage() {
       status: 'pending',
       submittedAt: new Date().toISOString(),
     };
-
     submitBudgetRequest(request);
     localStorage.removeItem(`budget_draft_${departmentId}`);
     setSubmitted(true);
@@ -173,7 +187,7 @@ export default function BudgetWizardPage() {
             budget will update once approved by the approval chain.
           </p>
           <button
-            onClick={() => router.push('/admin/departments')}
+            onClick={() => router.back()}
             className="mt-4 px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition"
           >
             Back to Departments
@@ -186,6 +200,14 @@ export default function BudgetWizardPage() {
   return (
     <div className="min-h-full bg-slate-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Back */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition"
+        >
+          <ChevronLeft size={16} /> Back
+        </button>
+
         <BudgetDashboardHeader
           departments={departments}
           fiscalYear={formData.fiscalYear}
@@ -205,10 +227,10 @@ export default function BudgetWizardPage() {
                     <div className="flex flex-col items-center">
                       <div
                         className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200
-                        ${isCompleted ? 'bg-teal-500 border-2 border-teal-500 text-white' : ''}
-                        ${isActive ? 'bg-teal-500 border-[3px] border-blue-600 text-white shadow-md' : ''}
-                        ${!isActive && !isCompleted ? 'border-2 border-gray-300 text-gray-400 bg-white' : ''}
-                      `}
+                          ${isCompleted ? 'bg-teal-500 border-2 border-teal-500 text-white' : ''}
+                          ${isActive ? 'bg-teal-500 border-[3px] border-blue-600 text-white shadow-md' : ''}
+                          ${!isActive && !isCompleted ? 'border-2 border-gray-300 text-gray-400 bg-white' : ''}
+                        `}
                       >
                         {isCompleted ? '✓' : s}
                       </div>
@@ -321,7 +343,6 @@ export default function BudgetWizardPage() {
             onClick={() => setShowPreview(false)}
           />
           <div className="relative bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-            {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Budget Preview</h2>
@@ -345,7 +366,6 @@ export default function BudgetWizardPage() {
               </div>
             </div>
 
-            {/* Modal body */}
             <div className="overflow-y-auto p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -488,7 +508,6 @@ export default function BudgetWizardPage() {
               </div>
             </div>
 
-            {/* Modal footer */}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50">
               <button
                 onClick={() => setShowPreview(false)}

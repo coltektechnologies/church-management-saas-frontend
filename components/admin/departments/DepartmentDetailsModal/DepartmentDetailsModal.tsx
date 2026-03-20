@@ -11,12 +11,9 @@ import { Activity } from '@/types/activity';
 import { Expense } from '@/types/expense';
 import BudgetTab from '@/components/admin/departments/DepartmentTabs/BudgetTab';
 import SettingsTab from '@/components/admin/departments/DepartmentTabs/SettingsTab';
+import { usePermissions } from '@/hooks/usePermissions';
 
-type MockChurchMember = {
-  id: string;
-  name: string;
-  email: string;
-};
+type MockChurchMember = { id: string; name: string; email: string };
 
 const mockChurchMembers: MockChurchMember[] = [
   { id: 'm1', name: 'Daniel Mensah', email: 'daniel@email.com' },
@@ -40,6 +37,8 @@ interface Props {
   onSubmitExpense: (expense: Expense) => void;
 }
 
+type TabKey = 'overview' | 'members' | 'activities' | 'budget' | 'settings';
+
 export default function DepartmentDetailsModal({
   department,
   departmentMembers,
@@ -52,10 +51,17 @@ export default function DepartmentDetailsModal({
   expenses,
   onSubmitExpense,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<
-    'overview' | 'members' | 'activities' | 'budget' | 'settings'
-  >('overview');
+  const { can } = usePermissions();
 
+  const allTabs: { key: TabKey; label: string }[] = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'members', label: 'Members' },
+    { key: 'activities', label: 'Activities' },
+    { key: 'budget', label: 'Budget & Expenses' },
+    ...(can('canViewSettings') ? [{ key: 'settings' as TabKey, label: 'Settings' }] : []),
+  ];
+
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [isClosing, setIsClosing] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState('');
@@ -64,28 +70,20 @@ export default function DepartmentDetailsModal({
 
   const handleClose = () => {
     setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-    }, 160);
+    setTimeout(() => onClose(), 160);
   };
 
   const themeClass = COLOR_MAP[department.themeColor] ?? 'bg-gray-700';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
         onClick={handleClose}
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${
-          isClosing ? 'modal-backdrop-out' : 'modal-backdrop-in'
-        }`}
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${isClosing ? 'modal-backdrop-out' : 'modal-backdrop-in'}`}
       />
 
-      {/* Modal */}
       <div
-        className={`relative bg-white w-full h-full md:h-auto md:w-[95%] md:max-w-6xl rounded-none md:rounded-2xl overflow-hidden shadow-2xl ${
-          isClosing ? 'modal-content-out' : 'modal-content-in'
-        }`}
+        className={`relative bg-white w-full h-full md:h-auto md:w-[95%] md:max-w-6xl rounded-none md:rounded-2xl overflow-hidden shadow-2xl ${isClosing ? 'modal-content-out' : 'modal-content-in'}`}
       >
         <div className={`${themeClass} px-8 pt-10 pb-8 text-white relative`}>
           <h2 className="text-3xl font-bold">{department.name}</h2>
@@ -100,17 +98,17 @@ export default function DepartmentDetailsModal({
 
         {/* Tabs */}
         <div className="flex gap-10 px-8 border-b border-gray-200">
-          {['overview', 'members', 'activities', 'budget', 'settings'].map((tab) => (
+          {allTabs.map(({ key, label }) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab as typeof activeTab)}
+              key={key}
+              onClick={() => setActiveTab(key)}
               className={`py-4 capitalize transition-all duration-200 cursor-pointer ${
-                activeTab === tab
+                activeTab === key
                   ? 'border-b-2 border-green-600 text-black font-medium'
                   : 'text-gray-500 hover:text-black hover:border-b-2 hover:border-gray-300'
               }`}
             >
-              {tab === 'budget' ? 'Budget & Expenses' : tab}
+              {label}
             </button>
           ))}
         </div>
@@ -147,7 +145,7 @@ export default function DepartmentDetailsModal({
               onSubmitExpense={onSubmitExpense}
             />
           )}
-          {activeTab === 'settings' && (
+          {activeTab === 'settings' && can('canViewSettings') && (
             <SettingsTab department={department} onUpdateDepartment={onUpdateDepartment} />
           )}
         </div>
