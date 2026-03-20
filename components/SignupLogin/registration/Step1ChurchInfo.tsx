@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CountrySelect } from '@/components/SignupLogin/CountrySelect';
+import { ClientOnly } from '@/components/ClientOnly';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
@@ -14,7 +15,8 @@ import type { RegistrationData } from './Step4Payment';
 interface StepChurchInfoProps {
   data: RegistrationData;
   onChange: (field: keyof RegistrationData, value: string) => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
+  loading?: boolean;
 }
 
 const presetDenominations = [
@@ -31,7 +33,7 @@ const presetDenominations = [
   'Orthodox',
 ];
 
-const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
+const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurchInfoProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
   const [denomTyped, setDenomTyped] = useState('');
@@ -103,16 +105,27 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
           {errors.churchName && <p className={styles.errorText}>{errors.churchName}</p>}
         </div>
 
-        {/* Country */}
+        {/* Country — ClientOnly to avoid Radix hydration mismatch (aria-controls IDs) */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Country<span className={styles.requiredAsterisk}>*</span>
           </Label>
-          <CountrySelect
-            value={data.country || ''}
-            onValueChange={(val) => onChange('country', val)}
-            className={errors.country ? 'border-red-500' : ''}
-          />
+          <ClientOnly
+            fallback={
+              <Input
+                readOnly
+                value={data.country || ''}
+                placeholder="Select country"
+                className={cn(styles.inputField, errors.country ? 'border-red-500' : '')}
+              />
+            }
+          >
+            <CountrySelect
+              value={data.country || ''}
+              onValueChange={(val) => onChange('country', val)}
+              className={errors.country ? 'border-red-500' : ''}
+            />
+          </ClientOnly>
           {errors.country && <p className={styles.errorText}>{errors.country}</p>}
         </div>
 
@@ -176,119 +189,128 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
           {errors.address && <p className={styles.errorText}>{errors.address}</p>}
         </div>
 
-        {/* Denomination */}
+        {/* Denomination — ClientOnly to avoid Radix hydration mismatch (aria-controls IDs) */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Denomination<span className={styles.requiredAsterisk}>*</span>
           </Label>
-          <Popover
-            open={open}
-            onOpenChange={(v) => {
-              setOpen(v);
-              if (!v) {
-                setDenomTyped('');
-              }
-            }}
+          <ClientOnly
+            fallback={
+              <Input
+                readOnly
+                value={data.denomination || ''}
+                placeholder="Select or type denomination..."
+                className={cn(styles.inputField, errors.denomination ? 'border-red-500' : '')}
+              />
+            }
           >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                className={cn(
-                  'justify-between font-normal text-sm',
-                  styles.inputField,
-                  errors.denomination && 'border-red-500'
-                )}
-              >
-                <span className={data.denomination ? 'text-[#0B2A4A]' : 'text-gray-400'}>
-                  {data.denomination || 'Select or type denomination...'}
-                </span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-
-            <PopoverContent
-              className="w-[--radix-popover-trigger-width] p-0 z-[9999]"
-              align="start"
+            <Popover
+              open={open}
+              onOpenChange={(v) => {
+                setOpen(v);
+                if (!v) {
+                  setDenomTyped('');
+                }
+              }}
             >
-              <Command shouldFilter={false}>
-                {/* Single inline input — type to filter or enter custom */}
-                <div className="flex items-center border-b border-gray-100 px-3">
-                  <input
-                    autoFocus
-                    placeholder="Type to search or enter your own..."
-                    value={denomTyped}
-                    onChange={(e) => {
-                      setDenomTyped(e.target.value);
-                      onChange('denomination', e.target.value);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && denomTyped.trim()) {
-                        onChange('denomination', denomTyped.trim());
-                        setOpen(false);
-                        setDenomTyped('');
-                      }
-                    }}
-                    className="flex-1 py-2.5 text-sm outline-none bg-transparent text-[#0B2A4A] placeholder:text-gray-400"
-                  />
-                </div>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className={cn(
+                    'justify-between font-normal text-sm',
+                    styles.inputField,
+                    errors.denomination && 'border-red-500'
+                  )}
+                >
+                  <span className={data.denomination ? 'text-[#0B2A4A]' : 'text-gray-400'}>
+                    {data.denomination || 'Select or type denomination...'}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
 
-                <CommandList className="max-h-[220px]">
-                  <CommandGroup>
-                    {/* Show filtered presets */}
-                    {filtered.map((item) => (
-                      <CommandItem
-                        key={item}
-                        value={item}
-                        onSelect={() => {
-                          onChange('denomination', item);
-                          setDenomTyped('');
+              <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0 z-[9999]"
+                align="start"
+              >
+                <Command shouldFilter={false}>
+                  <div className="flex items-center border-b border-gray-100 px-3">
+                    <input
+                      autoFocus
+                      placeholder="Type to search or enter your own..."
+                      value={denomTyped}
+                      onChange={(e) => {
+                        setDenomTyped(e.target.value);
+                        onChange('denomination', e.target.value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && denomTyped.trim()) {
+                          onChange('denomination', denomTyped.trim());
                           setOpen(false);
-                        }}
-                        className="text-sm cursor-pointer"
-                      >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4 shrink-0',
-                            data.denomination === item ? 'opacity-100 text-[#2FC4B2]' : 'opacity-0'
-                          )}
-                        />
-                        {item}
-                      </CommandItem>
-                    ))}
+                          setDenomTyped('');
+                        }
+                      }}
+                      className="flex-1 py-2.5 text-sm outline-none bg-transparent text-[#0B2A4A] placeholder:text-gray-400"
+                    />
+                  </div>
 
-                    {/* If typed value is not in list, show "use this" option */}
-                    {denomTyped.trim() &&
-                      !presetDenominations
-                        .map((d) => d.toLowerCase())
-                        .includes(denomTyped.trim().toLowerCase()) && (
+                  <CommandList className="max-h-[220px]">
+                    <CommandGroup>
+                      {filtered.map((item) => (
                         <CommandItem
-                          value={denomTyped}
+                          key={item}
+                          value={item}
                           onSelect={() => {
-                            onChange('denomination', denomTyped.trim());
+                            onChange('denomination', item);
                             setDenomTyped('');
                             setOpen(false);
                           }}
-                          className="text-sm cursor-pointer text-[#2FC4B2] font-medium"
+                          className="text-sm cursor-pointer"
                         >
-                          <Check className="mr-2 h-4 w-4 opacity-0 shrink-0" />
-                          Use &quot;{denomTyped.trim()}&quot;
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4 shrink-0',
+                              data.denomination === item
+                                ? 'opacity-100 text-[#2FC4B2]'
+                                : 'opacity-0'
+                            )}
+                          />
+                          {item}
                         </CommandItem>
-                      )}
-                  </CommandGroup>
-                </CommandList>
+                      ))}
 
-                {/* Bottom hint */}
-                <div className="px-3 py-2 border-t border-gray-100 bg-gray-50">
-                  <p className="text-[10px] text-gray-400">
-                    Not listed? Just type your denomination and press Enter or click &quot;Use&quot;
-                  </p>
-                </div>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                      {denomTyped.trim() &&
+                        !presetDenominations
+                          .map((d) => d.toLowerCase())
+                          .includes(denomTyped.trim().toLowerCase()) && (
+                          <CommandItem
+                            value={denomTyped}
+                            onSelect={() => {
+                              onChange('denomination', denomTyped.trim());
+                              setDenomTyped('');
+                              setOpen(false);
+                            }}
+                            className="text-sm cursor-pointer text-[#2FC4B2] font-medium"
+                          >
+                            <Check className="mr-2 h-4 w-4 opacity-0 shrink-0" />
+                            Use &quot;{denomTyped.trim()}&quot;
+                          </CommandItem>
+                        )}
+                    </CommandGroup>
+                  </CommandList>
 
-          {/* Show custom value chip if user typed something not in the list */}
+                  <div className="px-3 py-2 border-t border-gray-100 bg-gray-50">
+                    <p className="text-[10px] text-gray-400">
+                      Not listed? Just type your denomination and press Enter or click
+                      &quot;Use&quot;
+                    </p>
+                  </div>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </ClientOnly>
+
           {isCustomValue && (
             <p className="text-[10px] text-[#2FC4B2] mt-1 font-medium">
               ✓ Custom denomination saved: &quot;{data.denomination}&quot;
@@ -314,8 +336,8 @@ const Step1ChurchInfo = ({ data, onChange, onNext }: StepChurchInfoProps) => {
       </div>
 
       <div className={styles.actionWrapper}>
-        <Button onClick={handleValidation} className={styles.continueBtn}>
-          Continue
+        <Button onClick={handleValidation} className={styles.continueBtn} disabled={loading}>
+          {loading ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>

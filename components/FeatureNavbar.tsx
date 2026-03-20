@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ROUTES } from '@/lib/routes';
+import logo from '@/assets/logo.svg';
 
 export default function Navbar() {
   return (
@@ -13,7 +15,14 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href={ROUTES.home} className="font-semibold text-lg tracking-wide">
-          The Open Door
+          <Image
+            src={logo}
+            alt="The Open Door Logo"
+            width={240}
+            height={50}
+            className="h-auto w-auto max-w-[180px] md:max-w-[240px]"
+            priority
+          />
         </Link>
 
         <div className="hidden md:flex gap-8 text-sm font-medium">

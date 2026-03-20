@@ -11,12 +11,19 @@ import Link from 'next/link';
 interface StepReviewProps {
   data: RegistrationData;
   onBack: () => void;
-  onFinish: () => void;
+  onFinish: () => void | Promise<void>;
+  loading?: boolean;
+  isSuccess?: boolean;
 }
 
-const Step5Review = ({ data, onBack, onFinish }: StepReviewProps) => {
+const Step5Review = ({
+  data,
+  onBack,
+  onFinish,
+  loading = false,
+  isSuccess = false,
+}: StepReviewProps) => {
   const [agreed, setAgreed] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
   // Mapping the data for a clean display
   const reviewRows = [
@@ -26,14 +33,19 @@ const Step5Review = ({ data, onBack, onFinish }: StepReviewProps) => {
     { label: 'Admin Email', value: data.adminEmail },
     { label: 'Primary Admin Role', value: data.role },
     { label: 'Subscription Plan', value: data.subscriptionPlan?.toUpperCase() },
-    { label: 'Payment Method', value: data.paymentMethod?.split('_').join(' ').toUpperCase() },
+    {
+      label: 'Payment Method',
+      value: data.paymentMethod
+        ? data.paymentMethod.split('_').join(' ').toUpperCase()
+        : 'Paystack (card, mobile money, bank)',
+    },
   ];
 
   const handleSubmit = () => {
     if (!agreed) {
       return;
     }
-    setIsSuccess(true);
+    void onFinish();
   };
 
   return (
@@ -93,11 +105,11 @@ const Step5Review = ({ data, onBack, onFinish }: StepReviewProps) => {
             Back
           </Button>
           <Button
-            disabled={!agreed}
+            disabled={!agreed || loading}
             onClick={handleSubmit}
             className="flex-[2] h-[50px] rounded-xl bg-[#0B2A4A] hover:bg-black text-white font-bold transition-all disabled:opacity-40 shadow-xl shadow-[#0B2A4A]/20"
           >
-            Complete Registration
+            {loading ? 'Completing...' : 'Complete Registration'}
           </Button>
         </div>
       </div>

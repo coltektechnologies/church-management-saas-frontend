@@ -1,13 +1,14 @@
-'use client';
+/**
+ * LandingHero Component
+ * * Purpose: Hero section for the top of the landing page.
+ * Fonts: OV Soge (Main Headline), Outfit (Sub-headline and Buttons)
+ * Responsive: Stacks content vertically on mobile, side-by-side on desktop.
+ */
 
 import { Play } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import heroWorship from '@/assets/hero-worship.png';
 
-/**
- * LandingHero Component
- */
 const LandingHero = () => {
   return (
     <section
@@ -41,55 +42,65 @@ const LandingHero = () => {
               <span className="text-[#17D7BE]"> Streamline Your Church.</span>
             </h1>
 
-            <div className="space-y-3">
-              <p
-                className="text-base sm:text-lg md:text-xl lg:text-2xl text-white font-medium"
-                style={{ fontFamily: 'Outfit, sans-serif' }}
-              >
-                The all-in-one management platform designed for modern congregations.
-              </p>
-              <p
-                className="text-sm sm:text-base lg:text-lg text-white/80 max-w-md mx-auto lg:mx-0 leading-relaxed"
-                style={{ fontFamily: 'Outfit, sans-serif' }}
-              >
-                Manage your members, track finances with precision, and coordinate every department
-                from a single, secure dashboard.
-              </p>
-            </div>
+            <div className="hero-subtext-container space-y-4">
+              {/* Tagline - Font: Outfit Medium */}
 
-            <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
-              <Button
-                className="bg-[#17D7BE] hover:bg-[#17D7BE]/90 text-[#020202] px-8 py-5 sm:py-6 text-base sm:text-lg rounded-full w-full sm:w-auto font-medium shadow-lg"
-                style={{ fontFamily: 'Outfit, sans-serif' }}
-              >
-                Start Free Trial
-              </Button>
-              <Button
-                variant="outline"
-                className="bg-[#002B48] hover:bg-[#002B48]/90 text-white px-8 py-5 sm:py-6 text-base sm:text-lg rounded-full border-none w-full sm:w-auto shadow-md"
-                style={{ fontFamily: 'Outfit, sans-serif' }}
-              >
-                <div className="bg-white/10 rounded-full p-1 mr-2">
-                  <Play className="h-4 w-4 fill-current" />
-                </div>
-                Watch Demo Walkthrough
-              </Button>
+              <div className="space-y-3">
+                <p
+                  className="text-base sm:text-lg md:text-xl lg:text-2xl text-white font-medium"
+                  style={{ fontFamily: 'Outfit, sans-serif' }}
+                >
+                  The all-in-one management platform designed for modern congregations.
+                </p>
+
+                {/* Description - Font: Outfit Regular */}
+
+                <p
+                  className="text-sm sm:text-base lg:text-lg text-white/80 max-w-md mx-auto lg:mx-0 leading-relaxed"
+                  style={{ fontFamily: 'Outfit, sans-serif' }}
+                >
+                  Manage your members, track finances with precision, and coordinate every
+                  department from a single, secure dashboard.
+                </p>
+              </div>
+
+              {/* BUTTON GROUP: Primary CTA and Demo Video Link */}
+              <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 sm:gap-4 pt-2">
+                <Button
+                  className="bg-[#17D7BE] hover:bg-[#17D7BE]/90 text-[#020202] px-8 py-5 sm:py-6 text-base sm:text-lg rounded-full w-full sm:w-auto font-medium shadow-lg"
+                  style={{ fontFamily: 'Outfit, sans-serif' }}
+                >
+                  Start Free Trial
+                </Button>
+                <Button
+                  variant="outline"
+                  className="bg-[#002B48] hover:bg-[#002B48]/90 text-white px-8 py-5 sm:py-6 text-base sm:text-lg rounded-full border-none w-full sm:w-auto shadow-md"
+                  style={{ fontFamily: 'Outfit, sans-serif' }}
+                >
+                  <div className="bg-white/10 rounded-full p-1 mr-2">
+                    <Play className="h-4 w-4 fill-current" />
+                  </div>
+                  Watch Demo Walkthrough
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* IMAGE — top on mobile, right on desktop */}
-          <div
-            className="order-1 lg:order-2 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-none mx-auto rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl leading-[0] text-[0]"
-            style={{ fontSize: 0, lineHeight: 0 }}
-          >
-            <Image
-              src={heroWorship}
-              alt="Congregation worshipping"
-              width={700}
-              height={600}
-              className="w-full h-auto block"
-              priority
-            />
+          {/* VISUAL CONTENT: Interactive image frame with backdrop effects */}
+          <div className="hero-visual-block relative order-1 lg:order-2 max-w-2xl mx-auto lg:max-w-none w-full">
+            <div className="image-frame rounded-2xl overflow-hidden shadow-2xl relative z-10 border-4 border-white/10">
+              <Image
+                src="/hero-worship.svg"
+                alt="Congregation worshipping"
+                priority
+                width={700}
+                height={600}
+                className="hero-img w-full h-auto object-cover min-h-[300px]"
+                unoptimized
+              />
+            </div>
+            {/* Backdrop Decorative Layer */}
+            <div className="image-bg-decoration absolute -bottom-6 -right-6 w-full h-full bg-white/5 rounded-2xl z-0" />
           </div>
         </div>
       </div>
