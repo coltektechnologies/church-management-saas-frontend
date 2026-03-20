@@ -1,20 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import { Department } from '@/types/Department';
+import { usePermissions } from '@/hooks/usePermissions';
 
-type LocalMember = {
-  id: string;
-  name: string;
-  role: string;
-  joinedAt: string;
-};
-
-type MockChurchMember = {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
-};
+type LocalMember = { id: string; name: string; role: string; joinedAt: string };
+type MockChurchMember = { id: string; name: string; email: string; image?: string };
 
 interface Props {
   department: Department;
@@ -28,11 +19,11 @@ interface Props {
 export default function MembersTab({
   department,
   departmentMembers,
-  setDepartmentMembers,
   mockChurchMembers,
   onAddClick,
-  onUpdateDepartment,
 }: Props) {
+  const { can } = usePermissions();
+
   return (
     <>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -41,12 +32,14 @@ export default function MembersTab({
           <span className="ml-2 text-base font-normal text-gray-500">({department.members})</span>
         </h3>
 
-        <button
-          onClick={onAddClick}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium shadow-sm hover:shadow-md transition-all duration-200"
-        >
-          + Add Member
-        </button>
+        {can('canAddMember') && (
+          <button
+            onClick={onAddClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-medium shadow-sm hover:shadow-md transition-all duration-200"
+          >
+            + Add Member
+          </button>
+        )}
       </div>
 
       <div className="mt-8">
@@ -62,19 +55,20 @@ export default function MembersTab({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {departmentMembers.map((member) => {
               const fullMember = mockChurchMembers.find((m) => m.id === member.id);
-
               return (
                 <div
                   key={member.id}
                   className="bg-gray-100 rounded-2xl px-6 py-6 flex items-center gap-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:bg-gray-200"
                 >
-                  {/* Avatar */}
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-300 flex-shrink-0">
                     {fullMember?.image ? (
-                      <img
+                      <Image
                         src={fullMember.image}
                         alt={member.name}
-                        className="w-full h-full object-cover"
+                        width={56}
+                        height={56}
+                        className="object-cover rounded-full"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center font-semibold text-gray-600">
@@ -82,8 +76,6 @@ export default function MembersTab({
                       </div>
                     )}
                   </div>
-
-                  {/* Text Content */}
                   <div className="flex flex-col gap-1">
                     <p className="font-semibold text-green-700 text-base">{member.name}</p>
                     <div className="flex items-center gap-3 text-sm text-gray-500">
@@ -93,7 +85,6 @@ export default function MembersTab({
                           year: 'numeric',
                         })}
                       </span>
-
                       <span
                         className={`text-xs px-2 py-1 rounded-full font-medium ${
                           member.role === 'Leader'

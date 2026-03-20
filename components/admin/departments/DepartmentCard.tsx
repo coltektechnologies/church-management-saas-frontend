@@ -1,6 +1,8 @@
 import { Department } from '@/types/Department';
 import { COLOR_MAP, ICON_MAP } from '@/constants/departments';
 import { Eye } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
+import Image from 'next/image';
 
 interface DepartmentCardProps {
   department: Department;
@@ -9,8 +11,8 @@ interface DepartmentCardProps {
 }
 
 export default function DepartmentCard({ department, onViewDetails, onEdit }: DepartmentCardProps) {
+  const { can } = usePermissions();
   const isActive = department.status === 'active';
-
   const themeClass = COLOR_MAP[department.themeColor] ?? 'bg-gray-700';
   const iconMap = ICON_MAP;
 
@@ -28,12 +30,10 @@ export default function DepartmentCard({ department, onViewDetails, onEdit }: De
     >
       {/* Header */}
       <div className={`${themeClass} px-6 pt-8 pb-6 text-white relative`}>
-        {/* Status Badge */}
         <span
-          className={`
-           absolute top-3 right-4 text-xs font-semibold px-3 py-1 rounded-full
-            ${isActive ? 'bg-green-500' : 'bg-gray-600'}
-          `}
+          className={`absolute top-3 right-4 text-xs font-semibold px-3 py-1 rounded-full ${
+            isActive ? 'bg-green-500' : 'bg-gray-600'
+          }`}
         >
           {isActive ? 'Active' : 'Inactive'}
         </span>
@@ -43,13 +43,15 @@ export default function DepartmentCard({ department, onViewDetails, onEdit }: De
             <h3 className="text-xl font-semibold leading-tight">{department.name}</h3>
             <p className="text-sm opacity-90 mt-1">{department.code}</p>
           </div>
-
           <div className="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
             {department.icon?.startsWith('data:') ? (
-              <img
+              <Image
                 src={department.icon}
                 alt="Department Icon"
-                className="h-10 w-10 object-cover rounded-full"
+                width={40}
+                height={40}
+                className="object-cover rounded-full"
+                unoptimized
               />
             ) : iconMap[department.icon] ? (
               <span className="text-2xl text-white">{iconMap[department.icon]}</span>
@@ -67,26 +69,22 @@ export default function DepartmentCard({ department, onViewDetails, onEdit }: De
             <p className="font-semibold text-lg">{department.members}</p>
             <p className="text-sm text-gray-500">Members</p>
           </div>
-
           <div>
             <p className="font-semibold text-lg">{department.activities}</p>
             <p className="text-sm text-gray-500">Activities</p>
           </div>
-
           <div>
             <p className="font-semibold text-lg">{budgetPercentage.toFixed(0)}%</p>
             <p className="text-sm text-gray-500">Budget Used</p>
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
           <div className={`${themeClass} h-2.5`} style={{ width: `${budgetPercentage}%` }} />
         </div>
 
         <p className="text-base text-gray-600 leading-relaxed">{department.description}</p>
 
-        {/* Buttons */}
         <div className="flex gap-4 pt-2">
           {isActive ? (
             <button
@@ -104,12 +102,14 @@ export default function DepartmentCard({ department, onViewDetails, onEdit }: De
             </button>
           )}
 
-          <button
-            onClick={() => onEdit(department)}
-            className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
-          >
-            Edit
-          </button>
+          {can('canEditDepartment') && (
+            <button
+              onClick={() => onEdit(department)}
+              className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
+            >
+              Edit
+            </button>
+          )}
         </div>
       </div>
     </div>

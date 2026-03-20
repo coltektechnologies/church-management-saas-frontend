@@ -172,15 +172,17 @@ export default function TopNavbar() {
   const router = useRouter();
   const { profile, isReady, toggleDarkMode } = useChurchProfile();
 
-  const pc = profile.primaryColor || '#0B2A4A';
-  const churchName = profile.churchName || 'Your Church';
-  const adminName = profile.adminName || 'Admin User';
-  const adminEmail = profile.adminEmail || '';
-  const adminRole = profile.adminRole || 'Admin';
-  const statusKey = profile.subscriptionStatus || 'trial';
-
   const mounted = useIsMounted();
   const dark = mounted ? (profile.darkMode ?? false) : false;
+
+  // ── All profile-derived values guarded with mounted to prevent hydration mismatch ──
+  const pc = mounted ? profile.primaryColor || '#0B2A4A' : '#0B2A4A';
+  const churchName = mounted ? profile.churchName || 'Your Church' : 'Your Church';
+  const adminName = mounted ? profile.adminName || 'Admin User' : 'Admin User';
+  const adminEmail = mounted ? profile.adminEmail || '' : '';
+  const adminRole = mounted ? profile.adminRole || 'Admin' : 'Admin';
+  const statusKey = mounted ? profile.subscriptionStatus || 'trial' : 'trial';
+
   const statusStyle = STATUS_STYLES[statusKey];
 
   const pageTitle =
@@ -269,6 +271,7 @@ export default function TopNavbar() {
       <Sun size={10} className="text-yellow-500" />
     )
   ) : null;
+
   const DarkIconSm = mounted ? (
     dark ? (
       <Moon size={9} className="text-[#0B2A4A]" />

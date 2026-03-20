@@ -94,11 +94,12 @@ export default function AdminSidebar() {
 
   const hamburgerBg = mounted ? (dark ? primaryColor : '#FFFFFF') : '#FFFFFF';
 
-  const churchName = profile.churchName || 'Your Church';
-  const tagline = profile.tagline || "You don't have to have it all figured out.";
-  const adminName = profile.adminName || 'Admin User';
-  const adminRole = profile.adminRole || 'Admin';
-
+  const churchName = mounted ? profile.churchName || 'Your Church' : 'Your Church';
+  const tagline = mounted
+    ? profile.tagline || "You don't have to have it all figured out."
+    : "You don't have to have it all figured out.";
+  const adminName = mounted ? profile.adminName || 'Admin User' : 'Admin User';
+  const adminRole = mounted ? profile.adminRole || 'Admin' : 'Admin';
   const initials = adminName
     .split(' ')
     .filter(Boolean)

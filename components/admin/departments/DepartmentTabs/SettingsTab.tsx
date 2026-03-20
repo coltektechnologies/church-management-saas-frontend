@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Department } from '@/types/Department';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface Props {
   department: Department;
@@ -9,13 +10,15 @@ interface Props {
 }
 
 export default function SettingsTab({ department, onUpdateDepartment }: Props) {
+  const { can } = usePermissions();
+  const canEdit = can('canEditSettings');
+
   const settings = department.settings;
 
   const [isEditing, setIsEditing] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Local editable state for all settings
   const [threshold, setThreshold] = useState(settings.autoApprovalThreshold);
   const [requiresElderApproval, setRequiresElderApproval] = useState(
     settings.requiresElderApproval
@@ -35,14 +38,12 @@ export default function SettingsTab({ department, onUpdateDepartment }: Props) {
         canSubmitAnnouncements,
       },
     });
-
     setIsEditing(false);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   const handleCancelEdit = () => {
-    // Reset local state back to current department settings
     setThreshold(settings.autoApprovalThreshold);
     setRequiresElderApproval(settings.requiresElderApproval);
     setWeeklySummary(settings.weeklySummary);
@@ -51,19 +52,21 @@ export default function SettingsTab({ department, onUpdateDepartment }: Props) {
   };
 
   const handleArchive = () => {
-    onUpdateDepartment({
-      ...department,
-      status: 'inactive',
-    });
+    onUpdateDepartment({ ...department, status: 'inactive' });
     setShowArchiveConfirm(false);
   };
 
   return (
     <div className="space-y-10">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold">Department Settings</h3>
-
-        {/* Success message */}
+        <div>
+          <h3 className="text-xl font-semibold">Department Settings</h3>
+          {!canEdit && (
+            <p className="text-sm text-gray-400 mt-0.5">
+              You have read-only access to these settings.
+            </p>
+          )}
+        </div>
         {saveSuccess && (
           <p className="text-sm text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg">
             ✓ Settings saved successfully
@@ -148,40 +151,42 @@ export default function SettingsTab({ department, onUpdateDepartment }: Props) {
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-4 pt-6">
-        {isEditing ? (
-          <>
-            <button
-              onClick={handleSave}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
-            >
-              Save Settings
-            </button>
-            <button
-              onClick={handleCancelEdit}
-              className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition"
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
-            >
-              Edit Settings
-            </button>
-            <button
-              onClick={() => setShowArchiveConfirm(true)}
-              className="bg-gray-200 text-gray-800 px-6 py-3 rounded-xl hover:bg-gray-300 transition"
-            >
-              Archive Department
-            </button>
-          </>
-        )}
-      </div>
+      {/* Action Buttons — only shown if user can edit */}
+      {canEdit && (
+        <div className="flex gap-4 pt-6">
+          {isEditing ? (
+            <>
+              <button
+                onClick={handleSave}
+                className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
+              >
+                Save Settings
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
+              >
+                Edit Settings
+              </button>
+              <button
+                onClick={() => setShowArchiveConfirm(true)}
+                className="bg-gray-200 text-gray-800 px-6 py-3 rounded-xl hover:bg-gray-300 transition"
+              >
+                Archive Department
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Archive Confirmation */}
       {showArchiveConfirm && (

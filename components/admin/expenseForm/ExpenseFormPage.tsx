@@ -209,7 +209,7 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
             </p>
           )}
           <button
-            onClick={() => router.push(`/admin/departments`)}
+            onClick={() => router.back()}
             className="px-8 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition w-full"
           >
             Back to Departments

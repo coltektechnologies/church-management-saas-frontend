@@ -2,6 +2,7 @@
 
 import { Department } from '@/types/Department';
 import Link from 'next/link';
+import { usePermissions } from '@/hooks/usePermissions';
 
 type LocalMember = {
   id: string;
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export default function OverviewTab({ department, departmentMembers }: Props) {
+  const { can } = usePermissions();
+
   const budgetPercentage =
     department.annualBudget === 0
       ? 0
@@ -27,7 +30,6 @@ export default function OverviewTab({ department, departmentMembers }: Props) {
 
   return (
     <>
-      {/* Info Grid */}
       <div className="grid md:grid-cols-3 gap-6">
         <InfoCard title="Department Head" value={departmentHead} />
         <InfoCard title="Assistant Head" value={assistantHead} />
@@ -42,7 +44,6 @@ export default function OverviewTab({ department, departmentMembers }: Props) {
         />
       </div>
 
-      {/* Description */}
       <div>
         <h4 className="text-gray-500 mb-2">Department Description</h4>
         <p className="text-lg text-gray-800">
@@ -57,15 +58,16 @@ export default function OverviewTab({ department, departmentMembers }: Props) {
           <p className="text-sm text-gray-400">{budgetPercentage.toFixed(0)}% used</p>
         </div>
 
-        <Link
-          href={`/admin/departments/${department.id}/budget/new`}
-          className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-        >
-          Assign Budget
-        </Link>
+        {can('canAssignBudget') && (
+          <Link
+            href={`/departments/${department.id}/budget/new`}
+            className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+          >
+            Assign Budget
+          </Link>
+        )}
       </div>
 
-      {/* Stats Section */}
       <div className="grid md:grid-cols-4 gap-6">
         <StatCard label="Total Members" value={department.members} />
         <StatCard label="Upcoming Activities" value={department.activities} />
