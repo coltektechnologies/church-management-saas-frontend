@@ -506,12 +506,52 @@ export async function getTitheOfferingStats(periodMonths = 9): Promise<TitheOffe
     };
   }
 
-  const res = await fetch(
-    `${base}/analytics/finance/tithe-offerings/?period_months=${periodMonths}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  try {
+    const res = await fetch(
+      `${base}/analytics/finance/tithe-offerings/?period_months=${periodMonths}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  if (!res.ok) {
+    if (!res.ok) {
+      return {
+        monthly_trend: [],
+        this_month: {
+          tithe_total: '0',
+          offering_total: '0',
+          tithe_by_week: [
+            { name: 'W1', value: 0 },
+            { name: 'W2', value: 0 },
+            { name: 'W3', value: 0 },
+            { name: 'W4', value: 0 },
+          ],
+          offering_by_week: [
+            { name: 'W1', value: 0 },
+            { name: 'W2', value: 0 },
+            { name: 'W3', value: 0 },
+            { name: 'W4', value: 0 },
+          ],
+        },
+      };
+    }
+
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    const trend = (data.monthly_trend as TitheOfferingStats['monthly_trend']) ?? [];
+    const tm = (data.this_month as TitheOfferingStats['this_month']) ?? {
+      tithe_total: '0',
+      offering_total: '0',
+      tithe_by_week: [],
+      offering_by_week: [],
+    };
+    return {
+      monthly_trend: trend,
+      this_month: {
+        tithe_total: String(tm.tithe_total ?? '0'),
+        offering_total: String(tm.offering_total ?? '0'),
+        tithe_by_week: Array.isArray(tm.tithe_by_week) ? tm.tithe_by_week : [],
+        offering_by_week: Array.isArray(tm.offering_by_week) ? tm.offering_by_week : [],
+      },
+    };
+  } catch {
     return {
       monthly_trend: [],
       this_month: {
@@ -532,24 +572,6 @@ export async function getTitheOfferingStats(periodMonths = 9): Promise<TitheOffe
       },
     };
   }
-
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  const trend = (data.monthly_trend as TitheOfferingStats['monthly_trend']) ?? [];
-  const tm = (data.this_month as TitheOfferingStats['this_month']) ?? {
-    tithe_total: '0',
-    offering_total: '0',
-    tithe_by_week: [],
-    offering_by_week: [],
-  };
-  return {
-    monthly_trend: trend,
-    this_month: {
-      tithe_total: String(tm.tithe_total ?? '0'),
-      offering_total: String(tm.offering_total ?? '0'),
-      tithe_by_week: Array.isArray(tm.tithe_by_week) ? tm.tithe_by_week : [],
-      offering_by_week: Array.isArray(tm.offering_by_week) ? tm.offering_by_week : [],
-    },
-  };
 }
 
 export async function getMemberStats(): Promise<MemberStats> {
@@ -559,26 +581,30 @@ export async function getMemberStats(): Promise<MemberStats> {
     return emptyMemberStats;
   }
 
-  const res = await fetch(`${base}/analytics/members/stats/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    const res = await fetch(`${base}/analytics/members/stats/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  if (!res.ok) {
+    if (!res.ok) {
+      return emptyMemberStats;
+    }
+
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    return {
+      total_members: (data.total_members as number) ?? 0,
+      total_change_percent: (data.total_change_percent as number) ?? 0,
+      active_members: (data.active_members as number) ?? 0,
+      active_change_percent: (data.active_change_percent as number) ?? 0,
+      inactive_members: (data.inactive_members as number) ?? 0,
+      inactive_change_percent: (data.inactive_change_percent as number) ?? 0,
+      new_members_this_month: (data.new_members_this_month as number) ?? 0,
+      new_members_change_percent: (data.new_members_change_percent as number) ?? 0,
+      pending_approvals: (data.pending_approvals as number) ?? 0,
+    };
+  } catch {
     return emptyMemberStats;
   }
-
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  return {
-    total_members: (data.total_members as number) ?? 0,
-    total_change_percent: (data.total_change_percent as number) ?? 0,
-    active_members: (data.active_members as number) ?? 0,
-    active_change_percent: (data.active_change_percent as number) ?? 0,
-    inactive_members: (data.inactive_members as number) ?? 0,
-    inactive_change_percent: (data.inactive_change_percent as number) ?? 0,
-    new_members_this_month: (data.new_members_this_month as number) ?? 0,
-    new_members_change_percent: (data.new_members_change_percent as number) ?? 0,
-    pending_approvals: (data.pending_approvals as number) ?? 0,
-  };
 }
 
 export async function registrationVerifyPayment(
