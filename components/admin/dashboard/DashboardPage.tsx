@@ -38,12 +38,15 @@ export default function DashboardPage() {
     activeMembers,
   } = useAppData();
 
-  // dark-mode styles
   const mounted = useIsMounted();
-  const dark = mounted ? (profile.darkMode ?? false) : false;
 
-  const adminName = profile.adminName || 'Admin';
-  const pc = profile.primaryColor || '#0B2A4A';
+  // All values that read from localStorage must be gated behind mounted.
+  // Server and client must agree on the initial render — use safe static
+  // fallbacks on the server, real values only after hydration.
+  const dark = mounted ? (profile.darkMode ?? false) : false;
+  const adminName = mounted ? profile.adminName || 'Admin' : 'Admin';
+  const pc = mounted ? profile.primaryColor || '#0B2A4A' : '#0B2A4A';
+  const churchName = mounted ? profile.churchName || '' : '';
 
   const featuredCardStyle: React.CSSProperties = {
     backgroundColor: dark ? '#112240' : '#FDFEFE',
@@ -68,6 +71,7 @@ export default function DashboardPage() {
       >
         <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full opacity-10 bg-white" />
         <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full opacity-10 bg-white" />
+
         <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h1
@@ -76,6 +80,7 @@ export default function DashboardPage() {
             >
               {greeting}, {adminName} 👋
             </h1>
+
             <p className="text-white/80 text-[11px] sm:text-xs mt-1 leading-relaxed">
               {pendingAnnouncements > 0 && (
                 <>
@@ -98,10 +103,11 @@ export default function DashboardPage() {
                 </button>
               )}
               {pendingAnnouncements === 0 && newMembersThisWeek === 0 && (
-                <span>Welcome back to {profile.churchName || 'your church dashboard'}.</span>
+                <span>Welcome back to {churchName || 'your church dashboard'}.</span>
               )}
             </p>
           </div>
+
           <div className="flex items-center gap-2 flex-wrap">
             <DashboardDateRangePicker />
             <span className="text-[10px] bg-white/20 rounded-full px-3 py-1.5 font-medium hidden sm:inline-block">
