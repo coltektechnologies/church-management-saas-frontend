@@ -1,18 +1,30 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   FileText,
   Smartphone,
   Building2,
   Banknote,
-  Calendar,
-  ChevronDown,
   CheckCircle2,
   ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  createExpenseTransaction,
+  createIncomeTransaction,
+  getExpenseCategories,
+  getIncomeCategories,
+} from '@/lib/treasuryApi';
+import type { IncomeCategoryItem, ExpenseCategoryItem } from '@/lib/treasuryApi';
+
+const PAYMENT_MAP: Record<string, string> = {
+  cash: 'CASH',
+  cheque: 'CHEQUE',
+  momo: 'MOBILE_MONEY',
+  bank: 'BANK_TRANSFER',
+};
 
 export function TransactionForm() {
   const searchParams = useSearchParams();
@@ -21,6 +33,82 @@ export function TransactionForm() {
   const isIncome = rawType === 'income';
 
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [regNumber, setRegNumber] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [categoryId, setCategoryId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [chequeNumber, setChequeNumber] = useState('');
+  const [transactionRef, setTransactionRef] = useState('');
+  const [registration, setRegistration] = useState('');
+  const [notes] = useState('');
+
+  const [incomeCategories, setIncomeCategories] = useState<IncomeCategoryItem[]>([]);
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategoryItem[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const [inc, exp] = await Promise.all([getIncomeCategories(), getExpenseCategories()]);
+      setIncomeCategories(inc);
+      setExpenseCategories(exp);
+      if (inc.length && isIncome) {
+        setCategoryId(inc[0]?.id ?? '');
+      }
+      if (exp.length && !isIncome) {
+        setCategoryId(exp[0]?.id ?? '');
+      }
+    })();
+  }, [isIncome]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const amt = parseFloat(amount);
+    if (!categoryId || !date || !paymentMethod || Number.isNaN(amt) || amt <= 0) {
+      setError(
+        'Please fill in all required fields (Name, Date, Category, Amount, Payment Method).'
+      );
+      return;
+    }
+    if (paymentMethod === 'cheque' && !chequeNumber) {
+      setError('Cheque number is required for cheque payments.');
+      return;
+    }
+    if ((paymentMethod === 'momo' || paymentMethod === 'bank') && !transactionRef) {
+      setError('Transaction reference is required for Mobile Money and Bank Transfer.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const payload: Record<string, unknown> = {
+        category_id: categoryId,
+        transaction_date: date,
+        amount: String(amt),
+        payment_method: PAYMENT_MAP[paymentMethod] ?? 'CASH',
+        cheque_number: paymentMethod === 'cheque' ? chequeNumber : undefined,
+        transaction_reference:
+          paymentMethod === 'momo' || paymentMethod === 'bank' ? transactionRef : undefined,
+        notes: notes || registration || undefined,
+      };
+      if (isIncome) {
+        payload.contributor_name = name || undefined;
+        await createIncomeTransaction(payload);
+      } else {
+        payload.paid_to = name;
+        payload.description = registration || `Payment to ${name}`;
+        payload.recipient_phone = phone || undefined;
+        await createExpenseTransaction(payload);
+      }
+      router.push('/admin/treasury');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save transaction.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // Theming based on transaction type
   const theme = {
@@ -56,8 +144,13 @@ export function TransactionForm() {
     { id: 'bank', label: 'Bank Transfer', icon: <Building2 className="w-6 h-6" /> },
   ];
 
+  const categories = isIncome ? incomeCategories : expenseCategories;
+
   return (
-    <div className="w-full max-w-3xl mx-auto shadow-sm rounded-xl border border-slate-200 bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <form
+      onSubmit={handleSubmit}
+      className="w-full max-w-3xl mx-auto shadow-sm rounded-xl border border-slate-200 bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500"
+    >
       {/* ─── Top Header Banner ─── */}
       <div
         className={`${theme.color} px-8 py-6 text-center text-white relative flex flex-col items-center justify-center`}
@@ -94,6 +187,8 @@ export function TransactionForm() {
               </label>
               <input
                 type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder={theme.namePlaceholder}
                 className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all placeholder:text-slate-400"
               />
@@ -101,10 +196,12 @@ export function TransactionForm() {
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-700 block">
-                Phone Number <span className="text-red-500">*</span>
+                Phone Number {!isIncome && <span className="text-red-500">*</span>}
               </label>
               <input
                 type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 placeholder="Recipient phone number"
                 className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all placeholder:text-slate-400"
               />
@@ -114,6 +211,8 @@ export function TransactionForm() {
               <label className="text-xs font-semibold text-slate-700 block">{theme.idLabel}</label>
               <input
                 type="text"
+                value={regNumber}
+                onChange={(e) => setRegNumber(e.target.value)}
                 placeholder={theme.idPlaceholder}
                 className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all placeholder:text-slate-400"
               />
@@ -125,6 +224,8 @@ export function TransactionForm() {
               </label>
               <input
                 type="text"
+                value={registration}
+                onChange={(e) => setRegistration(e.target.value)}
                 placeholder={theme.registrationPlaceholder}
                 className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all placeholder:text-slate-400"
               />
@@ -158,17 +259,23 @@ export function TransactionForm() {
               </p>
             </div>
 
+            {error && (
+              <div className="md:col-span-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-1 md:col-span-2">
               <label className="text-xs font-semibold text-slate-700 block">
                 Date <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <input
-                  placeholder="_"
-                  type="date"
-                  className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all text-slate-600 appearance-none"
-                />
-              </div>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all text-slate-600"
+              />
             </div>
 
             <div className="space-y-1">
@@ -176,48 +283,59 @@ export function TransactionForm() {
                 {isIncome ? 'Income Category' : 'Expense Type'}{' '}
                 <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <select
-                  title="select expense type"
-                  className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all text-slate-600 appearance-none cursor-pointer"
-                >
-                  <option value="" disabled selected>
-                    Select {isIncome ? 'Category' : 'Expense Type'}
+              <select
+                title="select category"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                required
+                className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all text-slate-600 appearance-none cursor-pointer"
+              >
+                <option value="">Select {isIncome ? 'Category' : 'Expense Type'}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
-                  {isIncome ? (
-                    <>
-                      <option value="tithe">Tithe</option>
-                      <option value="freewill">Freewill Offering</option>
-                      <option value="thanksgiving">Thanksgiving</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="operations">Operations & Maintenance</option>
-                      <option value="program">Program Expenses</option>
-                      <option value="charity">Charity & Welfare</option>
-                    </>
-                  )}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-slate-700 block">
-                Currency <span className="text-red-500">*</span>
+                Amount (GH₵) <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <select
-                  title="select currency"
-                  className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all text-slate-600 appearance-none cursor-pointer"
-                >
-                  <option value="GHS">GHS (CEDIS)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                required
+                className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all text-slate-600"
+              />
             </div>
+
+            {(paymentMethod === 'cheque' ||
+              paymentMethod === 'momo' ||
+              paymentMethod === 'bank') && (
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-xs font-semibold text-slate-700 block">
+                  {paymentMethod === 'cheque' ? 'Cheque Number' : 'Transaction Reference'}{' '}
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={paymentMethod === 'cheque' ? chequeNumber : transactionRef}
+                  onChange={(e) =>
+                    paymentMethod === 'cheque'
+                      ? setChequeNumber(e.target.value)
+                      : setTransactionRef(e.target.value)
+                  }
+                  placeholder={paymentMethod === 'cheque' ? 'Cheque number' : 'Reference number'}
+                  className="w-full h-11 px-4 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all placeholder:text-slate-400"
+                />
+              </div>
+            )}
 
             <div className="space-y-3 md:col-span-2 mt-2">
               <label className="text-xs font-semibold text-slate-700 block">
@@ -230,6 +348,7 @@ export function TransactionForm() {
                   return (
                     <button
                       key={opt.id}
+                      type="button"
                       onClick={() => setPaymentMethod(opt.id)}
                       className={`flex flex-col items-center justify-center p-4 h-24 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
                         isSelected
@@ -263,12 +382,14 @@ export function TransactionForm() {
             Cancel
           </Button>
           <Button
-            className={`h-11 px-8 font-semibold text-white ${theme.color} hover:brightness-110 flex items-center gap-2`}
+            type="submit"
+            disabled={submitting}
+            className={`h-11 px-8 font-semibold text-white ${theme.color} hover:brightness-110 flex items-center gap-2 disabled:opacity-60`}
           >
-            Save Transaction <ChevronRight className="w-4 h-4" />
+            {submitting ? 'Saving...' : 'Save Transaction'} <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
