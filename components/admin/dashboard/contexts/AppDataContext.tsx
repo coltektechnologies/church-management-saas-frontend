@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { useDashboardApiSync } from '@/hooks/useDashboardApiSync';
 
 /* ─── Shared types — canonical, match mockData.ts exactly ─── */
 
@@ -137,6 +138,11 @@ interface AppDataContextType {
   averageAttendance: number;
   newMembersThisWeek: number;
   departmentCount: number;
+
+  // API sync state (dashboard backend integration)
+  apiLoading: boolean;
+  apiError: string | null;
+  refetchDashboard: () => Promise<void>;
 }
 
 const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
@@ -151,6 +157,25 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [activityLog, setActivityLog] = useState<ActivityLogItem[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [useMockData, setUseMockData] = useState(false);
+
+  /* ── Dashboard API sync (fetches from backend when authenticated) ── */
+  const {
+    isLoading: apiLoading,
+    error: apiError,
+    refetch,
+  } = useDashboardApiSync({
+    setMembers,
+    setTransactions,
+    setAnnouncements,
+    setEvents,
+    setDepartments,
+    setApprovals,
+    setActivityLog,
+  });
+
+  const refetchDashboard = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   /* ── Activity logger ── */
   const logActivity = useCallback((entry: Omit<ActivityLogItem, 'id' | 'timestamp'>) => {
@@ -421,6 +446,9 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
         approveItem,
         rejectItem,
         logActivity,
+        apiLoading,
+        apiError,
+        refetchDashboard,
         ...derived,
       }}
     >

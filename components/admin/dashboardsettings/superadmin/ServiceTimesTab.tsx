@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useChurch } from '@/components/quicksetup/contexts/ChurchContext';
 import { Input } from '@/components/ui/input';
+import { getChurchId, updateChurch } from '@/lib/settingsApi';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +21,12 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 const ServiceTimesTab = () => {
   const { church, setChurch } = useChurch();
   const [services, setServices] = useState(church?.services || []);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const svc = church?.services;
+    setServices(Array.isArray(svc) ? [...svc] : []);
+  }, [church?.churchName, church?.services]);
 
   const addService = () => {
     const newService = {
@@ -39,18 +46,40 @@ const ServiceTimesTab = () => {
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const hasEmptyLabels = services.some((s) => !s.label.trim());
     if (hasEmptyLabels) {
       toast.error('Please provide a name for all services');
       return;
     }
 
-    // setChurch accepts Partial<ChurchSetupData> — no need to spread church or use !
     setChurch({ services });
-    toast.success('Service schedule updated', {
-      description: 'Changes will reflect on your public church profile.',
-    });
+
+    const churchId = getChurchId();
+    if (churchId) {
+      setSaving(true);
+      try {
+        await updateChurch(churchId, {
+          service_times: services.map((s) => ({
+            id: s.id,
+            day: s.day,
+            time: s.time,
+            label: s.label,
+          })),
+        });
+        toast.success('Service schedule updated', {
+          description: 'Changes will reflect on your public church profile.',
+        });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to save service times');
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      toast.success('Service schedule updated (local only)', {
+        description: 'Sign in to sync with the server.',
+      });
+    }
   };
 
   return (
@@ -148,10 +177,10 @@ const ServiceTimesTab = () => {
       <div className="pt-4">
         <Button
           onClick={handleSave}
-          disabled={services.length === 0}
+          disabled={services.length === 0 || saving}
           className="bg-[#0B2A4A] hover:bg-[#081e36] text-white px-10 h-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95 disabled:opacity-50"
         >
-          Save Schedule
+          {saving ? 'Saving...' : 'Save Schedule'}
         </Button>
       </div>
     </div>

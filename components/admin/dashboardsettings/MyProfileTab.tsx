@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Upload, X, User } from 'lucide-react';
+import { Upload, X, User, Loader2 } from 'lucide-react';
+import { getStoredUser, updateUser } from '@/lib/settingsApi';
 
 const MyProfileTab = () => {
   const { profile, updateProfile } = useChurchProfile();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     adminName: profile.adminName || '',
@@ -38,8 +40,12 @@ const MyProfileTab = () => {
     .join('')
     .toUpperCase();
 
-  const handleSave = () => {
-    // Live update sidebar + topbar
+  const handleSave = async () => {
+    const user = getStoredUser();
+    const nameParts = form.adminName.trim().split(/\s+/);
+    const firstName = nameParts[0] ?? '';
+    const lastName = nameParts.slice(1).join(' ') ?? '';
+
     updateProfile({
       adminName: form.adminName,
       adminEmail: form.adminEmail,
@@ -48,9 +54,28 @@ const MyProfileTab = () => {
       avatarUrl: form.avatarUrl,
     });
 
-    toast.success('Profile updated successfully', {
-      description: 'Your name and photo are now live in the sidebar.',
-    });
+    if (user?.id) {
+      setSaving(true);
+      try {
+        await updateUser(user.id, {
+          first_name: firstName,
+          last_name: lastName,
+          email: form.adminEmail || undefined,
+          phone: form.adminPhone || undefined,
+        });
+        toast.success('Profile updated successfully', {
+          description: 'Your name and details are now saved.',
+        });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to update profile');
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      toast.success('Profile updated (local only)', {
+        description: 'Sign in to sync with the server.',
+      });
+    }
   };
 
   return (
@@ -162,9 +187,16 @@ const MyProfileTab = () => {
 
       <Button
         onClick={handleSave}
-        className="bg-[#0B2A4A] hover:bg-[#081e36] h-12 px-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95"
+        disabled={saving}
+        className="bg-[#0B2A4A] hover:bg-[#081e36] h-12 px-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95 disabled:opacity-70"
       >
-        Save Profile
+        {saving ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+          </>
+        ) : (
+          'Save Profile'
+        )}
       </Button>
     </div>
   );
