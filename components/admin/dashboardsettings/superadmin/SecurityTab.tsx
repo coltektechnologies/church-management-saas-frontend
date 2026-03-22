@@ -6,16 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { ShieldCheck, Lock, Monitor, Smartphone, KeyRound } from 'lucide-react';
+import { ShieldCheck, Lock, Monitor, Smartphone, KeyRound, Loader2 } from 'lucide-react';
+import { changePassword } from '@/lib/settingsApi';
 
 const SecurityTab = () => {
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [twoFactor, setTwoFactor] = useState(false);
+  const [changing, setChanging] = useState(false);
 
-  const handleChangePassword = () => {
-    if (!currentPw || !newPw) {
+  const handleChangePassword = async () => {
+    if (!currentPw || !newPw || !confirmPw) {
       toast.error('Please fill in all password fields');
       return;
     }
@@ -28,12 +30,20 @@ const SecurityTab = () => {
       return;
     }
 
-    toast.success('Password changed successfully', {
-      description: 'Your security settings have been updated.',
-    });
-    setCurrentPw('');
-    setNewPw('');
-    setConfirmPw('');
+    setChanging(true);
+    try {
+      await changePassword(currentPw, newPw, confirmPw);
+      toast.success('Password changed successfully', {
+        description: 'Your security settings have been updated.',
+      });
+      setCurrentPw('');
+      setNewPw('');
+      setConfirmPw('');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to change password');
+    } finally {
+      setChanging(false);
+    }
   };
 
   return (
@@ -98,9 +108,16 @@ const SecurityTab = () => {
         </div>
         <Button
           onClick={handleChangePassword}
-          className="bg-[#0B2A4A] hover:bg-[#081e36] text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all"
+          disabled={changing}
+          className="bg-[#0B2A4A] hover:bg-[#081e36] text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all disabled:opacity-70"
         >
-          Update Password
+          {changing ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating...
+            </>
+          ) : (
+            'Update Password'
+          )}
         </Button>
       </div>
 

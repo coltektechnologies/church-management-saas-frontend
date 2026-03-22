@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Save, Sun, Moon, RotateCcw } from 'lucide-react';
+import { Save, Sun, Moon, RotateCcw, Loader2 } from 'lucide-react';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts';
+import { getChurchId, updateChurch } from '@/lib/settingsApi';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DEFAULT_COLORS = {
@@ -409,10 +410,11 @@ export default function ColorThemeSettings() {
   }));
 
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const isDark = profile.darkMode ?? false;
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     updateProfile({
       primaryColor: colors.primary,
       accentColor: colors.accent,
@@ -421,9 +423,27 @@ export default function ColorThemeSettings() {
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  }, [colors, updateProfile]);
 
-  const handleReset = useCallback(() => {
+    const churchId = getChurchId();
+    if (churchId) {
+      setSaving(true);
+      try {
+        await updateChurch(churchId, {
+          primary_color: colors.primary,
+          accent_color: colors.accent,
+          sidebar_color: colors.sidebar,
+          background_color: colors.bg,
+          dark_mode: isDark,
+        });
+      } catch {
+        /* persist locally even if API fails */
+      } finally {
+        setSaving(false);
+      }
+    }
+  }, [colors, updateProfile, isDark]);
+
+  const handleReset = useCallback(async () => {
     setColors({ ...DEFAULT_COLORS });
     updateProfile({
       primaryColor: DEFAULT_COLORS.primary,
@@ -431,6 +451,19 @@ export default function ColorThemeSettings() {
       sidebarColor: DEFAULT_COLORS.sidebar,
       backgroundColor: DEFAULT_COLORS.bg,
     });
+    const churchId = getChurchId();
+    if (churchId) {
+      try {
+        await updateChurch(churchId, {
+          primary_color: DEFAULT_COLORS.primary,
+          accent_color: DEFAULT_COLORS.accent,
+          sidebar_color: DEFAULT_COLORS.sidebar,
+          background_color: DEFAULT_COLORS.bg,
+        });
+      } catch {
+        /* ignore */
+      }
+    }
   }, [updateProfile]);
 
   // Memoize so the preview only re-renders when colours or dark mode actually change
@@ -455,10 +488,12 @@ export default function ColorThemeSettings() {
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 text-sm font-bold text-white rounded-xl shadow-lg transition-all active:scale-95"
+            disabled={saving}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2 text-sm font-bold text-white rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-70"
             style={{ backgroundColor: saved ? '#10B981' : colors.primary }}
           >
-            <Save size={16} /> {saved ? 'Saved!' : 'Save Changes'}
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{' '}
+            {saved ? 'Saved!' : saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>

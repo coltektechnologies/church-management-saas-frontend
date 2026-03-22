@@ -10,10 +10,11 @@ import { usePermissions } from '@/hooks/usePermissions';
 interface Props {
   department: Department;
   expenses: Expense[];
-  onSubmitExpense: (expense: Expense) => void;
+  /** Optional — inline submit; tab uses route to full expense form */
+  onSubmitExpense?: (expense: Expense, options: { categoryId: string }) => Promise<unknown>;
 }
 
-export default function BudgetTab({ department, expenses, onSubmitExpense: _ }: Props) {
+export default function BudgetTab({ department, expenses }: Props) {
   const router = useRouter();
   const { can } = usePermissions();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');

@@ -4,6 +4,7 @@ import { useSyncExternalStore, type ReactNode } from 'react';
 import { ChurchProfileProvider, useChurchProfile } from '@/components/admin/dashboard/contexts';
 import { AppDataProvider } from '@/components/admin/dashboard/contexts/AppDataContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { useSettingsApiSync } from '@/hooks/useSettingsApiSync';
 import AdminSidebar from '@/components/admin/adminSidebar';
 import TopNavbar from '@/components/admin/TopNavbar';
 
@@ -17,6 +18,7 @@ function useIsMounted(): boolean {
 
 function AdminShell({ children }: { children: ReactNode }) {
   const { profile } = useChurchProfile();
+  useSettingsApiSync();
   const mounted = useIsMounted();
   const dark = mounted ? (profile.darkMode ?? false) : false;
 

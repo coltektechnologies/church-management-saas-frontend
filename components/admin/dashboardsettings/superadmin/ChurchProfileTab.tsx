@@ -9,18 +9,20 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Upload, Info, RefreshCw } from 'lucide-react';
+import { Upload, Info, RefreshCw, Loader2 } from 'lucide-react';
+import { getChurchId, updateChurch, churchDefaults } from '@/lib/settingsApi';
 
 const ChurchProfileTab = () => {
   const { church, setChurch } = useChurch();
   const { profile, updateProfile } = useChurchProfile();
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     churchName: profile.churchName || church.churchName || '',
     tagline: profile.tagline || '',
     logoUrl: profile.logoUrl || church.logoUrl || '',
-    primaryColor: profile.primaryColor || church.primaryColor || '#0B2A4A',
-    accentColor: profile.accentColor || church.accentColor || '#2FC4B2',
+    primaryColor: profile.primaryColor || church.primaryColor || churchDefaults.primaryColor,
+    accentColor: profile.accentColor || church.accentColor || churchDefaults.accentColor,
     address: profile.address || '',
     mission: profile.mission || church.mission || '',
     website: profile.website || church.website || '',
@@ -41,31 +43,71 @@ const ChurchProfileTab = () => {
     }
   };
 
-  const handleSave = () => {
-    setChurch({
-      churchName: form.churchName,
-      logoUrl: form.logoUrl || null,
-      primaryColor: form.primaryColor,
-      accentColor: form.accentColor,
-      mission: form.mission,
-      website: form.website,
-    });
+  const handleSave = async () => {
+    const churchId = getChurchId();
+    if (!churchId) {
+      setChurch({
+        churchName: form.churchName,
+        logoUrl: form.logoUrl || null,
+        primaryColor: form.primaryColor,
+        accentColor: form.accentColor,
+        mission: form.mission,
+        website: form.website,
+      });
+      updateProfile({
+        churchName: form.churchName,
+        tagline: form.tagline,
+        logoUrl: form.logoUrl || null,
+        primaryColor: form.primaryColor,
+        accentColor: form.accentColor,
+        address: form.address,
+        mission: form.mission,
+        website: form.website,
+      });
+      toast.success('Church profile updated (local only)', {
+        description: 'Sign in to sync with the server.',
+      });
+      return;
+    }
 
-    // Live update sidebar + topbar
-    updateProfile({
-      churchName: form.churchName,
-      tagline: form.tagline,
-      logoUrl: form.logoUrl || null,
-      primaryColor: form.primaryColor,
-      accentColor: form.accentColor,
-      address: form.address,
-      mission: form.mission,
-      website: form.website,
-    });
+    setSaving(true);
+    try {
+      await updateChurch(churchId, {
+        name: form.churchName,
+        tagline: form.tagline || undefined,
+        address: form.address || undefined,
+        mission: form.mission || undefined,
+        website: form.website || undefined,
+      });
 
-    toast.success('Church profile updated successfully', {
-      description: 'Changes are now live across your dashboard.',
-    });
+      setChurch({
+        churchName: form.churchName,
+        logoUrl: form.logoUrl || null,
+        primaryColor: form.primaryColor,
+        accentColor: form.accentColor,
+        mission: form.mission,
+        website: form.website,
+      });
+
+      updateProfile({
+        churchName: form.churchName,
+        tagline: form.tagline,
+        logoUrl: form.logoUrl || null,
+        primaryColor: form.primaryColor,
+        accentColor: form.accentColor,
+        address: form.address,
+        mission: form.mission,
+        website: form.website,
+      });
+
+      toast.success('Church profile updated successfully', {
+        description: 'Changes are now live across your dashboard.',
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update church profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -187,9 +229,16 @@ const ChurchProfileTab = () => {
 
       <Button
         onClick={handleSave}
-        className="bg-[#0B2A4A] hover:bg-[#081e36] h-12 px-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95"
+        disabled={saving}
+        className="bg-[#0B2A4A] hover:bg-[#081e36] h-12 px-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95 disabled:opacity-70"
       >
-        Update Profile
+        {saving ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+          </>
+        ) : (
+          'Update Profile'
+        )}
       </Button>
     </div>
   );

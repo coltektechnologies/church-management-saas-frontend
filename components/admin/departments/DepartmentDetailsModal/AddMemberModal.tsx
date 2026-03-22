@@ -14,8 +14,9 @@ interface Props {
   setSelectedMemberId: (id: string) => void;
   selectedRole: string;
   setSelectedRole: (role: string) => void;
-  onAdd: () => void;
+  onAdd: () => void | Promise<void>;
   error?: string;
+  assigning?: boolean;
 }
 
 export default function AddMemberModal({
@@ -28,6 +29,7 @@ export default function AddMemberModal({
   setSelectedRole,
   onAdd,
   error,
+  assigning = false,
 }: Props) {
   if (!show) {
     return null;
@@ -84,10 +86,12 @@ export default function AddMemberModal({
           </button>
 
           <button
-            onClick={onAdd}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            type="button"
+            disabled={assigning}
+            onClick={() => void onAdd()}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60"
           >
-            Add
+            {assigning ? 'Adding…' : 'Add'}
           </button>
         </div>
       </div>

@@ -24,6 +24,7 @@ interface Props {
   handleCreateDepartment: () => void;
   formRef: RefObject<HTMLDivElement | null>;
   editingDepartment?: boolean;
+  saving?: boolean;
 }
 
 export default function CreateDepartmentForm({
@@ -37,6 +38,7 @@ export default function CreateDepartmentForm({
   formRef,
   formError,
   editingDepartment,
+  saving = false,
 }: Props) {
   if (!showCreate) {
     return null;
@@ -259,17 +261,26 @@ export default function CreateDepartmentForm({
         </button>
 
         <button
+          type="button"
           onClick={handleCreateDepartment}
           disabled={
-            !formData.name.trim() || !formData.code.trim() || !formData.themeColor || !formData.icon
+            saving ||
+            !formData.name.trim() ||
+            !formData.code.trim() ||
+            !formData.themeColor ||
+            !formData.icon
           }
           className={`px-6 py-2 rounded-lg font-medium transition ${
-            !formData.name.trim() || !formData.code.trim() || !formData.themeColor || !formData.icon
+            saving ||
+            !formData.name.trim() ||
+            !formData.code.trim() ||
+            !formData.themeColor ||
+            !formData.icon
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
-          {editingDepartment ? 'Update Department' : '+ Create Department'}
+          {saving ? 'Saving…' : editingDepartment ? 'Update Department' : '+ Create Department'}
         </button>
       </div>
     </div>
