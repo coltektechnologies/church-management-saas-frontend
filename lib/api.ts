@@ -309,7 +309,7 @@ export async function createMember(payload: CreateMemberPayload): Promise<Create
     throw new Error('You must be logged in to add a member');
   }
 
-  const res = await fetch(`${base}/members/members/create/`, {
+  const res = await fetch(`${base}/members/create/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

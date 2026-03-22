@@ -1,14 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { TreasuryFilters } from '@/services/treasuryService';
 import {
-  fetchTreasurySummary,
-  fetchMonthlyTrend,
-  fetchRecentTransactions,
-  fetchIncomeBreakdown,
-  fetchExpenseBreakdown,
-  fetchMemberContributions,
+  approveExpenseRequest,
   fetchDepartmentBudgets,
+  fetchExpenseBreakdown,
+  fetchIncomeBreakdown,
+  fetchMemberContributions,
+  fetchMonthlyTrend,
   fetchPendingExpenseRequests,
+  fetchRecentTransactions,
+  fetchTreasurySummary,
+  rejectExpenseRequest,
 } from '@/services/treasuryService';
 
 export function useTreasurySummary(filters?: TreasuryFilters) {
@@ -46,10 +48,10 @@ export function useExpenseBreakdown(filters?: TreasuryFilters) {
   });
 }
 
-export function useMemberContributions() {
+export function useMemberContributions(filters?: TreasuryFilters) {
   return useQuery({
-    queryKey: ['treasury', 'member-contributions'],
-    queryFn: fetchMemberContributions,
+    queryKey: ['treasury', 'member-contributions', filters],
+    queryFn: () => fetchMemberContributions(filters),
   });
 }
 
@@ -64,5 +66,28 @@ export function usePendingExpenseRequests() {
   return useQuery({
     queryKey: ['treasury', 'pending-expense-requests'],
     queryFn: fetchPendingExpenseRequests,
+  });
+}
+
+export function useApproveExpenseRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => approveExpenseRequest(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['treasury', 'pending-expense-requests'] });
+      qc.invalidateQueries({ queryKey: ['treasury', 'summary'] });
+    },
+  });
+}
+
+export function useRejectExpenseRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      rejectExpenseRequest(id, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['treasury', 'pending-expense-requests'] });
+      qc.invalidateQueries({ queryKey: ['treasury', 'summary'] });
+    },
   });
 }

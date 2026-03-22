@@ -9,6 +9,7 @@ import TithingOfferingsChart from '@/components/admin/membership/TithingOffering
 import MemberFilters from '@/components/admin/membership/MemberFilters';
 import MembersTable from '@/components/admin/membership/MembersTable';
 import { getMemberStats, getTitheOfferingStats } from '@/lib/api';
+import { DEFAULT_MEMBER_FILTERS, type MemberFilterState } from '@/lib/memberFilters';
 
 function formatChange(pct: number): string {
   if (pct > 0) {
@@ -41,6 +42,8 @@ export default function MembershipDashboardPage() {
       offering_by_week: [] as { name: string; value: number }[],
     },
   });
+
+  const [filters, setFilters] = useState<MemberFilterState>(DEFAULT_MEMBER_FILTERS);
 
   useEffect(() => {
     getMemberStats().then(setStats);
@@ -136,10 +139,10 @@ export default function MembershipDashboardPage() {
       </div>
 
       {/* Filters */}
-      <MemberFilters />
+      <MemberFilters filters={filters} onFiltersChange={setFilters} />
 
       {/* Members Table */}
-      <MembersTable />
+      <MembersTable filters={filters} />
     </div>
   );
 }
