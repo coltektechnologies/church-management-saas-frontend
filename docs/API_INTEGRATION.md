@@ -485,3 +485,66 @@ The Treasury Dashboard fetches live data from the backend via `lib/treasuryApi.t
 | Create income                    | POST   | `/api/treasury/income-transactions/`                                                                         |
 | Create expense                   | POST   | `/api/treasury/expense-transactions/`                                                                        |
 | Department budgets               | GET    | `/api/departments/statistics/` (department list action; or per-dept `GET /api/departments/{id}/statistics/`) |
+
+---
+
+## Announcements (`/admin/announcements`) & notification center
+
+**Status: wired to Django REST** when authenticated and mock flags are off.
+
+### Environment
+
+| Variable                                  | Effect                                                        |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`                     | Required for live API (e.g. `http://localhost:8000/api`).     |
+| `NEXT_PUBLIC_USE_MOCK_ANNOUNCEMENTS=true` | Forces localStorage mock announcements (ignores API).         |
+| `NEXT_PUBLIC_USE_MOCK_NOTIFICATIONS=true` | Forces mock notification inbox + create wizard (ignores API). |
+
+If mock flags are **unset** or `false` and `getAccessToken()` is present, the UI calls the backend.
+
+### Announcements
+
+| Purpose                            | Method | Endpoint                                |
+| ---------------------------------- | ------ | --------------------------------------- |
+| List                               | GET    | `/announcements/?page_size=100&search=` |
+| Categories (resolve `category_id`) | GET    | `/announcements/categories/`            |
+| Detail (full `content`)            | GET    | `/announcements/{id}/`                  |
+| Create                             | POST   | `/announcements/`                       |
+| Patch                              | PATCH  | `/announcements/{id}/`                  |
+| Delete                             | DELETE | `/announcements/{id}/`                  |
+| Submit for review                  | POST   | `/announcements/{id}/submit/`           |
+| Approve                            | POST   | `/announcements/{id}/approve/`          |
+| Publish                            | POST   | `/announcements/{id}/publish/`          |
+
+**Implementation:** `lib/announcementsApi.ts` (HTTP), `lib/announcementMappers.ts` (DRF → UI types), `services/announcementService.ts` (mock vs API). List rows omit `content`; the grid shows a short placeholder until **Edit** loads detail via `announcementService.getAnnouncementById()`.
+
+**Publish flow:** Creating with “Publish” runs `submit → approve → publish` in sequence (requires permissions on the backend). “Save Draft” only `POST`s the announcement (stays `DRAFT`).
+
+### In-app notifications
+
+| Purpose                        | Method | Endpoint                                      |
+| ------------------------------ | ------ | --------------------------------------------- |
+| List (current user)            | GET    | `/notifications/notifications/?page_size=100` |
+| Create (single user or member) | POST   | `/notifications/notifications/`               |
+| Mark read                      | PUT    | `/notifications/notifications/{id}/read/`     |
+| Mark all read                  | PUT    | `/notifications/notifications/mark_all_read/` |
+| Unread count                   | GET    | `/notifications/notifications/unread_count/`  |
+| Bulk send                      | POST   | `/notifications/send-bulk/`                   |
+| Staff users (recipient picker) | GET    | `/accounts/users/`                            |
+| Departments (batch picker)     | GET    | `/departments/`                               |
+
+**Implementation:** `lib/notificationsApi.ts`, `services/notificationsService.ts`, `hooks/useNotificationsInbox.ts`. `NotificationCenterPanel` uses React Query when the API is enabled. `CreateNotificationModal` loads real users/departments when authenticated; **visitor-only** single recipient and **visitors-only** batch are blocked with a message (not in `NotificationCreateSerializer` / `send-bulk` target options). **Recurring** wizard schedules are not submitted to the API from this modal (use recurring-schedules endpoint separately).
+
+### Files
+
+| File                                                   | Purpose                                                     |
+| ------------------------------------------------------ | ----------------------------------------------------------- |
+| `lib/announcementsApi.ts`                              | Announcement CRUD + workflow actions                        |
+| `lib/announcementMappers.ts`                           | Backend ↔ `Announcement` UI type                            |
+| `lib/notificationsApi.ts`                              | Notifications + bulk + account users list                   |
+| `lib/featureFlags.ts`                                  | `isMockAnnouncementsEnabled` / `isMockNotificationsEnabled` |
+| `services/announcementService.ts`                      | Single entry for announcements page                         |
+| `services/notificationsService.ts`                     | Map API rows to `MockNotificationItem`                      |
+| `hooks/useNotificationsInbox.ts`                       | React Query + mark-read mutations                           |
+| `components/announcements/NotificationCenterPanel.tsx` | Live inbox vs mock                                          |
+| `components/announcements/CreateNotificationModal.tsx` | Live create/bulk vs mock                                    |

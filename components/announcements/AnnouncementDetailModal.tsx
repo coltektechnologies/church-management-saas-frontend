@@ -115,7 +115,9 @@ export function AnnouncementDetailModal({
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Audience</p>
-                <p className="text-sm font-medium">{announcement.audience.join(', ')}</p>
+                <p className="text-sm font-medium">
+                  {announcement.audience?.length ? announcement.audience.join(', ') : '—'}
+                </p>
               </div>
             </div>
 

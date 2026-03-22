@@ -131,7 +131,9 @@ export function AnnouncementCard({
           </div>
           <div className="flex items-center gap-1.5" title="Audience">
             <Users className="size-3.5" />
-            <span className="truncate max-w-[100px]">{announcement.audience.join(', ')}</span>
+            <span className="truncate max-w-[100px]">
+              {announcement.audience?.length ? announcement.audience.join(', ') : 'Everyone'}
+            </span>
           </div>
         </div>
       </CardContent>
