@@ -8,6 +8,8 @@
  * @see docs/API_INTEGRATION.md
  */
 
+import type { Expense } from '@/types/expense';
+
 import { getApiBaseUrl, getAccessToken } from './api';
 
 function getAuthHeaders(): Record<string, string> {
@@ -342,16 +344,20 @@ export async function getExpenseRequest(id: string): Promise<ExpenseRequestItem 
   );
 }
 
-/** GET /api/treasury/expense-requests/?status= */
+/** GET /api/treasury/expense-requests/?status=&department_id= */
 export async function getExpenseRequests(params?: {
   status?: string;
+  department_id?: string;
   page_size?: number;
 }): Promise<ExpenseRequestItem[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
-  sp.set('page_size', String(params?.page_size ?? 50));
+  sp.set('page_size', String(params?.page_size ?? 100));
   if (params?.status) {
     sp.set('status', params.status);
+  }
+  if (params?.department_id) {
+    sp.set('department_id', params.department_id);
   }
   const raw = await fetchAuthSafe<{ results?: ExpenseRequestItem[] } | ExpenseRequestItem[]>(
     `${base}/treasury/expense-requests/?${sp}`,
@@ -359,6 +365,116 @@ export async function getExpenseRequests(params?: {
     []
   );
   return normalizeListResponse<ExpenseRequestItem>(raw ?? []);
+}
+
+/** POST /api/treasury/expense-requests/ — create (usually status DRAFT, then call submit) */
+export interface CreateExpenseRequestBody {
+  department_id: string;
+  category_id: string;
+  amount_requested: string;
+  purpose: string;
+  justification: string;
+  required_by_date: string;
+  status?: string;
+  priority?: string;
+}
+
+export async function createExpenseRequest(
+  body: CreateExpenseRequestBody
+): Promise<Record<string, unknown>> {
+  const base = getApiBaseUrl();
+  return fetchAuth<Record<string, unknown>>(`${base}/treasury/expense-requests/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      status: 'DRAFT',
+      priority: 'MEDIUM',
+      ...body,
+    }),
+  });
+}
+
+/** POST /api/treasury/expense-requests/{id}/submit/ */
+export async function submitExpenseRequest(id: string): Promise<Record<string, unknown>> {
+  const base = getApiBaseUrl();
+  return fetchAuth<Record<string, unknown>>(`${base}/treasury/expense-requests/${id}/submit/`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+}
+
+/** Create draft + submit for approval in one call. */
+export async function createAndSubmitExpenseRequest(params: {
+  departmentId: string;
+  categoryId: string;
+  purpose: string;
+  justification: string;
+  amount: number;
+  /** YYYY-MM-DD; defaults to 14 days from today */
+  requiredByDate?: string;
+}): Promise<{ id: string; requestNumber: string; status: string }> {
+  const reqDate =
+    params.requiredByDate ??
+    new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const created = await createExpenseRequest({
+    department_id: params.departmentId,
+    category_id: params.categoryId,
+    amount_requested: params.amount.toFixed(2),
+    purpose: params.purpose,
+    justification: params.justification,
+    required_by_date: reqDate,
+    status: 'DRAFT',
+    priority: 'MEDIUM',
+  });
+
+  const id = String(created.id ?? '');
+  if (!id) {
+    throw new Error('Invalid expense request response');
+  }
+
+  const submitted = await submitExpenseRequest(id);
+  const status = String(submitted.status ?? 'SUBMITTED');
+  return {
+    id,
+    requestNumber: String(created.request_number ?? submitted.request_number ?? id),
+    status,
+  };
+}
+
+/** Map backend expense request status → UI expense status */
+export function mapApiExpenseStatusToUi(status: string): 'pending' | 'approved' | 'rejected' {
+  const s = status.toUpperCase();
+  if (s === 'APPROVED' || s === 'DISBURSED') {
+    return 'approved';
+  }
+  if (s === 'REJECTED' || s === 'CANCELLED') {
+    return 'rejected';
+  }
+  return 'pending';
+}
+
+/** Map list API row → local Expense (list payload may omit purpose) */
+export function mapExpenseRequestRowToExpense(row: ExpenseRequestItem): Expense {
+  const amount = parseFloat(String(row.amount_requested ?? 0));
+  const st = mapApiExpenseStatusToUi(String(row.status ?? 'SUBMITTED'));
+  const ext = row as ExpenseRequestItem & { purpose?: string };
+  const title =
+    (typeof ext.purpose === 'string' && ext.purpose.trim()) ||
+    String(row.category_name ?? row.department_name ?? 'Expense request');
+
+  return {
+    id: String(row.id),
+    expenseRef: String(row.request_number ?? row.id),
+    title,
+    description: typeof ext.purpose === 'string' ? ext.purpose : '',
+    submitterName: String(row.requested_by_name ?? ''),
+    items: [{ id: 'agg', name: title, quantity: 1, unitCost: amount }],
+    amount,
+    documents: [],
+    status: st,
+    submittedAt: String(row.created_at ?? new Date().toISOString()),
+    reviewedAt: undefined,
+  };
 }
 
 /** GET /api/analytics/finance/member-contributions/?limit=&date_from=&date_to= */

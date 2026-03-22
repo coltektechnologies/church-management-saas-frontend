@@ -3,15 +3,15 @@
 import Image from 'next/image';
 import { Department } from '@/types/Department';
 import { usePermissions } from '@/hooks/usePermissions';
+import type { DepartmentMemberUI } from '@/lib/departmentsApi';
 
-type LocalMember = { id: string; name: string; role: string; joinedAt: string };
-type MockChurchMember = { id: string; name: string; email: string; image?: string };
+type ChurchMemberOption = { id: string; name: string; email: string; image?: string };
 
 interface Props {
   department: Department;
-  departmentMembers: LocalMember[];
-  setDepartmentMembers: React.Dispatch<React.SetStateAction<LocalMember[]>>;
-  mockChurchMembers: MockChurchMember[];
+  departmentMembers: DepartmentMemberUI[];
+  setDepartmentMembers: React.Dispatch<React.SetStateAction<DepartmentMemberUI[]>>;
+  churchMemberOptions: ChurchMemberOption[];
   onAddClick: () => void;
   onUpdateDepartment: (updated: Department) => void;
 }
@@ -19,7 +19,7 @@ interface Props {
 export default function MembersTab({
   department,
   departmentMembers,
-  mockChurchMembers,
+  churchMemberOptions,
   onAddClick,
 }: Props) {
   const { can } = usePermissions();
@@ -54,10 +54,10 @@ export default function MembersTab({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {departmentMembers.map((member) => {
-              const fullMember = mockChurchMembers.find((m) => m.id === member.id);
+              const fullMember = churchMemberOptions.find((m) => m.id === member.id);
               return (
                 <div
-                  key={member.id}
+                  key={member.assignmentId}
                   className="bg-gray-100 rounded-2xl px-6 py-6 flex items-center gap-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:bg-gray-200"
                 >
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-300 flex-shrink-0">
