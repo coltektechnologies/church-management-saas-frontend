@@ -1,217 +1,356 @@
 'use client';
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Department } from '@/types/Department';
 import { Activity } from '@/types/activity';
 import { Expense } from '@/types/expense';
 import { BudgetRequest } from '@/types/budget';
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type DepartmentMember = {
-  id: string;
-  name: string;
-  role: string;
-  joinedAt: string;
-};
+import {
+  assignMemberToDepartment,
+  createDepartment,
+  createDepartmentActivity,
+  deleteDepartmentActivity,
+  fetchDepartmentActivities,
+  fetchDepartmentsList,
+  fetchMemberDepartments,
+  mapActivityRowToActivity,
+  mapListRowToDepartment,
+  mapMemberDepartmentRow,
+  mergeDepartmentDetail,
+  normalizeIconForApi,
+  removeMemberFromDepartment,
+  updateDepartment as updateDepartmentApi,
+  type CreateActivityBody,
+  type DepartmentDetailResponse,
+  type DepartmentMemberUI,
+} from '@/lib/departmentsApi';
+import {
+  createAndSubmitExpenseRequest,
+  getDepartmentBudgets,
+  getExpenseRequests,
+  mapExpenseRequestRowToExpense,
+} from '@/lib/treasuryApi';
 
 type DepartmentsContextType = {
-  // Departments
   departments: Department[];
   setDepartments: React.Dispatch<React.SetStateAction<Department[]>>;
   updateDepartment: (updated: Department) => void;
+  applyDepartmentDetail: (id: string, detail: DepartmentDetailResponse) => void;
+  refreshDepartments: () => Promise<void>;
+  createDepartmentRemote: (input: {
+    name: string;
+    code: string;
+    description: string;
+    status: 'active' | 'inactive';
+    themeColor: string;
+    icon: string;
+  }) => Promise<Department>;
+  updateDepartmentRemote: (
+    id: string,
+    input: {
+      name: string;
+      code: string;
+      description: string;
+      status: 'active' | 'inactive';
+      themeColor: string;
+      icon: string;
+    }
+  ) => Promise<Department>;
 
-  // Members per department
-  departmentMembersMap: Record<string, DepartmentMember[]>;
-  setDepartmentMembersMap: React.Dispatch<React.SetStateAction<Record<string, DepartmentMember[]>>>;
+  departmentMembersMap: Record<string, DepartmentMemberUI[]>;
+  setDepartmentMembersMap: React.Dispatch<
+    React.SetStateAction<Record<string, DepartmentMemberUI[]>>
+  >;
+  loadDepartmentMembers: (departmentId: string) => Promise<void>;
+  assignMember: (departmentId: string, memberId: string, role: string) => Promise<void>;
+  removeMember: (departmentId: string, assignmentId: string) => Promise<void>;
 
-  // Activities per department
   departmentActivitiesMap: Record<string, Activity[]>;
-  addActivity: (departmentId: string, activity: Activity) => void;
-  deleteActivity: (departmentId: string, activityId: string) => void;
+  loadDepartmentActivities: (departmentId: string) => Promise<void>;
+  addActivityRemote: (departmentId: string, body: CreateActivityBody) => Promise<Activity>;
+  deleteActivityRemote: (departmentId: string, activityId: string) => Promise<void>;
 
-  // Expenses per department
   departmentExpensesMap: Record<string, Expense[]>;
-  submitExpense: (departmentId: string, expense: Expense) => void;
+  loadDepartmentExpenseRequests: (departmentId: string) => Promise<void>;
+  /** Refresh annualBudget / budgetUsed for one department from treasury API */
+  syncDepartmentBudgetFromApi: (departmentId: string) => Promise<void>;
+  submitExpense: (
+    departmentId: string,
+    expense: Expense,
+    options: { categoryId: string }
+  ) => Promise<{ requestNumber: string; status: string }>;
+  /** @deprecated No backend update flow wired; kept for compatibility */
   updateExpense: (departmentId: string, expenseId: string, updatedExpense: Expense) => void;
 
-  // Budget requests — pending approval pipeline
   budgetRequests: BudgetRequest[];
   submitBudgetRequest: (request: BudgetRequest) => void;
   approveBudgetRequest: (requestId: string) => void;
   rejectBudgetRequest: (requestId: string) => void;
 
-  // Loading/error states — ready for API integration
   loading: boolean;
   error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
 };
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const mockDepartments: Department[] = [
-  {
-    id: '1',
-    name: 'Secretariat',
-    code: 'SEC-001',
-    description: 'Records, communication, documentation management',
-    members: 5,
-    activities: 12,
-    budgetUsed: 5000,
-    annualBudget: 10000,
-    status: 'active',
-    themeColor: 'navy',
-    icon: '📖',
-    dateEstablished: '10/01/2022',
-    settings: {
-      autoApprovalThreshold: 5,
-      requiresElderApproval: true,
-      weeklySummary: true,
-      canSubmitAnnouncements: true,
-    },
-  },
-  {
-    id: '2',
-    name: 'Treasury',
-    code: 'TRD-002',
-    description: 'Financial oversight and budget control',
-    members: 4,
-    activities: 8,
-    budgetUsed: 3000,
-    annualBudget: 10000,
-    status: 'active',
-    themeColor: 'green',
-    icon: '💰',
-    dateEstablished: '10/01/2022',
-    settings: {
-      autoApprovalThreshold: 5,
-      requiresElderApproval: true,
-      weeklySummary: true,
-      canSubmitAnnouncements: true,
-    },
-  },
-  {
-    id: '3',
-    name: 'Deaconry',
-    code: 'DCN-003',
-    description: 'Community welfare and support',
-    members: 6,
-    activities: 10,
-    budgetUsed: 6000,
-    annualBudget: 10000,
-    status: 'inactive',
-    themeColor: 'purple',
-    icon: '🤝',
-    dateEstablished: '10/01/2022',
-    settings: {
-      autoApprovalThreshold: 5,
-      requiresElderApproval: true,
-      weeklySummary: true,
-      canSubmitAnnouncements: true,
-    },
-  },
-];
-
-// ─── Context ──────────────────────────────────────────────────────────────────
 
 const DepartmentsContext = createContext<DepartmentsContextType | null>(null);
 
-// ─── Provider ────────────────────────────────────────────────────────────────
-
 export function DepartmentsProvider({ children }: { children: React.ReactNode }) {
-  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [departmentMembersMap, setDepartmentMembersMap] = useState<
-    Record<string, DepartmentMember[]>
+    Record<string, DepartmentMemberUI[]>
   >({});
   const [departmentActivitiesMap, setDepartmentActivitiesMap] = useState<
     Record<string, Activity[]>
   >({});
   const [departmentExpensesMap, setDepartmentExpensesMap] = useState<Record<string, Expense[]>>({});
   const [budgetRequests, setBudgetRequests] = useState<BudgetRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const loading = false;
-  const error = null;
+  const refreshDepartments = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const rows = await fetchDepartmentsList();
+      setDepartments(rows.map(mapListRowToDepartment));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load departments');
+      setDepartments([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // ── Department handlers ──
+  useEffect(() => {
+    void refreshDepartments();
+  }, [refreshDepartments]);
 
   const updateDepartment = (updated: Department) => {
     setDepartments((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
   };
 
-  // ── Activity handlers ──
+  const applyDepartmentDetail = useCallback((id: string, detail: DepartmentDetailResponse) => {
+    setDepartments((prev) => {
+      const current = prev.find((d) => d.id === id);
+      if (!current) {
+        return prev;
+      }
+      const merged = mergeDepartmentDetail(current, detail);
+      return prev.map((d) => (d.id === id ? merged : d));
+    });
+  }, []);
 
-  const addActivity = (departmentId: string, activity: Activity) => {
+  const createDepartmentRemote = useCallback(
+    async (input: {
+      name: string;
+      code: string;
+      description: string;
+      status: 'active' | 'inactive';
+      themeColor: string;
+      icon: string;
+    }) => {
+      const detail = await createDepartment({
+        name: input.name.trim(),
+        code: input.code.trim().toUpperCase(),
+        description: input.description.trim(),
+        icon: normalizeIconForApi(input.icon),
+        color: input.themeColor,
+        is_active: input.status === 'active',
+      });
+      const mapped = mergeDepartmentDetail(
+        mapListRowToDepartment({
+          id: detail.id,
+          name: detail.name,
+          code: detail.code,
+          icon: detail.icon,
+          color: detail.color,
+          is_active: detail.is_active,
+          member_count: detail.member_count,
+        }),
+        detail,
+        0
+      );
+      setDepartments((prev) => [...prev, mapped]);
+      return mapped;
+    },
+    []
+  );
+
+  const updateDepartmentRemote = useCallback(
+    async (
+      id: string,
+      input: {
+        name: string;
+        code: string;
+        description: string;
+        status: 'active' | 'inactive';
+        themeColor: string;
+        icon: string;
+      }
+    ) => {
+      const detail = await updateDepartmentApi(id, {
+        name: input.name.trim(),
+        code: input.code.trim().toUpperCase(),
+        description: input.description.trim(),
+        icon: normalizeIconForApi(input.icon),
+        color: input.themeColor,
+        is_active: input.status === 'active',
+      });
+      setDepartments((prev) => {
+        const existing = prev.find((d) => d.id === id);
+        const base =
+          existing ??
+          mapListRowToDepartment({
+            id: detail.id,
+            name: detail.name,
+            code: detail.code,
+            icon: detail.icon,
+            color: detail.color,
+            is_active: detail.is_active,
+            member_count: detail.member_count,
+          });
+        const mapped = mergeDepartmentDetail(base, detail);
+        return prev.map((d) => (d.id === id ? mapped : d));
+      });
+      return mergeDepartmentDetail(
+        mapListRowToDepartment({
+          id: detail.id,
+          name: detail.name,
+          code: detail.code,
+          icon: detail.icon,
+          color: detail.color,
+          is_active: detail.is_active,
+          member_count: detail.member_count,
+        }),
+        detail
+      );
+    },
+    []
+  );
+
+  const loadDepartmentMembers = useCallback(async (departmentId: string) => {
+    const rows = await fetchMemberDepartments();
+    const forDept = rows.filter((r) => String(r.department) === departmentId);
+    const mapped = forDept.map(mapMemberDepartmentRow);
+    setDepartmentMembersMap((prev) => ({ ...prev, [departmentId]: mapped }));
+    setDepartments((prev) =>
+      prev.map((d) => (d.id === departmentId ? { ...d, members: mapped.length } : d))
+    );
+  }, []);
+
+  const assignMember = useCallback(
+    async (departmentId: string, memberId: string, role: string) => {
+      await assignMemberToDepartment({
+        member: memberId,
+        department: departmentId,
+        role_in_department: role,
+      });
+      await loadDepartmentMembers(departmentId);
+    },
+    [loadDepartmentMembers]
+  );
+
+  const removeMember = useCallback(async (departmentId: string, assignmentId: string) => {
+    await removeMemberFromDepartment(assignmentId);
+    setDepartmentMembersMap((prev) => ({
+      ...prev,
+      [departmentId]: (prev[departmentId] || []).filter((m) => m.assignmentId !== assignmentId),
+    }));
+    setDepartments((prev) =>
+      prev.map((d) =>
+        d.id === departmentId ? { ...d, members: Math.max((d.members || 0) - 1, 0) } : d
+      )
+    );
+  }, []);
+
+  const loadDepartmentActivities = useCallback(async (departmentId: string) => {
+    const rows = await fetchDepartmentActivities(departmentId);
+    const mapped = rows.map(mapActivityRowToActivity);
+    setDepartmentActivitiesMap((prev) => ({ ...prev, [departmentId]: mapped }));
+    setDepartments((prev) =>
+      prev.map((d) => (d.id === departmentId ? { ...d, activities: mapped.length } : d))
+    );
+  }, []);
+
+  const addActivityRemote = useCallback(async (departmentId: string, body: CreateActivityBody) => {
+    const row = await createDepartmentActivity(departmentId, body);
+    const activity = mapActivityRowToActivity(row);
     setDepartmentActivitiesMap((prev) => ({
       ...prev,
       [departmentId]: [...(prev[departmentId] || []), activity],
     }));
     setDepartments((prev) =>
-      prev.map((d) => (d.id === departmentId ? { ...d, activities: d.activities + 1 } : d))
+      prev.map((d) => (d.id === departmentId ? { ...d, activities: (d.activities || 0) + 1 } : d))
     );
-  };
+    return activity;
+  }, []);
 
-  const deleteActivity = (departmentId: string, activityId: string) => {
+  const deleteActivityRemote = useCallback(async (departmentId: string, activityId: string) => {
+    await deleteDepartmentActivity(departmentId, activityId);
     setDepartmentActivitiesMap((prev) => ({
       ...prev,
       [departmentId]: (prev[departmentId] || []).filter((a) => a.id !== activityId),
     }));
     setDepartments((prev) =>
       prev.map((d) =>
-        d.id === departmentId ? { ...d, activities: Math.max(d.activities - 1, 0) } : d
+        d.id === departmentId ? { ...d, activities: Math.max((d.activities || 0) - 1, 0) } : d
       )
     );
-  };
+  }, []);
 
-  // ── Expense handlers ──
+  const loadDepartmentExpenseRequests = useCallback(async (departmentId: string) => {
+    const rows = await getExpenseRequests({ department_id: departmentId, page_size: 100 });
+    const mapped = rows.map(mapExpenseRequestRowToExpense);
+    setDepartmentExpensesMap((prev) => ({ ...prev, [departmentId]: mapped }));
+  }, []);
 
-  const submitExpense = (departmentId: string, expense: Expense) => {
-    const department = departments.find((d) => d.id === departmentId);
-    const threshold = department?.settings.autoApprovalThreshold ?? 0;
-
-    const finalExpense: Expense =
-      expense.amount <= threshold
-        ? { ...expense, status: 'approved', reviewedAt: new Date().toISOString() }
-        : expense;
-
-    setDepartmentExpensesMap((prev) => ({
-      ...prev,
-      [departmentId]: [...(prev[departmentId] || []), finalExpense],
-    }));
-
-    if (finalExpense.status === 'approved') {
-      setDepartments((prev) =>
-        prev.map((d) =>
-          d.id === departmentId ? { ...d, budgetUsed: d.budgetUsed + finalExpense.amount } : d
-        )
-      );
+  const syncDepartmentBudgetFromApi = useCallback(async (departmentId: string) => {
+    const data = await getDepartmentBudgets();
+    const row = data?.departments?.find((d) => String(d.id) === String(departmentId));
+    if (!row) {
+      return;
     }
+    setDepartments((prev) =>
+      prev.map((d) =>
+        d.id === departmentId ? { ...d, annualBudget: row.allocated, budgetUsed: row.utilized } : d
+      )
+    );
+  }, []);
+
+  const submitExpense = useCallback(
+    async (departmentId: string, expense: Expense, options: { categoryId: string }) => {
+      const itemsLines = expense.items
+        .map(
+          (i) =>
+            `• ${i.name} × ${i.quantity} @ GHS ${i.unitCost} = GHS ${(i.quantity * i.unitCost).toFixed(2)}`
+        )
+        .join('\n');
+      const justification = `${expense.description}\n\n--- Line items ---\n${itemsLines}`;
+
+      const result = await createAndSubmitExpenseRequest({
+        departmentId,
+        categoryId: options.categoryId,
+        purpose: expense.title,
+        justification,
+        amount: expense.amount,
+      });
+
+      await loadDepartmentExpenseRequests(departmentId);
+      await syncDepartmentBudgetFromApi(departmentId);
+
+      return result;
+    },
+    [loadDepartmentExpenseRequests, syncDepartmentBudgetFromApi]
+  );
+
+  const updateExpense = (_departmentId: string, _expenseId: string, _updatedExpense: Expense) => {
+    /* Expense request edits not exposed */
   };
 
-  const updateExpense = (departmentId: string, expenseId: string, updatedExpense: Expense) => {
-    setDepartmentExpensesMap((prev) => {
-      const updatedList = (prev[departmentId] || []).map((e) =>
-        e.id === expenseId ? updatedExpense : e
-      );
-
-      const totalApproved = updatedList
-        .filter((e) => e.status === 'approved')
-        .reduce((sum, e) => sum + e.amount, 0);
-
-      setDepartments((deps) =>
-        deps.map((d) => (d.id === departmentId ? { ...d, budgetUsed: totalApproved } : d))
-      );
-
-      return { ...prev, [departmentId]: updatedList };
-    });
-  };
-
-  // ── Budget request handlers ──
-
-  // Submit: creates a pending request
   const submitBudgetRequest = (request: BudgetRequest) => {
     setBudgetRequests((prev) => [...prev, request]);
   };
 
-  // Approve: marks request approved AND updates the department's annualBudget
   const approveBudgetRequest = (requestId: string) => {
     setBudgetRequests((prev) =>
       prev.map((r) =>
@@ -229,7 +368,6 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
     }
   };
 
-  // Reject: marks request rejected — annualBudget unchanged
   const rejectBudgetRequest = (requestId: string) => {
     setBudgetRequests((prev) =>
       prev.map((r) =>
@@ -244,12 +382,22 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
         departments,
         setDepartments,
         updateDepartment,
+        applyDepartmentDetail,
+        refreshDepartments,
+        createDepartmentRemote,
+        updateDepartmentRemote,
         departmentMembersMap,
         setDepartmentMembersMap,
+        loadDepartmentMembers,
+        assignMember,
+        removeMember,
         departmentActivitiesMap,
-        addActivity,
-        deleteActivity,
+        loadDepartmentActivities,
+        addActivityRemote,
+        deleteActivityRemote,
         departmentExpensesMap,
+        loadDepartmentExpenseRequests,
+        syncDepartmentBudgetFromApi,
         submitExpense,
         updateExpense,
         budgetRequests,
@@ -258,14 +406,13 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
         rejectBudgetRequest,
         loading,
         error,
+        setError,
       }}
     >
       {children}
     </DepartmentsContext.Provider>
   );
 }
-
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useDepartments() {
   const context = useContext(DepartmentsContext);
