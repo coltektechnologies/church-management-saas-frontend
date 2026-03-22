@@ -29,18 +29,13 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getMembers, deleteMember, type MemberListItem } from '@/lib/api';
+import {
+  type MemberFilterState,
+  applyMemberFilters,
+  type FilterableMemberRow,
+} from '@/lib/memberFilters';
 
-interface MemberRow {
-  id: string;
-  name: string;
-  memberId: string;
-  phone: string;
-  email: string;
-  department: string;
-  role: string;
-  status: string;
-  memberSince: string;
-}
+type MemberRow = FilterableMemberRow;
 
 const roleStyles: Record<string, string> = {
   Admin: 'bg-red-100 text-red-800',
@@ -81,7 +76,11 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
-export default function MembersTable() {
+export interface MembersTableProps {
+  filters?: MemberFilterState;
+}
+
+export default function MembersTable({ filters }: MembersTableProps) {
   const router = useRouter();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,8 +96,17 @@ export default function MembersTable() {
       .finally(() => setLoading(false));
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(members.length / perPage));
-  const paginated = members.slice((page - 1) * perPage, page * perPage);
+  const filteredMembers = applyMemberFilters(
+    members,
+    filters || { search: '', status: 'all', department: 'all', dateRange: 'all' }
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters?.search, filters?.status, filters?.department, filters?.dateRange]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredMembers.length / perPage));
+  const paginated = filteredMembers.slice((page - 1) * perPage, page * perPage);
   const selectedCount = selectedIds.size;
   const isAllSelected = paginated.length > 0 && paginated.every((m) => selectedIds.has(m.id));
   const isSomeSelected = selectedIds.size > 0;

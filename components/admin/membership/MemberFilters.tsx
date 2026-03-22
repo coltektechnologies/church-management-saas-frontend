@@ -4,8 +4,27 @@ import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus } from 'lucide-react';
+import {
+  type MemberFilterState,
+  MEMBERSHIP_STATUS_OPTIONS,
+  DATE_RANGE_OPTIONS,
+} from '@/lib/memberFilters';
 
-export default function MemberFilters() {
+export interface MemberFiltersProps {
+  filters: MemberFilterState;
+  onFiltersChange: (filters: MemberFilterState) => void;
+  departmentOptions?: { value: string; label: string }[];
+}
+
+export default function MemberFilters({
+  filters,
+  onFiltersChange,
+  departmentOptions = [],
+}: MemberFiltersProps) {
+  const update = (key: keyof MemberFilterState, value: string) => {
+    onFiltersChange({ ...filters, [key]: value });
+  };
+
   return (
     <div
       className="flex items-center justify-center w-full"
@@ -28,20 +47,44 @@ export default function MemberFilters() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search member..."
+            value={filters.search}
+            onChange={(e) => update('search', e.target.value)}
             className="pl-9 h-9 rounded-none border-[#D9DADC] bg-white text-[#2B2B2C] placeholder:text-gray-400 text-sm"
           />
         </div>
-        <select className="h-9 px-3 rounded-none text-sm font-medium text-[#2B2B2C] bg-white border border-[#D9DADC] focus:ring-2 focus:ring-blue-500 outline-none">
-          <option>All Status</option>
+        <select
+          value={filters.status}
+          onChange={(e) => update('status', e.target.value)}
+          className="h-9 px-3 rounded-none text-sm font-medium text-[#2B2B2C] bg-white border border-[#D9DADC] focus:ring-2 focus:ring-blue-500 outline-none"
+        >
+          {MEMBERSHIP_STATUS_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
         </select>
-        <select className="h-9 px-3 rounded-none text-sm font-medium text-[#2B2B2C] bg-white border border-[#D9DADC] focus:ring-2 focus:ring-blue-500 outline-none">
-          <option>All Roles</option>
+        <select
+          value={filters.department}
+          onChange={(e) => update('department', e.target.value)}
+          className="h-9 px-3 rounded-none text-sm font-medium text-[#2B2B2C] bg-white border border-[#D9DADC] focus:ring-2 focus:ring-blue-500 outline-none"
+        >
+          <option value="all">All Departments</option>
+          {departmentOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
         </select>
-        <select className="h-9 px-3 rounded-none text-sm font-medium text-[#2B2B2C] bg-white border border-[#D9DADC] focus:ring-2 focus:ring-blue-500 outline-none">
-          <option>All Departments</option>
-        </select>
-        <select className="h-9 px-3 rounded-none text-sm font-medium text-[#2B2B2C] bg-white border border-[#D9DADC] focus:ring-2 focus:ring-blue-500 outline-none">
-          <option>All Dates</option>
+        <select
+          value={filters.dateRange}
+          onChange={(e) => update('dateRange', e.target.value)}
+          className="h-9 px-3 rounded-none text-sm font-medium text-[#2B2B2C] bg-white border border-[#D9DADC] focus:ring-2 focus:ring-blue-500 outline-none"
+        >
+          {DATE_RANGE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
         </select>
       </div>
       <Link href="/admin/members/add">

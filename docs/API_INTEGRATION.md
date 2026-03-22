@@ -124,6 +124,45 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api
 
 5. Visit `/admin` to see the dashboard with live data.
 
+## Members Page Integration (`/admin/members`)
+
+The Members page is fully connected to the backend API. Data flow:
+
+### API Endpoints
+
+| Purpose              | Method | Endpoint                              | Used By                           |
+| -------------------- | ------ | ------------------------------------- | --------------------------------- |
+| Member stats         | GET    | `/analytics/members/stats/`           | Stats cards (Total, Active, etc.) |
+| Tithe/offering stats | GET    | `/analytics/finance/tithe-offerings/` | Monthly trend + Tithing charts    |
+| Members list         | GET    | `/members/members/`                   | MembersTable                      |
+| Member detail        | GET    | `/members/members/{id}/`              | Member detail + edit pages        |
+| Create member        | POST   | `/members/create/`                    | Add member page                   |
+| Update member        | PUT    | `/members/members/{id}/`              | Edit member page                  |
+| Delete member        | DELETE | `/members/members/{id}/`              | MembersTable (single + bulk)      |
+
+### Filter Integration
+
+The search bar and filter dropdowns are wired to the members table via shared state:
+
+- **State location**: `app/admin/members/page.tsx` holds `filters` and passes them to both `MemberFilters` and `MembersTable`.
+- **Filter logic**: `lib/memberFilters.ts` provides `applyMemberFilters()` for client-side filtering (backend returns full list; filtering is done in the browser).
+- **Filter fields**:
+  - **Search**: Matches name, email, phone, member ID (case-insensitive).
+  - **Status**: Membership status (Active, Inactive, Transfer, New Convert, Visitor).
+  - **Department**: Filters by department when data is available (extensible for future API).
+  - **Date**: Member since date (This Month, Last 6 Months, This Year, Last Year).
+
+When filters change, the table re-filters and pagination resets to page 1.
+
+### Files
+
+| File                                            | Purpose                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| `lib/memberFilters.ts`                          | Filter types, options, and `applyMemberFilters()`            |
+| `lib/api.ts`                                    | `getMembers()`, `getMember()`, `createMember()`, etc.        |
+| `components/admin/membership/MemberFilters.tsx` | Controlled filter UI; receives `filters` + `onFiltersChange` |
+| `components/admin/membership/MembersTable.tsx`  | Fetches members, applies filters, paginates                  |
+
 ## Type Mappings
 
 Backend models are mapped to frontend types as follows:
