@@ -344,6 +344,9 @@ export async function getExpenseRequest(id: string): Promise<ExpenseRequestItem 
   );
 }
 
+/** GET /api/treasury/expense-requests/?status= */
+export async function getExpenseRequests(params?: {
+  status?: string;
 /** GET /api/treasury/expense-requests/?status=&department_id= */
 export async function getExpenseRequests(params?: {
   status?: string;
@@ -352,6 +355,10 @@ export async function getExpenseRequests(params?: {
 }): Promise<ExpenseRequestItem[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
+  sp.set('page_size', String(params?.page_size ?? 50));
+  if (params?.status) {
+    sp.set('status', params.status);
+  }
   sp.set('page_size', String(params?.page_size ?? 100));
   if (params?.status) {
     sp.set('status', params.status);
