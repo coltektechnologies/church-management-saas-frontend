@@ -5,16 +5,18 @@ import { useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Expense } from '@/types/expense';
 import { Department } from '@/types/Department';
-import NextLink from 'next/link';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface Props {
   department: Department;
   expenses: Expense[];
-  onSubmitExpense: (expense: Expense) => void;
+  /** Optional — inline submit; tab uses route to full expense form */
+  onSubmitExpense?: (expense: Expense, options: { categoryId: string }) => Promise<unknown>;
 }
 
-export default function BudgetTab({ department, expenses, onSubmitExpense: _ }: Props) {
+export default function BudgetTab({ department, expenses }: Props) {
   const router = useRouter();
+  const { can } = usePermissions();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   const filteredExpenses = expenses.filter((e) => filter === 'all' || e.status === filter);
@@ -36,12 +38,14 @@ export default function BudgetTab({ department, expenses, onSubmitExpense: _ }: 
               started.
             </p>
           </div>
-          <NextLink
-            href={`/admin/departments/${department.id}/budget/new`}
-            className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-amber-700 transition whitespace-nowrap"
-          >
-            Assign Budget
-          </NextLink>
+          {can('canAssignBudget') && (
+            <button
+              onClick={() => router.push(`/departments/${department.id}/budget/new`)}
+              className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-amber-700 transition whitespace-nowrap"
+            >
+              Assign Budget
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 space-y-4">
@@ -104,12 +108,14 @@ export default function BudgetTab({ department, expenses, onSubmitExpense: _ }: 
               {type}
             </button>
           ))}
-          <button
-            onClick={() => router.push(`/admin/departments/${department.id}/expenses/new`)}
-            className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm hover:bg-blue-700 transition"
-          >
-            + Submit Expense
-          </button>
+          {can('canSubmitExpense') && (
+            <button
+              onClick={() => router.push(`/departments/${department.id}/expenses/new`)}
+              className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-sm hover:bg-blue-700 transition"
+            >
+              + Submit Expense
+            </button>
+          )}
         </div>
       </div>
 

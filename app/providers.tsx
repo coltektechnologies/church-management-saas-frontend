@@ -3,22 +3,21 @@
 import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-// Add this import
 import { ChurchProvider } from '@/components/quicksetup/contexts/ChurchContext';
+import { DepartmentsProvider } from '@/context/DepartmentsContext';
 
 type ProvidersProps = {
   children: ReactNode;
 };
 
 export function Providers({ children }: ProvidersProps) {
-  // Create the QueryClient once per app load
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
             retry: 1,
-            staleTime: 1000 * 30, // 30s
+            staleTime: 1000 * 30,
           },
         },
       })
@@ -26,10 +25,11 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Wrap children with ChurchProvider to enable the Setup Page logic */}
       <ChurchProvider>
-        {children}
-        <Toaster richColors position="top-right" />
+        <DepartmentsProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </DepartmentsProvider>
       </ChurchProvider>
     </QueryClientProvider>
   );

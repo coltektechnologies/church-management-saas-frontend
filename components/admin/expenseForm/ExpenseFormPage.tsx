@@ -15,12 +15,16 @@ import {
 } from 'lucide-react';
 import { Expense, ExpenseItem } from '@/types/expense';
 import { Department } from '@/types/Department';
+import { getExpenseCategories, type ExpenseCategoryItem } from '@/lib/treasuryApi';
 import ExpenseDashboardHeader from './ExpenseDashboardHeader';
 
 interface Props {
   department: Department;
   expenses: Expense[];
-  onSubmit: (expense: Expense) => void;
+  onSubmit: (
+    expense: Expense,
+    options: { categoryId: string }
+  ) => Promise<{ requestNumber: string; status: string }>;
 }
 
 const APPROVAL_CHAIN = [
@@ -58,12 +62,6 @@ const APPROVAL_CHAIN = [
   },
 ];
 
-function generateExpenseRef(): string {
-  const year = new Date().getFullYear();
-  const num = Math.floor(10000 + Math.random() * 90000);
-  return `EXP-${year}-${num}`;
-}
-
 type Screen = 'form' | 'success';
 
 export default function ExpenseFormPage({ department, expenses, onSubmit }: Props) {
@@ -85,6 +83,16 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
   ]);
   const [documents, setDocuments] = useState<File[]>([]);
   const [error, setError] = useState('');
+  const [expenseCategories, setExpenseCategories] = useState<ExpenseCategoryItem[]>([]);
+  const [categoryId, setCategoryId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [fastTracked, setFastTracked] = useState(false);
+
+  useEffect(() => {
+    void getExpenseCategories().then((cats) => {
+      setExpenseCategories(cats.filter((c) => c.is_active));
+    });
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem(draftKey);
@@ -112,7 +120,8 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
   }, []);
 
   const grandTotal = items.reduce((sum, i) => sum + i.quantity * i.unitCost, 0);
-  const isAutoApproved = grandTotal > 0 && grandTotal <= department.settings.autoApprovalThreshold;
+  const qualifiesThreshold =
+    grandTotal > 0 && grandTotal <= department.settings.autoApprovalThreshold;
 
   const addItem = () =>
     setItems((prev) => [...prev, { id: crypto.randomUUID(), name: '', quantity: 1, unitCost: 0 }]);
@@ -137,7 +146,7 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
     setTimeout(() => setDraftSaved(false), 3000);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setError('');
     if (!submitterName.trim()) {
       setError('Please enter your full name.');
@@ -145,6 +154,10 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
     }
     if (!title.trim()) {
       setError('Please enter an expense title.');
+      return;
+    }
+    if (!categoryId) {
+      setError('Please select an expense category.');
       return;
     }
     if (items.some((i) => !i.name.trim())) {
@@ -160,10 +173,9 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
       return;
     }
 
-    const ref = generateExpenseRef();
     const expense: Expense = {
       id: crypto.randomUUID(),
-      expenseRef: ref,
+      expenseRef: '',
       title,
       description: justification,
       submitterName,
@@ -174,10 +186,18 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
       submittedAt: new Date().toISOString(),
     };
 
-    onSubmit(expense);
-    localStorage.removeItem(draftKey);
-    setSubmittedRef(ref);
-    setScreen('success');
+    setSubmitting(true);
+    try {
+      const result = await onSubmit(expense, { categoryId });
+      localStorage.removeItem(draftKey);
+      setSubmittedRef(result.requestNumber);
+      setFastTracked(result.status === 'DEPT_HEAD_APPROVED');
+      setScreen('success');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not submit expense request');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // ── SUCCESS SCREEN ────────────────────────────────────────────────────────
@@ -203,13 +223,13 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
               Keep this for tracking · Treasury uses this for reporting
             </p>
           </div>
-          {isAutoApproved && (
+          {fastTracked && (
             <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-              ⚡ This request was auto-approved as it is within the threshold.
+              ⚡ Submitted as department head/elder — first approval step recorded automatically.
             </p>
           )}
           <button
-            onClick={() => router.push(`/admin/departments`)}
+            onClick={() => router.back()}
             className="px-8 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition w-full"
           >
             Back to Departments
@@ -292,6 +312,23 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
                       onChange={(e) => setTitle(e.target.value)}
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400"
                     />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Expense category <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                    >
+                      <option value="">Select category</option>
+                      {expenseCategories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
@@ -471,10 +508,12 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
                     <Eye size={15} /> Preview
                   </button>
                   <button
-                    onClick={handleSubmit}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition"
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void handleSubmit()}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition disabled:opacity-60"
                   >
-                    Submit Request
+                    {submitting ? 'Submitting…' : 'Submit Request'}
                   </button>
                 </div>
               </div>
@@ -520,9 +559,9 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
                     </span>{' '}
                     or below are approved automatically — no chain needed.
                   </p>
-                  {isAutoApproved && (
+                  {qualifiesThreshold && (
                     <p className="text-xs text-green-700 bg-green-100 rounded-lg px-2 py-1 mt-1 font-medium">
-                      ✓ Current total qualifies for auto-approval
+                      ✓ Amount is within your department auto-approval threshold (if applicable)
                     </p>
                   )}
                 </div>
@@ -651,13 +690,15 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
                 Close
               </button>
               <button
+                type="button"
+                disabled={submitting}
                 onClick={() => {
                   setShowPreview(false);
-                  handleSubmit();
+                  void handleSubmit();
                 }}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition"
+                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition disabled:opacity-60"
               >
-                Submit Request
+                {submitting ? 'Submitting…' : 'Submit Request'}
               </button>
             </div>
           </div>
