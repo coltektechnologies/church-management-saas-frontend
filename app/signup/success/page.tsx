@@ -13,6 +13,17 @@ import {
 } from '@/lib/api';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 
+/** Parse REG_{uuid}_{timestamp} — UUID contains hyphens, must not split on every underscore. */
+function parseSessionIdFromReference(reference: string): string | null {
+  if (!reference?.startsWith('REG_')) return null;
+  const body = reference.slice(4);
+  const lastUnderscore = body.lastIndexOf('_');
+  if (lastUnderscore <= 0) return null;
+  const sessionPart = body.slice(0, lastUnderscore);
+  const tail = body.slice(lastUnderscore + 1);
+  return tail && /^\d+$/.test(tail) ? sessionPart : null;
+}
+
 function getInitialState(reference: string | null): {
   status: 'loading' | 'success' | 'error';
   message: string;
@@ -23,8 +34,7 @@ function getInitialState(reference: string | null): {
       message: 'Missing payment reference. Please start registration again and complete payment.',
     };
   }
-  const parts = reference.split('_');
-  const sessionIdFromRef = parts.length >= 3 ? parts[1] : null;
+  const sessionIdFromRef = parseSessionIdFromReference(reference);
   const sessionId =
     typeof window !== 'undefined'
       ? getStoredRegistrationSessionId() || sessionIdFromRef
@@ -53,8 +63,7 @@ function SignupSuccessContent() {
     if (!reference || status !== 'loading' || verified) {
       return;
     }
-    const parts = reference.split('_');
-    const sessionIdFromRef = parts.length >= 3 ? parts[1] : null;
+    const sessionIdFromRef = parseSessionIdFromReference(reference);
     const sessionId = getStoredRegistrationSessionId() || sessionIdFromRef;
     if (!sessionId) {
       return;
@@ -104,7 +113,7 @@ function SignupSuccessContent() {
             Your payment may not have been confirmed, or the link is invalid. Start over to try
             again.
           </p>
-          <Link href="/signup" className="block w-full">
+          <Link href="/signup?restart=1" className="block w-full">
             <Button className="w-full h-12 bg-[#2FC4B2] hover:bg-[#28b0a0] text-white font-bold rounded-xl">
               Start registration again
             </Button>

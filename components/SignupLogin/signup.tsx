@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/SignupLogin/Header';
 import Footer from '@/components/SignupLogin/Footer';
 import RegistrationLayout from '@/components/SignupLogin/RegistrationLayout';
@@ -18,6 +18,10 @@ import {
   registrationInitializePayment,
   setStoredRegistrationSessionId,
   clearStoredRegistrationSessionId,
+  getRegistrationDraft,
+  setRegistrationDraft,
+  clearRegistrationDraft,
+  getStoredRegistrationSessionId,
 } from '@/lib/api';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 
@@ -104,8 +108,39 @@ const Signup = () => {
   const [formData, setFormData] = useState<RegistrationData>(defaultFormData);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  // Restore draft (sessionId, formData, step) on mount so back navigation / refresh preserves progress
+  useEffect(() => {
+    const restart = searchParams?.get('restart') === '1';
+    if (restart) {
+      clearStoredRegistrationSessionId();
+      clearRegistrationDraft();
+    }
+    const draft = restart ? null : getRegistrationDraft();
+    const storedSession = getStoredRegistrationSessionId();
+    if (draft) {
+      setFormData((prev) => ({ ...defaultFormData, ...draft.formData }) as RegistrationData);
+      setCurrentStep(Math.min(Math.max(1, draft.currentStep), TOTAL_STEPS));
+      setSessionId(draft.sessionId || storedSession);
+    } else if (storedSession) {
+      setSessionId(storedSession);
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist draft whenever state changes so back/refresh preserves progress
+  useEffect(() => {
+    if (!hydrated) return;
+    setRegistrationDraft({
+      formData: formData as unknown as Record<string, string>,
+      currentStep,
+      sessionId,
+    });
+  }, [hydrated, formData, currentStep, sessionId]);
 
   const pageStyles = {
     container: 'flex min-h-screen flex-col bg-background',
@@ -154,6 +189,7 @@ const Signup = () => {
         church_size: mapChurchSize(d.churchSize || ''),
       });
       setSessionId(session_id);
+      setStoredRegistrationSessionId(session_id);
       goNext();
     } catch (err) {
       toast({
@@ -188,6 +224,7 @@ const Signup = () => {
         confirm_password: d.confirmPassword || '',
       });
       setSessionId(session_id);
+      setStoredRegistrationSessionId(session_id);
       goNext();
     } catch (err) {
       toast({
@@ -217,6 +254,7 @@ const Signup = () => {
         billing_cycle: mapBillingToBackend(d.billing || 'monthly'),
       });
       setSessionId(session_id);
+      setStoredRegistrationSessionId(session_id);
       // Free or paid: next step is always final review (no separate payment UI)
       goToStep(4);
     } catch (err) {
@@ -244,6 +282,7 @@ const Signup = () => {
       const result = await registrationInitializePayment(sessionId);
       if (!result.requires_payment) {
         clearStoredRegistrationSessionId();
+        clearRegistrationDraft();
         localStorage.setItem('access_token', result.tokens.access);
         localStorage.setItem('refresh_token', result.tokens.refresh);
         localStorage.setItem('user', JSON.stringify(result.user));
@@ -257,6 +296,7 @@ const Signup = () => {
         return;
       }
       setStoredRegistrationSessionId(sessionId);
+      clearRegistrationDraft();
       window.location.href = result.authorization_url;
     } catch (err) {
       toast({
