@@ -8,7 +8,6 @@ import RegistrationLayout from '@/components/SignupLogin/RegistrationLayout';
 import Step1ChurchInfo from '@/components/SignupLogin/registration/Step1ChurchInfo';
 import Step2AdminDetails from '@/components/SignupLogin/registration/Step2AdminDetails';
 import Step3Subscription from '@/components/SignupLogin/registration/Step3Subscription';
-import Step4Payment from '@/components/SignupLogin/registration/Step4Payment';
 import Step5Review from '@/components/SignupLogin/registration/Step5Review';
 import { useToast } from '@/hooks/use-toast';
 import type { RegistrationData } from '@/components/SignupLogin/registration/Step4Payment';
@@ -22,12 +21,13 @@ import {
 } from '@/lib/api';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 
+const TOTAL_STEPS = 4;
+
 const stepTitles = [
   'Church Information',
   'Primary Admin Details',
   'Subscription Plan',
-  'Payment Details',
-  'Review & Submit',
+  'Review & confirm',
 ];
 
 const defaultFormData: RegistrationData = {
@@ -53,7 +53,7 @@ const defaultFormData: RegistrationData = {
   // Step 3
   subscriptionPlan: '',
   billing: 'monthly',
-  // Step 4
+  // Legacy fields (payment step removed from flow; Paystack is used for paid plans at final confirm)
   paymentMethod: '',
   bankName: '',
 };
@@ -93,7 +93,7 @@ function mapBillingToBackend(billing: string): string {
   return (billing || 'monthly').toLowerCase() === 'yearly' ? 'YEARLY' : 'MONTHLY';
 }
 
-/** True when selected plan is free (no payment) — skip Payment step and go straight to Review */
+/** True when selected plan has no Paystack step (free / trial) */
 function isFreePlan(data: RegistrationData): boolean {
   const plan = (data.subscriptionPlan || '').toUpperCase();
   return plan === 'TRIAL' || plan === 'FREE';
@@ -118,13 +118,12 @@ const Signup = () => {
   };
 
   const goNext = () => {
-    if (currentStep < 5) {
+    if (currentStep < TOTAL_STEPS) {
       setCurrentStep((s) => s + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  /** Go to a specific step (used to skip step 4 when plan is free). */
   const goToStep = (step: number) => {
     setCurrentStep(step);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -134,13 +133,8 @@ const Signup = () => {
     if (currentStep <= 1) {
       return;
     }
-    // From Review (5), if plan is free we skipped Payment (4) — go back to Subscription (3)
-    if (currentStep === 5 && isFreePlan(formData)) {
-      goToStep(3);
-    } else {
-      setCurrentStep((s) => s - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    setCurrentStep((s) => s - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleStep1Next = async () => {
@@ -223,12 +217,8 @@ const Signup = () => {
         billing_cycle: mapBillingToBackend(d.billing || 'monthly'),
       });
       setSessionId(session_id);
-      // Free plan: skip Payment (step 4) and go straight to Review & Submit (step 5)
-      if (isFreePlan(formData)) {
-        goToStep(5);
-      } else {
-        goNext();
-      }
+      // Free or paid: next step is always final review (no separate payment UI)
+      goToStep(4);
     } catch (err) {
       toast({
         title: 'Error',
@@ -315,21 +305,12 @@ const Signup = () => {
               );
             case 4:
               return (
-                <Step4Payment
-                  data={formData}
-                  onChange={handleChange}
-                  onNext={goNext}
-                  onBack={goBack}
-                  loading={loading}
-                />
-              );
-            case 5:
-              return (
                 <Step5Review
                   data={formData}
                   onBack={goBack}
                   onFinish={handleSubmit}
                   loading={loading}
+                  requiresPayment={!isFreePlan(formData)}
                 />
               );
             default:
@@ -344,7 +325,11 @@ const Signup = () => {
     <div className={pageStyles.container}>
       <Header />
       <main className={pageStyles.mainContent}>
-        <RegistrationLayout currentStep={currentStep} stepTitle={stepTitles[currentStep - 1]}>
+        <RegistrationLayout
+          currentStep={currentStep}
+          totalSteps={TOTAL_STEPS}
+          stepTitle={stepTitles[currentStep - 1]}
+        >
           {renderStep()}
         </RegistrationLayout>
       </main>
