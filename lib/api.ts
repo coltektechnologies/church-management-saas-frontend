@@ -81,6 +81,42 @@ export function clearStoredRegistrationSessionId(): void {
   localStorage.removeItem(REGISTRATION_SESSION_KEY);
 }
 
+// Draft: formData + currentStep + sessionId (survives refresh / back navigation within tab)
+const REGISTRATION_DRAFT_KEY = 'church_registration_draft';
+
+export interface RegistrationDraft {
+  formData: Record<string, string>;
+  currentStep: number;
+  sessionId: string | null;
+}
+
+export function getRegistrationDraft(): RegistrationDraft | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(REGISTRATION_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as RegistrationDraft;
+    if (!parsed || typeof parsed.currentStep !== 'number') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function setRegistrationDraft(draft: RegistrationDraft): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    // Ignore quota / private mode
+  }
+}
+
+export function clearRegistrationDraft(): void {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
+}
+
 /** Extract first error message from API error response. */
 function apiErrorMessage(data: Record<string, unknown>, fallback: string): string {
   const errors = data?.errors as Record<string, unknown> | undefined;
