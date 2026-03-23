@@ -7,6 +7,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { useSettingsApiSync } from '@/hooks/useSettingsApiSync';
 import AdminSidebar from '@/components/admin/adminSidebar';
 import TopNavbar from '@/components/admin/TopNavbar';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 
 function useIsMounted(): boolean {
   return useSyncExternalStore(
@@ -64,12 +65,14 @@ function AdminShell({ children }: { children: ReactNode }) {
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider defaultRole="admin">
-      <ChurchProfileProvider>
-        <AppDataProvider>
-          <AdminShell>{children}</AdminShell>
-        </AppDataProvider>
-      </ChurchProfileProvider>
-    </AuthProvider>
+    <RequireAuth>
+      <AuthProvider defaultRole="admin">
+        <ChurchProfileProvider>
+          <AppDataProvider>
+            <AdminShell>{children}</AdminShell>
+          </AppDataProvider>
+        </ChurchProfileProvider>
+      </AuthProvider>
+    </RequireAuth>
   );
 }

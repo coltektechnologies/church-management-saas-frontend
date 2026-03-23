@@ -20,6 +20,7 @@ import {
   setStoredRegistrationSessionId,
   clearStoredRegistrationSessionId,
 } from '@/lib/api';
+import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 
 const stepTitles = [
   'Church Information',
@@ -256,6 +257,7 @@ const Signup = () => {
         localStorage.setItem('access_token', result.tokens.access);
         localStorage.setItem('refresh_token', result.tokens.refresh);
         localStorage.setItem('user', JSON.stringify(result.user));
+        setChurchSessionCookie();
         toast({
           title: 'Registration successful!',
           description:

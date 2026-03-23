@@ -11,6 +11,7 @@ import {
   clearStoredRegistrationSessionId,
   registrationVerifyPayment,
 } from '@/lib/api';
+import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 
 function getInitialState(reference: string | null): {
   status: 'loading' | 'success' | 'error';
@@ -64,6 +65,7 @@ function SignupSuccessContent() {
         localStorage.setItem('access_token', result.tokens.access);
         localStorage.setItem('refresh_token', result.tokens.refresh);
         localStorage.setItem('user', JSON.stringify(result.user));
+        setChurchSessionCookie();
         setStatus('success');
         toast({
           title: 'Registration successful!',

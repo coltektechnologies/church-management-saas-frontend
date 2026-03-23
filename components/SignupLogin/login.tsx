@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/SignupLogin/Header';
 import Footer from '@/components/SignupLogin/Footer';
 import { Input } from '@/components/ui/input';
@@ -13,15 +13,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '@/assets/logo.svg';
 import { login as apiLogin } from '@/lib/api';
+import { getSafeReturnPath } from '@/lib/safeReturnPath';
+import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 
 const Login = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Already logged in (e.g. token in localStorage but cookie missing) — heal cookie + leave login.
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      return;
+    }
+    setChurchSessionCookie();
+    const next = searchParams.get('next');
+    router.replace(getSafeReturnPath(next));
+  }, [router, searchParams]);
 
   const styles = {
     wrapper: 'flex min-h-screen flex-col justify-between bg-[#F8F9FA]',
@@ -67,7 +81,9 @@ const Login = () => {
       localStorage.setItem('access_token', tokens.access);
       localStorage.setItem('refresh_token', tokens.refresh);
       localStorage.setItem('user', JSON.stringify(user));
-      router.push('/dashboard');
+      setChurchSessionCookie();
+      const next = searchParams.get('next');
+      router.push(getSafeReturnPath(next));
     } catch (err) {
       setLoading(false);
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
