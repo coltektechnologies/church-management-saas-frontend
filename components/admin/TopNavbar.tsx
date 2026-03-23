@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useChurchProfile, type SubscriptionStatus } from '@/components/admin/dashboard/contexts';
 import { mockNotifications, type MockNotification } from '@/components/admin/mock/mockData';
+import { clearClientAuth } from '@/lib/churchSessionBrowser';
 
 function useIsMounted(): boolean {
   return useSyncExternalStore(
@@ -647,6 +648,7 @@ export default function TopNavbar() {
                 <button
                   onClick={() => {
                     setProfileOpen(false);
+                    clearClientAuth();
                     router.push('/login');
                   }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-red-500 hover:bg-red-50 transition-colors"

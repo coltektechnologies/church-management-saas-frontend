@@ -9,6 +9,7 @@ import { ThemeProvider } from '@/components/secretary/ThemeProvider';
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 
 function SecretaryShell({ children }: { children: ReactNode }) {
   const { profile, isReady } = useSecretaryProfile();
@@ -46,16 +47,18 @@ function SecretaryShell({ children }: { children: ReactNode }) {
 
 export default function SecretaryLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider defaultRole="secretary">
-      <ChurchProfileProvider>
-        <SecretaryProfileProvider>
-          <AppDataProvider>
-            <ThemeProvider>
-              <SecretaryShell>{children}</SecretaryShell>
-            </ThemeProvider>
-          </AppDataProvider>
-        </SecretaryProfileProvider>
-      </ChurchProfileProvider>
-    </AuthProvider>
+    <RequireAuth>
+      <AuthProvider defaultRole="secretary">
+        <ChurchProfileProvider>
+          <SecretaryProfileProvider>
+            <AppDataProvider>
+              <ThemeProvider>
+                <SecretaryShell>{children}</SecretaryShell>
+              </ThemeProvider>
+            </AppDataProvider>
+          </SecretaryProfileProvider>
+        </ChurchProfileProvider>
+      </AuthProvider>
+    </RequireAuth>
   );
 }
