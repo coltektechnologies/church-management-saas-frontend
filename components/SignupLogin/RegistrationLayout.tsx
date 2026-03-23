@@ -2,16 +2,23 @@ import InfoPanel from './InfoPanel';
 import StepIndicator from './StepIndicator';
 
 /**
- * RegistrationLayout - Shared wrapper for the 5-step signup process.
+ * RegistrationLayout - Shared wrapper for the multi-step signup process.
  * Logic: Handles responsiveness and consistent spacing for all steps.
  */
 interface RegistrationLayoutProps {
   currentStep: number;
+  /** Total steps shown in the header and progress bar (e.g. 4). */
+  totalSteps?: number;
   stepTitle: string;
   children: React.ReactNode;
 }
 
-const RegistrationLayout = ({ currentStep, stepTitle, children }: RegistrationLayoutProps) => {
+const RegistrationLayout = ({
+  currentStep,
+  totalSteps = 4,
+  stepTitle,
+  children,
+}: RegistrationLayoutProps) => {
   // Organized styles for better code maintenance
   const styles = {
     wrapper: 'container mx-auto px-4 py-8 lg:py-16 min-h-screen flex items-center justify-center',
@@ -37,10 +44,12 @@ const RegistrationLayout = ({ currentStep, stepTitle, children }: RegistrationLa
         <section className={styles.rightCol}>
           <div className={styles.header}>
             <div>
-              <p className={styles.stepLabel}>Step {currentStep} of 5</p>
+              <p className={styles.stepLabel}>
+                Step {currentStep} of {totalSteps}
+              </p>
               <h2 className={styles.title}>{stepTitle}</h2>
             </div>
-            <StepIndicator currentStep={currentStep} />
+            <StepIndicator currentStep={currentStep} totalSteps={totalSteps} />
           </div>
 
           {/* Render Active Step */}
