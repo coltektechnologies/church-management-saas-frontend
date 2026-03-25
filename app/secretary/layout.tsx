@@ -12,7 +12,6 @@ import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine'
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
-import { RequireAuth } from '@/components/auth/RequireAuth';
 
 function SecretaryShell({ children }: { children: ReactNode }) {
   const { profile, isReady } = useSecretaryProfile();
