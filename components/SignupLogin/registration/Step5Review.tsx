@@ -3,17 +3,17 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Check, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ShieldCheck, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RegistrationData } from './Step4Payment';
-import Link from 'next/link';
 
 interface StepReviewProps {
   data: RegistrationData;
   onBack: () => void;
   onFinish: () => void | Promise<void>;
   loading?: boolean;
-  isSuccess?: boolean;
+  /** When true, user must confirm summary then is sent to Paystack (paid plans). */
+  requiresPayment?: boolean;
 }
 
 const Step5Review = ({
@@ -21,25 +21,29 @@ const Step5Review = ({
   onBack,
   onFinish,
   loading = false,
-  isSuccess = false,
+  requiresPayment = false,
 }: StepReviewProps) => {
   const [agreed, setAgreed] = useState(false);
 
-  // Mapping the data for a clean display
-  const reviewRows = [
+  const baseRows = [
     { label: 'Church Name', value: data.churchName },
     { label: 'Subdomain', value: data.subdomain ? `${data.subdomain}.opendoor.com` : '' },
     { label: 'Full Name', value: data.fullName },
     { label: 'Admin Email', value: data.adminEmail },
     { label: 'Primary Admin Role', value: data.role },
     { label: 'Subscription Plan', value: data.subscriptionPlan?.toUpperCase() },
-    {
-      label: 'Payment Method',
-      value: data.paymentMethod
-        ? data.paymentMethod.split('_').join(' ').toUpperCase()
-        : 'Paystack (card, mobile money, bank)',
-    },
   ];
+
+  const paymentRow = requiresPayment
+    ? [
+        {
+          label: 'Payment',
+          value: 'Paystack (card, mobile money, bank) — after you confirm below',
+        },
+      ]
+    : [];
+
+  const reviewRows = [...baseRows, ...paymentRow];
 
   const handleSubmit = () => {
     if (!agreed) {
@@ -47,6 +51,14 @@ const Step5Review = ({
     }
     void onFinish();
   };
+
+  const primaryLabel = requiresPayment
+    ? loading
+      ? 'Opening Paystack...'
+      : 'Confirm & pay with Paystack'
+    : loading
+      ? 'Completing...'
+      : 'Complete registration';
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col items-center w-full">
@@ -56,11 +68,27 @@ const Step5Review = ({
           <p className="text-sm font-bold text-[#0B2A4A] uppercase tracking-widest">Final Review</p>
         </div>
 
+        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+          {requiresPayment
+            ? 'Check your details. When you confirm, you will be redirected to Paystack to complete payment securely.'
+            : 'Check your details and complete registration. No payment is required for your plan.'}
+        </p>
+
+        {requiresPayment && (
+          <div className="mb-6 flex gap-3 rounded-xl border border-[#2FC4B2]/40 bg-teal-50/50 px-4 py-3 text-sm text-[#0B2A4A]">
+            <CreditCard className="w-5 h-5 shrink-0 text-[#2FC4B2]" />
+            <p>
+              <span className="font-bold">Paystack</span> handles card, mobile money, and bank
+              options. You only leave this site after you click the button below.
+            </p>
+          </div>
+        )}
+
         {/* Review Table */}
         <div className="rounded-2xl border border-gray-100 overflow-hidden shadow-sm mb-8 bg-white">
           {reviewRows.map((row, idx) => (
             <div
-              key={idx}
+              key={row.label}
               className={cn(
                 'flex flex-col sm:flex-row sm:items-center px-6 py-4 gap-1 sm:gap-4 transition-colors hover:bg-gray-50/50',
                 idx !== reviewRows.length - 1 && 'border-b border-gray-50'
@@ -90,8 +118,10 @@ const Step5Review = ({
           >
             I agree to the Open Door{' '}
             <span className="text-[#2FC4B2] underline cursor-pointer">Terms of Service</span> &{' '}
-            <span className="text-[#2FC4B2] underline cursor-pointer">Privacy Policy</span>. I
-            understand that my subscription will automatically renew.
+            <span className="text-[#2FC4B2] underline cursor-pointer">Privacy Policy</span>.
+            {requiresPayment
+              ? ' I authorise payment via Paystack for my selected plan.'
+              : ' I understand that my subscription will automatically renew where applicable.'}
           </label>
         </div>
 
@@ -109,54 +139,10 @@ const Step5Review = ({
             onClick={handleSubmit}
             className="flex-[2] h-[50px] rounded-xl bg-[#0B2A4A] hover:bg-black text-white font-bold transition-all disabled:opacity-40 shadow-xl shadow-[#0B2A4A]/20"
           >
-            {loading ? 'Completing...' : 'Complete Registration'}
+            {primaryLabel}
           </Button>
         </div>
       </div>
-
-      {/* Success Modal */}
-      {isSuccess && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0B2A4A]/70 backdrop-blur-md px-4">
-          <div className="bg-white rounded-[32px] p-10 max-w-[440px] w-full text-center shadow-2xl animate-in zoom-in-90 duration-300 border border-white/20">
-            <div className="relative w-24 h-24 mx-auto mb-8">
-              <div className="absolute inset-0 bg-[#2FC4B2]/20 rounded-full animate-ping opacity-25" />
-              <div className="relative w-24 h-24 rounded-full bg-[#2FC4B2]/10 flex items-center justify-center mx-auto">
-                <Check className="w-12 h-12 text-[#2FC4B2] stroke-[4px]" />
-              </div>
-            </div>
-
-            <h3 className="text-[28px] font-black text-[#0B2A4A] mb-3 leading-tight">
-              Welcome Aboard!
-            </h3>
-            <p className="text-gray-500 text-sm mb-10 leading-relaxed px-4">
-              Your account is ready. Let&apos;s take a quick moment to personalize your church
-              workspace settings.
-            </p>
-
-            <div className="space-y-4">
-              <Link href="/QuickSetupPage" className="w-full block">
-                <Button
-                  onClick={onFinish}
-                  className="w-full h-[60px] bg-[#0B2A4A] hover:bg-black text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-3 group transition-all shadow-xl shadow-[#0B2A4A]/30 active:scale-[0.98]"
-                >
-                  Start Quick Setup
-                  <Sparkles
-                    size={22}
-                    className="group-hover:rotate-12 transition-transform text-[#2FC4B2]"
-                  />
-                </Button>
-              </Link>
-
-              <button
-                onClick={() => (window.location.href = '/dashboard')}
-                className="w-full py-2 text-[11px] font-black text-gray-400 uppercase tracking-[2px] hover:text-[#0B2A4A] transition-colors flex items-center justify-center gap-2"
-              >
-                Skip to Dashboard <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
