@@ -53,7 +53,7 @@ const MONTH_NAMES = [
 // is not part of the base interface. We extend here so we can read it without
 // casting to `any`.
 interface ActivityWithType {
-  timestamp: string;
+  timestamp: number; // fixed: AppActivity extends ActivityEntry which uses number
   tab?: string;
   entity?: string;
   action?: string;
@@ -132,7 +132,7 @@ function useGrowthData(
     const buckets: Record<string, number> = {};
 
     for (const a of activities as ActivityWithType[]) {
-      const ts = new Date(a.timestamp).getTime();
+      const ts = a.timestamp;
       if (isNaN(ts) || ts < fromMs || ts > toMs) {
         continue;
       }
