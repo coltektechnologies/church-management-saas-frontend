@@ -21,12 +21,28 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Trash2, CalendarDays, Pencil, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  useEvents,
+  type ChurchEvent,
+  type EventStatus,
+  type EventType,
+  type EventReminder,
+} from '@/components/secretary/contexts/EventsContext';
+import { useLogEvent } from '@/components/secretary/contexts/ActivityContext';
 
-type EventStatus = 'upcoming' | 'completed' | 'cancelled' | 'postponed';
-type EventType = 'service' | 'event';
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-interface ChurchEvent {
-  id: string;
+const EVENT_COLORS = [
+  { label: 'Primary', value: 'bg-primary' },
+  { label: 'Red', value: 'bg-destructive' },
+  { label: 'Amber', value: 'bg-amber-500' },
+  { label: 'Violet', value: 'bg-violet-500' },
+  { label: 'Pink', value: 'bg-pink-500' },
+  { label: 'Green', value: 'bg-emerald-500' },
+  { label: 'Sky', value: 'bg-sky-500' },
+];
+
+interface EventForm {
   name: string;
   day: string;
   date: string;
@@ -34,18 +50,10 @@ interface ChurchEvent {
   type: EventType;
   color: string;
   status: EventStatus;
+  reminders: EventReminder[];
 }
 
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-const EVENT_COLORS = [
-  { label: 'Primary', value: 'bg-primary' },
-  { label: 'Red', value: 'bg-destructive' },
-  { label: 'Navy', value: 'bg-primary-dark' },
-  { label: 'Green', value: 'bg-success' },
-];
-
-const EMPTY_FORM: Omit<ChurchEvent, 'id'> = {
+const EMPTY: EventForm = {
   name: '',
   day: 'Sunday',
   date: '',
@@ -53,31 +61,34 @@ const EMPTY_FORM: Omit<ChurchEvent, 'id'> = {
   type: 'service',
   color: 'bg-primary',
   status: 'upcoming',
+  reminders: [],
 };
 
 export default function EventsScheduleTab() {
-  const [events, setEvents] = useState<ChurchEvent[]>([]);
+  const { events, addEvent, updateEvent, removeEvent } = useEvents();
+  const log = useLogEvent();
+
   const [editId, setEditId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState<Omit<ChurchEvent, 'id'>>(EMPTY_FORM);
+  const [form, setForm] = useState<EventForm>(EMPTY);
 
   const openAdd = () => {
-    setForm(EMPTY_FORM);
+    setForm(EMPTY);
     setEditId(null);
     setShowAdd(true);
   };
-
-  const openEdit = (event: ChurchEvent) => {
+  const openEdit = (e: ChurchEvent) => {
     setForm({
-      name: event.name,
-      day: event.day,
-      date: event.date,
-      time: event.time,
-      type: event.type,
-      color: event.color,
-      status: event.status,
+      name: e.name,
+      day: e.day,
+      date: e.date,
+      time: e.time,
+      type: e.type,
+      color: e.color,
+      status: e.status,
+      reminders: e.reminders ?? [],
     });
-    setEditId(event.id);
+    setEditId(e.id);
     setShowAdd(true);
   };
 
@@ -92,17 +103,26 @@ export default function EventsScheduleTab() {
     }
 
     if (editId) {
-      setEvents((prev) => prev.map((e) => (e.id === editId ? { ...e, ...form } : e)));
+      updateEvent(editId, form);
+      log.logUpdated(form.name);
       toast.success('Event updated', { description: `"${form.name}" has been updated.` });
     } else {
-      setEvents((prev) => [...prev, { id: crypto.randomUUID(), ...form }]);
+      addEvent(form);
+      log.logAdded(form.name);
       toast.success('Event added', { description: `"${form.name}" will appear on the calendar.` });
     }
     setShowAdd(false);
   };
 
-  const handleStatusChange = (id: string, status: EventStatus) => {
-    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)));
+  const handleDelete = (id: string, name: string) => {
+    removeEvent(id);
+    log.logRemoved(name);
+    toast.info('Event removed');
+  };
+
+  const handleStatus = (id: string, name: string, status: EventStatus) => {
+    updateEvent(id, { status });
+    log.logStatus(name, status);
     toast.info(`Event marked as ${status}`);
   };
 
@@ -135,7 +155,7 @@ export default function EventsScheduleTab() {
         </Button>
       </div>
 
-      {/* Upcoming events */}
+      {/* Upcoming */}
       {upcomingEvents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-muted/10 rounded-[24px] border-2 border-dashed border-border">
           <CalendarDays className="text-muted-foreground/30 mb-4" size={48} />
@@ -162,7 +182,7 @@ export default function EventsScheduleTab() {
               <div
                 className={`h-10 w-10 rounded-lg ${event.color} flex items-center justify-center shrink-0`}
               >
-                <span className="text-primary-foreground text-sm">📅</span>
+                <span className="text-white text-sm">📅</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-foreground">{event.name}</p>
@@ -176,7 +196,7 @@ export default function EventsScheduleTab() {
                 </Badge>
                 <Select
                   value={event.status}
-                  onValueChange={(v) => handleStatusChange(event.id, v as EventStatus)}
+                  onValueChange={(v) => handleStatus(event.id, event.name, v as EventStatus)}
                 >
                   <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg">
                     <SelectValue />
@@ -199,10 +219,7 @@ export default function EventsScheduleTab() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => {
-                    setEvents((p) => p.filter((e) => e.id !== event.id));
-                    toast.info('Event removed');
-                  }}
+                  onClick={() => handleDelete(event.id, event.name)}
                   className="h-8 w-8 text-destructive/50 hover:text-destructive"
                 >
                   <Trash2 size={14} />
@@ -213,7 +230,7 @@ export default function EventsScheduleTab() {
         </div>
       )}
 
-      {/* Past events */}
+      {/* Past */}
       {pastEvents.length > 0 && (
         <div className="space-y-3">
           <h4 className="text-xs font-black uppercase text-muted-foreground tracking-wider">
@@ -247,7 +264,7 @@ export default function EventsScheduleTab() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setEvents((p) => p.filter((e) => e.id !== event.id))}
+                onClick={() => handleDelete(event.id, event.name)}
                 className="h-8 w-8 text-destructive/50 hover:text-destructive"
               >
                 <Trash2 size={14} />
@@ -257,7 +274,7 @@ export default function EventsScheduleTab() {
         </div>
       )}
 
-      {/* Add / Edit dialog */}
+      {/* Dialog */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-lg rounded-2xl">
           <DialogHeader>
@@ -265,7 +282,6 @@ export default function EventsScheduleTab() {
               {editId ? 'Edit Event' : 'Add New Event'}
             </DialogTitle>
           </DialogHeader>
-
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-muted-foreground">
@@ -278,7 +294,6 @@ export default function EventsScheduleTab() {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-muted-foreground">
@@ -315,7 +330,6 @@ export default function EventsScheduleTab() {
                 </Select>
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-muted-foreground">
@@ -340,22 +354,21 @@ export default function EventsScheduleTab() {
                 />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase text-muted-foreground">
                 Color Tag
               </Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {EVENT_COLORS.map((c) => (
                   <button
                     key={c.value}
+                    title={c.label}
                     onClick={() => setForm({ ...form, color: c.value })}
                     className={`w-8 h-8 rounded-lg ${c.value} border-2 transition-all ${form.color === c.value ? 'border-foreground scale-110' : 'border-transparent'}`}
                   />
                 ))}
               </div>
             </div>
-
             {editId && (
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase text-muted-foreground">
@@ -378,7 +391,6 @@ export default function EventsScheduleTab() {
               </div>
             )}
           </div>
-
           <DialogFooter className="gap-2">
             <Button
               variant="ghost"

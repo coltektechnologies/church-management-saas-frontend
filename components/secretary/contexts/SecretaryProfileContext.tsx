@@ -37,6 +37,9 @@ export interface SecretaryProfile {
   fontFamily: string;
   fontSize: string;
   autoBackup: boolean;
+  // Event reminder contacts
+  reminderEmail: string; // email address for event reminders
+  reminderPhone: string; // WhatsApp/phone number for event reminders
 }
 
 interface SecretaryProfileContextType {
@@ -70,6 +73,8 @@ const DEFAULT: SecretaryProfile = {
   fontFamily: 'Inter',
   fontSize: '14',
   autoBackup: false,
+  reminderEmail: '', // defaults to empty — user sets in System Preferences or event dialog
+  reminderPhone: '', // defaults to empty — user sets in System Preferences or event dialog
 };
 
 const STORAGE_KEY = 'secretary_profile_v1';

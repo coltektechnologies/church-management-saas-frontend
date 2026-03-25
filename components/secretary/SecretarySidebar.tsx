@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -14,6 +14,8 @@ import {
   ClipboardCheck,
   Settings,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
@@ -29,7 +31,6 @@ const navItems = [
   { title: 'Settings', path: '/secretary/settings', icon: Settings },
 ];
 
-// WCAG luminance — best readable text for any background
 function autoText(hex: string): string {
   const h = hex.replace('#', '');
   const r = parseInt(h.substring(0, 2), 16) || 0;
@@ -45,9 +46,11 @@ function autoText(hex: string): string {
 export default function SecretarySidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [collapsed, setCollapsed] = useState(false);
 
-  // Church info — from admin settings (name + tagline only)
   const { profile: church, isReady: churchReady } = useChurchProfile();
+  const { profile: user, isReady: userReady } = useSecretaryProfile();
+
   const churchName = churchReady
     ? church.churchName || 'SDA Church - Adenta'
     : 'SDA Church - Adenta';
@@ -55,15 +58,11 @@ export default function SecretarySidebar() {
     ? church.tagline || "You don't have to have it all figured out to come to church."
     : "You don't have to have it all figured out to come to church.";
 
-  // User + theme — secretary profile
-  const { profile: user, isReady: userReady } = useSecretaryProfile();
-
   const userName = userReady ? user.adminName || 'Ps Owusu William' : 'Ps Owusu William';
   const userRole = userReady ? user.adminRole || 'Secretary' : 'Secretary';
   const avatarUrl = userReady ? (user.avatarUrl ?? null) : null;
   const isDark = userReady ? user.darkMode : false;
 
-  // ── Strictly pick dark OR light palette — never mixed ────────────────
   const primaryColor = userReady
     ? isDark
       ? user.darkPrimaryColor || '#1A3F6B'
@@ -74,18 +73,15 @@ export default function SecretarySidebar() {
       ? user.darkAccentColor || '#2FC4B2'
       : user.accentColor || '#2FC4B2'
     : '#2FC4B2';
-  // Light sidebar defaults to white; dark sidebar defaults to deep navy
   const sidebarColor = userReady
     ? isDark
       ? user.darkSidebarColor || '#0D1F36'
       : user.sidebarColor || '#FFFFFF'
     : '#FFFFFF';
 
-  // Auto text colours — always readable regardless of sidebar bg
   const sidebarText = autoText(sidebarColor);
   const primaryText = autoText(primaryColor);
   const accentText = autoText(accentColor);
-
   const initials = userName
     .split(' ')
     .map((w) => w[0])
@@ -98,71 +94,120 @@ export default function SecretarySidebar() {
 
   return (
     <aside
-      className="hidden lg:flex flex-col w-[260px] h-screen"
+      className="hidden lg:flex flex-col h-screen flex-shrink-0"
       style={{
+        width: collapsed ? '64px' : '260px',
+        minWidth: collapsed ? '64px' : '260px',
         background: sidebarColor,
         borderRight: `1px solid ${sidebarText}15`,
         boxShadow: '0px 4px 5.9px 5px rgba(0,0,0,0.08)',
         zIndex: 20,
         position: 'sticky',
         top: 0,
-        transition: 'background 0.3s ease',
+        transition:
+          'width 0.22s cubic-bezier(0.4,0,0.2,1), min-width 0.22s cubic-bezier(0.4,0,0.2,1)',
+        overflow: 'hidden',
       }}
     >
-      <div className="flex flex-col flex-1 overflow-y-auto pt-14">
-        {/* Divider */}
-        <div className="mx-4" style={{ borderBottom: `1px solid ${sidebarText}15` }} />
+      {/* Topbar spacer — matches topbar height */}
+      <div style={{ height: '56px', flexShrink: 0 }} />
 
-        {/* Tagline card — fixed teal card, always readable */}
-        <div className="px-4 mt-4">
-          <div
+      {/*
+        ── Collapse toggle  ────────────────────────────────────────────────────
+        Sits ABOVE the church card, flush with the divider line.
+        flex-shrink-0 keeps it always visible even when sidebar scrolls.
+      */}
+      <div
+        className="flex-shrink-0 flex items-center px-3 pb-2 pt-1"
+        style={{
+          justifyContent: collapsed ? 'center' : 'space-between',
+          borderBottom: `1px solid ${sidebarText}18`,
+        }}
+      >
+        {/* Church name micro-label — only shown when expanded */}
+        {!collapsed && (
+          <span
             style={{
-              width: '100%',
-              background: '#BFF7EE',
-              borderRadius: '8px',
-              border: '1px solid #2FC4B2',
-              boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-              padding: '8px 12px',
-              boxSizing: 'border-box',
+              fontFamily: "'OV Soge', sans-serif",
+              fontSize: '10px',
+              fontWeight: 600,
+              color: `${sidebarText}55`,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
             }}
           >
-            <p
-              style={{
-                fontFamily: "'OV Soge', sans-serif",
-                fontWeight: 600,
-                fontSize: '11px',
-                color: '#000000',
-                letterSpacing: '0.05em',
-                lineHeight: '1.4',
-                wordBreak: 'break-word',
-                whiteSpace: 'normal',
-                margin: 0,
-              }}
-            >
-              {churchName}
-            </p>
-            <p
-              style={{
-                fontFamily: "'OV Soge', sans-serif",
-                fontWeight: 500,
-                fontSize: '10px',
-                color: '#000000',
-                letterSpacing: '0.05em',
-                lineHeight: '1.5',
-                marginTop: '4px',
-                marginBottom: 0,
-                whiteSpace: 'normal',
-                wordBreak: 'break-word',
-                fontStyle: 'italic',
-              }}
-            >
-              &ldquo;{tagline}&rdquo;
-            </p>
-          </div>
-        </div>
+            Menu
+          </span>
+        )}
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="flex items-center justify-center w-7 h-7 rounded-lg transition-all"
+          style={{ background: `${sidebarText}10`, color: sidebarText, flexShrink: 0 }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = `${sidebarText}22`;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = `${sidebarText}10`;
+          }}
+        >
+          {collapsed ? <PanelLeftOpen size={14} /> : <PanelLeftClose size={14} />}
+        </button>
+      </div>
 
-        {/* Nav items — colours from active palette */}
-        <nav className="flex-1 px-3 mt-4 space-y-0.5">
+      {/* Scrollable body */}
+      <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+        {/* Church / tagline card */}
+        {!collapsed && (
+          <div className="px-4 mt-4" style={{ animation: 'fadeIn 0.18s ease' }}>
+            <div
+              style={{
+                background: '#BFF7EE',
+                borderRadius: '8px',
+                border: '1px solid #2FC4B2',
+                boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+                padding: '8px 12px',
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "'OV Soge',sans-serif",
+                  fontWeight: 600,
+                  fontSize: '11px',
+                  color: '#000',
+                  letterSpacing: '0.05em',
+                  lineHeight: '1.4',
+                  wordBreak: 'break-word',
+                  margin: 0,
+                }}
+              >
+                {churchName}
+              </p>
+              <p
+                style={{
+                  fontFamily: "'OV Soge',sans-serif",
+                  fontWeight: 500,
+                  fontSize: '10px',
+                  color: '#000',
+                  letterSpacing: '0.05em',
+                  lineHeight: '1.5',
+                  marginTop: '4px',
+                  fontStyle: 'italic',
+                  wordBreak: 'break-word',
+                }}
+              >
+                &ldquo;{tagline}&rdquo;
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav
+          className="flex-1 mt-4 space-y-0.5"
+          style={{ padding: collapsed ? '0 8px' : '0 12px' }}
+        >
           {navItems.map((item) => {
             const active = isActive(item.path);
             const Icon = item.icon;
@@ -170,123 +215,169 @@ export default function SecretarySidebar() {
               <Link
                 key={item.path}
                 href={item.path}
-                className="flex items-center gap-3 px-3 py-2.5 transition-all duration-200"
+                title={collapsed ? item.title : undefined}
+                className="flex items-center transition-all duration-200 relative group"
                 style={{
+                  gap: collapsed ? '0' : '12px',
+                  padding: collapsed ? '10px 0' : '10px 12px',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
                   borderRadius: active ? '0px' : '8px',
                   background: active ? primaryColor : 'transparent',
                   ...(active && { borderLeft: `4px solid ${accentColor}` }),
                 }}
               >
                 <Icon
-                  className="w-[18px] h-[18px] flex-shrink-0"
+                  size={18}
+                  className="flex-shrink-0"
                   style={{ color: active ? accentColor : sidebarText }}
                 />
-                <span
-                  style={{
-                    fontFamily: "'OV Soge', sans-serif",
-                    fontWeight: 600,
-                    fontSize: '13px',
-                    color: active ? primaryText : sidebarText,
-                    letterSpacing: '0px',
-                  }}
-                >
-                  {item.title}
-                </span>
+                {!collapsed && (
+                  <span
+                    style={{
+                      fontFamily: "'OV Soge',sans-serif",
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      color: active ? primaryText : sidebarText,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {item.title}
+                  </span>
+                )}
+                {collapsed && (
+                  <div
+                    className="absolute left-full ml-2 px-2 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{
+                      background: primaryColor,
+                      color: primaryText,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      zIndex: 200,
+                    }}
+                  >
+                    {item.title}
+                  </div>
+                )}
               </Link>
             );
           })}
         </nav>
 
-        {/* User card — auto-matches selected theme */}
-        <div className="px-3 pt-2 pb-1">
-          <div
-            className="flex items-start gap-3 px-3 py-3"
-            style={{
-              background: isDark ? `${primaryColor}30` : `${primaryColor}12`,
-              borderRadius: '8px',
-              border: `1px solid ${accentColor}35`,
-              boxShadow: `0px 0px 3.8px 2px ${accentColor}25`,
-              transition: 'background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease',
-            }}
-          >
-            {/* Avatar */}
+        {/* User card */}
+        <div style={{ padding: collapsed ? '8px' : '8px 12px' }}>
+          {collapsed ? (
+            <div className="flex justify-center py-2" title={userName}>
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden"
+                style={{ background: avatarUrl ? 'transparent' : accentColor }}
+              >
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt="avatar"
+                    width={36}
+                    height={36}
+                    className="object-cover w-full h-full"
+                    unoptimized
+                  />
+                ) : (
+                  <span style={{ color: accentText, fontWeight: 700, fontSize: '12px' }}>
+                    {initials}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : (
             <div
-              className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 mt-0.5"
-              style={{ background: avatarUrl ? 'transparent' : accentColor }}
+              className="flex items-start gap-3 px-3 py-3"
+              style={{
+                background: isDark ? `${primaryColor}30` : `${primaryColor}12`,
+                borderRadius: '8px',
+                border: `1px solid ${accentColor}35`,
+                boxShadow: `0px 0px 3.8px 2px ${accentColor}25`,
+              }}
             >
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt="avatar"
-                  width={36}
-                  height={36}
-                  className="object-cover w-full h-full"
-                  unoptimized
-                />
-              ) : (
-                <span style={{ color: accentText, fontWeight: 700, fontSize: '12px' }}>
-                  {initials}
-                </span>
-              )}
-            </div>
-
-            {/* Name + role */}
-            <div className="flex-1 min-w-0">
-              <p
-                style={{
-                  fontFamily: "'OV Soge', sans-serif",
-                  fontWeight: 500,
-                  fontSize: '13px',
-                  color: sidebarText,
-                  lineHeight: '1.3',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  wordBreak: 'break-word',
-                }}
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 mt-0.5"
+                style={{ background: avatarUrl ? 'transparent' : accentColor }}
               >
-                {userName}
-              </p>
-              <p
-                style={{
-                  fontFamily: "'OV Soge', sans-serif",
-                  fontWeight: 300,
-                  fontSize: '11px',
-                  color: `${sidebarText}80`,
-                  marginTop: '2px',
-                  lineHeight: '1.3',
-                  wordBreak: 'break-word',
-                }}
-              >
-                {userRole}
-              </p>
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt="avatar"
+                    width={36}
+                    height={36}
+                    className="object-cover w-full h-full"
+                    unoptimized
+                  />
+                ) : (
+                  <span style={{ color: accentText, fontWeight: 700, fontSize: '12px' }}>
+                    {initials}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p
+                  style={{
+                    fontFamily: "'OV Soge',sans-serif",
+                    fontWeight: 500,
+                    fontSize: '13px',
+                    color: sidebarText,
+                    lineHeight: '1.3',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  {userName}
+                </p>
+                <p
+                  style={{
+                    fontFamily: "'OV Soge',sans-serif",
+                    fontWeight: 300,
+                    fontSize: '11px',
+                    color: `${sidebarText}80`,
+                    marginTop: '2px',
+                  }}
+                >
+                  {userRole}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Management label */}
-        <div className="px-5 pt-3 pb-2">
-          <p
-            style={{
-              fontFamily: "'OV Soge', sans-serif",
-              fontWeight: 400,
-              fontSize: '10px',
-              color: `${sidebarText}60`,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}
-          >
-            Management
-          </p>
-        </div>
+        {!collapsed && (
+          <div className="px-5 pt-3 pb-2">
+            <p
+              style={{
+                fontFamily: "'OV Soge',sans-serif",
+                fontWeight: 400,
+                fontSize: '10px',
+                color: `${sidebarText}60`,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Management
+            </p>
+          </div>
+        )}
 
         {/* Logout */}
-        <div className="px-3 pb-5">
+        <div style={{ padding: collapsed ? '0 8px 16px' : '0 12px 16px' }}>
           <button
             onClick={() => router.push('/login')}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200"
-            style={{ background: 'transparent' }}
+            title={collapsed ? 'Log out' : undefined}
+            className="w-full flex items-center rounded-lg transition-all duration-200 group relative"
+            style={{
+              gap: collapsed ? '0' : '12px',
+              padding: collapsed ? '10px 0' : '10px 12px',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              background: 'transparent',
+            }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.background = 'rgba(220,38,38,0.12)';
             }}
@@ -294,17 +385,33 @@ export default function SecretarySidebar() {
               (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
             }}
           >
-            <LogOut className="w-[18px] h-[18px] flex-shrink-0" style={{ color: '#DC2626' }} />
-            <span
-              style={{
-                fontFamily: "'OV Soge', sans-serif",
-                fontWeight: 600,
-                fontSize: '13px',
-                color: '#DC2626',
-              }}
-            >
-              Log out
-            </span>
+            <LogOut size={18} className="flex-shrink-0" style={{ color: '#DC2626' }} />
+            {!collapsed && (
+              <span
+                style={{
+                  fontFamily: "'OV Soge',sans-serif",
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  color: '#DC2626',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Log out
+              </span>
+            )}
+            {collapsed && (
+              <div
+                className="absolute left-full ml-2 px-2 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{
+                  background: '#DC2626',
+                  color: '#FFFFFF',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  zIndex: 200,
+                }}
+              >
+                Log out
+              </div>
+            )}
           </button>
         </div>
       </div>

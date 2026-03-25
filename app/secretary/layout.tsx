@@ -5,7 +5,10 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ChurchProfileProvider } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { SecretaryProfileProvider } from '@/components/secretary/contexts/SecretaryProfileContext';
 import { AppDataProvider } from '@/components/secretary/contexts/AppDataContext';
+import { EventsProvider } from '@/components/secretary/contexts/EventsContext';
+import { ActivityProvider } from '@/components/secretary/contexts/ActivityContext';
 import { ThemeProvider } from '@/components/secretary/ThemeProvider';
+import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine';
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
@@ -15,7 +18,6 @@ function SecretaryShell({ children }: { children: ReactNode }) {
 
   const isDark = isReady ? profile.darkMode : false;
 
-  // Strictly use dark or light background — never mixed
   const mainBg = isReady
     ? isDark
       ? profile.darkBackgroundColor || '#0A1628'
@@ -28,6 +30,9 @@ function SecretaryShell({ children }: { children: ReactNode }) {
       className="min-h-screen transition-colors duration-300"
       style={{ backgroundColor: mainBg }}
     >
+      {/* Mounts once — checks reminders every 60s, fires toast + mailto/wa.me */}
+      <ReminderEngine />
+
       <SecretaryTopbar />
       <div className="flex">
         <div className="sticky top-0 h-screen" style={{ zIndex: 20 }}>
@@ -50,9 +55,13 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
       <ChurchProfileProvider>
         <SecretaryProfileProvider>
           <AppDataProvider>
-            <ThemeProvider>
-              <SecretaryShell>{children}</SecretaryShell>
-            </ThemeProvider>
+            <EventsProvider>
+              <ActivityProvider>
+                <ThemeProvider>
+                  <SecretaryShell>{children}</SecretaryShell>
+                </ThemeProvider>
+              </ActivityProvider>
+            </EventsProvider>
           </AppDataProvider>
         </SecretaryProfileProvider>
       </ChurchProfileProvider>

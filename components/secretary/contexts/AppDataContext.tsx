@@ -1,6 +1,5 @@
 'use client';
 
-// Minimal stub — enough to render the layout without errors.
 // Replace with real data fetching when building each feature.
 import { createContext, useContext, useState, ReactNode } from 'react';
 
