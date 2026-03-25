@@ -47,6 +47,19 @@ const MONTH_NAMES = [
   'Dec',
 ];
 
+// ── Extended activity shape ───────────────────────────────────────────────────
+// The base AppData activity type only guarantees a small set of fields.
+// The ActivityContext also emits a `type` field (e.g. 'member_added') that
+// is not part of the base interface. We extend here so we can read it without
+// casting to `any`.
+interface ActivityWithType {
+  timestamp: string;
+  tab?: string;
+  entity?: string;
+  action?: string;
+  type?: string;
+}
+
 // ── MOCK DATA — remove this block when real member data is wired up ───────────
 // This is demo data for team presentation only.
 // Once the Members page is connected and activity log has real member events,
@@ -67,10 +80,18 @@ const MOCK_DATA = [
 ];
 // ── END MOCK DATA ─────────────────────────────────────────────────────────────
 
+function isMemberActivity(a: ActivityWithType): boolean {
+  return (
+    a.tab?.toLowerCase().includes('member') === true ||
+    a.entity?.toLowerCase().includes('member') === true ||
+    a.action?.toLowerCase().includes('member') === true ||
+    a.type === 'member_added' ||
+    a.type === 'member_updated' ||
+    a.type === 'member_removed'
+  );
+}
+
 // ── Live growth data derived from activity log ────────────────────────────────
-// Returns real data when member activities exist in the log.
-// Falls back to MOCK_DATA for demo when the log is empty.
-// Wire the Members page with useLogMember() calls to populate this automatically.
 function useGrowthData(
   rangeMode: 'preset' | 'custom',
   presetRange: string,
@@ -83,7 +104,6 @@ function useGrowthData(
     const now = new Date();
     const year = now.getFullYear();
 
-    // ── Determine time window ────────────────────────────────────────────────
     let fromMs = 0;
     let toMs = now.getTime();
 
@@ -109,25 +129,14 @@ function useGrowthData(
       }
     }
 
-    // ── Bucket member activities by month ────────────────────────────────────
     const buckets: Record<string, number> = {};
 
-    for (const a of activities) {
+    for (const a of activities as ActivityWithType[]) {
       const ts = new Date(a.timestamp).getTime();
       if (isNaN(ts) || ts < fromMs || ts > toMs) {
         continue;
       }
-
-      const isMemberActivity =
-        a.tab?.toLowerCase().includes('member') ||
-        a.entity?.toLowerCase().includes('member') ||
-        a.action?.toLowerCase().includes('member') ||
-        // also match ActivityContext log format (type field)
-        (a as any).type === 'member_added' ||
-        (a as any).type === 'member_updated' ||
-        (a as any).type === 'member_removed';
-
-      if (!isMemberActivity) {
+      if (!isMemberActivity(a)) {
         continue;
       }
 
@@ -138,8 +147,6 @@ function useGrowthData(
 
     const hasRealData = Object.keys(buckets).length > 0;
 
-    // ── Use mock data for demo when no real activity exists ──────────────────
-    // TODO: remove MOCK_DATA import and this branch once Members page is wired
     if (!hasRealData) {
       return MOCK_DATA;
     }
@@ -321,16 +328,8 @@ export function MembershipGrowthChart() {
     width: 32,
   };
 
-  // Check if showing mock data — activities with no member events
   const { activities } = useAppData();
-  const usingMockData = !activities.some(
-    (a: any) =>
-      a.type === 'member_added' ||
-      a.type === 'member_updated' ||
-      a.type === 'member_removed' ||
-      a.tab?.toLowerCase().includes('member') ||
-      a.entity?.toLowerCase().includes('member')
-  );
+  const usingMockData = !(activities as ActivityWithType[]).some(isMemberActivity);
 
   const renderChart = () => {
     if (chartType === 'pie') {
@@ -632,7 +631,7 @@ export function MembershipGrowthChart() {
 
         <p className="text-[9px] text-muted-foreground mt-1 pl-1">
           {usingMockData
-            ? '⚠️ Showing demo data wire Members page with useLogMember() to see real growth'
+            ? 'Showing demo data wire Members page with useLogMember() to see real growth'
             : 'Live data from member activity log · updates automatically'}
         </p>
 
