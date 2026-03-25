@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
-import { clearClientAuth } from '@/lib/churchSessionBrowser';
 
 const navItems = [
   { title: 'Dashboard', path: '/secretary', icon: LayoutDashboard },
