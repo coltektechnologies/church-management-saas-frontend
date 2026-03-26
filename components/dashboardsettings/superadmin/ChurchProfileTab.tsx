@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useChurch } from '@/components/quicksetup/contexts/ChurchContext';
+import { useState } from 'react';
+import Image from 'next/image';
+import { useChurch, type ChurchSetupData } from '@/components/quicksetup/contexts/ChurchContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,11 +10,16 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Upload, Info, RefreshCw } from 'lucide-react';
 
+/** Profile tab reads optional fields that may be merged into context at runtime. */
+type ChurchProfileState = ChurchSetupData & {
+  churchSize?: string;
+  address?: string;
+  description?: string;
+};
+
 const ChurchProfileTab = () => {
   const { church, setChurch } = useChurch();
-
-  // Cast to any to access dynamic properties without TS errors
-  const churchData = church as any;
+  const churchData = church as ChurchProfileState;
 
   // We initialize the form with whatever is currently in the Context.
   // This could be from Step 1 of Quick Setup or a previously saved state.
@@ -62,7 +68,14 @@ const ChurchProfileTab = () => {
         <div className="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
           <div className="w-20 h-20 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden">
             {form.logoUrl ? (
-              <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+              <Image
+                src={form.logoUrl}
+                alt="Logo"
+                width={80}
+                height={80}
+                className="w-full h-full object-contain"
+                unoptimized
+              />
             ) : (
               <Upload className="text-slate-300" size={24} />
             )}

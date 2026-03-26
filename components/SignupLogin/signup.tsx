@@ -123,18 +123,20 @@ const Signup = () => {
     const draft = restart ? null : getRegistrationDraft();
     const storedSession = getStoredRegistrationSessionId();
     if (draft) {
-      setFormData((prev) => ({ ...defaultFormData, ...draft.formData }) as RegistrationData);
+      setFormData(() => ({ ...defaultFormData, ...draft.formData }) as RegistrationData);
       setCurrentStep(Math.min(Math.max(1, draft.currentStep), TOTAL_STEPS));
       setSessionId(draft.sessionId || storedSession);
     } else if (storedSession) {
       setSessionId(storedSession);
     }
     setHydrated(true);
-  }, []);
+  }, [searchParams]);
 
   // Persist draft whenever state changes so back/refresh preserves progress
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated) {
+      return;
+    }
     setRegistrationDraft({
       formData: formData as unknown as Record<string, string>,
       currentStep,
