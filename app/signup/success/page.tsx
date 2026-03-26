@@ -11,7 +11,7 @@ import {
   clearStoredRegistrationSessionId,
   registrationVerifyPayment,
 } from '@/lib/api';
-import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
+import { clearClientAuth } from '@/lib/churchSessionBrowser';
 
 /** Parse REG_{uuid}_{timestamp} — UUID contains hyphens, must not split on every underscore. */
 function parseSessionIdFromReference(reference: string): string | null {
@@ -74,18 +74,15 @@ function SignupSuccessContent() {
     }
 
     registrationVerifyPayment(sessionId, reference)
-      .then((result) => {
+      .then(() => {
         clearStoredRegistrationSessionId();
-        localStorage.setItem('access_token', result.tokens.access);
-        localStorage.setItem('refresh_token', result.tokens.refresh);
-        localStorage.setItem('user', JSON.stringify(result.user));
-        setChurchSessionCookie();
+        clearClientAuth();
         setVerified(true);
         setStatus('success');
         toast({
           title: 'Registration successful!',
           description:
-            'Your login credentials have been sent to your email and SMS when applicable. You can sign in now.',
+            'Sign in with your admin email and the password you created. If your server sends welcome messages, check email or SMS.',
         });
       })
       .catch((err) => {
@@ -145,12 +142,13 @@ function SignupSuccessContent() {
         </div>
         <h1 className="text-2xl font-black text-[#0B2A4A] mb-3">You&apos;re registered!</h1>
         <p className="text-gray-600 text-sm leading-relaxed mb-8">
-          Your church account is ready. Check your email and SMS for login details if we sent them.
-          Use the button below to sign in to your dashboard.
+          Your church account is ready. Sign in with the email and password you used during
+          registration. If your organization sends welcome notifications, you may also see email or
+          SMS.
         </p>
         <Button
           className="w-full h-12 bg-[#0B2A4A] hover:bg-black text-white font-bold rounded-xl"
-          onClick={() => router.push('/login')}
+          onClick={() => router.push('/login?registered=1')}
         >
           Continue to login
         </Button>

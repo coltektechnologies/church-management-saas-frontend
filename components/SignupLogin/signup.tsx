@@ -23,7 +23,7 @@ import {
   clearRegistrationDraft,
   getStoredRegistrationSessionId,
 } from '@/lib/api';
-import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
+import { clearClientAuth } from '@/lib/churchSessionBrowser';
 
 const TOTAL_STEPS = 4;
 
@@ -285,16 +285,15 @@ const Signup = () => {
       if (!result.requires_payment) {
         clearStoredRegistrationSessionId();
         clearRegistrationDraft();
-        localStorage.setItem('access_token', result.tokens.access);
-        localStorage.setItem('refresh_token', result.tokens.refresh);
-        localStorage.setItem('user', JSON.stringify(result.user));
-        setChurchSessionCookie();
+        // Do not store tokens here: login page treats access_token as "already signed in" and
+        // would skip the form. User must sign in explicitly (email/SMS are backend-owned).
+        clearClientAuth();
         toast({
           title: 'Registration successful!',
           description:
-            'Your login credentials have been sent to your email and SMS. Please sign in.',
+            'Sign in with your admin email and the password you created. If your server sends welcome messages, check email or SMS.',
         });
-        router.push('/login');
+        router.push('/login?registered=1');
         return;
       }
       setStoredRegistrationSessionId(sessionId);
