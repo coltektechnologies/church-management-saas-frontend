@@ -12,6 +12,9 @@ import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine'
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
+import { RequireAuth } from '@/components/auth/RequireAuth';
+
+const skipAuth = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
 
 function SecretaryShell({ children }: { children: ReactNode }) {
   const { profile, isReady } = useSecretaryProfile();
@@ -30,9 +33,7 @@ function SecretaryShell({ children }: { children: ReactNode }) {
       className="min-h-screen transition-colors duration-300"
       style={{ backgroundColor: mainBg }}
     >
-      {/* Mounts once — checks reminders every 60s, fires toast + mailto/wa.me */}
       <ReminderEngine />
-
       <SecretaryTopbar />
       <div className="flex">
         <div className="sticky top-0 h-screen" style={{ zIndex: 20 }}>
@@ -50,21 +51,26 @@ function SecretaryShell({ children }: { children: ReactNode }) {
 }
 
 export default function SecretaryLayout({ children }: { children: ReactNode }) {
-  return (
+  const tree = (
     <AuthProvider defaultRole="secretary">
       <ChurchProfileProvider>
         <SecretaryProfileProvider>
-          <AppDataProvider>
-            <EventsProvider>
-              <ActivityProvider>
+          <ActivityProvider>
+            <AppDataProvider>
+              <EventsProvider>
                 <ThemeProvider>
                   <SecretaryShell>{children}</SecretaryShell>
                 </ThemeProvider>
-              </ActivityProvider>
-            </EventsProvider>
-          </AppDataProvider>
+              </EventsProvider>
+            </AppDataProvider>
+          </ActivityProvider>
         </SecretaryProfileProvider>
       </ChurchProfileProvider>
     </AuthProvider>
   );
+
+  if (skipAuth) {
+    return tree;
+  }
+  return <RequireAuth>{tree}</RequireAuth>;
 }
