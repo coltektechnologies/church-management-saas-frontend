@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import {
   X,
-  ImagePlus,
   Check,
   ChevronDown,
   Loader2,
@@ -13,6 +13,7 @@ import {
   FileText,
   Trash2,
   Upload,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -26,7 +27,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 
-/* --- Interfaces --- */
 export interface RegistrationData {
   churchName: string;
   churchEmail: string;
@@ -49,6 +49,7 @@ export interface RegistrationData {
   billing?: string;
   paymentMethod: string;
   bankName?: string;
+  paymentCompleted?: boolean;
 }
 
 interface Step4Props {
@@ -56,6 +57,7 @@ interface Step4Props {
   onChange: (field: keyof RegistrationData, value: string) => void;
   onNext: () => void;
   onBack: () => void;
+  loading?: boolean; // ← added: passed from signup.tsx, used to disable Continue while submitting
 }
 
 interface UploadedFile {
@@ -67,46 +69,50 @@ interface UploadedFile {
 
 const planOptions = [
   { value: 'free', label: 'Start Free' },
-  { value: 'basic', label: 'Basic ($14 per month)' },
-  { value: 'premium', label: 'Premium ($20 per month)' },
-  { value: 'enterprise', label: 'Enterprise ($30 per month)' },
+  { value: 'basic', label: 'Basic (₵14 per month)' },
+  { value: 'premium', label: 'Premium (₵20 per month)' },
+  { value: 'enterprise', label: 'Enterprise (₵30 per month)' },
 ];
 
 const mobileProviders = ['MTN Mobile Money', 'Telecel Cash', 'AirtelTigo Money'];
 const bankOptions = ['GCB Bank', 'Ecobank', 'Stanbic Bank', 'Absa', 'Zenith Bank', 'Fidelity Bank'];
 
 const paymentMethods = [
-  { id: 'mobile_money', label: 'Mobile Money', description: 'MTN, Telecel, AirtelTigo' },
-  { id: 'visa_mastercard', label: 'Visa / Mastercard', description: 'Credit or debit card' },
-  { id: 'bank_transfer', label: 'Bank Transfer', description: 'Direct bank payment' },
+  {
+    id: 'paystack',
+    label: 'Paystack',
+    description: 'Card, mobile money & bank — secure checkout (Ghana)',
+  },
+  { id: 'mobile_money', label: 'Mobile Money', description: 'MTN, Telecel, AirtelTigo (manual)' },
+  {
+    id: 'visa_mastercard',
+    label: 'Visa / Mastercard',
+    description: 'Credit or debit card (manual)',
+  },
+  { id: 'bank_transfer', label: 'Bank Transfer', description: 'Direct bank payment (manual)' },
 ];
 
-const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => {
+const Step4PaymentDetails = ({ data, onChange, onNext, onBack, loading }: Step4Props) => {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [openBankList, setOpenBankList] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [continueError, setContinueError] = useState('');
 
-  // Mobile money fields
   const [mobileProvider, setMobileProvider] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [mobileAccountName, setMobileAccountName] = useState('');
-
-  // Card fields
   const [cardNumber, setCardNumber] = useState('');
   const [cardHolder, setCardHolder] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCountry, setCardCountry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
-
-  // Bank fields
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankRef, setBankRef] = useState('');
-
   const [payErrors, setPayErrors] = useState<Record<string, string>>({});
+  const [payErrorSummary, setPayErrorSummary] = useState('');
 
-  // Select / unselect payment method
   const handleMethodClick = (methodId: string) => {
     if (data.paymentMethod === methodId) {
       onChange('paymentMethod', '');
@@ -116,6 +122,8 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
       setActiveDialog(methodId);
     }
     setPayErrors({});
+    setPayErrorSummary('');
+    setContinueError('');
   };
 
   const validateAndPay = () => {
@@ -135,7 +143,6 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
         errs.subscriptionPlan = 'Required';
       }
     }
-
     if (activeDialog === 'visa_mastercard') {
       if (!cardNumber.trim()) {
         errs.cardNumber = 'Required';
@@ -156,7 +163,6 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
         errs.subscriptionPlan = 'Required';
       }
     }
-
     if (activeDialog === 'bank_transfer') {
       if (!data.bankName) {
         errs.bankName = 'Required';
@@ -168,11 +174,33 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
         errs.subscriptionPlan = 'Required';
       }
     }
-
     setPayErrors(errs);
-    if (Object.keys(errs).length === 0) {
-      setShowConfirmPopup(true);
+
+    if (Object.keys(errs).length > 0) {
+      const count = Object.keys(errs).length;
+      setPayErrorSummary(
+        `${count} required field${count > 1 ? 's' : ''} missing — please fill them in before paying.`
+      );
+      return;
     }
+
+    setPayErrorSummary('');
+    setShowConfirmPopup(true);
+  };
+
+  /** Paystack: no fake card/MoMo fields — gateway handles payment after review (step 5). */
+  const confirmPaystackSelection = () => {
+    if (!data.subscriptionPlan) {
+      setPayErrors({ subscriptionPlan: 'Required' });
+      setPayErrorSummary('Choose a subscription plan in step 3 first.');
+      return;
+    }
+    setPayErrors({});
+    setPayErrorSummary('');
+    onChange('paymentMethod', 'paystack');
+    onChange('paymentCompleted' as keyof RegistrationData, 'true');
+    setActiveDialog(null);
+    setContinueError('');
   };
 
   const handleFinalConfirm = async () => {
@@ -181,8 +209,22 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
     setTimeout(() => {
       setIsLoading(false);
       setActiveDialog(null);
-      onNext();
+      onChange('paymentMethod', data.paymentMethod);
+      onChange('paymentCompleted' as keyof RegistrationData, 'true');
+      setContinueError('');
     }, 2000);
+  };
+
+  const handleContinue = () => {
+    if (!data.paymentCompleted) {
+      if (!data.paymentMethod) {
+        setContinueError('Please select a payment method and complete payment before continuing.');
+      } else {
+        setContinueError('Please complete the payment process before continuing.');
+      }
+      return;
+    }
+    onNext();
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,29 +292,94 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
         })}
       </div>
 
-      {/* Buttons — Continue first on mobile */}
+      {/* Payment completed badge */}
+      {data.paymentCompleted && (
+        <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 rounded-[10px] px-4 py-3">
+          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+            <Check size={12} className="text-white" />
+          </div>
+          <p className="text-green-700 text-sm font-semibold">
+            Payment completed! You can continue.
+          </p>
+        </div>
+      )}
+
+      {/* Continue error */}
+      {continueError && !data.paymentCompleted && (
+        <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-200 rounded-[10px] px-4 py-3">
+          <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+          <p className="text-red-600 text-sm font-medium">{continueError}</p>
+        </div>
+      )}
+
+      {/* Buttons */}
       <div className="flex flex-col-reverse sm:flex-row justify-center gap-2 mt-12">
         <button
           onClick={onBack}
-          className="w-full sm:w-[229px] h-[44px] bg-[#D9D9D9] text-black rounded-[10px] font-bold text-sm"
+          disabled={loading}
+          className="w-full sm:w-[229px] h-[44px] bg-[#D9D9D9] text-black rounded-[10px] font-bold text-sm disabled:opacity-50"
         >
           Back
         </button>
         <button
-          onClick={onNext}
-          className="w-full sm:w-[229px] h-[44px] bg-[#666666] text-white rounded-[10px] font-bold text-sm"
+          onClick={handleContinue}
+          disabled={loading}
+          className={`w-full sm:w-[229px] h-[44px] rounded-[10px] font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+            data.paymentCompleted
+              ? 'bg-[#0B2A4A] text-white hover:bg-black disabled:opacity-50'
+              : 'bg-[#666666] text-white cursor-pointer'
+          }`}
         >
-          Continue
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {loading ? 'Processing...' : 'Continue'}
         </button>
       </div>
 
-      {/* Mobile Money Dialog */}
+      {/* ── Paystack (real gateway — checkout opens after step 5 submit) ── */}
+      {activeDialog === 'paystack' && (
+        <DialogContainer
+          onClose={() => setActiveDialog(null)}
+          title="Pay with Paystack"
+          width="max-w-[440px]"
+        >
+          {payErrorSummary && <ErrorBanner msg={payErrorSummary} />}
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-[#4A5568] leading-relaxed">
+              Subscriptions are collected through{' '}
+              <strong className="text-[#0B2A4A]">Paystack</strong>. After you review your details on
+              the next step and click <strong>Complete Registration</strong>, you will be redirected
+              to Paystack to pay with a <strong>bank card</strong>, <strong>mobile money</strong>,
+              or other methods Paystack offers for your plan.
+            </p>
+            <div className="rounded-[10px] border border-[#2FC4B2]/40 bg-teal-50/40 px-4 py-3 text-[12px] text-[#0B2A4A]">
+              <p className="font-bold mb-1">Selected plan</p>
+              <p className="text-muted-foreground">
+                {data.subscriptionPlan
+                  ? data.subscriptionPlan.replace(/_/g, ' ').toUpperCase()
+                  : 'None — go back to step 3'}
+              </p>
+            </div>
+            {payErrors.subscriptionPlan && <Err msg={payErrors.subscriptionPlan} />}
+            <button
+              type="button"
+              onClick={confirmPaystackSelection}
+              className="w-full h-12 bg-[#0B2A4A] text-white rounded-[10px] font-bold text-sm hover:bg-black transition-colors"
+            >
+              Continue — I’ll pay on Paystack after review
+            </button>
+            <EncryptionFooter />
+          </div>
+        </DialogContainer>
+      )}
+
+      {/* ── Mobile Money Dialog ── */}
       {activeDialog === 'mobile_money' && (
         <DialogContainer
           onClose={() => setActiveDialog(null)}
           title="Payment Details"
           width="max-w-[400px]"
         >
+          {payErrorSummary && <ErrorBanner msg={payErrorSummary} />}
           <div className="flex flex-col gap-4">
             <Field label="Network provider*">
               <Select
@@ -306,10 +413,10 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
             <Field label="Subscription plan*">
               <Select
                 value={data.subscriptionPlan}
+                rawOptions={planOptions}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   onChange('subscriptionPlan', e.target.value)
                 }
-                rawOptions={planOptions}
               />
               {payErrors.subscriptionPlan && <Err msg={payErrors.subscriptionPlan} />}
             </Field>
@@ -319,13 +426,14 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
         </DialogContainer>
       )}
 
-      {/* Visa/Mastercard Dialog */}
+      {/* ── Visa/Mastercard Dialog ── */}
       {activeDialog === 'visa_mastercard' && (
         <DialogContainer
           onClose={() => setActiveDialog(null)}
           title="Payment Details"
           width="max-w-[540px]"
         >
+          {payErrorSummary && <ErrorBanner msg={payErrorSummary} />}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
             <Field label="Card number*">
               <Input
@@ -373,10 +481,10 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
             <Field label="Subscription plan*">
               <Select
                 value={data.subscriptionPlan}
+                rawOptions={planOptions}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   onChange('subscriptionPlan', e.target.value)
                 }
-                rawOptions={planOptions}
               />
               {payErrors.subscriptionPlan && <Err msg={payErrors.subscriptionPlan} />}
             </Field>
@@ -388,13 +496,14 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
         </DialogContainer>
       )}
 
-      {/* Bank Transfer Dialog */}
+      {/* ── Bank Transfer Dialog ── */}
       {activeDialog === 'bank_transfer' && (
         <DialogContainer
           onClose={() => setActiveDialog(null)}
           title="Payment Details"
           width="max-w-[440px]"
         >
+          {payErrorSummary && <ErrorBanner msg={payErrorSummary} />}
           <div className="flex flex-col gap-4">
             <Field label="Bank name*">
               <Popover open={openBankList} onOpenChange={setOpenBankList}>
@@ -440,7 +549,6 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
               </Popover>
               {payErrors.bankName && <Err msg={payErrors.bankName} />}
             </Field>
-
             <Field label="Account number*">
               <Input
                 placeholder="000 000 000 000"
@@ -461,15 +569,13 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
             <Field label="Subscription plan*">
               <Select
                 value={data.subscriptionPlan}
+                rawOptions={planOptions}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   onChange('subscriptionPlan', e.target.value)
                 }
-                rawOptions={planOptions}
               />
               {payErrors.subscriptionPlan && <Err msg={payErrors.subscriptionPlan} />}
             </Field>
-
-            {/* Upload Receipt */}
             <Field label="Upload Receipt">
               <label
                 className={cn(
@@ -504,7 +610,6 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
                   onChange={handleFileUpload}
                 />
               </label>
-
               {uploadedFiles.length > 0 && (
                 <div className="mt-2 rounded-[10px] border border-[#2FC4B2]/30 overflow-hidden">
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-100">
@@ -535,11 +640,15 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
                             <FileText className="w-5 h-5 text-red-400" />
                           </div>
                         ) : (
-                          <img
-                            src={file.url}
-                            alt={file.name}
-                            className="w-11 h-11 rounded-lg object-cover border border-gray-200 shrink-0"
-                          />
+                          <div className="relative w-11 h-11 rounded-lg border border-gray-200 shrink-0 overflow-hidden">
+                            <Image
+                              src={file.url}
+                              alt={file.name}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          </div>
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-[12px] font-semibold text-[#0B2A4A] truncate">
@@ -562,7 +671,6 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
                 </div>
               )}
             </Field>
-
             <PayButton onClick={validateAndPay} loading={isLoading} />
             <EncryptionFooter />
           </div>
@@ -585,7 +693,13 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
                 { label: 'Phone', value: data.phone || 'Not set' },
                 { label: 'Role', value: data.role },
                 { label: 'Plan', value: data.subscriptionPlan?.toUpperCase() },
-                { label: 'Method', value: data.paymentMethod.replace('_', ' ') },
+                {
+                  label: 'Method',
+                  value:
+                    data.paymentMethod === 'paystack'
+                      ? 'Paystack'
+                      : data.paymentMethod.replace(/_/g, ' '),
+                },
               ].map((row, i, arr) => (
                 <div
                   key={row.label}
@@ -631,7 +745,14 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack }: Step4Props) => 
   );
 };
 
-/* --- Sub-components --- */
+/* ── Sub-components ── */
+const ErrorBanner = ({ msg }: { msg: string }) => (
+  <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-[10px] px-4 py-3 mb-4">
+    <Info size={15} className="text-red-500 shrink-0 mt-0.5" />
+    <p className="text-red-600 text-[12px] font-semibold">{msg}</p>
+  </div>
+);
+
 const DialogContainer = ({
   onClose,
   title,
@@ -745,6 +866,17 @@ const PayButton = ({
 );
 
 const PaymentMethodIcon = ({ methodId }: { methodId: string }) => {
+  if (methodId === 'paystack') {
+    return (
+      <div
+        className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[11px] font-black text-white shrink-0"
+        style={{ background: 'linear-gradient(135deg, #00C3F7 0%, #0B2A4A 100%)' }}
+        title="Paystack"
+      >
+        PS
+      </div>
+    );
+  }
   if (methodId === 'mobile_money') {
     return (
       <div className="flex -space-x-1">

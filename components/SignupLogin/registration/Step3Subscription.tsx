@@ -2,56 +2,40 @@
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import type { RegistrationData } from './Step4Payment';
+import { getRegistrationPlans, type RegistrationPlan } from '@/lib/api';
 
 interface StepSubscriptionProps {
   data: RegistrationData;
   onChange: (field: keyof RegistrationData, value: string) => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   onBack: () => void;
+  loading?: boolean;
 }
 
-const plans = [
-  {
-    id: 'free',
-    name: 'Start Free',
-    monthlyPrice: '0',
-    yearlyPrice: '0',
-    subPrice: 'for 14 days',
-    description: 'Full access for 14 days to explore Open Door',
-  },
-  {
-    id: 'basic',
-    name: 'Basic',
-    monthlyPrice: '14',
-    yearlyPrice: '140',
-    subPrice: 'per month',
-    description: 'Finance tracking, SMS alerts, and 5 admin accounts.',
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    monthlyPrice: '20',
-    yearlyPrice: '200',
-    subPrice: 'per month',
-    description: 'Advanced analytics, unlimited admins and full coordination',
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    monthlyPrice: '30',
-    yearlyPrice: '300',
-    subPrice: 'per month',
-    description: 'Custom features, enterprise security, and priority support',
-  },
-];
-
-const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionProps) => {
+const Step3Subscription = ({
+  data,
+  onChange,
+  onNext,
+  onBack,
+  loading = false,
+}: StepSubscriptionProps) => {
+  const [plans, setPlans] = useState<RegistrationPlan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [plansError, setPlansError] = useState<string | null>(null);
   const [billing, setBilling] = useState<'monthly' | 'yearly'>(
     (data.billing as 'monthly' | 'yearly') || 'monthly'
   );
   const [planError, setPlanError] = useState(false);
+
+  useEffect(() => {
+    getRegistrationPlans()
+      .then(setPlans)
+      .catch(() => setPlansError('Could not load plans'))
+      .finally(() => setPlansLoading(false));
+  }, []);
 
   const handlePlanClick = (planId: string) => {
     if (data.subscriptionPlan === planId) {
@@ -69,6 +53,36 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
     }
     onNext();
   };
+
+  const displaySubPrice = (plan: RegistrationPlan) => {
+    if (!plan.requires_payment) {
+      if (plan.id === 'FREE') {
+        return 'free forever';
+      }
+      return 'trial';
+    }
+    return billing === 'monthly' ? 'per month' : 'per year';
+  };
+
+  if (plansLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="w-10 h-10 text-[#2FC4B2] animate-spin mb-4" />
+        <p className="text-sm text-gray-500">Loading plans...</p>
+      </div>
+    );
+  }
+
+  if (plansError || plans.length === 0) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+        <p className="text-red-600 font-medium">{plansError || 'No plans available'}</p>
+        <Button onClick={onBack} variant="outline" className="mt-4">
+          Back
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-in fade-in duration-500 font-poppins">
@@ -99,13 +113,12 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
         Click a plan to select it. Click again to unselect.
       </p>
 
-      {/* Plans */}
+      {/* Plans from API */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         {plans.map((plan) => {
           const isSelected = data.subscriptionPlan === plan.id;
-          const displayPrice = billing === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-          const displaySubPrice =
-            plan.id === 'free' ? plan.subPrice : billing === 'monthly' ? 'per month' : 'per year';
+          const displayPrice = billing === 'monthly' ? plan.monthly_price : plan.yearly_price;
+          const subPrice = displaySubPrice(plan);
 
           return (
             <button
@@ -145,7 +158,7 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
               <div className="p-4 flex flex-col grow">
                 <div className="flex items-baseline gap-1 mb-2">
                   <span className="text-[30px] font-semibold text-[#000000]">${displayPrice}</span>
-                  <span className="text-[12px] font-medium text-[#1DAA99]">{displaySubPrice}</span>
+                  <span className="text-[12px] font-medium text-[#1DAA99]">{subPrice}</span>
                 </div>
                 <p className="text-[12px] font-medium text-[#000000]">{plan.description}</p>
               </div>
@@ -177,8 +190,9 @@ const Step3Subscription = ({ data, onChange, onNext, onBack }: StepSubscriptionP
         <Button
           onClick={handleContinue}
           className="w-full sm:w-[229px] h-[44px] rounded-[10px] bg-[#666666] hover:bg-black text-white font-bold transition-all"
+          disabled={loading}
         >
-          Continue
+          {loading ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>

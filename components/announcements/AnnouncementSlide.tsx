@@ -110,7 +110,7 @@ export function AnnouncementSlide({
         </div>
         <span className="flex items-center gap-1.5">
           <Users className="size-3.5" />
-          {announcement.audience.join(', ')}
+          {announcement.audience?.length ? announcement.audience.join(', ') : 'Everyone'}
         </span>
       </div>
     </div>

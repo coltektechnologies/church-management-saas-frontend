@@ -21,8 +21,8 @@ export default function NewExpensePage() {
     );
   }
 
-  const handleSubmit = (expense: Expense) => {
-    submitExpense(departmentId, expense);
+  const handleSubmit = async (expense: Expense, options: { categoryId: string }) => {
+    return submitExpense(departmentId, expense, options);
   };
 
   return <ExpenseFormPage department={department} expenses={expenses} onSubmit={handleSubmit} />;

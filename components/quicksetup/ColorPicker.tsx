@@ -84,9 +84,6 @@ const ColorPicker = ({ label, value, onChange }: ColorPickerProps) => {
   const [mode, setMode] = useState<ColorMode>('hex');
   const [textInput, setTextInput] = useState(value);
 
-  const rgb = hexToRgb(value);
-  // removed: const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b) — was unused
-
   const getDisplayValue = useCallback((currentValue: string, currentMode: ColorMode) => {
     const cRgb = hexToRgb(currentValue);
     const cHsl = rgbToHsl(cRgb.r, cRgb.g, cRgb.b);

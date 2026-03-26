@@ -1,9 +1,14 @@
 import { Plus, FileText, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface FloatingActionsProps {
   onOpenCreate: () => void;
   onOpenTemplates: () => void;
+  /** Opens the notification center (in-app alerts) */
+  onOpenNotifications?: () => void;
+  /** Unread count for the badge; omit to hide badge */
+  notificationUnreadCount?: number;
   /** When true, hide floating buttons (present mode takes focus) */
   hidden?: boolean;
 }
@@ -11,6 +16,8 @@ interface FloatingActionsProps {
 export function FloatingActions({
   onOpenCreate,
   onOpenTemplates,
+  onOpenNotifications,
+  notificationUnreadCount = 0,
   hidden = false,
 }: FloatingActionsProps) {
   if (hidden) {
@@ -23,14 +30,24 @@ export function FloatingActions({
         <Button
           size="icon"
           title="Notifications"
+          type="button"
+          onClick={() => onOpenNotifications?.()}
           className="size-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:-translate-y-1 transition-transform cursor-pointer"
-          aria-label="Notifications"
+          aria-label="Open notifications"
         >
           <Megaphone className="size-5" />
         </Button>
-        <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-sm cursor-pointer ">
-          3
-        </span>
+        {notificationUnreadCount > 0 && (
+          <span
+            className={cn(
+              'absolute -top-1 -right-1 flex min-w-5 h-5 items-center justify-center rounded-full px-1',
+              'bg-destructive text-[10px] font-bold text-white shadow-sm pointer-events-none'
+            )}
+            aria-hidden
+          >
+            {notificationUnreadCount > 99 ? '99+' : notificationUnreadCount}
+          </span>
+        )}
       </div>
 
       <Button

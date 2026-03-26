@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
 import { useAnnouncementStore } from '@/store/useAnnouncementStore';
@@ -17,11 +17,14 @@ import {
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { useDeleteAnnouncement } from '@/hooks/useDeleteAnnouncement';
 import { SavedPresetsSection } from '@/components/announcements/SavedPresetsSection';
-import type {
-  CreateAnnouncementPayload,
-  Announcement,
-  AnnouncementStatus,
-  AnnouncementCategory,
+import { NotificationCenterPanel } from '@/components/announcements/NotificationCenterPanel';
+import { MOCK_NOTIFICATIONS } from '@/services/notificationsMock';
+import {
+  announcementService,
+  type CreateAnnouncementPayload,
+  type Announcement,
+  type AnnouncementStatus,
+  type AnnouncementCategory,
 } from '@/services/announcementService';
 import type { PresentationPreset } from '@/services/presentationPresets';
 import { Search, Presentation, BookOpen } from 'lucide-react';
@@ -74,6 +77,12 @@ export default function AnnouncementsPage() {
   // Active tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('announcements');
 
+  // Notification center (mock — wire to GET /api/notifications/notifications/)
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const [notificationUnread, setNotificationUnread] = useState(
+    () => MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length
+  );
+
   const { data: announcements = [], isLoading } = useAnnouncements(filters);
   const deleteMutation = useDeleteAnnouncement();
 
@@ -82,28 +91,36 @@ export default function AnnouncementsPage() {
   const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
 
   const handleEdit = useCallback(
-    (id: string) => {
-      const ann = announcements.find((a) => a.id === id);
-      if (ann) {
-        setTemplatePayload({
-          id: ann.id,
-          category: ann.category,
-          priority: ann.priority,
-          title: ann.title,
-          content: ann.content,
-          audience: ann.audience,
-          status: ann.status,
-          scheduleType: ann.scheduleType,
-          scheduledDate: ann.scheduledDate,
-          displayDurationType: ann.displayDurationType,
-          displayDurationDays: ann.displayDurationDays,
-          targetDepartments: ann.targetDepartments,
-          includeVisitors: ann.includeVisitors,
-          sendSms: ann.sendSms,
-          sendEmail: ann.sendEmail,
-        } as Partial<CreateAnnouncementPayload> & { id: string });
-        setIsModalOpen(true);
+    async (id: string) => {
+      let ann = announcements.find((a) => a.id === id);
+      if (!ann) {
+        return;
       }
+      const needsDetail =
+        !ann.content?.trim() || (ann.content.includes('Tap') && ann.content.includes('View'));
+      if (needsDetail) {
+        try {
+          ann = await announcementService.getAnnouncementById(id);
+        } catch {
+          /* keep list row */
+        }
+      }
+      setTemplatePayload({
+        id: ann.id,
+        category: ann.category,
+        priority: ann.priority,
+        title: ann.title,
+        content: ann.content,
+        audience: ann.audience,
+        status: ann.status,
+        publish_at: ann.publish_at,
+        expires_at: ann.expires_at,
+        scheduleType: ann.scheduleType,
+        scheduledDate: ann.scheduledDate,
+        displayDurationType: ann.displayDurationType,
+        displayDurationDays: ann.displayDurationDays,
+      } as Partial<CreateAnnouncementPayload> & { id: string });
+      setIsModalOpen(true);
     },
     [announcements]
   );
@@ -160,7 +177,10 @@ export default function AnnouncementsPage() {
     { label: 'Archived', value: 'Archived', icon: '/announcements/archived.svg' },
   ];
 
-  const pendingCount = 1; // Can be computed based on stats API in the future
+  const pendingCount = useMemo(
+    () => announcements.filter((a) => a.status === 'Pending').length,
+    [announcements]
+  );
   const isAllActive = !filters.status || filters.status.length === 0;
 
   const handleDateChange = (type: 'from' | 'to', value: string) => {
@@ -425,9 +445,9 @@ export default function AnnouncementsPage() {
                         />
                       </div>
                       <span>{item.label}</span>
-                      {item.value === 'Pending' && (
-                        <span className="flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full size-5 ml-1 leading-none pb-[1px]">
-                          {pendingCount}
+                      {item.value === 'Pending' && pendingCount > 0 && (
+                        <span className="flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full size-5 min-w-5 ml-1 leading-none pb-[1px]">
+                          {pendingCount > 99 ? '99+' : pendingCount}
                         </span>
                       )}
                     </button>
@@ -486,7 +506,15 @@ export default function AnnouncementsPage() {
           setIsModalOpen(true);
         }}
         onOpenTemplates={() => setIsTemplatesOpen(true)}
+        onOpenNotifications={() => setNotificationPanelOpen(true)}
+        notificationUnreadCount={notificationUnread}
         hidden={isPresentMode}
+      />
+
+      <NotificationCenterPanel
+        open={notificationPanelOpen}
+        onOpenChange={setNotificationPanelOpen}
+        onUnreadCountChange={setNotificationUnread}
       />
 
       {/* Selection action bar — shown in present mode */}

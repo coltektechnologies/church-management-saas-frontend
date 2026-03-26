@@ -62,8 +62,11 @@ export function QuickActions(props: QuickActionsProps) {
       router.push('/admin/treasury/record?type=income');
     } else if (handlerName === 'onRecordExpenditure') {
       router.push('/admin/treasury/record?type=expense');
-    } else if (props[handlerName]) {
-      props[handlerName]!();
+    } else {
+      const fn = props[handlerName];
+      if (fn) {
+        fn();
+      }
     }
   };
 
