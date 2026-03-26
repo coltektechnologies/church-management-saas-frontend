@@ -105,6 +105,15 @@ const Login = () => {
             <p className={styles.subheading}>
               Sign in to manage church, staff, and church fronts across your tenants.
             </p>
+            {searchParams.get('registered') === '1' && (
+              <p
+                className="mt-4 rounded-lg border border-[#2FC4B2]/40 bg-[#2FC4B2]/10 px-4 py-3 text-[13px] font-medium text-[#0B2A4A] leading-relaxed"
+                role="status"
+              >
+                Registration complete. Enter your admin email and password below to access your
+                dashboard.
+              </p>
+            )}
           </div>
 
           <form onSubmit={handleLogin} className={styles.form}>
