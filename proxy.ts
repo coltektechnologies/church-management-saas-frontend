@@ -6,6 +6,10 @@ import type { NextRequest } from 'next/server';
  *
  * Public (no session cookie): marketing + auth + registration only.
  * Everything else requires `church_session=1` (set on successful login / token storage).
+ *
+ * Optional local preview for /secretary without cookie: set NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true
+ * in .env.local and uncomment the skipSecretaryCookie block below, then restart dev.
+ * Never enable that in production.
  */
 const CHURCH_SESSION_COOKIE = 'church_session';
 const CHURCH_SESSION_COOKIE_VALUE = '1';
@@ -48,6 +52,12 @@ function isNextOrStaticAsset(pathname: string): boolean {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
+  // const skipSecretaryCookie =
+  //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+  //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
 
   if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
     return NextResponse.next();

@@ -11,12 +11,22 @@ import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 
+/*
+ * Optional local preview without login:
+ * 1) Uncomment NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true in .env.local
+ * 2) Uncomment skipAuth + the if/return block at the bottom of SecretaryLayout
+ * 3) In proxy.ts, uncomment skipSecretaryCookie and the combined `if` line
+ * 4) Restart dev
+ *
+ * Otherwise: normal auth — login first, then /secretary.
+ */
+// const skipAuth = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
+
 function SecretaryShell({ children }: { children: ReactNode }) {
   const { profile, isReady } = useSecretaryProfile();
 
   const isDark = isReady ? profile.darkMode : false;
 
-  // Strictly use dark or light background — never mixed
   const mainBg = isReady
     ? isDark
       ? profile.darkBackgroundColor || '#0A1628'
@@ -46,19 +56,24 @@ function SecretaryShell({ children }: { children: ReactNode }) {
 }
 
 export default function SecretaryLayout({ children }: { children: ReactNode }) {
-  return (
-    <RequireAuth>
-      <AuthProvider defaultRole="secretary">
-        <ChurchProfileProvider>
-          <SecretaryProfileProvider>
-            <AppDataProvider>
-              <ThemeProvider>
-                <SecretaryShell>{children}</SecretaryShell>
-              </ThemeProvider>
-            </AppDataProvider>
-          </SecretaryProfileProvider>
-        </ChurchProfileProvider>
-      </AuthProvider>
-    </RequireAuth>
+  const tree = (
+    <AuthProvider defaultRole="secretary">
+      <ChurchProfileProvider>
+        <SecretaryProfileProvider>
+          <AppDataProvider>
+            <ThemeProvider>
+              <SecretaryShell>{children}</SecretaryShell>
+            </ThemeProvider>
+          </AppDataProvider>
+        </SecretaryProfileProvider>
+      </ChurchProfileProvider>
+    </AuthProvider>
   );
+
+  // When preview is enabled: uncomment skipAuth above and these two lines:
+  // if (skipAuth) {
+  //   return tree;
+  // }
+
+  return <RequireAuth>{tree}</RequireAuth>;
 }

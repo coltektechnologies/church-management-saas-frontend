@@ -171,7 +171,7 @@ export const dialCountries = [
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export function CountryCodeInput({
-  value,
+  value: _value,
   onChange,
   className,
   placeholder = '000 000 0000',

@@ -15,10 +15,14 @@ import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 
 /** Parse REG_{uuid}_{timestamp} — UUID contains hyphens, must not split on every underscore. */
 function parseSessionIdFromReference(reference: string): string | null {
-  if (!reference?.startsWith('REG_')) return null;
+  if (!reference?.startsWith('REG_')) {
+    return null;
+  }
   const body = reference.slice(4);
   const lastUnderscore = body.lastIndexOf('_');
-  if (lastUnderscore <= 0) return null;
+  if (lastUnderscore <= 0) {
+    return null;
+  }
   const sessionPart = body.slice(0, lastUnderscore);
   const tail = body.slice(lastUnderscore + 1);
   return tail && /^\d+$/.test(tail) ? sessionPart : null;
