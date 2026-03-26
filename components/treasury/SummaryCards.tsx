@@ -2,14 +2,7 @@
 
 import React from 'react';
 import { formatCurrency, TreasurySummary } from '@/services/treasuryService';
-import {
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-  DollarSign,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react';
+import { Wallet } from 'lucide-react';
 
 interface SummaryCardsProps {
   data?: TreasurySummary;

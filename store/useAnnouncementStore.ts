@@ -1,9 +1,5 @@
 import { create } from 'zustand';
-import {
-  AnnouncementListFilters,
-  AnnouncementCategory,
-  AnnouncementStatus,
-} from '@/services/announcementService';
+import { AnnouncementListFilters, AnnouncementStatus } from '@/services/announcementService';
 
 interface AnnouncementStore {
   filters: AnnouncementListFilters;

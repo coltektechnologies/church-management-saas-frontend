@@ -1,4 +1,5 @@
 import { RefObject, Dispatch, SetStateAction } from 'react';
+import Image from 'next/image';
 import { DEPARTMENT_COLORS, DEPARTMENT_ICONS } from '@/constants/departments';
 import type { ThemeColor } from '@/constants/departments';
 
@@ -169,11 +170,13 @@ export default function CreateDepartmentForm({
           {formData.icon?.startsWith('data:') && (
             <div className="mb-6 p-4 rounded-xl border border-blue-200 bg-blue-50 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl overflow-hidden border border-blue-400">
-                  <img
+                <div className="h-14 w-14 rounded-xl overflow-hidden border border-blue-400 relative">
+                  <Image
                     src={formData.icon}
                     alt="Custom Icon"
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
                   />
                 </div>
 

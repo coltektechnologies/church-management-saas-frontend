@@ -52,7 +52,7 @@ const AccountSettingsContent = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const activeTabData = TABS.find((t) => t.key === activeTab)!;
+  const activeTabData = TABS.find((t) => t.key === activeTab) ?? TABS[0];
   const ActiveIcon = activeTabData.icon;
 
   // Split tabs into rows of 3 for the mobile grid
