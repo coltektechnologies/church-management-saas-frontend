@@ -91,12 +91,18 @@ export interface RegistrationDraft {
 }
 
 export function getRegistrationDraft(): RegistrationDraft | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
   try {
     const raw = sessionStorage.getItem(REGISTRATION_DRAFT_KEY);
-    if (!raw) return null;
+    if (!raw) {
+      return null;
+    }
     const parsed = JSON.parse(raw) as RegistrationDraft;
-    if (!parsed || typeof parsed.currentStep !== 'number') return null;
+    if (!parsed || typeof parsed.currentStep !== 'number') {
+      return null;
+    }
     return parsed;
   } catch {
     return null;
@@ -104,7 +110,9 @@ export function getRegistrationDraft(): RegistrationDraft | null {
 }
 
 export function setRegistrationDraft(draft: RegistrationDraft): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(draft));
   } catch {
@@ -113,7 +121,9 @@ export function setRegistrationDraft(draft: RegistrationDraft): void {
 }
 
 export function clearRegistrationDraft(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
 }
 

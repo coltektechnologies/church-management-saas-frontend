@@ -146,7 +146,7 @@ type TouchedKeys = keyof Pick<
   | 'interested_departments'
 >;
 
-const REQUIRED_KEYS: TouchedKeys[] = [
+const _REQUIRED_KEYS: TouchedKeys[] = [
   'title',
   'first_name',
   'last_name',

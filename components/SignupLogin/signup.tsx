@@ -23,7 +23,7 @@ import {
   clearRegistrationDraft,
   getStoredRegistrationSessionId,
 } from '@/lib/api';
-import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
+import { clearClientAuth } from '@/lib/churchSessionBrowser';
 
 const TOTAL_STEPS = 4;
 
@@ -123,18 +123,20 @@ const Signup = () => {
     const draft = restart ? null : getRegistrationDraft();
     const storedSession = getStoredRegistrationSessionId();
     if (draft) {
-      setFormData((prev) => ({ ...defaultFormData, ...draft.formData }) as RegistrationData);
+      setFormData(() => ({ ...defaultFormData, ...draft.formData }) as RegistrationData);
       setCurrentStep(Math.min(Math.max(1, draft.currentStep), TOTAL_STEPS));
       setSessionId(draft.sessionId || storedSession);
     } else if (storedSession) {
       setSessionId(storedSession);
     }
     setHydrated(true);
-  }, []);
+  }, [searchParams]);
 
   // Persist draft whenever state changes so back/refresh preserves progress
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated) {
+      return;
+    }
     setRegistrationDraft({
       formData: formData as unknown as Record<string, string>,
       currentStep,
@@ -283,16 +285,15 @@ const Signup = () => {
       if (!result.requires_payment) {
         clearStoredRegistrationSessionId();
         clearRegistrationDraft();
-        localStorage.setItem('access_token', result.tokens.access);
-        localStorage.setItem('refresh_token', result.tokens.refresh);
-        localStorage.setItem('user', JSON.stringify(result.user));
-        setChurchSessionCookie();
+        // Do not store tokens here: login page treats access_token as "already signed in" and
+        // would skip the form. User must sign in explicitly (email/SMS are backend-owned).
+        clearClientAuth();
         toast({
           title: 'Registration successful!',
           description:
-            'Your login credentials have been sent to your email and SMS. Please sign in.',
+            'Sign in with your admin email and the password you created. If your server sends welcome messages, check email or SMS.',
         });
-        router.push('/login');
+        router.push('/login?registered=1');
         return;
       }
       setStoredRegistrationSessionId(sessionId);
