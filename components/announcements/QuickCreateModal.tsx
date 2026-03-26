@@ -20,6 +20,7 @@ import {
   CreateAnnouncementPayload,
   AnnouncementCategory,
   AnnouncementStatus,
+  type PriorityLevel,
 } from '@/services/announcementService';
 import {
   Bold,
@@ -33,6 +34,15 @@ import {
 import { cn } from '@/lib/utils';
 import { useCreateAnnouncement } from '@/hooks/useCreateAnnouncement';
 import { useUpdateAnnouncement } from '@/hooks/useUpdateAnnouncement';
+import { toast } from 'sonner';
+import {
+  buildPublishAndExpires,
+  isoToDatetimeLocal,
+  nowDatetimeLocalValue,
+  parseDatetimeLocalToDate,
+  type ExpiryMode,
+  type SchedulePublish,
+} from '@/lib/announcementSchedule';
 
 interface QuickCreateModalProps {
   open: boolean;
@@ -42,57 +52,92 @@ interface QuickCreateModalProps {
 
 const steps = [1, 2, 3, 4];
 
+type QuickCreateFormData = Partial<CreateAnnouncementPayload> & {
+  id?: string;
+  schedulePublish: SchedulePublish;
+  publishAtLocal: string;
+  expiryMode: ExpiryMode;
+  expiresAtLocal: string;
+  expiresDaysAfterPublish: number;
+};
+
+function deriveSchedulingFromInitial(
+  initial: Partial<CreateAnnouncementPayload> & { id?: string }
+): Pick<
+  QuickCreateFormData,
+  'schedulePublish' | 'publishAtLocal' | 'expiryMode' | 'expiresAtLocal' | 'expiresDaysAfterPublish'
+> {
+  let schedulePublish: SchedulePublish = 'immediate';
+  let publishAtLocal = '';
+
+  if (initial.publish_at) {
+    schedulePublish = 'scheduled';
+    publishAtLocal = isoToDatetimeLocal(initial.publish_at);
+  } else if (initial.scheduleType === 'SpecificDate' && initial.scheduledDate) {
+    schedulePublish = 'scheduled';
+    publishAtLocal =
+      initial.scheduledDate.length >= 16
+        ? initial.scheduledDate.slice(0, 16)
+        : initial.scheduledDate;
+  }
+
+  let expiryMode: ExpiryMode = 'none';
+  let expiresAtLocal = '';
+  let expiresDaysAfterPublish = 7;
+
+  if (initial.expires_at) {
+    expiryMode = 'until';
+    expiresAtLocal = isoToDatetimeLocal(initial.expires_at);
+  } else if (initial.displayDurationType === 'Duration' && (initial.displayDurationDays ?? 0) > 0) {
+    expiryMode = 'days';
+    expiresDaysAfterPublish = initial.displayDurationDays ?? 7;
+  }
+
+  return {
+    schedulePublish,
+    publishAtLocal,
+    expiryMode,
+    expiresAtLocal,
+    expiresDaysAfterPublish,
+  };
+}
+
+const defaultForm = (): QuickCreateFormData => ({
+  category: 'General Church',
+  priority: 'Medium',
+  title: '',
+  content: '',
+  status: 'Pending',
+  schedulePublish: 'immediate',
+  publishAtLocal: '',
+  expiryMode: 'none',
+  expiresAtLocal: '',
+  expiresDaysAfterPublish: 7,
+});
+
 export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreateModalProps) {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<Partial<CreateAnnouncementPayload> & { id?: string }>({
-    category: 'General Church',
-    priority: 'Medium',
-    title: '',
-    content: '',
-    audience: ['All Members'],
-    status: 'Pending',
-    scheduledDate: '',
-  });
+  const [formData, setFormData] = useState<QuickCreateFormData>(defaultForm);
 
   // Sync incoming initialData if present when modal opens
   React.useEffect(() => {
     if (open) {
       if (initialData) {
         setFormData({
-          id: (initialData as any).id,
+          ...defaultForm(),
+          id: (initialData as { id?: string }).id,
           category: initialData.category || 'General Church',
           priority: initialData.priority || 'Medium',
           title: initialData.title || '',
           content: initialData.content || '',
-          audience: initialData.audience || ['All Members'],
+          audience: initialData.audience,
           status: initialData.status || 'Pending',
-          scheduleType: initialData.scheduleType || 'Instant',
-          scheduledDate: initialData.scheduledDate || '',
-          displayDurationType: initialData.displayDurationType || 'OneTime',
-          displayDurationDays: initialData.displayDurationDays || 12,
-          targetDepartments: initialData.targetDepartments || [],
-          includeVisitors: initialData.includeVisitors || false,
-          sendSms: initialData.sendSms || false,
-          sendEmail: initialData.sendEmail || false,
+          publish_at: initialData.publish_at,
+          expires_at: initialData.expires_at,
+          ...deriveSchedulingFromInitial(initialData),
         });
       } else {
-        // Reset to default if no explicit template was passed
-        setFormData({
-          category: 'General Church',
-          priority: 'Medium',
-          title: '',
-          content: '',
-          audience: ['All Members'],
-          status: 'Pending',
-          scheduleType: 'Instant',
-          scheduledDate: '',
-          displayDurationType: 'OneTime',
-          displayDurationDays: 12,
-          targetDepartments: [],
-          includeVisitors: false,
-          sendSms: false,
-          sendEmail: false,
-        });
+        setFormData(defaultForm());
       }
       setStep(1);
     }
@@ -117,28 +162,38 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
 
   const handleReset = () => {
     setStep(1);
-    setFormData({
-      category: 'General Church',
-      priority: 'Medium',
-      title: '',
-      content: '',
-      audience: ['All Members'],
-      status: 'Pending',
-      scheduleType: 'Instant',
-      scheduledDate: '',
-      displayDurationType: 'OneTime',
-      displayDurationDays: 12,
-      targetDepartments: [],
-      includeVisitors: false,
-      sendSms: false,
-      sendEmail: false,
-    });
+    setFormData(defaultForm());
     setAttachments([]);
   };
 
   const handleSubmit = (status: AnnouncementStatus) => {
-    const finalData = { ...formData, status };
-    const { id, ...payload } = finalData;
+    let publish_at: string | null;
+    let expires_at: string | null;
+    try {
+      ({ publish_at, expires_at } = buildPublishAndExpires({
+        schedulePublish: formData.schedulePublish,
+        publishAtLocal: formData.publishAtLocal,
+        expiryMode: formData.expiryMode,
+        expiresAtLocal: formData.expiresAtLocal,
+        expiresDaysAfterPublish: formData.expiresDaysAfterPublish,
+      }));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Invalid schedule');
+      return;
+    }
+
+    const payload: CreateAnnouncementPayload = {
+      category: formData.category as AnnouncementCategory,
+      priority: formData.priority as CreateAnnouncementPayload['priority'],
+      title: formData.title || '',
+      content: formData.content || '',
+      status,
+      publish_at,
+      expires_at,
+      ...(formData.audience?.length ? { audience: formData.audience } : {}),
+    };
+
+    const { id } = formData;
 
     if (id) {
       updateMutation.mutate(
@@ -151,7 +206,7 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
         }
       );
     } else {
-      createMutation.mutate(payload as CreateAnnouncementPayload, {
+      createMutation.mutate(payload, {
         onSuccess: () => {
           onOpenChange(false);
           handleReset();
@@ -162,6 +217,11 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
 
   const isStep1Valid =
     !!formData.category && !!formData.priority && !!formData.title && !!formData.content;
+
+  const isStep2Valid =
+    (formData.schedulePublish !== 'scheduled' || !!formData.publishAtLocal?.trim()) &&
+    (formData.expiryMode !== 'until' || !!formData.expiresAtLocal?.trim()) &&
+    (formData.expiryMode !== 'days' || (formData.expiresDaysAfterPublish ?? 0) >= 1);
 
   return (
     <Dialog
@@ -234,7 +294,9 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
                     </Label>
                     <Select
                       value={formData.priority}
-                      onValueChange={(val) => setFormData({ ...formData, priority: val as any })}
+                      onValueChange={(val) =>
+                        setFormData({ ...formData, priority: val as PriorityLevel })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Priority Level" />
@@ -304,163 +366,155 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
 
             {step === 2 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 pb-8">
+                <p className="text-sm text-muted-foreground rounded-lg border border-border bg-muted/20 p-3">
+                  Scheduling matches the API: <strong>publish_at</strong> is when the announcement
+                  becomes visible; <strong>expires_at</strong> is when it stops showing. Audience
+                  targeting is not on the announcement model yet.
+                </p>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Schedule Settings */}
                   <div className="space-y-4">
-                    <Label className="text-base">Schedule Settings</Label>
+                    <Label className="text-base">Publish</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Maps to <code className="text-[11px]">publish_at</code> — leave unscheduled to
+                      go live when you publish/approve.
+                    </p>
                     <div className="space-y-3">
                       <label className="flex items-center gap-3 text-sm cursor-pointer">
                         <input
                           type="radio"
-                          name="scheduleType"
+                          name="schedulePublish"
                           className="size-4 accent-primary"
-                          checked={formData.scheduleType === 'Instant'}
-                          onChange={() => setFormData({ ...formData, scheduleType: 'Instant' })}
+                          checked={formData.schedulePublish === 'immediate'}
+                          onChange={() =>
+                            setFormData({ ...formData, schedulePublish: 'immediate' })
+                          }
                         />
-                        Instant Announce
+                        Publish as soon as approved (not date-scheduled)
                       </label>
                       <label className="flex items-center gap-3 text-sm cursor-pointer">
                         <input
                           type="radio"
-                          name="scheduleType"
+                          name="schedulePublish"
                           className="size-4 accent-primary"
-                          checked={formData.scheduleType === 'SpecificDate'}
+                          checked={formData.schedulePublish === 'scheduled'}
                           onChange={() =>
-                            setFormData({ ...formData, scheduleType: 'SpecificDate' })
+                            setFormData({
+                              ...formData,
+                              schedulePublish: 'scheduled',
+                              publishAtLocal:
+                                formData.publishAtLocal?.trim() || nowDatetimeLocalValue(),
+                            })
                           }
                         />
-                        Schedule for specific date/time
+                        Schedule first publish (date &amp; time)
                       </label>
-                      {formData.scheduleType === 'SpecificDate' && (
-                        <div className="pl-7 pt-1">
+                      {formData.schedulePublish === 'scheduled' && (
+                        <div className="pl-7 pt-1 space-y-1">
                           <Input
                             type="datetime-local"
-                            value={formData.scheduledDate || ''}
+                            step={60}
+                            value={formData.publishAtLocal || ''}
                             onChange={(e) =>
-                              setFormData({ ...formData, scheduledDate: e.target.value })
+                              setFormData({ ...formData, publishAtLocal: e.target.value })
                             }
                             className="h-9"
                           />
+                          <p className="text-[11px] text-muted-foreground">
+                            Sent to API as ISO 8601 <code>publish_at</code>.
+                          </p>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Display Duration */}
                   <div className="space-y-4">
-                    <Label className="text-base">Display Duration</Label>
+                    <Label className="text-base">Stop showing</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Maps to <code className="text-[11px]">expires_at</code>. Omit for no automatic
+                      end.
+                    </p>
                     <div className="space-y-3">
                       <label className="flex items-center gap-3 text-sm cursor-pointer">
                         <input
                           type="radio"
-                          name="durationType"
+                          name="expiryMode"
                           className="size-4 accent-primary"
-                          checked={formData.displayDurationType === 'OneTime'}
-                          onChange={() =>
-                            setFormData({ ...formData, displayDurationType: 'OneTime' })
-                          }
+                          checked={formData.expiryMode === 'none'}
+                          onChange={() => setFormData({ ...formData, expiryMode: 'none' })}
                         />
-                        One time only
+                        No end date
                       </label>
                       <label className="flex items-center gap-3 text-sm cursor-pointer">
                         <input
                           type="radio"
-                          name="durationType"
+                          name="expiryMode"
                           className="size-4 accent-primary"
-                          checked={formData.displayDurationType === 'Duration'}
+                          checked={formData.expiryMode === 'until'}
                           onChange={() =>
-                            setFormData({ ...formData, displayDurationType: 'Duration' })
-                          }
-                        />
-                        Display for
-                        <Input
-                          type="number"
-                          className="w-16 h-8 text-center px-1"
-                          value={formData.displayDurationDays || ''}
-                          onChange={(e) =>
                             setFormData({
                               ...formData,
-                              displayDurationDays: parseInt(e.target.value) || 0,
+                              expiryMode: 'until',
+                              expiresAtLocal:
+                                formData.expiresAtLocal?.trim() || nowDatetimeLocalValue(),
                             })
                           }
-                          disabled={formData.displayDurationType !== 'Duration'}
                         />
-                        days
+                        Stop at date &amp; time
                       </label>
+                      {formData.expiryMode === 'until' && (
+                        <div className="pl-7 pt-1 space-y-1">
+                          <Input
+                            type="datetime-local"
+                            step={60}
+                            value={formData.expiresAtLocal || ''}
+                            onChange={(e) =>
+                              setFormData({ ...formData, expiresAtLocal: e.target.value })
+                            }
+                            className="h-9"
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            Pick date and time — stored as <code>expires_at</code> (UTC) for the
+                            API.
+                          </p>
+                        </div>
+                      )}
+                      <label className="flex items-center gap-3 text-sm cursor-pointer flex-wrap">
+                        <input
+                          type="radio"
+                          name="expiryMode"
+                          className="size-4 accent-primary"
+                          checked={formData.expiryMode === 'days'}
+                          onChange={() => setFormData({ ...formData, expiryMode: 'days' })}
+                        />
+                        <span className="flex flex-wrap items-center gap-2">
+                          Show for
+                          <Input
+                            type="number"
+                            min={1}
+                            className="w-16 h-8 text-center px-1"
+                            value={formData.expiresDaysAfterPublish || ''}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                expiresDaysAfterPublish: Math.max(
+                                  1,
+                                  parseInt(e.target.value, 10) || 1
+                                ),
+                              })
+                            }
+                            disabled={formData.expiryMode !== 'days'}
+                          />
+                          days after publish time
+                        </span>
+                      </label>
+                      {formData.expiryMode === 'days' && (
+                        <p className="text-[11px] text-muted-foreground pl-7">
+                          Computes <code>expires_at</code> from the scheduled publish time, or from
+                          &quot;now&quot; if not scheduled.
+                        </p>
+                      )}
                     </div>
-                  </div>
-                </div>
-
-                {/* Target Audience */}
-                <div className="space-y-4">
-                  <Label className="text-base">Target Audience</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <label className="flex items-center gap-3 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary rounded-sm"
-                        checked={formData.audience?.includes('All Members')}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setFormData({
-                            ...formData,
-                            audience: checked ? ['All Members'] : [],
-                          });
-                        }}
-                      />
-                      All Members
-                    </label>
-                    <label className="flex items-center gap-3 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary rounded-sm"
-                        checked={(formData.targetDepartments || []).length > 0}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
-                          setFormData({
-                            ...formData,
-                            targetDepartments: checked ? ['Workers', 'Choir'] : [],
-                          });
-                        }}
-                      />
-                      Specific Departments
-                    </label>
-                    <label className="flex items-center gap-3 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary rounded-sm"
-                        checked={formData.includeVisitors}
-                        onChange={(e) =>
-                          setFormData({ ...formData, includeVisitors: e.target.checked })
-                        }
-                      />
-                      Include Visitors
-                    </label>
-                  </div>
-                </div>
-
-                {/* Notification Settings */}
-                <div className="space-y-4">
-                  <Label className="text-base">Notification Settings</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <label className="flex items-center gap-3 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary rounded-sm"
-                        checked={formData.sendSms}
-                        onChange={(e) => setFormData({ ...formData, sendSms: e.target.checked })}
-                      />
-                      Send SMS Notification
-                    </label>
-                    <label className="flex items-center gap-3 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-primary rounded-sm"
-                        checked={formData.sendEmail}
-                        onChange={(e) => setFormData({ ...formData, sendEmail: e.target.checked })}
-                      />
-                      Send Email Notification
-                    </label>
                   </div>
                 </div>
               </div>
@@ -489,38 +543,39 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
                     <p className="text-sm text-foreground/80 line-clamp-3">{formData.content}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">Audience</span>
-                    <p className="text-sm">
-                      {formData.audience?.join(', ')}
-                      {formData.includeVisitors && ' (+ Visitors)'}
+                    <span className="text-xs text-muted-foreground">Publish (publish_at)</span>
+                    <p className="text-sm font-medium">
+                      {formData.schedulePublish === 'scheduled' && formData.publishAtLocal
+                        ? (() => {
+                            const d = parseDatetimeLocalToDate(formData.publishAtLocal);
+                            return d
+                              ? d.toLocaleString(undefined, {
+                                  dateStyle: 'medium',
+                                  timeStyle: 'short',
+                                })
+                              : formData.publishAtLocal;
+                          })()
+                        : 'When approved / published (not date-scheduled)'}
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">Schedule</span>
-                    <p className="text-sm font-medium">
-                      {formData.scheduleType === 'Instant'
-                        ? 'Instant Announce'
-                        : `Scheduled for: ${new Date(formData.scheduledDate || '').toLocaleString()}`}
+                    <span className="text-xs text-muted-foreground">Stop showing (expires_at)</span>
+                    <p className="text-sm text-foreground/80">
+                      {formData.expiryMode === 'none' && 'No automatic end date'}
+                      {formData.expiryMode === 'until' &&
+                        formData.expiresAtLocal &&
+                        (() => {
+                          const d = parseDatetimeLocalToDate(formData.expiresAtLocal);
+                          return d
+                            ? d.toLocaleString(undefined, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })
+                            : formData.expiresAtLocal;
+                        })()}
+                      {formData.expiryMode === 'days' &&
+                        `${formData.expiresDaysAfterPublish} day(s) after publish time (computed on save)`}
                     </p>
-                  </div>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="text-xs text-muted-foreground">Duration</span>
-                      <p className="text-sm text-foreground/80">
-                        {formData.displayDurationType === 'OneTime'
-                          ? 'One time only'
-                          : `Display for ${formData.displayDurationDays} days`}
-                      </p>
-                    </div>
-                    {/* Notifications */}
-                    <div className="text-right">
-                      <span className="text-xs text-muted-foreground">Notifications</span>
-                      <p className="text-sm text-foreground/80">
-                        {[formData.sendSms && 'SMS', formData.sendEmail && 'Email']
-                          .filter(Boolean)
-                          .join(', ') || 'None'}
-                      </p>
-                    </div>
                   </div>
                 </div>
 
@@ -608,7 +663,7 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
               {step < 4 ? (
                 <Button
                   onClick={handleNext}
-                  disabled={step === 1 && !isStep1Valid}
+                  disabled={(step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)}
                   className="bg-[var(--color-success)] hover:bg-[var(--color-success)]/90 text-primary"
                 >
                   Next Step

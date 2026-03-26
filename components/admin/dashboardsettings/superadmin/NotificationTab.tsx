@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,31 @@ import {
   Banknote,
   CalendarDays,
   Settings,
+  Loader2,
 } from 'lucide-react';
+import {
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  type NotificationPreferenceResponse,
+} from '@/lib/settingsApi';
+
+/** Map frontend keys to backend fields (used when building save payload) */
+const _FRONT_TO_BACK: Record<string, keyof NotificationPreferenceResponse> = {
+  newMember: 'announcements',
+  announcement: 'announcements',
+  financial: 'finance',
+  events: 'events',
+  approvals: 'reminders',
+  system: 'announcements',
+};
+
+/** For load: which backend field drives which frontend key */
+const BACK_TO_FRONT: Record<string, string[]> = {
+  announcements: ['newMember', 'announcement', 'system'],
+  finance: ['financial'],
+  events: ['events'],
+  reminders: ['approvals'],
+};
 
 const PREFS = [
   {
@@ -55,20 +79,55 @@ const PREFS = [
 ];
 
 const NotificationTab = () => {
-  // Initialize preferences state - defaults to all true for new users
   const [prefs, setPrefs] = useState<Record<string, boolean>>(
     Object.fromEntries(PREFS.map((p) => [p.key, true]))
   );
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getNotificationPreferences().then((data) => {
+      if (data) {
+        const next: Record<string, boolean> = {
+          ...Object.fromEntries(PREFS.map((p) => [p.key, true])),
+        };
+        (
+          Object.entries(BACK_TO_FRONT) as [keyof NotificationPreferenceResponse, string[]][]
+        ).forEach(([backKey, frontKeys]) => {
+          const val = data[backKey] !== false;
+          frontKeys.forEach((fk) => {
+            next[fk] = val;
+          });
+        });
+        setPrefs(next);
+      }
+      setLoading(false);
+    });
+  }, []);
 
   const toggle = (key: string) => {
     setPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleSave = () => {
-    // In a real app, you would send 'prefs' to your backend here
-    toast.success('Notification preferences updated', {
-      description: 'You will receive alerts based on your new settings.',
-    });
+  const handleSave = async () => {
+    const payload: Partial<NotificationPreferenceResponse> = {
+      announcements: prefs.announcement || prefs.newMember || prefs.system,
+      finance: prefs.financial,
+      events: prefs.events,
+      reminders: prefs.approvals,
+    };
+
+    setSaving(true);
+    try {
+      await updateNotificationPreferences(payload);
+      toast.success('Notification preferences updated', {
+        description: 'You will receive alerts based on your new settings.',
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update preferences');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -120,9 +179,16 @@ const NotificationTab = () => {
       <div className="pt-4 border-t border-slate-50">
         <Button
           onClick={handleSave}
-          className="bg-[#0B2A4A] hover:bg-[#081e36] text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95"
+          disabled={loading || saving}
+          className="bg-[#0B2A4A] hover:bg-[#081e36] text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95 disabled:opacity-70"
         >
-          Save Preferences
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+            </>
+          ) : (
+            'Save Preferences'
+          )}
         </Button>
       </div>
     </div>

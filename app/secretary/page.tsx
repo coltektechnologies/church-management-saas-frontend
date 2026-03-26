@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import DashboardPage from '@/components/secretary/dashboard/DashboardPage';
 
-export default function SecretaryIndexPage() {
-  redirect('/secretary/departments');
+export default function SecretaryPage() {
+  return <DashboardPage />;
 }

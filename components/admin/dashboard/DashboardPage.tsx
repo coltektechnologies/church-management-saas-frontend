@@ -2,7 +2,14 @@
 
 import { useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users2, CircleDollarSign, Megaphone, PersonStanding } from 'lucide-react';
+import {
+  Users2,
+  CircleDollarSign,
+  Megaphone,
+  PersonStanding,
+  RefreshCw,
+  AlertCircle,
+} from 'lucide-react';
 
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
@@ -36,14 +43,20 @@ export default function DashboardPage() {
     pendingAnnouncements,
     averageAttendance,
     activeMembers,
+    apiLoading,
+    apiError,
+    refetchDashboard,
   } = useAppData();
 
-  // dark-mode styles
   const mounted = useIsMounted();
-  const dark = mounted ? (profile.darkMode ?? false) : false;
 
-  const adminName = profile.adminName || 'Admin';
-  const pc = profile.primaryColor || '#0B2A4A';
+  // All values that read from localStorage must be gated behind mounted.
+  // Server and client must agree on the initial render — use safe static
+  // fallbacks on the server, real values only after hydration.
+  const dark = mounted ? (profile.darkMode ?? false) : false;
+  const adminName = mounted ? profile.adminName || 'Admin' : 'Admin';
+  const pc = mounted ? profile.primaryColor || '#0B2A4A' : '#0B2A4A';
+  const churchName = mounted ? profile.churchName || '' : '';
 
   const featuredCardStyle: React.CSSProperties = {
     backgroundColor: dark ? '#112240' : '#FDFEFE',
@@ -58,6 +71,36 @@ export default function DashboardPage() {
 
   return (
     <div className="p-3 sm:p-4 lg:p-6 space-y-5">
+      {/* API Error banner */}
+      {apiError && (
+        <div
+          className="flex items-center justify-between gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800"
+          role="alert"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
+            <p className="text-sm font-medium text-amber-800 dark:text-amber-200 truncate">
+              {apiError}
+            </p>
+          </div>
+          <button
+            onClick={() => refetchDashboard()}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/50 dark:hover:bg-amber-900 transition-colors shrink-0"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Loading overlay (subtle) */}
+      {apiLoading && (
+        <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <span>Loading dashboard data…</span>
+        </div>
+      )}
+
       {/* Welcome banner */}
       <div
         className="p-4 sm:p-5 lg:p-6 text-white relative overflow-hidden"
@@ -68,6 +111,7 @@ export default function DashboardPage() {
       >
         <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full opacity-10 bg-white" />
         <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full opacity-10 bg-white" />
+
         <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h1
@@ -76,6 +120,7 @@ export default function DashboardPage() {
             >
               {greeting}, {adminName} 👋
             </h1>
+
             <p className="text-white/80 text-[11px] sm:text-xs mt-1 leading-relaxed">
               {pendingAnnouncements > 0 && (
                 <>
@@ -98,10 +143,11 @@ export default function DashboardPage() {
                 </button>
               )}
               {pendingAnnouncements === 0 && newMembersThisWeek === 0 && (
-                <span>Welcome back to {profile.churchName || 'your church dashboard'}.</span>
+                <span>Welcome back to {churchName || 'your church dashboard'}.</span>
               )}
             </p>
           </div>
+
           <div className="flex items-center gap-2 flex-wrap">
             <DashboardDateRangePicker />
             <span className="text-[10px] bg-white/20 rounded-full px-3 py-1.5 font-medium hidden sm:inline-block">
@@ -120,7 +166,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
         <StatCard
           title="Total Members"
-          value={totalMembers > 0 ? totalMembers.toLocaleString() : '—'}
+          value={totalMembers.toLocaleString()}
           subtitle={totalMembers > 0 ? `${activeMembers} active` : 'No members yet'}
           icon={Users2}
           empty={totalMembers === 0}
@@ -128,7 +174,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Monthly Income"
-          value={totalIncome > 0 ? `₵${totalIncome.toLocaleString()}` : '—'}
+          value={`₵${totalIncome.toLocaleString()}`}
           subtitle={totalIncome > 0 ? 'Filtered by date' : 'No transactions yet'}
           icon={CircleDollarSign}
           empty={totalIncome === 0}
@@ -136,7 +182,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Announcements"
-          value={publishedAnnouncements > 0 ? `${publishedAnnouncements}` : '—'}
+          value={String(publishedAnnouncements)}
           subtitle="Published"
           icon={Megaphone}
           empty={publishedAnnouncements === 0}
@@ -144,7 +190,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Attendance"
-          value={averageAttendance > 0 ? `${averageAttendance}%` : '—'}
+          value={`${averageAttendance}%`}
           subtitle="Average"
           icon={PersonStanding}
           empty={averageAttendance === 0}

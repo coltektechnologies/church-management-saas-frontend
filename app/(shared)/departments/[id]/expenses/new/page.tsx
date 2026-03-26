@@ -2,7 +2,6 @@
 
 import { useParams } from 'next/navigation';
 import { useDepartments } from '@/context/DepartmentsContext';
-import { Expense } from '@/types/expense';
 import ExpenseFormPage from '@/components/admin/expenseForm/ExpenseFormPage';
 
 export default function NewExpensePage() {
@@ -21,9 +20,11 @@ export default function NewExpensePage() {
     );
   }
 
-  const handleSubmit = (expense: Expense) => {
-    submitExpense(departmentId, expense);
-  };
-
-  return <ExpenseFormPage department={department} expenses={expenses} onSubmit={handleSubmit} />;
+  return (
+    <ExpenseFormPage
+      department={department}
+      expenses={expenses}
+      onSubmit={async (expense, options) => submitExpense(departmentId, expense, options)}
+    />
+  );
 }

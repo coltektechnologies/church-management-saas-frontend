@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Check, Eye, X } from 'lucide-react';
 import type { ExpenseRequest } from '@/services/treasuryService';
 import { formatCurrency } from '@/services/treasuryService';
 
@@ -12,6 +11,8 @@ interface PendingExpenseRequestsProps {
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
   onView?: (id: string) => void;
+  isApproving?: boolean;
+  isRejecting?: boolean;
 }
 
 export function PendingExpenseRequests({
@@ -20,6 +21,8 @@ export function PendingExpenseRequests({
   onApprove,
   onReject,
   onView,
+  isApproving = false,
+  isRejecting = false,
 }: PendingExpenseRequestsProps) {
   if (isLoading || !data) {
     return (
@@ -62,24 +65,27 @@ export function PendingExpenseRequests({
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 size="sm"
-                className="h-7 px-3 text-[11px] font-medium bg-[#10b981] hover:bg-[#10b981]/90 text-white cursor-pointer rounded"
+                disabled={isApproving || isRejecting}
+                className="h-7 px-3 text-[11px] font-medium bg-[#10b981] hover:bg-[#10b981]/90 text-white cursor-pointer rounded disabled:opacity-60"
                 onClick={() => onApprove?.(req.id)}
               >
-                Approve
+                {isApproving ? '...' : 'Approve'}
               </Button>
               <Button
                 size="sm"
-                className="h-7 px-3 text-[11px] font-medium bg-[#9ca3af] hover:bg-[#9ca3af]/90 text-white cursor-pointer rounded"
+                disabled={isApproving || isRejecting}
+                className="h-7 px-3 text-[11px] font-medium bg-[#9ca3af] hover:bg-[#9ca3af]/90 text-white cursor-pointer rounded disabled:opacity-60"
                 onClick={() => onView?.(req.id)}
               >
                 View
               </Button>
               <Button
                 size="sm"
-                className="h-7 px-3 text-[11px] font-medium bg-[#ef4444] hover:bg-[#ef4444]/90 text-white cursor-pointer rounded"
+                disabled={isApproving || isRejecting}
+                className="h-7 px-3 text-[11px] font-medium bg-[#ef4444] hover:bg-[#ef4444]/90 text-white cursor-pointer rounded disabled:opacity-60"
                 onClick={() => onReject?.(req.id)}
               >
-                Reject
+                {isRejecting ? '...' : 'Reject'}
               </Button>
             </div>
           </div>

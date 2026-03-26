@@ -27,12 +27,20 @@ export interface Announcement {
   author: string;
   authorRole: string;
   date: string; // ISO String or readable string based on mock
-  audience: string[];
-  // New Management Fields
+  /** @deprecated UI-only legacy; not on backend Announcement model */
+  audience?: string[];
+  /** ISO — when the announcement becomes visible (null = when published, not scheduled) */
+  publish_at?: string | null;
+  /** ISO — when to stop showing */
+  expires_at?: string | null;
+  /** @deprecated use publish_at */
   scheduleType?: 'Instant' | 'SpecificDate';
-  scheduledDate?: string; // specific go-live date when 'SpecificDate' is used
+  /** @deprecated use publish_at */
+  scheduledDate?: string;
+  /** @deprecated use expires_at */
   displayDurationType?: 'OneTime' | 'Duration';
-  displayDurationDays?: number; // active length when 'Duration' is used
+  /** @deprecated */
+  displayDurationDays?: number;
   targetDepartments?: string[];
   includeVisitors?: boolean;
   sendSms?: boolean;

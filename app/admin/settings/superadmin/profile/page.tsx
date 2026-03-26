@@ -248,7 +248,6 @@ export default function YourProfilePage() {
               <Input
                 className="h-12 bg-slate-50 dark:bg-white/5 border-none font-semibold rounded-xl"
                 value={form.adminRole}
-                placeholder="Senior Pastor / Admin"
                 onChange={(e) => setForm({ ...form, adminRole: e.target.value })}
               />
             </div>

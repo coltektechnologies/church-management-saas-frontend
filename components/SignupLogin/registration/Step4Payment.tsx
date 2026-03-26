@@ -78,9 +78,18 @@ const mobileProviders = ['MTN Mobile Money', 'Telecel Cash', 'AirtelTigo Money']
 const bankOptions = ['GCB Bank', 'Ecobank', 'Stanbic Bank', 'Absa', 'Zenith Bank', 'Fidelity Bank'];
 
 const paymentMethods = [
-  { id: 'mobile_money', label: 'Mobile Money', description: 'MTN, Telecel, AirtelTigo' },
-  { id: 'visa_mastercard', label: 'Visa / Mastercard', description: 'Credit or debit card' },
-  { id: 'bank_transfer', label: 'Bank Transfer', description: 'Direct bank payment' },
+  {
+    id: 'paystack',
+    label: 'Paystack',
+    description: 'Card, mobile money & bank — secure checkout (Ghana)',
+  },
+  { id: 'mobile_money', label: 'Mobile Money', description: 'MTN, Telecel, AirtelTigo (manual)' },
+  {
+    id: 'visa_mastercard',
+    label: 'Visa / Mastercard',
+    description: 'Credit or debit card (manual)',
+  },
+  { id: 'bank_transfer', label: 'Bank Transfer', description: 'Direct bank payment (manual)' },
 ];
 
 const Step4PaymentDetails = ({ data, onChange, onNext, onBack, loading }: Step4Props) => {
@@ -165,7 +174,6 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack, loading }: Step4P
         errs.subscriptionPlan = 'Required';
       }
     }
-
     setPayErrors(errs);
 
     if (Object.keys(errs).length > 0) {
@@ -178,6 +186,21 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack, loading }: Step4P
 
     setPayErrorSummary('');
     setShowConfirmPopup(true);
+  };
+
+  /** Paystack: no fake card/MoMo fields — gateway handles payment after review (step 5). */
+  const confirmPaystackSelection = () => {
+    if (!data.subscriptionPlan) {
+      setPayErrors({ subscriptionPlan: 'Required' });
+      setPayErrorSummary('Choose a subscription plan in step 3 first.');
+      return;
+    }
+    setPayErrors({});
+    setPayErrorSummary('');
+    onChange('paymentMethod', 'paystack');
+    onChange('paymentCompleted' as keyof RegistrationData, 'true');
+    setActiveDialog(null);
+    setContinueError('');
   };
 
   const handleFinalConfirm = async () => {
@@ -311,6 +334,43 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack, loading }: Step4P
           {loading ? 'Processing...' : 'Continue'}
         </button>
       </div>
+
+      {/* ── Paystack (real gateway — checkout opens after step 5 submit) ── */}
+      {activeDialog === 'paystack' && (
+        <DialogContainer
+          onClose={() => setActiveDialog(null)}
+          title="Pay with Paystack"
+          width="max-w-[440px]"
+        >
+          {payErrorSummary && <ErrorBanner msg={payErrorSummary} />}
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-[#4A5568] leading-relaxed">
+              Subscriptions are collected through{' '}
+              <strong className="text-[#0B2A4A]">Paystack</strong>. After you review your details on
+              the next step and click <strong>Complete Registration</strong>, you will be redirected
+              to Paystack to pay with a <strong>bank card</strong>, <strong>mobile money</strong>,
+              or other methods Paystack offers for your plan.
+            </p>
+            <div className="rounded-[10px] border border-[#2FC4B2]/40 bg-teal-50/40 px-4 py-3 text-[12px] text-[#0B2A4A]">
+              <p className="font-bold mb-1">Selected plan</p>
+              <p className="text-muted-foreground">
+                {data.subscriptionPlan
+                  ? data.subscriptionPlan.replace(/_/g, ' ').toUpperCase()
+                  : 'None — go back to step 3'}
+              </p>
+            </div>
+            {payErrors.subscriptionPlan && <Err msg={payErrors.subscriptionPlan} />}
+            <button
+              type="button"
+              onClick={confirmPaystackSelection}
+              className="w-full h-12 bg-[#0B2A4A] text-white rounded-[10px] font-bold text-sm hover:bg-black transition-colors"
+            >
+              Continue — I’ll pay on Paystack after review
+            </button>
+            <EncryptionFooter />
+          </div>
+        </DialogContainer>
+      )}
 
       {/* ── Mobile Money Dialog ── */}
       {activeDialog === 'mobile_money' && (
@@ -633,7 +693,13 @@ const Step4PaymentDetails = ({ data, onChange, onNext, onBack, loading }: Step4P
                 { label: 'Phone', value: data.phone || 'Not set' },
                 { label: 'Role', value: data.role },
                 { label: 'Plan', value: data.subscriptionPlan?.toUpperCase() },
-                { label: 'Method', value: data.paymentMethod.replace('_', ' ') },
+                {
+                  label: 'Method',
+                  value:
+                    data.paymentMethod === 'paystack'
+                      ? 'Paystack'
+                      : data.paymentMethod.replace(/_/g, ' '),
+                },
               ].map((row, i, arr) => (
                 <div
                   key={row.label}
@@ -800,6 +866,17 @@ const PayButton = ({
 );
 
 const PaymentMethodIcon = ({ methodId }: { methodId: string }) => {
+  if (methodId === 'paystack') {
+    return (
+      <div
+        className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[11px] font-black text-white shrink-0"
+        style={{ background: 'linear-gradient(135deg, #00C3F7 0%, #0B2A4A 100%)' }}
+        title="Paystack"
+      >
+        PS
+      </div>
+    );
+  }
   if (methodId === 'mobile_money') {
     return (
       <div className="flex -space-x-1">

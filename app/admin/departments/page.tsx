@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 import { Department } from '@/types/Department';
@@ -9,19 +9,34 @@ import DepartmentCard from '@/components/admin/departments/DepartmentCard';
 import CreateDepartmentForm from '@/components/admin/departments/CreateDepartmentForm';
 import DepartmentDetailsModal from '@/components/admin/departments/DepartmentDetailsModal/DepartmentDetailsModal';
 import { useDepartments } from '@/context/DepartmentsContext';
+import {
+  buildCreateActivityBodyFromScheduledAt,
+  fetchDepartmentDetail,
+  parseThemeColor,
+} from '@/lib/departmentsApi';
+import { getMembers, type MemberListItem } from '@/lib/api';
 
 export default function DepartmentsPage() {
   const {
     departments,
-    setDepartments,
     updateDepartment,
+    applyDepartmentDetail,
+    refreshDepartments,
+    createDepartmentRemote,
+    updateDepartmentRemote,
     departmentMembersMap,
     setDepartmentMembersMap,
     departmentActivitiesMap,
-    addActivity,
-    deleteActivity,
+    loadDepartmentMembers,
+    loadDepartmentActivities,
+    loadDepartmentExpenseRequests,
+    assignMember,
+    addActivityRemote,
+    deleteActivityRemote,
     departmentExpensesMap,
-    submitExpense,
+    loading,
+    error,
+    setError,
   } = useDepartments();
 
   const [formError, setFormError] = useState<string | null>(null);
@@ -29,11 +44,14 @@ export default function DepartmentsPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [showCreate, setShowCreate] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [savingDepartment, setSavingDepartment] = useState(false);
 
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null);
   const selectedDepartment = selectedDepartmentId
     ? (departments.find((d) => d.id === selectedDepartmentId) ?? null)
     : null;
+
+  const [churchMembers, setChurchMembers] = useState<MemberListItem[]>([]);
 
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -43,16 +61,52 @@ export default function DepartmentsPage() {
     }
   }, [showCreate]);
 
+  useEffect(() => {
+    void getMembers().then(setChurchMembers);
+  }, []);
+
+  const loadModalData = useCallback(
+    async (departmentId: string) => {
+      try {
+        const detail = await fetchDepartmentDetail(departmentId);
+        await Promise.all([
+          loadDepartmentMembers(departmentId),
+          loadDepartmentActivities(departmentId),
+          loadDepartmentExpenseRequests(departmentId),
+        ]);
+        applyDepartmentDetail(departmentId, detail);
+      } catch {
+        await Promise.all([
+          loadDepartmentMembers(departmentId),
+          loadDepartmentActivities(departmentId),
+          loadDepartmentExpenseRequests(departmentId),
+        ]);
+      }
+    },
+    [
+      applyDepartmentDetail,
+      loadDepartmentMembers,
+      loadDepartmentActivities,
+      loadDepartmentExpenseRequests,
+    ]
+  );
+
+  useEffect(() => {
+    if (!selectedDepartmentId) {
+      return;
+    }
+    void loadModalData(selectedDepartmentId);
+  }, [selectedDepartmentId, loadModalData]);
+
   const [formData, setFormData] = useState({
     name: '',
     code: '',
     description: '',
     status: 'active' as 'active' | 'inactive',
-    themeColor: 'navy',
+    themeColor: 'navy' as Department['themeColor'],
     icon: 'prayer',
   });
 
-  // ── Derived stats ──
   const totalDepartments = departments.length;
   const activeDepartments = departments.filter((d) => d.status === 'active').length;
   const inactiveDepartments = departments.filter((d) => d.status === 'inactive').length;
@@ -70,7 +124,6 @@ export default function DepartmentsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // ── Form handlers ──
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -90,7 +143,7 @@ export default function DepartmentsPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleCreateDepartment = () => {
+  const handleCreateDepartment = async () => {
     const name = formData.name.trim();
     const code = formData.code.trim().toUpperCase();
 
@@ -104,51 +157,72 @@ export default function DepartmentsPage() {
       return;
     }
 
-    if (editingDepartment) {
-      updateDepartment({
-        ...editingDepartment,
-        name,
-        code,
-        description: formData.description.trim(),
-        status: formData.status,
-        themeColor: formData.themeColor,
-        icon: formData.icon,
-      });
-      setEditingDepartment(null);
-    } else {
-      const newDepartment: Department = {
-        id: Date.now().toString(),
-        name,
-        code,
-        description: formData.description.trim(),
-        members: 0,
-        activities: 0,
-        budgetUsed: 0,
-        annualBudget: 0,
-        status: formData.status,
-        themeColor: formData.themeColor,
-        icon: formData.icon,
-        dateEstablished: new Date().toISOString(),
-        settings: {
-          autoApprovalThreshold: 5,
-          requiresElderApproval: true,
-          weeklySummary: true,
-          canSubmitAnnouncements: true,
-        },
-      };
-      setDepartments((prev) => [...prev, newDepartment]);
-    }
-
-    setFormData({
-      name: '',
-      code: '',
-      description: '',
-      status: 'active',
-      themeColor: 'navy',
-      icon: 'prayer',
-    });
+    setSavingDepartment(true);
     setFormError(null);
-    setShowCreate(false);
+    setError(null);
+
+    try {
+      if (editingDepartment) {
+        await updateDepartmentRemote(editingDepartment.id, {
+          name,
+          code,
+          description: formData.description.trim(),
+          status: formData.status,
+          themeColor: formData.themeColor,
+          icon: formData.icon,
+        });
+        setEditingDepartment(null);
+      } else {
+        await createDepartmentRemote({
+          name,
+          code,
+          description: formData.description.trim(),
+          status: formData.status,
+          themeColor: formData.themeColor,
+          icon: formData.icon,
+        });
+      }
+
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        status: 'active',
+        themeColor: 'navy',
+        icon: 'prayer',
+      });
+      setShowCreate(false);
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : 'Could not save department');
+    } finally {
+      setSavingDepartment(false);
+    }
+  };
+
+  const openEdit = async (department: Department) => {
+    setEditingDepartment(department);
+    setFormError(null);
+    try {
+      const detail = await fetchDepartmentDetail(department.id);
+      setFormData({
+        name: detail.name,
+        code: detail.code,
+        description: detail.description?.trim() ?? '',
+        status: detail.is_active ? 'active' : 'inactive',
+        themeColor: parseThemeColor(detail.color),
+        icon: detail.icon && !detail.icon.startsWith('data:') ? detail.icon : department.icon,
+      });
+    } catch {
+      setFormData({
+        name: department.name,
+        code: department.code,
+        description: department.description,
+        status: department.status,
+        themeColor: department.themeColor,
+        icon: department.icon,
+      });
+    }
+    setShowCreate(true);
   };
 
   return (
@@ -169,6 +243,7 @@ export default function DepartmentsPage() {
           </div>
 
           <button
+            type="button"
             onClick={() => setShowCreate(true)}
             className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-blue-700 shadow-sm hover:shadow-lg transition-all duration-200"
           >
@@ -176,6 +251,21 @@ export default function DepartmentsPage() {
           </button>
         </div>
       </div>
+
+      {(error || loading) && (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+          {loading ? 'Loading departments…' : error}
+          {error && (
+            <button
+              type="button"
+              className="ml-3 text-blue-600 underline"
+              onClick={() => void refreshDepartments()}
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <SummaryCard title="Total Departments" value={totalDepartments} color="text-blue-600" />
@@ -213,15 +303,16 @@ export default function DepartmentsPage() {
         </select>
       </div>
 
-      {filteredDepartments.length === 0 ? (
+      {!loading && filteredDepartments.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
           <div className="text-5xl mb-6">🏛️</div>
           <h3 className="text-2xl font-semibold text-gray-800 mb-3">No Departments Yet</h3>
           <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            You haven't created any church departments yet. Start by creating your first department
-            to begin managing ministries.
+            You haven&apos;t created any church departments yet. Start by creating your first
+            department to begin managing ministries.
           </p>
           <button
+            type="button"
             onClick={() => setShowCreate(true)}
             className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition"
           >
@@ -235,18 +326,7 @@ export default function DepartmentsPage() {
               key={dept.id}
               department={dept}
               onViewDetails={(department) => setSelectedDepartmentId(department.id)}
-              onEdit={(department) => {
-                setEditingDepartment(department);
-                setFormData({
-                  name: department.name,
-                  code: department.code,
-                  description: department.description,
-                  status: department.status,
-                  themeColor: department.themeColor,
-                  icon: department.icon,
-                });
-                setShowCreate(true);
-              }}
+              onEdit={(department) => void openEdit(department)}
             />
           ))}
         </div>
@@ -259,10 +339,11 @@ export default function DepartmentsPage() {
         setFormData={setFormData}
         handleChange={handleChange}
         handleIconUpload={handleIconUpload}
-        handleCreateDepartment={handleCreateDepartment}
+        handleCreateDepartment={() => void handleCreateDepartment()}
         formRef={formRef}
         formError={formError}
         editingDepartment={!!editingDepartment}
+        saving={savingDepartment}
       />
 
       {selectedDepartment && (
@@ -278,14 +359,24 @@ export default function DepartmentsPage() {
                   : members,
             }));
           }}
+          churchMembers={churchMembers}
           activities={departmentActivitiesMap[selectedDepartment.id] || []}
-          onAddActivity={(newActivity) => addActivity(selectedDepartment.id, newActivity)}
-          onDeleteActivity={(activityId) => deleteActivity(selectedDepartment.id, activityId)}
+          onAddActivity={async (payload) => {
+            await addActivityRemote(
+              selectedDepartment.id,
+              buildCreateActivityBodyFromScheduledAt(payload)
+            );
+          }}
+          onDeleteActivity={(activityId) =>
+            void deleteActivityRemote(selectedDepartment.id, activityId)
+          }
           expenses={departmentExpensesMap[selectedDepartment.id] || []}
-          onSubmitExpense={(expense) => submitExpense(selectedDepartment.id, expense)}
           onClose={() => setSelectedDepartmentId(null)}
           onUpdateDepartment={(updatedDepartment) => {
             updateDepartment(updatedDepartment);
+          }}
+          onAssignMember={async (memberId, role) => {
+            await assignMember(selectedDepartment.id, memberId, role);
           }}
         />
       )}

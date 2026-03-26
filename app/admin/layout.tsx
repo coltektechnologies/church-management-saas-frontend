@@ -4,8 +4,10 @@ import { useSyncExternalStore, type ReactNode } from 'react';
 import { ChurchProfileProvider, useChurchProfile } from '@/components/admin/dashboard/contexts';
 import { AppDataProvider } from '@/components/admin/dashboard/contexts/AppDataContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { useSettingsApiSync } from '@/hooks/useSettingsApiSync';
 import AdminSidebar from '@/components/admin/adminSidebar';
 import TopNavbar from '@/components/admin/TopNavbar';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 
 function useIsMounted(): boolean {
   return useSyncExternalStore(
@@ -17,6 +19,7 @@ function useIsMounted(): boolean {
 
 function AdminShell({ children }: { children: ReactNode }) {
   const { profile } = useChurchProfile();
+  useSettingsApiSync();
   const mounted = useIsMounted();
   const dark = mounted ? (profile.darkMode ?? false) : false;
 
@@ -62,12 +65,14 @@ function AdminShell({ children }: { children: ReactNode }) {
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider defaultRole="admin">
-      <ChurchProfileProvider>
-        <AppDataProvider>
-          <AdminShell>{children}</AdminShell>
-        </AppDataProvider>
-      </ChurchProfileProvider>
-    </AuthProvider>
+    <RequireAuth>
+      <AuthProvider defaultRole="admin">
+        <ChurchProfileProvider>
+          <AppDataProvider>
+            <AdminShell>{children}</AdminShell>
+          </AppDataProvider>
+        </ChurchProfileProvider>
+      </AuthProvider>
+    </RequireAuth>
   );
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { X, Printer, Save, Eye, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
-import { BudgetFormData, BudgetRequest } from '@/types/budget';
+import { BudgetFormData } from '@/types/budget';
 import BasicInfoStep from '@/components/admin/budgetWizard/BasicInfoStep';
 import BudgetItemsStep from '@/components/admin/budgetWizard/BudgetItemsStep';
 import JustificationStep from '@/components/admin/budgetWizard/JustificationStep';
@@ -11,6 +11,7 @@ import DocumentsStep from '@/components/admin/budgetWizard/DocumentsStep';
 import ReviewStep from '@/components/admin/budgetWizard/ReviewStep';
 import BudgetDashboardHeader from '@/components/admin/budgetWizard/BudgetDashboardHeader';
 import { useDepartments } from '@/context/DepartmentsContext';
+import { submitProgramBudgetWizard } from '@/lib/programBudgetApi';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -29,7 +30,7 @@ function loadDraft(departmentId: string): Partial<BudgetFormData> {
 }
 
 export default function BudgetWizardPage() {
-  const { departments, budgetRequests, submitBudgetRequest } = useDepartments();
+  const { departments, budgetRequests, syncDepartmentBudgetFromApi } = useDepartments();
   const { role } = useAuth();
   const { can } = usePermissions();
   const params = useParams();
@@ -43,6 +44,8 @@ export default function BudgetWizardPage() {
   const [draftSaved, setDraftSaved] = useState(false);
   const [stepError, setStepError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Lazy initializer — reads draft from localStorage once on mount, no useEffect needed
   const [formData, setFormData] = useState<BudgetFormData>(() => {
@@ -138,6 +141,7 @@ export default function BudgetWizardPage() {
       return;
     }
     setStepError('');
+    setSubmitError('');
     setStep((prev) => Math.min(prev + 1, 5));
   };
 
@@ -148,27 +152,30 @@ export default function BudgetWizardPage() {
     setTimeout(() => setDraftSaved(false), 3000);
   };
 
-  const handleSubmit = () => {
-    if (!currentDepartment) {
+  const handleSubmit = async () => {
+    if (!currentDepartment || submitting) {
       return;
     }
-    const request: BudgetRequest = {
-      id: crypto.randomUUID(),
-      departmentId: currentDepartment.id,
-      fiscalYear: formData.fiscalYear,
-      title: formData.title,
-      departmentHead: formData.departmentHead ?? '',
-      grandTotal,
-      personnel: formData.personnel,
-      programs: formData.programs,
-      equipment: formData.equipment,
-      training: formData.training,
-      status: 'pending',
-      submittedAt: new Date().toISOString(),
-    };
-    submitBudgetRequest(request);
-    localStorage.removeItem(`budget_draft_${departmentId}`);
-    setSubmitted(true);
+    const err1 = validateStep(1);
+    const err2 = validateStep(2);
+    const err3 = validateStep(3);
+    const firstError = err1 || err2 || err3;
+    if (firstError) {
+      setSubmitError(firstError);
+      return;
+    }
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      await submitProgramBudgetWizard(departmentId, formData);
+      await syncDepartmentBudgetFromApi(departmentId);
+      localStorage.removeItem(`budget_draft_${departmentId}`);
+      setSubmitted(true);
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Failed to submit budget');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -285,9 +292,9 @@ export default function BudgetWizardPage() {
         </div>
 
         {/* Validation error */}
-        {stepError && (
+        {(stepError || submitError) && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
-            ⚠️ {stepError}
+            ⚠️ {stepError || submitError}
           </p>
         )}
 
@@ -325,10 +332,12 @@ export default function BudgetWizardPage() {
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition uppercase tracking-wide"
+                type="button"
+                disabled={submitting}
+                onClick={() => void handleSubmit()}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit Budget
+                {submitting ? 'Submitting…' : 'Submit Budget'}
               </button>
             )}
           </div>
@@ -516,17 +525,19 @@ export default function BudgetWizardPage() {
                 Close
               </button>
               <button
+                type="button"
+                disabled={submitting}
                 onClick={() => {
                   setShowPreview(false);
                   if (step === 5) {
-                    handleSubmit();
+                    void handleSubmit();
                   } else {
                     setStep(5);
                   }
                 }}
-                className="px-5 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition"
+                className="px-5 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {step === 5 ? 'Submit Budget' : 'Go to Review'}
+                {step === 5 ? (submitting ? 'Submitting…' : 'Submit Budget') : 'Go to Review'}
               </button>
             </div>
           </div>

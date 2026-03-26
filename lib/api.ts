@@ -81,6 +81,52 @@ export function clearStoredRegistrationSessionId(): void {
   localStorage.removeItem(REGISTRATION_SESSION_KEY);
 }
 
+// Draft: formData + currentStep + sessionId (survives refresh / back navigation within tab)
+const REGISTRATION_DRAFT_KEY = 'church_registration_draft';
+
+export interface RegistrationDraft {
+  formData: Record<string, string>;
+  currentStep: number;
+  sessionId: string | null;
+}
+
+export function getRegistrationDraft(): RegistrationDraft | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  try {
+    const raw = sessionStorage.getItem(REGISTRATION_DRAFT_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as RegistrationDraft;
+    if (!parsed || typeof parsed.currentStep !== 'number') {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function setRegistrationDraft(draft: RegistrationDraft): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  try {
+    sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    // Ignore quota / private mode
+  }
+}
+
+export function clearRegistrationDraft(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  sessionStorage.removeItem(REGISTRATION_DRAFT_KEY);
+}
+
 /** Extract first error message from API error response. */
 function apiErrorMessage(data: Record<string, unknown>, fallback: string): string {
   const errors = data?.errors as Record<string, unknown> | undefined;
@@ -309,7 +355,7 @@ export async function createMember(payload: CreateMemberPayload): Promise<Create
     throw new Error('You must be logged in to add a member');
   }
 
-  const res = await fetch(`${base}/members/members/create/`, {
+  const res = await fetch(`${base}/members/create/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -506,12 +552,52 @@ export async function getTitheOfferingStats(periodMonths = 9): Promise<TitheOffe
     };
   }
 
-  const res = await fetch(
-    `${base}/analytics/finance/tithe-offerings/?period_months=${periodMonths}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  try {
+    const res = await fetch(
+      `${base}/analytics/finance/tithe-offerings/?period_months=${periodMonths}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  if (!res.ok) {
+    if (!res.ok) {
+      return {
+        monthly_trend: [],
+        this_month: {
+          tithe_total: '0',
+          offering_total: '0',
+          tithe_by_week: [
+            { name: 'W1', value: 0 },
+            { name: 'W2', value: 0 },
+            { name: 'W3', value: 0 },
+            { name: 'W4', value: 0 },
+          ],
+          offering_by_week: [
+            { name: 'W1', value: 0 },
+            { name: 'W2', value: 0 },
+            { name: 'W3', value: 0 },
+            { name: 'W4', value: 0 },
+          ],
+        },
+      };
+    }
+
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    const trend = (data.monthly_trend as TitheOfferingStats['monthly_trend']) ?? [];
+    const tm = (data.this_month as TitheOfferingStats['this_month']) ?? {
+      tithe_total: '0',
+      offering_total: '0',
+      tithe_by_week: [],
+      offering_by_week: [],
+    };
+    return {
+      monthly_trend: trend,
+      this_month: {
+        tithe_total: String(tm.tithe_total ?? '0'),
+        offering_total: String(tm.offering_total ?? '0'),
+        tithe_by_week: Array.isArray(tm.tithe_by_week) ? tm.tithe_by_week : [],
+        offering_by_week: Array.isArray(tm.offering_by_week) ? tm.offering_by_week : [],
+      },
+    };
+  } catch {
     return {
       monthly_trend: [],
       this_month: {
@@ -532,24 +618,6 @@ export async function getTitheOfferingStats(periodMonths = 9): Promise<TitheOffe
       },
     };
   }
-
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  const trend = (data.monthly_trend as TitheOfferingStats['monthly_trend']) ?? [];
-  const tm = (data.this_month as TitheOfferingStats['this_month']) ?? {
-    tithe_total: '0',
-    offering_total: '0',
-    tithe_by_week: [],
-    offering_by_week: [],
-  };
-  return {
-    monthly_trend: trend,
-    this_month: {
-      tithe_total: String(tm.tithe_total ?? '0'),
-      offering_total: String(tm.offering_total ?? '0'),
-      tithe_by_week: Array.isArray(tm.tithe_by_week) ? tm.tithe_by_week : [],
-      offering_by_week: Array.isArray(tm.offering_by_week) ? tm.offering_by_week : [],
-    },
-  };
 }
 
 export async function getMemberStats(): Promise<MemberStats> {
@@ -559,26 +627,30 @@ export async function getMemberStats(): Promise<MemberStats> {
     return emptyMemberStats;
   }
 
-  const res = await fetch(`${base}/analytics/members/stats/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  try {
+    const res = await fetch(`${base}/analytics/members/stats/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  if (!res.ok) {
+    if (!res.ok) {
+      return emptyMemberStats;
+    }
+
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    return {
+      total_members: (data.total_members as number) ?? 0,
+      total_change_percent: (data.total_change_percent as number) ?? 0,
+      active_members: (data.active_members as number) ?? 0,
+      active_change_percent: (data.active_change_percent as number) ?? 0,
+      inactive_members: (data.inactive_members as number) ?? 0,
+      inactive_change_percent: (data.inactive_change_percent as number) ?? 0,
+      new_members_this_month: (data.new_members_this_month as number) ?? 0,
+      new_members_change_percent: (data.new_members_change_percent as number) ?? 0,
+      pending_approvals: (data.pending_approvals as number) ?? 0,
+    };
+  } catch {
     return emptyMemberStats;
   }
-
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-  return {
-    total_members: (data.total_members as number) ?? 0,
-    total_change_percent: (data.total_change_percent as number) ?? 0,
-    active_members: (data.active_members as number) ?? 0,
-    active_change_percent: (data.active_change_percent as number) ?? 0,
-    inactive_members: (data.inactive_members as number) ?? 0,
-    inactive_change_percent: (data.inactive_change_percent as number) ?? 0,
-    new_members_this_month: (data.new_members_this_month as number) ?? 0,
-    new_members_change_percent: (data.new_members_change_percent as number) ?? 0,
-    pending_approvals: (data.pending_approvals as number) ?? 0,
-  };
 }
 
 export async function registrationVerifyPayment(

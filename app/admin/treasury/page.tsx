@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-// import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SummaryCards } from '@/components/treasury/SummaryCards';
 import { QuickActions } from '@/components/treasury/QuickActions';
 import { IncomeExpenseChart } from '@/components/treasury/IncomeExpenseChart';
@@ -12,30 +11,48 @@ import { MemberContributions } from '@/components/treasury/MemberContributions';
 import { DepartmentBudgets } from '@/components/treasury/DepartmentBudgets';
 import { PendingExpenseRequests } from '@/components/treasury/PendingExpenseRequests';
 import {
-  useTreasurySummary,
-  useMonthlyTrend,
-  useRecentTransactions,
-  useIncomeBreakdown,
-  useExpenseBreakdown,
-  useMemberContributions,
+  useApproveExpenseRequest,
   useDepartmentBudgets,
+  useExpenseBreakdown,
+  useIncomeBreakdown,
+  useMemberContributions,
+  useMonthlyTrend,
   usePendingExpenseRequests,
+  useRecentTransactions,
+  useRejectExpenseRequest,
+  useTreasurySummary,
 } from '@/hooks/useTreasury';
 import type { PeriodFilter } from '@/services/treasuryService';
-import { Landmark, FileText, PlusCircle, ArrowLeft } from 'lucide-react';
+import { Landmark, PlusCircle, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const PERIOD_OPTIONS: { label: string; value: PeriodFilter }[] = [
-  { label: 'This Month', value: 'this_week' }, // we keep the value to avoid breaking existing hooks, but change label to This Month
+  { label: 'This Month', value: 'this_week' },
   { label: 'This Quarter', value: 'this_quarter' },
   { label: 'This Year', value: 'this_year' },
   { label: 'Custom', value: 'custom' },
 ];
 
+function defaultCustomDates() {
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  return [start.toISOString().slice(0, 10), today.toISOString().slice(0, 10)] as const;
+}
+
 export default function TreasuryPage() {
   const [period, setPeriod] = useState<PeriodFilter>('this_year');
-  const filters = { period };
+  const [customFrom, setCustomFrom] = useState(defaultCustomDates()[0]);
+  const [customTo, setCustomTo] = useState(defaultCustomDates()[1]);
+
+  const filters: { period: PeriodFilter; from?: string; to?: string } = { period };
+  if (period === 'custom') {
+    filters.from = customFrom;
+    filters.to = customTo;
+  }
+
   const router = useRouter();
+  const approveMutation = useApproveExpenseRequest();
+  const rejectMutation = useRejectExpenseRequest();
 
   /* ─── Data hooks ─── */
   const { data: summary, isLoading: loadingSummary } = useTreasurySummary(filters);
@@ -43,7 +60,7 @@ export default function TreasuryPage() {
   const { data: transactions, isLoading: loadingTxns } = useRecentTransactions(filters);
   const { data: incomeBreakdown, isLoading: loadingIncome } = useIncomeBreakdown(filters);
   const { data: expenseBreakdown, isLoading: loadingExpense } = useExpenseBreakdown(filters);
-  const { data: memberContribs, isLoading: loadingMembers } = useMemberContributions();
+  const { data: memberContribs, isLoading: loadingMembers } = useMemberContributions(filters);
   const { data: deptBudgets, isLoading: loadingBudgets } = useDepartmentBudgets();
   const { data: expenseRequests, isLoading: loadingRequests } = usePendingExpenseRequests();
 
@@ -102,27 +119,22 @@ export default function TreasuryPage() {
         ))}
 
         <div
-          className={`${period !== 'custom' ? 'opacity-0 w-0 overflow-hidden scale-95' : 'opacity-100 scale-100'} ease-in-out duration-500  `}
+          className={`flex items-center gap-2 ${period !== 'custom' ? 'opacity-0 w-0 overflow-hidden scale-95' : 'opacity-100 scale-100'} ease-in-out duration-500`}
         >
           <input
-            placeholder="_"
             type="date"
-            className={`px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer bg-background text-foreground border-border hover:border-foreground/30`}
+            value={customFrom}
+            onChange={(e) => setCustomFrom(e.target.value)}
+            className="px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer bg-background text-foreground border-border hover:border-foreground/30"
           />
-          <span>-</span>
+          <span className="text-muted-foreground">–</span>
           <input
-            placeholder="_"
             type="date"
-            className={`px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer bg-background text-foreground border-border hover:border-foreground/30`}
+            value={customTo}
+            onChange={(e) => setCustomTo(e.target.value)}
+            className="px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer bg-background text-foreground border-border hover:border-foreground/30"
           />
         </div>
-
-        <Button
-          size="sm"
-          className="rounded-md text-[13px] font-medium transition-all duration-150 h-8 px-5 ml-1 cursor-pointer bg-[#2563eb] hover:bg-[#1d4ed8] text-white border-none"
-        >
-          Apply Filter
-        </Button>
       </div>
 
       {/* ─── Summary Cards ─── */}
@@ -156,12 +168,11 @@ export default function TreasuryPage() {
         <PendingExpenseRequests
           data={expenseRequests}
           isLoading={loadingRequests}
-          // eslint-disable-next-line no-console
-          onApprove={(id) => console.log('Approve', id)}
-          // eslint-disable-next-line no-console
-          onReject={(id) => console.log('Reject', id)}
-          // eslint-disable-next-line no-console
-          onView={(id) => console.log('View', id)}
+          onApprove={(id) => approveMutation.mutate(id)}
+          onReject={(id) => rejectMutation.mutate({ id })}
+          onView={() => {}}
+          isApproving={approveMutation.isPending}
+          isRejecting={rejectMutation.isPending}
         />
       </div>
     </div>
