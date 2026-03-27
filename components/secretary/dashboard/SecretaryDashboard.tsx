@@ -97,9 +97,7 @@ export default function SecretaryDashboard() {
     <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Greeting */}
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">
-          Good to see you, {firstName}! 👋
-        </h1>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">Welcome, {firstName}! 👋</h1>
         <p className="text-sm text-muted-foreground mt-1">{activitySummary}</p>
       </div>
 

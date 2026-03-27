@@ -48,22 +48,15 @@ const MONTH_NAMES = [
 ];
 
 // ── Extended activity shape ───────────────────────────────────────────────────
-// The base AppData activity type only guarantees a small set of fields.
-// The ActivityContext also emits a `type` field (e.g. 'member_added') that
-// is not part of the base interface. We extend here so we can read it without
-// casting to `any`.
 interface ActivityWithType {
-  timestamp: number; // fixed: AppActivity extends ActivityEntry which uses number
+  timestamp: number;
   tab?: string;
   entity?: string;
   action?: string;
   type?: string;
 }
 
-// ── MOCK DATA — remove this block when real member data is wired up ───────────
-// This is demo data for team presentation only.
-// Once the Members page is connected and activity log has real member events,
-// this array will be ignored automatically (see useGrowthData below).
+// ── MOCK DATA ─────────────────────────────────────────────────────────────────
 const MOCK_DATA = [
   { name: 'Jan', members: 45 },
   { name: 'Feb', members: 62 },
@@ -78,7 +71,6 @@ const MOCK_DATA = [
   { name: 'Nov', members: 160 },
   { name: 'Dec', members: 178 },
 ];
-// ── END MOCK DATA ─────────────────────────────────────────────────────────────
 
 function isMemberActivity(a: ActivityWithType): boolean {
   return (
@@ -89,6 +81,59 @@ function isMemberActivity(a: ActivityWithType): boolean {
     a.type === 'member_updated' ||
     a.type === 'member_removed'
   );
+}
+
+// ── Format large numbers on Y-axis (e.g. 5000 → 5k) ─────────────────────────
+function formatYAxis(value: number): string {
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}k`;
+  }
+  return String(value);
+}
+
+// ── Derive a nice Y-axis upper bound with breathing room ─────────────────────
+function niceMax(max: number): number {
+  if (max === 0) {
+    return 10;
+  }
+  const withPadding = max * 1.15;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(withPadding)));
+  const nice = Math.ceil(withPadding / magnitude) * magnitude;
+  return nice;
+}
+
+// ── Derive chart container height from data magnitude ─────────────────────────
+function deriveChartHeight(maxValue: number): number {
+  if (maxValue <= 200) {
+    return 260;
+  }
+  if (maxValue <= 1_000) {
+    return 300;
+  }
+  if (maxValue <= 5_000) {
+    return 340;
+  }
+  if (maxValue <= 20_000) {
+    return 380;
+  }
+  return 420;
+}
+
+// ── Y-axis tick count: more members → more ticks for readability ──────────────
+function deriveTickCount(maxValue: number): number {
+  if (maxValue <= 200) {
+    return 5;
+  }
+  if (maxValue <= 1_000) {
+    return 6;
+  }
+  if (maxValue <= 5_000) {
+    return 7;
+  }
+  return 8;
 }
 
 // ── Live growth data derived from activity log ────────────────────────────────
@@ -179,6 +224,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   }
   const item = payload[0];
   const color = item?.fill ?? item?.stroke ?? item?.color ?? '#000';
+  const value = item?.value ?? 0;
   return (
     <div
       style={{
@@ -193,13 +239,43 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: 2, fontSize: 10 }}>
         {label}
       </p>
-      <p style={{ color, fontWeight: 700, fontSize: 12 }}>{item?.value} members</p>
+      <p style={{ color, fontWeight: 700, fontSize: 12 }}>
+        {value.toLocaleString()} member{value !== 1 ? 's' : ''}
+      </p>
     </div>
   );
 }
 
 function renderPieLabel(props: PieLabelRenderProps) {
-  return `${props.name ?? ''}: ${props.value ?? ''}`;
+  const pct = typeof props.percent === 'number' ? `${(props.percent * 100).toFixed(1)}%` : '';
+  return `${props.name ?? ''} ${pct}`;
+}
+
+function toQuarterData(data: { name: string; members: number }[]) {
+  const quarters: Record<string, number> = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+  const monthToQ: Record<string, keyof typeof quarters> = {
+    Jan: 'Q1',
+    Feb: 'Q1',
+    Mar: 'Q1',
+    Apr: 'Q2',
+    May: 'Q2',
+    Jun: 'Q2',
+    Jul: 'Q3',
+    Aug: 'Q3',
+    Sep: 'Q3',
+    Oct: 'Q4',
+    Nov: 'Q4',
+    Dec: 'Q4',
+  };
+  for (const d of data) {
+    const q = monthToQ[d.name];
+    if (q) {
+      quarters[q] += d.members;
+    }
+  }
+  return Object.entries(quarters)
+    .filter(([, v]) => v > 0)
+    .map(([name, members]) => ({ name, members }));
 }
 
 interface GridProps {
@@ -278,6 +354,263 @@ function SmartDropdown({ open, onClose, trigger, children, minWidth = 220 }: Sma
   );
 }
 
+// ── ChartTypePicker — two-level dropdown (family + sub) ───────────────────────
+//
+// Replaces the flat <select> for chart type. Renders a trigger button that
+// shows the current sub-type label, and on click opens a two-column panel:
+//   left  → family list  (Bar/Column, Line, Area, Pie/Donut)
+//   right → sub-options grid for the hovered family
+//
+// The trigger button uses `width: max-content` so it only takes as much
+// horizontal space as the selected label actually needs — no fixed width.
+
+interface ChartSubOption {
+  id: string;
+  label: string;
+  icon: string;
+  desc: string;
+}
+interface ChartFamily {
+  id: string;
+  label: string;
+  icon: string;
+  subs: ChartSubOption[];
+}
+
+const CHART_FAMILIES: ChartFamily[] = [
+  {
+    id: 'bar',
+    label: 'Bar / Column',
+    icon: '▐',
+    subs: [
+      { id: 'bar', label: 'Clustered Column', icon: '▐▐', desc: 'Side-by-side columns' },
+      { id: 'bar-stacked', label: 'Stacked Column', icon: '▐̲', desc: 'Columns stacked to total' },
+      { id: 'bar-100', label: '100% Stacked', icon: '%', desc: 'Normalised to 100%' },
+      { id: 'bar-horizontal', label: 'Horizontal Bar', icon: '═', desc: 'Bars run left → right' },
+    ],
+  },
+  {
+    id: 'line',
+    label: 'Line',
+    icon: '╱',
+    subs: [
+      { id: 'line', label: 'Line', icon: '╱', desc: 'Straight segments' },
+      { id: 'line-smooth', label: 'Smooth Line', icon: '∿', desc: 'Curved monotone' },
+      { id: 'line-stepped', label: 'Step Line', icon: '⌐', desc: 'Staircase steps' },
+      { id: 'line-dots', label: 'Line + Markers', icon: '•╱•', desc: 'Dots at every point' },
+    ],
+  },
+  {
+    id: 'area',
+    label: 'Area',
+    icon: '◺',
+    subs: [
+      { id: 'area', label: 'Gradient Area', icon: '◺', desc: 'Filled with gradient' },
+      { id: 'area-solid', label: 'Solid Area', icon: '▬', desc: 'Flat solid fill' },
+      { id: 'area-stacked', label: 'Stacked Area', icon: '◺◺', desc: 'Multiple series stacked' },
+      { id: 'area-stepped', label: 'Step Area', icon: '⌐▬', desc: 'Step-filled area' },
+    ],
+  },
+  {
+    id: 'pie',
+    label: 'Pie / Donut',
+    icon: '◉',
+    subs: [
+      { id: 'pie', label: 'Donut', icon: '◉', desc: 'Ring with centre total' },
+      { id: 'pie-pie', label: 'Pie', icon: '●', desc: 'Classic filled pie' },
+      { id: 'pie-semi', label: 'Semi', icon: '◓', desc: 'Half-donut gauge' },
+      { id: 'pie-quarter', label: 'Quarterly', icon: '◑', desc: 'Grouped by quarter' },
+    ],
+  },
+];
+
+const ALL_SUBS = CHART_FAMILIES.flatMap((f) => f.subs);
+const subById = (id: string) => ALL_SUBS.find((s) => s.id === id);
+const familyOfSub = (subId: string) =>
+  CHART_FAMILIES.find((f) => f.subs.some((s) => s.id === subId));
+
+interface ChartTypePickerProps {
+  value: string;
+  onChange: (id: string) => void;
+}
+
+function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
+  const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(() => familyOfSub(value)?.id ?? 'bar');
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const [flip, setFlip] = useState(false);
+
+  const currentSub = subById(value);
+  const currentFamily = familyOfSub(value);
+  const hoveredFamily = CHART_FAMILIES.find((f) => f.id === hovered) ?? CHART_FAMILIES[0];
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  // Flip panel left if it would overflow viewport
+  useEffect(() => {
+    if (!open || !dropRef.current) {
+      return;
+    }
+    const rect = dropRef.current.getBoundingClientRect();
+    setFlip(rect.right > window.innerWidth - 8);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      {/* ── Trigger button — width hugs the label text ── */}
+      <button
+        onClick={() => {
+          setOpen((o) => !o);
+          setHovered(familyOfSub(value)?.id ?? 'bar');
+        }}
+        className="flex items-center gap-1 text-[9px] sm:text-[10px] border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground hover:bg-muted transition-colors"
+        style={{ width: 'max-content' }}
+      >
+        <span style={{ fontSize: 13, lineHeight: 1 }}>{currentSub?.icon ?? '▐▐'}</span>
+        <span className="truncate" style={{ maxWidth: 96 }}>
+          {currentSub?.label ?? 'Chart type'}
+        </span>
+        <ChevronDown size={10} className="text-muted-foreground shrink-0" />
+      </button>
+
+      {/* ── Drop panel ── */}
+      {open && (
+        <div
+          ref={dropRef}
+          className="absolute bg-card border border-border rounded-xl shadow-2xl p-3"
+          style={{
+            top: '100%',
+            left: flip ? 'auto' : '0',
+            right: flip ? '0' : 'auto',
+            marginTop: 4,
+            zIndex: 300,
+            // Width is driven by content; two columns side-by-side
+            width: 'max-content',
+            minWidth: 340,
+            maxWidth: '95vw',
+          }}
+        >
+          <div style={{ display: 'flex', gap: 0 }}>
+            {/* ── Left: family list ── */}
+            <div
+              style={{
+                // Width fits the longest family label — no fixed px
+                width: 'max-content',
+                minWidth: 110,
+                borderRight: '1px solid hsl(var(--border))',
+                paddingRight: 8,
+                flexShrink: 0,
+              }}
+            >
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold mb-2 pl-1">
+                Type
+              </p>
+              {CHART_FAMILIES.map((f) => {
+                const isActive = currentFamily?.id === f.id;
+                const isHov = hovered === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    onMouseEnter={() => setHovered(f.id)}
+                    onClick={() => {
+                      onChange(f.subs[0].id);
+                      setOpen(false);
+                    }}
+                    className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors"
+                    style={{
+                      background: isHov ? 'hsl(var(--muted))' : 'transparent',
+                      fontWeight: isActive ? 700 : 400,
+                      color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--foreground))',
+                      fontSize: 11,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <span style={{ fontSize: 14, lineHeight: 1 }}>{f.icon}</span>
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ── Right: sub-option grid ── */}
+            <div style={{ flex: 1, paddingLeft: 10 }}>
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">
+                {hoveredFamily.label}
+              </p>
+              <div
+                style={{
+                  display: 'grid',
+                  // Two columns; each column fits its content — no fixed width
+                  gridTemplateColumns: 'repeat(2, max-content)',
+                  gap: 6,
+                }}
+              >
+                {hoveredFamily.subs.map((s) => {
+                  const active = value === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => {
+                        onChange(s.id);
+                        setOpen(false);
+                      }}
+                      className="flex flex-col items-start gap-1 rounded-xl p-2 border transition-all text-left hover:shadow-md"
+                      style={{
+                        border: active
+                          ? '2px solid hsl(var(--primary))'
+                          : '1.5px solid hsl(var(--border))',
+                        background: active ? 'hsl(var(--primary) / 0.07)' : 'hsl(var(--card))',
+                        // Width hugs content — no overflow, no fixed px
+                        width: 'max-content',
+                        minWidth: 100,
+                      }}
+                    >
+                      <span style={{ fontSize: 20, lineHeight: 1.1, opacity: 0.82 }}>{s.icon}</span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: active ? 700 : 500,
+                          color: 'hsl(var(--foreground))',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {s.label}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 9,
+                          color: 'hsl(var(--muted-foreground))',
+                          lineHeight: 1.3,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {s.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export function MembershipGrowthChart() {
   const { profile, isReady } = useSecretaryProfile();
@@ -296,6 +629,8 @@ export function MembershipGrowthChart() {
 
   const DEFAULT_COLORS = [pc, ac, '#E4002B', '#FFB020', '#6366F1', '#EC4899', '#14B8A6', '#F97316'];
 
+  // chartType now stores the sub-option id (e.g. 'bar', 'line-smooth', 'pie', …)
+  // The render logic below maps sub-ids → Recharts components.
   const [chartType, setChartType] = useState('bar');
   const [rangeMode, setRangeMode] = useState<'preset' | 'custom'>('preset');
   const [presetRange, setPresetRange] = useState('all');
@@ -307,12 +642,36 @@ export function MembershipGrowthChart() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [barColors, setBarColors] = useState<Record<number, string>>({});
   const [selectedBar, setSelectedBar] = useState<number | null>(null);
+  const [showBorder, setShowBorder] = useState(false);
 
   const filteredData = useGrowthData(rangeMode, presetRange, customFrom, customTo);
+
+  const maxValue = useMemo(
+    () => Math.max(0, ...filteredData.map((d) => d.members)),
+    [filteredData]
+  );
+  const yDomainMax = useMemo(() => niceMax(maxValue), [maxValue]);
+  const chartHeight = useMemo(() => deriveChartHeight(maxValue), [maxValue]);
+  const yTickCount = useMemo(() => deriveTickCount(maxValue), [maxValue]);
+
+  const yAxisWidth = useMemo(() => {
+    if (maxValue >= 1_000_000) {
+      return 48;
+    }
+    if (maxValue >= 10_000) {
+      return 44;
+    }
+    if (maxValue >= 1_000) {
+      return 40;
+    }
+    return 32;
+  }, [maxValue]);
+
   const getColor = (i: number) => barColors[i] ?? colors[i % colors.length];
   const primarySeriesColor = colors[0] ?? pc;
   const margin = { top: 8, right: 16, left: 0, bottom: 4 };
   const axisStyle = { fontSize: 11, fill: '#6B7280', fontFamily: 'inherit' };
+
   const xAxisProps = {
     dataKey: 'name' as const,
     tick: axisStyle,
@@ -320,47 +679,155 @@ export function MembershipGrowthChart() {
     tickLine: { stroke: '#D1D5DB', strokeWidth: 1 },
     tickSize: 3,
   };
+
   const yAxisProps = {
     tick: axisStyle,
     axisLine: { stroke: '#D1D5DB', strokeWidth: 1 },
     tickLine: { stroke: '#D1D5DB', strokeWidth: 1 },
     tickSize: 3,
-    width: 32,
+    width: yAxisWidth,
+    domain: [0, yDomainMax] as [number, number],
+    tickCount: yTickCount,
+    tickFormatter: formatYAxis,
+    allowDataOverflow: false,
   };
 
   const { activities } = useAppData();
   const usingMockData = !(activities as ActivityWithType[]).some(isMemberActivity);
 
+  // Derive the family from the chosen sub-id
+  const activeFamily = familyOfSub(chartType)?.id ?? 'bar';
+
+  // Curve / stepped helpers for line + area
+  type CurveType = 'linear' | 'monotone' | 'step';
+  const curveFor = (): CurveType => {
+    if (chartType.includes('smooth')) {
+      return 'monotone';
+    }
+    if (chartType.includes('step') || chartType.includes('stepped')) {
+      return 'step';
+    }
+    return 'linear';
+  };
+  const dotRadius = chartType === 'line-dots' ? 4 : 2.5;
+
   const renderChart = () => {
-    if (chartType === 'pie') {
+    // ── PIE / DONUT ───────────────────────────────────────────────────────────
+    if (activeFamily === 'pie') {
+      const pieData = toQuarterData(filteredData);
+      const total = pieData.reduce((s, d) => s + d.members, 0);
+      const isSolid = chartType === 'pie-pie';
+      const isSemi = chartType === 'pie-semi';
+      const innerRadius = isSolid ? '0%' : isSemi ? '55%' : '48%';
+      const outerRadius = '70%';
+      const startAngle = isSemi ? 180 : 0;
+      const endAngle = isSemi ? 0 : 360;
+      const cy = isSemi ? '70%' : '50%';
+
       return (
         <PieChart>
           <Pie
-            data={filteredData}
+            data={pieData}
             dataKey="members"
             nameKey="name"
             cx="50%"
-            cy="50%"
-            outerRadius="70%"
-            label={renderPieLabel}
-            strokeWidth={1}
+            cy={cy}
+            innerRadius={innerRadius}
+            outerRadius={outerRadius}
+            startAngle={startAngle}
+            endAngle={endAngle}
+            paddingAngle={isSolid ? 1 : 3}
+            strokeWidth={2}
             stroke="hsl(var(--card))"
+            label={renderPieLabel}
+            labelLine={{ stroke: '#9CA3AF', strokeWidth: 1 }}
           >
-            {filteredData.map((_, i) => (
+            {pieData.map((_, i) => (
               <Cell
                 key={i}
                 fill={getColor(i)}
                 cursor="pointer"
+                opacity={selectedBar === null || selectedBar === i ? 1 : 0.35}
                 onClick={() => setSelectedBar(selectedBar === i ? null : i)}
               />
             ))}
           </Pie>
+          {/* Centre label — ring variants only */}
+          {!isSolid && !isSemi && (
+            <>
+              <text
+                x="50%"
+                y="46%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  fill: 'hsl(var(--foreground))',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {formatYAxis(total)}
+              </text>
+              <text
+                x="50%"
+                y="57%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                style={{ fontSize: 10, fill: '#6B7280', fontFamily: 'inherit' }}
+              >
+                members
+              </text>
+            </>
+          )}
           <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: 11, color: '#6B7280' }} />
+          <Legend
+            wrapperStyle={{ fontSize: 11, color: '#6B7280', paddingTop: 8 }}
+            formatter={(value, entry) => (
+              <span style={{ color: '#6B7280' }}>
+                {value} —{' '}
+                {(
+                  (entry as { payload?: { members: number } }).payload?.members ?? 0
+                ).toLocaleString()}
+              </span>
+            )}
+          />
         </PieChart>
       );
     }
-    if (chartType === 'line') {
+
+    // ── AREA ──────────────────────────────────────────────────────────────────
+    if (activeFamily === 'area') {
+      const isSolidFill = chartType === 'area-solid';
+      return (
+        <AreaChart data={filteredData} margin={margin}>
+          {!isSolidFill && (
+            <defs>
+              <linearGradient id="areaGradSec" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={primarySeriesColor} stopOpacity={0.25} />
+                <stop offset="95%" stopColor={primarySeriesColor} stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+          )}
+          <ChartGrid show={showGrid} style={gridStyle} />
+          <XAxis {...xAxisProps} />
+          <YAxis {...yAxisProps} />
+          <Tooltip content={<CustomTooltip />} />
+          <Area
+            type={curveFor()}
+            dataKey="members"
+            stroke={primarySeriesColor}
+            strokeWidth={1.5}
+            fill={isSolidFill ? primarySeriesColor : 'url(#areaGradSec)'}
+            fillOpacity={isSolidFill ? 0.15 : 1}
+            dot={{ fill: primarySeriesColor, r: 2.5, strokeWidth: 0 }}
+          />
+        </AreaChart>
+      );
+    }
+
+    // ── LINE ──────────────────────────────────────────────────────────────────
+    if (activeFamily === 'line') {
       return (
         <LineChart data={filteredData} margin={margin}>
           <ChartGrid show={showGrid} style={gridStyle} />
@@ -368,54 +835,71 @@ export function MembershipGrowthChart() {
           <YAxis {...yAxisProps} />
           <Tooltip content={<CustomTooltip />} />
           <Line
-            type="linear"
+            type={curveFor()}
             dataKey="members"
             stroke={primarySeriesColor}
             strokeWidth={1.5}
-            dot={{ fill: primarySeriesColor, r: 3, strokeWidth: 0 }}
+            dot={{ fill: primarySeriesColor, r: dotRadius, strokeWidth: 0 }}
             activeDot={{ r: 5, strokeWidth: 0 }}
           />
         </LineChart>
       );
     }
-    if (chartType === 'area') {
-      return (
-        <AreaChart data={filteredData} margin={margin}>
-          <defs>
-            <linearGradient id="areaGradSec" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={primarySeriesColor} stopOpacity={0.25} />
-              <stop offset="95%" stopColor={primarySeriesColor} stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <ChartGrid show={showGrid} style={gridStyle} />
-          <XAxis {...xAxisProps} />
-          <YAxis {...yAxisProps} />
-          <Tooltip content={<CustomTooltip />} />
-          <Area
-            type="linear"
-            dataKey="members"
-            stroke={primarySeriesColor}
-            strokeWidth={1.5}
-            fill="url(#areaGradSec)"
-            dot={{ fill: primarySeriesColor, r: 2.5, strokeWidth: 0 }}
-          />
-        </AreaChart>
-      );
-    }
+
+    // ── BAR (clustered / stacked / 100% / horizontal) ─────────────────────────
+    const isHorizontal = chartType === 'bar-horizontal';
+    const isStacked100 = chartType === 'bar-100';
+    const isStacked = chartType === 'bar-stacked' || isStacked100;
+    const barData = isStacked100 ? filteredData.map((d) => ({ ...d, members: 100 })) : filteredData;
+
     return (
-      <BarChart data={filteredData} margin={margin} barCategoryGap="20%" barGap={2}>
+      <BarChart
+        data={barData}
+        margin={margin}
+        layout={isHorizontal ? 'vertical' : 'horizontal'}
+        barCategoryGap="20%"
+        barGap={2}
+      >
         <ChartGrid show={showGrid} style={gridStyle} />
-        <XAxis {...xAxisProps} />
-        <YAxis {...yAxisProps} />
+        {isHorizontal ? (
+          <>
+            <XAxis
+              type="number"
+              tick={axisStyle}
+              axisLine={{ stroke: '#D1D5DB', strokeWidth: 1 }}
+              tickLine={{ stroke: '#D1D5DB', strokeWidth: 1 }}
+              tickSize={3}
+              width={yAxisWidth}
+              domain={[0, isStacked100 ? 100 : yDomainMax]}
+              tickCount={yTickCount}
+              tickFormatter={isStacked100 ? (v) => `${v}%` : formatYAxis}
+              allowDataOverflow={false}
+            />
+            <YAxis
+              type="category"
+              dataKey="name"
+              tick={axisStyle}
+              axisLine={{ stroke: '#D1D5DB', strokeWidth: 1 }}
+              tickLine={{ stroke: '#D1D5DB', strokeWidth: 1 }}
+              width={30}
+            />
+          </>
+        ) : (
+          <>
+            <XAxis {...xAxisProps} />
+            <YAxis {...yAxisProps} tickFormatter={isStacked100 ? (v) => `${v}%` : formatYAxis} />
+          </>
+        )}
         <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F3F4F6', opacity: 0.7 }} />
         <Bar
           dataKey="members"
-          radius={[2, 2, 0, 0]}
+          radius={isStacked ? [0, 0, 0, 0] : [2, 2, 0, 0]}
           cursor="pointer"
-          maxBarSize={48}
+          maxBarSize={isHorizontal ? 22 : 48}
+          stackId={isStacked ? 's' : undefined}
           onClick={(_, i) => setSelectedBar(selectedBar === i ? null : i)}
         >
-          {filteredData.map((_, i) => (
+          {barData.map((_, i) => (
             <Cell
               key={i}
               fill={getColor(i)}
@@ -427,12 +911,19 @@ export function MembershipGrowthChart() {
     );
   };
 
+  const isPieOrRadar = activeFamily === 'pie';
+
   return (
     <Card className="bg-card">
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-semibold">Membership Growth</CardTitle>
+            {maxValue > 0 && (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary tabular-nums">
+                {maxValue.toLocaleString()} peak
+              </span>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
@@ -488,8 +979,8 @@ export function MembershipGrowthChart() {
               </div>
             )}
 
-            {/* Grid toggle */}
-            {chartType !== 'pie' && (
+            {/* Grid + Border toggles — hidden for pie */}
+            {!isPieOrRadar && (
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setShowGrid((g) => !g)}
@@ -511,6 +1002,18 @@ export function MembershipGrowthChart() {
                     {gridStyle === 'dashed' ? '- - -' : '———'}
                   </button>
                 )}
+                <button
+                  onClick={() => setShowBorder((b) => !b)}
+                  className={[
+                    'text-[9px] sm:text-[10px] lg:text-xs border rounded-full px-2 sm:px-3 py-1 transition-colors',
+                    showBorder
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-card text-muted-foreground hover:bg-muted',
+                  ].join(' ')}
+                  title="Toggle chart border"
+                >
+                  Border
+                </button>
               </div>
             )}
 
@@ -589,38 +1092,27 @@ export function MembershipGrowthChart() {
               )}
             </SmartDropdown>
 
-            {/* Chart type */}
-            <div className="relative">
-              <select
-                value={chartType}
-                onChange={(e) => setChartType(e.target.value)}
-                className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground appearance-none pr-4 sm:pr-6"
-              >
-                {CHART_TYPES.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                size={10}
-                className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-              />
-            </div>
+            {/* ── Chart type picker — two-level, auto-sizing ── */}
+            <ChartTypePicker
+              value={chartType}
+              onChange={(id) => {
+                setChartType(id);
+                setSelectedBar(null);
+              }}
+            />
           </div>
         </div>
       </CardHeader>
 
-      <Separator className="mx-4" />
+      <Separator className="-mx-0 w-full" />
 
       <CardContent className="pt-3">
         <div
-          className="w-full rounded-sm"
+          className="w-full rounded-sm transition-all duration-300"
           style={{
-            minHeight: 200,
-            height: 'clamp(200px,30vh,300px)',
+            height: chartHeight,
             background: 'hsl(var(--card))',
-            border: '1px solid #E5E7EB',
+            border: showBorder ? '1px solid #E5E7EB' : 'none',
             padding: '6px 2px 4px 0',
           }}
         >
@@ -631,14 +1123,14 @@ export function MembershipGrowthChart() {
 
         <p className="text-[9px] text-muted-foreground mt-1 pl-1">
           {usingMockData
-            ? 'Showing demo data wire Members page with useLogMember() to see real growth'
-            : 'Live data from member activity log · updates automatically'}
+            ? 'Showing demo data — wire Members page with useLogMember() to see real growth'
+            : `Live data · ${filteredData.reduce((s, d) => s + d.members, 0).toLocaleString()} total events in view · updates automatically`}
         </p>
 
         {selectedBar !== null && (
           <p className="text-[10px] text-muted-foreground mt-1 text-center">
-            Selected: {filteredData[selectedBar]?.name} — {filteredData[selectedBar]?.members}{' '}
-            members
+            Selected: {filteredData[selectedBar]?.name} —{' '}
+            {filteredData[selectedBar]?.members.toLocaleString()} members
           </p>
         )}
       </CardContent>
