@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -15,6 +15,8 @@ import logo from '@/assets/logo.svg';
 import { login as apiLogin } from '@/lib/api';
 import { getSafeReturnPath } from '@/lib/safeReturnPath';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
+import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
+import { toast } from 'sonner';
 
 const Login = () => {
   const router = useRouter();
@@ -26,16 +28,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Already logged in (e.g. token in localStorage but cookie missing) — heal cookie + leave login.
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      return;
-    }
-    setChurchSessionCookie();
-    const next = searchParams.get('next');
-    router.replace(getSafeReturnPath(next));
-  }, [router, searchParams]);
+  useRedirectIfAuthenticated();
 
   const styles = {
     wrapper: 'flex min-h-screen flex-col justify-between bg-[#F8F9FA]',
@@ -64,7 +57,9 @@ const Login = () => {
     setError('');
 
     if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password.');
+      const msg = 'Please enter both email and password.';
+      setError(msg);
+      toast.error('Missing credentials', { description: msg });
       return;
     }
 
@@ -83,10 +78,19 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(user));
       setChurchSessionCookie();
       const next = searchParams.get('next');
-      router.push(getSafeReturnPath(next));
+      const dest = getSafeReturnPath(next);
+      toast.success('Signed in successfully', {
+        description:
+          typeof user.email === 'string' && user.email
+            ? `Welcome back — ${user.email}`
+            : 'Redirecting to your dashboard.',
+      });
+      router.push(dest);
     } catch (err) {
       setLoading(false);
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      const msg = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(msg);
+      toast.error('Sign-in failed', { description: msg });
     }
   };
 

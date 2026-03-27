@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { createMember, CreateMemberPayload, getMemberStats } from '@/lib/api';
+import { toast } from 'sonner';
 
 const TITLES = [
   { value: 'Mr', label: 'Mr' },
@@ -252,15 +253,21 @@ export default function AddMemberPage() {
       form.education_level,
     ];
     if (required.some((v) => !v)) {
-      setError('Please fill all required fields.');
+      const msg = 'Please fill all required fields.';
+      setError(msg);
+      toast.error('Form incomplete', { description: msg });
       return;
     }
     if (form.region === 'Other' && !form.custom_region.trim()) {
-      setError('Please specify the region name when selecting "Other".');
+      const msg = 'Please specify the region name when selecting "Other".';
+      setError(msg);
+      toast.error('Form incomplete', { description: msg });
       return;
     }
     if (form.interested_departments.length === 0) {
-      setError('Please select at least one department.');
+      const msg = 'Please select at least one department.';
+      setError(msg);
+      toast.error('Form incomplete', { description: msg });
       return;
     }
 
@@ -297,11 +304,29 @@ export default function AddMemberPage() {
 
     setSubmitting(true);
     try {
-      await createMember(payload);
+      const result = await createMember(payload);
+      const extras: string[] = [];
+      if (result.member_id) {
+        extras.push(`Member ID: ${result.member_id}`);
+      }
+      if (result.system_access_created) {
+        extras.push('Member portal access was created');
+      }
+      if (result.email_sent) {
+        extras.push('Credentials emailed');
+      }
+      if (result.sms_sent) {
+        extras.push('Credentials sent by SMS');
+      }
+      toast.success(result.message || 'Member created successfully', {
+        description: extras.length ? extras.join(' · ') : undefined,
+      });
       router.push('/admin/members');
       return;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create member');
+      const msg = err instanceof Error ? err.message : 'Failed to create member';
+      setError(msg);
+      toast.error('Could not create member', { description: msg });
     } finally {
       setSubmitting(false);
     }

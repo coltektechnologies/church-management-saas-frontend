@@ -1,3 +1,4 @@
+import { logoutToServer } from '@/lib/api';
 import { CHURCH_SESSION_COOKIE, CHURCH_SESSION_COOKIE_VALUE } from '@/lib/churchSessionConstants';
 
 const WEEK_SEC = 60 * 60 * 24 * 7;
@@ -27,4 +28,10 @@ export function clearClientAuth(): void {
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
   clearChurchSessionCookie();
+}
+
+/** Invalidate refresh token on the API, then clear local storage and session cookie. */
+export async function performLogout(): Promise<void> {
+  await logoutToServer();
+  clearClientAuth();
 }
