@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMember, updateMember, type MemberDetail } from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function MemberEditPage() {
   const router = useRouter();
@@ -34,9 +35,12 @@ export default function MemberEditPage() {
     setError('');
     try {
       await updateMember(id, member);
+      toast.success('Member updated', { description: 'Your changes were saved.' });
       router.push(`/admin/members/${id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to update');
+      const msg = e instanceof Error ? e.message : 'Failed to update';
+      setError(msg);
+      toast.error('Could not save member', { description: msg });
     } finally {
       setSubmitting(false);
     }

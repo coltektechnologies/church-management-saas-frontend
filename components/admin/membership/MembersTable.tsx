@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getMembers, deleteMember, type MemberListItem } from '@/lib/api';
+import { toast } from 'sonner';
 import {
   type MemberFilterState,
   applyMemberFilters,
@@ -156,8 +157,11 @@ export default function MembersTable({ filters }: MembersTableProps) {
         next.delete(id);
         return next;
       });
-    } catch {
-      alert('Failed to delete member');
+      toast.success('Member removed', { description: 'The member was deleted from your directory.' });
+    } catch (e) {
+      toast.error('Could not delete member', {
+        description: e instanceof Error ? e.message : 'Please try again.',
+      });
     } finally {
       setDeletingId(null);
     }
@@ -191,15 +195,27 @@ export default function MembersTable({ filters }: MembersTableProps) {
     if (!confirm(`Delete ${selectedCount} member(s)? This cannot be undone.`)) {
       return;
     }
+    let ok = 0;
+    let failed = 0;
     for (const id of selectedIds) {
       try {
         await deleteMember(id);
         setMembers((prev) => prev.filter((m) => m.id !== id));
+        ok += 1;
       } catch {
-        // continue
+        failed += 1;
       }
     }
     clearSelection();
+    if (ok > 0) {
+      toast.success(ok === 1 ? 'Member removed' : `${ok} members removed`);
+    }
+    if (failed > 0) {
+      toast.error(
+        failed === 1 ? 'One member could not be deleted' : `${failed} members could not be deleted`,
+        { description: 'Check permissions or try again.' }
+      );
+    }
   };
 
   return (

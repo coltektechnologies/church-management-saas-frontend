@@ -24,6 +24,7 @@ import {
   getStoredRegistrationSessionId,
 } from '@/lib/api';
 import { clearClientAuth } from '@/lib/churchSessionBrowser';
+import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
 
 const TOTAL_STEPS = 4;
 
@@ -112,6 +113,8 @@ const Signup = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+
+  useRedirectIfAuthenticated();
 
   // Restore draft (sessionId, formData, step) on mount so back navigation / refresh preserves progress
   useEffect(() => {
