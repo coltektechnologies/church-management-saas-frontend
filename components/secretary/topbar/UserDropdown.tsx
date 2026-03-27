@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   User,
   Settings,
@@ -19,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
 import SubscriptionBadge from '@/components/secretary/topbar/SubscriptionBadge';
+import { performLogout } from '@/lib/churchSessionBrowser';
 
 const AVATAR_COLORS = ['#0B2A4A', '#065F46', '#7C3AED', '#B45309', '#9D174D', '#1E40AF'];
 
@@ -57,6 +59,7 @@ export default function UserDropdown({
   hoverBg = 'rgba(0,0,0,0.06)',
   textColor = '#0B2A4A',
 }: Props) {
+  const router = useRouter();
   const { profile: church, isReady: churchReady } = useChurchProfile();
   const { profile: user, updateProfile: updateUser, isReady: userReady } = useSecretaryProfile();
 
@@ -284,7 +287,11 @@ export default function UserDropdown({
             <div className="py-1 border-t border-border rounded-b-xl overflow-hidden">
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={async () => {
+                  setOpen(false);
+                  await performLogout();
+                  router.push('/login');
+                }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-destructive hover:bg-destructive/10 transition-colors"
               >
                 <LogOut size={15} className="flex-shrink-0" />

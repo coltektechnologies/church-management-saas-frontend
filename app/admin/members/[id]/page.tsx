@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getMember, deleteMember, type MemberDetail } from '@/lib/api';
+import { toast } from 'sonner';
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: 'border-green-500 text-green-600 bg-white',
@@ -100,9 +101,12 @@ export default function MemberDetailPage() {
     setDeleting(true);
     try {
       await deleteMember(id);
+      toast.success('Member removed', { description: 'Returning to the members list.' });
       router.push('/admin/members');
-    } catch {
-      setError('Failed to delete member');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to delete member';
+      setError(msg);
+      toast.error('Could not delete member', { description: msg });
     } finally {
       setDeleting(false);
     }

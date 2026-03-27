@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
+import { performLogout } from '@/lib/churchSessionBrowser';
 
 const navItems = [
   { title: 'Dashboard', path: '/secretary', icon: LayoutDashboard },
@@ -369,7 +370,10 @@ export default function SecretarySidebar() {
         {/* Logout */}
         <div style={{ padding: collapsed ? '0 8px 16px' : '0 12px 16px' }}>
           <button
-            onClick={() => router.push('/login')}
+            onClick={async () => {
+              await performLogout();
+              router.push('/login');
+            }}
             title={collapsed ? 'Log out' : undefined}
             className="w-full flex items-center rounded-lg transition-all duration-200 group relative"
             style={{
