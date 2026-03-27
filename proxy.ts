@@ -54,13 +54,13 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
-  // const skipSecretaryCookie =
-  //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
-  //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+  const skipSecretaryCookie =
+    process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+    (pathname === '/secretary' || pathname.startsWith('/secretary/'));
 
-  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
-  //   return NextResponse.next();
-  // }
+  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
+    return NextResponse.next();
+  }
 
   const sessionOk =
     request.cookies.get(CHURCH_SESSION_COOKIE)?.value === CHURCH_SESSION_COOKIE_VALUE;
