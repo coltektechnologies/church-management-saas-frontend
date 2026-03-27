@@ -157,7 +157,9 @@ export default function MembersTable({ filters }: MembersTableProps) {
         next.delete(id);
         return next;
       });
-      toast.success('Member removed', { description: 'The member was deleted from your directory.' });
+      toast.success('Member removed', {
+        description: 'The member was deleted from your directory.',
+      });
     } catch (e) {
       toast.error('Could not delete member', {
         description: e instanceof Error ? e.message : 'Please try again.',
