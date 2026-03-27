@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useChurch } from '@/components/quicksetup/contexts/ChurchContext';
+import { performLogout } from '@/lib/churchSessionBrowser';
 import {
   LayoutDashboard,
   Users,
@@ -37,6 +39,7 @@ interface DashboardSidebarProps {
 }
 
 const DashboardSidebar = ({ activeNav, onNavChange }: DashboardSidebarProps) => {
+  const router = useRouter();
   const { church } = useChurch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -134,7 +137,14 @@ const DashboardSidebar = ({ activeNav, onNavChange }: DashboardSidebarProps) => 
         </nav>
 
         <div className="p-4 border-t border-border mt-auto">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold text-[13px] transition-colors">
+          <button
+            type="button"
+            onClick={async () => {
+              await performLogout();
+              router.push('/login');
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold text-[13px] transition-colors"
+          >
             <LogOut size={18} /> Logout
           </button>
         </div>

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
-import { clearClientAuth } from '@/lib/churchSessionBrowser';
+import { performLogout } from '@/lib/churchSessionBrowser';
 
 const navItems = [
   { title: 'Dashboard', path: '/secretary', icon: LayoutDashboard },
@@ -285,8 +285,8 @@ export default function SecretarySidebar() {
         {/* Logout */}
         <div className="px-3 pb-5">
           <button
-            onClick={() => {
-              clearClientAuth();
+            onClick={async () => {
+              await performLogout();
               router.push('/login');
             }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200"

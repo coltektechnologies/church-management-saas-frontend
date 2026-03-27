@@ -60,6 +60,40 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   return data as LoginResponse;
 }
 
+/**
+ * Blacklist the refresh token on the server (POST /api/auth/logout/).
+ * No-op if tokens are missing or API base URL is not configured.
+ */
+export async function logoutToServer(): Promise<void> {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  let base: string;
+  try {
+    base = getApiBaseUrl();
+  } catch {
+    return;
+  }
+  const access = localStorage.getItem('access_token');
+  const refresh = localStorage.getItem('refresh_token');
+  if (!access || !refresh) {
+    return;
+  }
+
+  try {
+    await fetch(`${base}/auth/logout/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${access}`,
+      },
+      body: JSON.stringify({ refresh }),
+    });
+  } catch {
+    // Network errors — caller still clears local session
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Registration (multi-step church signup)
 // ---------------------------------------------------------------------------
