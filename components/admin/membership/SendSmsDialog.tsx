@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -46,12 +46,6 @@ export function SendSmsDialog({ open, onOpenChange, recipients, onSent }: SendSm
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setMessage('');
-    }
-  }, [open]);
-
   const resolved = recipients.map((r) => ({
     ...r,
     dial: usablePhone(r.phone),
@@ -77,9 +71,13 @@ export function SendSmsDialog({ open, onOpenChange, recipients, onSent }: SendSm
     let lastError = '';
 
     for (const r of withPhone) {
+      const dial = r.dial;
+      if (!dial) {
+        continue;
+      }
       try {
         await sendNotificationSms({
-          phone_number: r.dial!,
+          phone_number: dial,
           message: body,
           member_id: r.id,
         });
@@ -112,7 +110,15 @@ export function SendSmsDialog({ open, onOpenChange, recipients, onSent }: SendSm
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) {
+          setMessage('');
+        }
+        onOpenChange(next);
+      }}
+    >
       <DialogContent
         className={cn(
           'sm:max-w-lg max-h-[min(90dvh,680px)] overflow-y-auto',
