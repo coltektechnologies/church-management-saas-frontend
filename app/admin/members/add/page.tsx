@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -23,6 +23,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { createMember, CreateMemberPayload, getMemberStats } from '@/lib/api';
+import {
+  fetchDepartmentsList,
+  type DepartmentListRow,
+} from '@/lib/departmentsApi';
 import { toast } from 'sonner';
 
 const TITLES = [
@@ -85,15 +89,6 @@ const EDUCATION_LEVELS = [
 const BAPTISM_STATUSES = [
   { value: 'BAPTISED', label: 'Baptised' },
   { value: 'NOT_BAPTISED', label: 'Not Baptised' },
-];
-
-const DEPARTMENTS = [
-  'Secretariat',
-  'Treasury',
-  'Deaconry',
-  'Personal Ministry',
-  'Sabbath School',
-  'Adventist Youth',
 ];
 
 const emptyForm = {
@@ -170,7 +165,8 @@ const _REQUIRED_KEYS: TouchedKeys[] = [
 function isFieldInvalid(
   key: TouchedKeys,
   form: typeof emptyForm,
-  touched: Partial<Record<TouchedKeys, boolean>>
+  touched: Partial<Record<TouchedKeys, boolean>>,
+  requireDepartmentInterest: boolean
 ): boolean {
   if (!touched[key]) {
     return false;
@@ -179,7 +175,7 @@ function isFieldInvalid(
     return form.region === 'Other' && !form.custom_region.trim();
   }
   if (key === 'interested_departments') {
-    return form.interested_departments.length === 0;
+    return requireDepartmentInterest && form.interested_departments.length === 0;
   }
   const val = form[key];
   if (typeof val === 'string') {
@@ -200,10 +196,38 @@ export default function AddMemberPage() {
     pending_approvals: 0,
     active_members: 0,
   });
+  const [departments, setDepartments] = useState<DepartmentListRow[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
+  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+
+  const requireDepartmentInterest = departments.length > 0;
+
+  const loadDepartments = useCallback(() => {
+    setDepartmentsLoading(true);
+    setDepartmentsError(null);
+    fetchDepartmentsList()
+      .then((rows) => {
+        const active = rows
+          .filter((d) => d.is_active)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setDepartments(active);
+      })
+      .catch((e) => {
+        setDepartmentsError(e instanceof Error ? e.message : 'Failed to load departments');
+        setDepartments([]);
+      })
+      .finally(() => {
+        setDepartmentsLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     getMemberStats().then(setStats);
   }, []);
+
+  useEffect(() => {
+    loadDepartments();
+  }, [loadDepartments]);
 
   const markTouched = (key: TouchedKeys) => {
     setTouched((prev) => ({ ...prev, [key]: true }));
@@ -214,7 +238,8 @@ export default function AddMemberPage() {
     setError('');
   };
 
-  const invalid = (key: TouchedKeys) => isFieldInvalid(key, form, touched);
+  const invalid = (key: TouchedKeys) =>
+    isFieldInvalid(key, form, touched, requireDepartmentInterest);
   const fieldClass = (key: TouchedKeys) =>
     invalid(key) ? 'border-red-500 focus:ring-red-500' : 'border-[#DDDDDD] focus:ring-blue-500';
 
@@ -264,7 +289,13 @@ export default function AddMemberPage() {
       toast.error('Form incomplete', { description: msg });
       return;
     }
-    if (form.interested_departments.length === 0) {
+    if (departmentsLoading) {
+      const msg = 'Departments are still loading. Please wait a moment.';
+      setError(msg);
+      toast.error('Please wait', { description: msg });
+      return;
+    }
+    if (requireDepartmentInterest && form.interested_departments.length === 0) {
       const msg = 'Please select at least one department.';
       setError(msg);
       toast.error('Form incomplete', { description: msg });
@@ -887,15 +918,47 @@ export default function AddMemberPage() {
                     </select>
                   </div>
                   <div className="space-y-2" onBlur={() => markTouched('interested_departments')}>
-                    <Label>Department Interest *</Label>
+                    <Label>
+                      Department Interest
+                      {requireDepartmentInterest ? ' *' : ''}
+                    </Label>
+                    {departmentsLoading && (
+                      <p className="text-xs text-gray-500">Loading departments…</p>
+                    )}
+                    {departmentsError && !departmentsLoading && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-red-600">{departmentsError}</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 rounded-none text-xs"
+                          onClick={() => loadDepartments()}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    )}
+                    {!departmentsLoading && !departmentsError && departments.length === 0 && (
+                      <p className="text-xs text-gray-600">
+                        No active departments yet.{' '}
+                        <Link
+                          href="/admin/departments"
+                          className="text-[#0B2A4A] underline underline-offset-2"
+                        >
+                          Create departments
+                        </Link>{' '}
+                        first, or continue without department interest.
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-2">
-                      {DEPARTMENTS.map((dept) => {
-                        const selected = form.interested_departments.includes(dept);
+                      {departments.map((dept) => {
+                        const selected = form.interested_departments.includes(dept.name);
                         return (
                           <button
-                            key={dept}
+                            key={dept.id}
                             type="button"
-                            onClick={() => toggleDepartment(dept)}
+                            onClick={() => toggleDepartment(dept.name)}
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none border text-sm transition-colors ${
                               selected
                                 ? 'border-[#0B2A4A] bg-[#0B2A4A] text-white'
@@ -903,7 +966,7 @@ export default function AddMemberPage() {
                             }`}
                           >
                             <FileText className="h-3.5 w-3.5" />
-                            {dept}
+                            {dept.name}
                           </button>
                         );
                       })}

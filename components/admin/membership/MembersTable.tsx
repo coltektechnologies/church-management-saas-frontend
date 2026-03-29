@@ -30,6 +30,9 @@ import {
 import { format } from 'date-fns';
 import { getMembers, deleteMember, type MemberListItem } from '@/lib/api';
 import { toast } from 'sonner';
+import { DeleteMemberDialog } from '@/components/admin/membership/DeleteMemberDialog';
+import { SendSmsDialog } from '@/components/admin/membership/SendSmsDialog';
+import { SendEmailDialog } from '@/components/admin/membership/SendEmailDialog';
 import {
   type MemberFilterState,
   applyMemberFilters,
@@ -89,6 +92,13 @@ export default function MembersTable({ filters }: MembersTableProps) {
   const [perPage, setPerPage] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [smsRecipientIds, setSmsRecipientIds] = useState<string[]>([]);
+  const [emailRecipientIds, setEmailRecipientIds] = useState<string[]>([]);
 
   useEffect(() => {
     getMembers()
@@ -137,35 +147,60 @@ export default function MembersTable({ filters }: MembersTableProps) {
 
   const _handleView = (id: string) => router.push(`/admin/members/${id}`);
   const _handleEdit = (id: string) => router.push(`/admin/members/${id}/edit`);
+
   const handleSendMessage = (id: string) => {
-    const m = members.find((x) => x.id === id);
-    if (m?.phone || m?.email) {
-      window.location.href = m.phone ? `sms:${m.phone}` : `mailto:${m.email}`;
-    }
+    setSmsRecipientIds([id]);
+    setSmsOpen(true);
   };
-  const handleDelete = async (id: string, e?: React.MouseEvent) => {
+  const openDeleteForIds = (ids: string[]) => {
+    setDeleteTargetIds(ids);
+    setDeleteDialogOpen(true);
+  };
+  const handleDeleteClick = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!confirm('Are you sure you want to delete this member?')) {
+    openDeleteForIds([id]);
+  };
+
+  const runDelete = async () => {
+    const ids = deleteTargetIds;
+    if (ids.length === 0) {
       return;
     }
-    setDeletingId(id);
-    try {
-      await deleteMember(id);
-      setMembers((prev) => prev.filter((m) => m.id !== id));
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
+    const isSingle = ids.length === 1;
+    if (isSingle) {
+      setDeletingId(ids[0]);
+    } else {
+      setBulkDeleteLoading(true);
+    }
+    let ok = 0;
+    let failed = 0;
+    for (const delId of ids) {
+      try {
+        await deleteMember(delId);
+        setMembers((prev) => prev.filter((m) => m.id !== delId));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(delId);
+          return next;
+        });
+        ok += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setDeletingId(null);
+    setBulkDeleteLoading(false);
+    setDeleteDialogOpen(false);
+    setDeleteTargetIds([]);
+    if (ok > 0) {
+      toast.success(ok === 1 ? 'Member removed' : `${ok} members removed`, {
+        description: 'Removed from your directory.',
       });
-      toast.success('Member removed', {
-        description: 'The member was deleted from your directory.',
-      });
-    } catch (e) {
-      toast.error('Could not delete member', {
-        description: e instanceof Error ? e.message : 'Please try again.',
-      });
-    } finally {
-      setDeletingId(null);
+    }
+    if (failed > 0) {
+      toast.error(
+        failed === 1 ? 'One member could not be deleted' : `${failed} members could not be deleted`
+      );
     }
   };
 
@@ -180,45 +215,33 @@ export default function MembersTable({ filters }: MembersTableProps) {
     }
   };
   const handleBulkSendMessage = () => {
-    const ids = Array.from(selectedIds);
-    const m = members.find((x) => x.id === ids[0]);
-    if (m?.phone || m?.email) {
-      window.location.href = m.phone ? `sms:${m.phone}` : `mailto:${m.email}`;
-    }
+    setSmsRecipientIds(Array.from(selectedIds));
+    setSmsOpen(true);
   };
   const handleBulkSendEmail = () => {
-    const ids = Array.from(selectedIds);
-    const m = members.find((x) => x.id === ids[0]);
-    if (m?.email) {
-      window.location.href = `mailto:${m.email}`;
-    }
+    setEmailRecipientIds(Array.from(selectedIds));
+    setEmailOpen(true);
   };
-  const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selectedCount} member(s)? This cannot be undone.`)) {
-      return;
-    }
-    let ok = 0;
-    let failed = 0;
-    for (const id of selectedIds) {
-      try {
-        await deleteMember(id);
-        setMembers((prev) => prev.filter((m) => m.id !== id));
-        ok += 1;
-      } catch {
-        failed += 1;
-      }
-    }
-    clearSelection();
-    if (ok > 0) {
-      toast.success(ok === 1 ? 'Member removed' : `${ok} members removed`);
-    }
-    if (failed > 0) {
-      toast.error(
-        failed === 1 ? 'One member could not be deleted' : `${failed} members could not be deleted`,
-        { description: 'Check permissions or try again.' }
-      );
-    }
+  const handleBulkDelete = () => {
+    openDeleteForIds(Array.from(selectedIds));
   };
+
+  const smsRecipients = smsRecipientIds
+    .map((rid) => members.find((m) => m.id === rid))
+    .filter((m): m is MemberRow => Boolean(m))
+    .map((m) => ({ id: m.id, name: m.name, phone: m.phone }));
+
+  const emailRecipients = emailRecipientIds
+    .map((rid) => members.find((m) => m.id === rid))
+    .filter((m): m is MemberRow => Boolean(m))
+    .map((m) => ({ id: m.id, name: m.name, email: m.email }));
+
+  const deleteDialogNames = deleteTargetIds.map((rid) => {
+    const row = members.find((m) => m.id === rid);
+    return row?.name ?? `Member ${rid.slice(0, 8)}`;
+  });
+
+  const deleteBusy = Boolean(deletingId) || bulkDeleteLoading;
 
   return (
     <div className="space-y-4 w-full">
@@ -460,8 +483,8 @@ export default function MembersTable({ filters }: MembersTableProps) {
                         size="icon"
                         className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
                         title="Delete"
-                        onClick={(e) => handleDelete(member.id, e)}
-                        disabled={deletingId === member.id}
+                        onClick={(e) => handleDeleteClick(member.id, e)}
+                        disabled={deleteBusy}
                       >
                         <UserMinus className="h-4 w-4" />
                       </Button>
@@ -511,6 +534,21 @@ export default function MembersTable({ filters }: MembersTableProps) {
           </select>
         </div>
       </div>
+
+      <DeleteMemberDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setDeleteTargetIds([]);
+          }
+        }}
+        names={deleteDialogNames}
+        loading={deleteBusy}
+        onConfirm={runDelete}
+      />
+      <SendSmsDialog open={smsOpen} onOpenChange={setSmsOpen} recipients={smsRecipients} />
+      <SendEmailDialog open={emailOpen} onOpenChange={setEmailOpen} recipients={emailRecipients} />
     </div>
   );
 }

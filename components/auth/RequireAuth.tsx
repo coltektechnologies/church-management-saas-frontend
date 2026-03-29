@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
+import { Loader2 } from 'lucide-react';
+import { clearClientAuth, setChurchSessionCookie } from '@/lib/churchSessionBrowser';
+import { isAccessTokenExpired } from '@/lib/jwtExpiry';
 
 /**
  * Client-side guard for localStorage JWT + keeps session cookie in sync for middleware.
+ * Expired access tokens are cleared: the session cookie can outlive JWT (e.g. 7d vs 5h).
  */
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -14,7 +17,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) {
+    if (!token || isAccessTokenExpired(token)) {
+      clearClientAuth();
       const search = typeof window !== 'undefined' ? window.location.search : '';
       const pathWithQuery = `${pathname}${search}`;
       router.replace(`/login?next=${encodeURIComponent(pathWithQuery)}`);
@@ -28,8 +32,17 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   if (!allowed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-600 text-sm">
-        Checking session…
+      <div
+        className="flex min-h-screen items-center justify-center bg-slate-50"
+        role="status"
+        aria-live="polite"
+      >
+        <Loader2
+          className="size-9 animate-spin text-slate-400"
+          strokeWidth={1.75}
+          aria-hidden
+        />
+        <span className="sr-only">Loading</span>
       </div>
     );
   }

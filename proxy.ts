@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server';
  *
  * Public (no session cookie): marketing + auth + registration only.
  * Everything else requires `church_session=1` (set on successful login / token storage).
+ * With a session cookie, `/` and `/features` redirect to `/admin` so users leave only via Sign out.
  *
  * Optional local preview for /secretary without cookie: set NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true
  * in .env.local and uncomment the skipSecretaryCookie block below, then restart dev.
@@ -35,6 +36,17 @@ function isAuthOnlyPath(pathname: string): boolean {
     return true;
   }
   if (pathname === '/signup' || pathname.startsWith('/signup/')) {
+    return true;
+  }
+  return false;
+}
+
+/** Marketing / landing routes: signed-in users must use Logout first, not browse these. */
+function isMarketingShellPath(pathname: string): boolean {
+  if (pathname === '/') {
+    return true;
+  }
+  if (pathname === '/features' || pathname.startsWith('/features/')) {
     return true;
   }
   return false;
@@ -74,6 +86,14 @@ export function proxy(request: NextRequest) {
   if (sessionOk && isAuthOnlyPath(pathname)) {
     const dest = request.nextUrl.clone();
     dest.pathname = LOGGED_IN_AUTH_REDIRECT;
+    dest.search = '';
+    return NextResponse.redirect(dest);
+  }
+
+  // Signed-in users cannot "exit" to the marketing site without logging out (clears cookie).
+  if (sessionOk && isMarketingShellPath(pathname)) {
+    const dest = request.nextUrl.clone();
+    dest.pathname = '/admin';
     dest.search = '';
     return NextResponse.redirect(dest);
   }

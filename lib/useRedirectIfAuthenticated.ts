@@ -4,9 +4,10 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 import { getSafeReturnPath } from '@/lib/safeReturnPath';
+import { isAccessTokenExpired } from '@/lib/jwtExpiry';
 
 /**
- * If an access token exists, sync the session cookie and leave auth routes.
+ * If a non-expired access token exists, sync the session cookie and leave auth routes.
  * Use inside a `<Suspense>` boundary (required for useSearchParams).
  */
 export function useRedirectIfAuthenticated(): void {
@@ -15,7 +16,7 @@ export function useRedirectIfAuthenticated(): void {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) {
+    if (!token || isAccessTokenExpired(token)) {
       return;
     }
     setChurchSessionCookie();

@@ -36,6 +36,31 @@ async function fetchAuth<T>(url: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
+/** PUT church with multipart form (for `logo` file). Do not set Content-Type (browser sets boundary). */
+async function fetchAuthMultipart<T>(url: string, form: FormData): Promise<T> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await fetch(url, { method: 'PUT', headers, body: form });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    const msg =
+      (typeof data?.detail === 'string' ? data.detail : null) ||
+      (data?.error as string) ||
+      `Request failed: ${res.status}`;
+    throw new Error(msg);
+  }
+  return data as T;
+}
+
+function appendIfDefined(form: FormData, key: string, value: string | undefined): void {
+  if (value !== undefined && value !== null && value !== '') {
+    form.append(key, value);
+  }
+}
+
 /** Stored user from login */
 export interface StoredUser {
   id: string;
@@ -163,13 +188,46 @@ export async function getChurch(churchId: string): Promise<ChurchApiResponse | n
   }
 }
 
-/** Update church */
+export type UpdateChurchOptions = {
+  /** When set, sends multipart/form-data so the logo is persisted on the server (and Cloudinary if configured). */
+  logoFile?: File | null;
+};
+
+/**
+ * Update church (JSON). For a new logo file, pass `options.logoFile` — uses multipart PUT with `logo`.
+ */
 export async function updateChurch(
   churchId: string,
-  data: Partial<ChurchApiResponse>
+  data: Partial<ChurchApiResponse>,
+  options?: UpdateChurchOptions
 ): Promise<ChurchApiResponse> {
   const base = getApiBaseUrl();
-  return fetchAuth<ChurchApiResponse>(`${base}/auth/churches/${churchId}/`, {
+  const url = `${base}/auth/churches/${churchId}/`;
+
+  if (options?.logoFile) {
+    const form = new FormData();
+    appendIfDefined(form, 'name', data.name);
+    appendIfDefined(form, 'tagline', data.tagline);
+    appendIfDefined(form, 'address', data.address);
+    appendIfDefined(form, 'mission', data.mission);
+    appendIfDefined(form, 'website', data.website);
+    appendIfDefined(form, 'denomination', data.denomination);
+    appendIfDefined(form, 'country', data.country);
+    appendIfDefined(form, 'region', data.region);
+    appendIfDefined(form, 'city', data.city);
+    appendIfDefined(form, 'phone', data.phone);
+    appendIfDefined(form, 'primary_color', data.primary_color);
+    appendIfDefined(form, 'accent_color', data.accent_color);
+    appendIfDefined(form, 'sidebar_color', data.sidebar_color);
+    appendIfDefined(form, 'background_color', data.background_color);
+    if (typeof data.dark_mode === 'boolean') {
+      form.append('dark_mode', data.dark_mode ? 'true' : 'false');
+    }
+    form.append('logo', options.logoFile);
+    return fetchAuthMultipart<ChurchApiResponse>(url, form);
+  }
+
+  return fetchAuth<ChurchApiResponse>(url, {
     method: 'PUT',
     body: JSON.stringify(data),
   });

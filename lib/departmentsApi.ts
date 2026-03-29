@@ -95,7 +95,13 @@ export interface DepartmentDetailResponse {
   color?: string | null;
   is_active: boolean;
   member_count?: number;
-  heads?: { id: string; name: string; assigned_at?: string }[];
+  heads?: {
+    id: string;
+    name: string;
+    assigned_at?: string;
+    /** API: HEAD | ASSISTANT; omit for legacy rows */
+    head_role?: string;
+  }[];
   elder_in_charge?: string | null;
   elder_in_charge_name?: string | null;
   current_budget?: {
@@ -191,6 +197,10 @@ export function mergeDepartmentDetail(
     ? new Date(detail.created_at).toLocaleDateString()
     : base.dateEstablished;
 
+  const heads = detail.heads ?? [];
+  const primaryHead =
+    heads.find((h) => (h.head_role ?? 'HEAD') === 'HEAD') ?? heads[0];
+  const assistantHead = heads.find((h) => h.head_role === 'ASSISTANT');
   return {
     ...base,
     name: detail.name,
@@ -204,6 +214,12 @@ export function mergeDepartmentDetail(
     themeColor,
     icon,
     dateEstablished: est,
+    headMemberId: primaryHead?.id ?? null,
+    headDisplayName: primaryHead?.name ?? null,
+    assistantHeadMemberId: assistantHead?.id ?? null,
+    assistantHeadDisplayName: assistantHead?.name ?? null,
+    elderInChargeMemberId: detail.elder_in_charge ?? null,
+    elderInChargeDisplayName: detail.elder_in_charge_name ?? null,
   };
 }
 
@@ -283,14 +299,40 @@ export async function createDepartment(
   });
 }
 
+/** PATCH body; `elder_in_charge` is member UUID or null to clear (update only). */
+export type UpdateDepartmentBody = Partial<CreateDepartmentBody> & {
+  elder_in_charge?: string | null;
+};
+
 export async function updateDepartment(
   id: string,
-  body: Partial<CreateDepartmentBody>
+  body: UpdateDepartmentBody
 ): Promise<DepartmentDetailResponse> {
   const base = getApiBaseUrl();
   return fetchAuth<DepartmentDetailResponse>(`${base}/departments/${id}/`, {
     method: 'PATCH',
     body: JSON.stringify(body),
+  });
+}
+
+/** Assign department head (`member_id` = church member UUID). */
+export async function setDepartmentHead(departmentId: string, memberId: string): Promise<void> {
+  const base = getApiBaseUrl();
+  await fetchAuth<unknown>(`${base}/departments/${departmentId}/head/`, {
+    method: 'PUT',
+    body: JSON.stringify({ member_id: memberId }),
+  });
+}
+
+/** Assign assistant head, or pass `null` to remove. */
+export async function setDepartmentAssistantHead(
+  departmentId: string,
+  memberId: string | null
+): Promise<void> {
+  const base = getApiBaseUrl();
+  await fetchAuth<unknown>(`${base}/departments/${departmentId}/assistant-head/`, {
+    method: 'PUT',
+    body: JSON.stringify({ member_id: memberId }),
   });
 }
 
