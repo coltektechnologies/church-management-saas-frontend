@@ -37,11 +37,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
         role="status"
         aria-live="polite"
       >
-        <Loader2
-          className="size-9 animate-spin text-slate-400"
-          strokeWidth={1.75}
-          aria-hidden
-        />
+        <Loader2 className="size-9 animate-spin text-slate-400" strokeWidth={1.75} aria-hidden />
         <span className="sr-only">Loading</span>
       </div>
     );

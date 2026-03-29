@@ -182,8 +182,7 @@ function defaultDateRange(): { from: string; to: string } {
   const to = new Date();
   const from = new Date(to.getFullYear(), to.getMonth(), 1);
   const pad = (n: number) => String(n).padStart(2, '0');
-  const iso = (d: Date) =>
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   return { from: iso(from), to: iso(to) };
 }
 
@@ -279,7 +278,10 @@ export default function AdminReportsHub() {
         >
           Reports
         </h1>
-        <p className="text-sm max-w-3xl leading-relaxed" style={{ color: 'var(--admin-text-muted)' }}>
+        <p
+          className="text-sm max-w-3xl leading-relaxed"
+          style={{ color: 'var(--admin-text-muted)' }}
+        >
           Generate church-wide reports from live data. Choose a date range where applicable, preview
           JSON in the browser, or download PDF, Excel, or CSV. Exports use the same filters as
           preview.
@@ -303,7 +305,10 @@ export default function AdminReportsHub() {
             Report period
           </div>
           <div className="flex flex-wrap items-end gap-4">
-            <label className="flex flex-col gap-1.5 text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--admin-text-muted)' }}>
+            <label
+              className="flex flex-col gap-1.5 text-xs font-medium uppercase tracking-wide"
+              style={{ color: 'var(--admin-text-muted)' }}
+            >
               From
               <input
                 type="date"
@@ -317,7 +322,10 @@ export default function AdminReportsHub() {
                 }}
               />
             </label>
-            <label className="flex flex-col gap-1.5 text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--admin-text-muted)' }}>
+            <label
+              className="flex flex-col gap-1.5 text-xs font-medium uppercase tracking-wide"
+              style={{ color: 'var(--admin-text-muted)' }}
+            >
               To
               <input
                 type="date"
@@ -396,24 +404,34 @@ export default function AdminReportsHub() {
                     <div
                       className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
                       style={{
-                        backgroundColor: 'color-mix(in srgb, var(--color-primary) 12%, transparent)',
+                        backgroundColor:
+                          'color-mix(in srgb, var(--color-primary) 12%, transparent)',
                         color: 'var(--color-primary)',
                       }}
                     >
                       <Icon className="w-5 h-5" strokeWidth={2} />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-[15px] leading-snug" style={{ color: 'var(--admin-text)' }}>
+                      <h3
+                        className="font-semibold text-[15px] leading-snug"
+                        style={{ color: 'var(--admin-text)' }}
+                      >
                         {item.title}
                       </h3>
-                      <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--admin-text-muted)' }}>
+                      <p
+                        className="text-xs mt-1 leading-relaxed"
+                        style={{ color: 'var(--admin-text-muted)' }}
+                      >
                         {item.description}
                       </p>
                     </div>
                   </div>
 
                   {item.membershipFilter && (
-                    <label className="flex flex-col gap-1.5 text-xs font-medium" style={{ color: 'var(--admin-text-muted)' }}>
+                    <label
+                      className="flex flex-col gap-1.5 text-xs font-medium"
+                      style={{ color: 'var(--admin-text-muted)' }}
+                    >
                       Membership status
                       <select
                         value={membershipStatus}
@@ -435,7 +453,10 @@ export default function AdminReportsHub() {
                   )}
 
                   {item.announcementStatusFilter && (
-                    <label className="flex flex-col gap-1.5 text-xs font-medium" style={{ color: 'var(--admin-text-muted)' }}>
+                    <label
+                      className="flex flex-col gap-1.5 text-xs font-medium"
+                      style={{ color: 'var(--admin-text-muted)' }}
+                    >
                       Announcement status
                       <select
                         value={announcementStatus}
@@ -566,7 +587,10 @@ export default function AdminReportsHub() {
           </div>
           <div className="p-4 max-h-[min(28rem,55vh)] overflow-auto">
             {previewLoading && (
-              <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--admin-text-muted)' }}>
+              <div
+                className="flex items-center gap-2 text-sm"
+                style={{ color: 'var(--admin-text-muted)' }}
+              >
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Loading…
               </div>
@@ -635,22 +659,40 @@ export default function AdminReportsHub() {
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--admin-border)' }}>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: 'var(--admin-text)' }}>
+                    <th
+                      className="text-left py-3 px-4 font-semibold"
+                      style={{ color: 'var(--admin-text)' }}
+                    >
                       Name
                     </th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: 'var(--admin-text)' }}>
+                    <th
+                      className="text-left py-3 px-4 font-semibold"
+                      style={{ color: 'var(--admin-text)' }}
+                    >
                       Type
                     </th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: 'var(--admin-text)' }}>
+                    <th
+                      className="text-left py-3 px-4 font-semibold"
+                      style={{ color: 'var(--admin-text)' }}
+                    >
                       Frequency
                     </th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: 'var(--admin-text)' }}>
+                    <th
+                      className="text-left py-3 px-4 font-semibold"
+                      style={{ color: 'var(--admin-text)' }}
+                    >
                       Format
                     </th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: 'var(--admin-text)' }}>
+                    <th
+                      className="text-left py-3 px-4 font-semibold"
+                      style={{ color: 'var(--admin-text)' }}
+                    >
                       Next run
                     </th>
-                    <th className="text-left py-3 px-4 font-semibold" style={{ color: 'var(--admin-text)' }}>
+                    <th
+                      className="text-left py-3 px-4 font-semibold"
+                      style={{ color: 'var(--admin-text)' }}
+                    >
                       Active
                     </th>
                   </tr>
@@ -671,7 +713,10 @@ export default function AdminReportsHub() {
                       <td className="py-3 px-4" style={{ color: 'var(--admin-text-muted)' }}>
                         {row.frequency_display || row.frequency}
                       </td>
-                      <td className="py-3 px-4 uppercase" style={{ color: 'var(--admin-text-muted)' }}>
+                      <td
+                        className="py-3 px-4 uppercase"
+                        style={{ color: 'var(--admin-text-muted)' }}
+                      >
                         {row.format}
                       </td>
                       <td className="py-3 px-4" style={{ color: 'var(--admin-text-muted)' }}>
@@ -689,7 +734,9 @@ export default function AdminReportsHub() {
                             backgroundColor: row.is_active
                               ? 'color-mix(in srgb, var(--color-accent) 20%, transparent)'
                               : 'var(--admin-bg)',
-                            color: row.is_active ? 'var(--color-accent)' : 'var(--admin-text-muted)',
+                            color: row.is_active
+                              ? 'var(--color-accent)'
+                              : 'var(--admin-text-muted)',
                           }}
                         >
                           {row.is_active ? 'Yes' : 'No'}

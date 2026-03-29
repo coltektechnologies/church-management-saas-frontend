@@ -200,8 +200,7 @@ export function mergeDepartmentDetail(
     : base.dateEstablished;
 
   const heads = detail.heads ?? [];
-  const primaryHead =
-    heads.find((h) => (h.head_role ?? 'HEAD') === 'HEAD') ?? heads[0];
+  const primaryHead = heads.find((h) => (h.head_role ?? 'HEAD') === 'HEAD') ?? heads[0];
   const assistantHead = heads.find((h) => h.head_role === 'ASSISTANT');
   return {
     ...base,

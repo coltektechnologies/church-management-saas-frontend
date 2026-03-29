@@ -130,15 +130,12 @@ export default function MembersTable({ filters }: MembersTableProps) {
   });
 
   const page =
-    pagination.key === filterKey
-      ? Math.min(Math.max(1, pagination.page), totalPages)
-      : 1;
+    pagination.key === filterKey ? Math.min(Math.max(1, pagination.page), totalPages) : 1;
 
   const setPage = useCallback(
     (next: number | ((p: number) => number)) => {
       setPagination((prev) => {
-        const base =
-          prev.key === filterKey ? Math.min(Math.max(1, prev.page), totalPages) : 1;
+        const base = prev.key === filterKey ? Math.min(Math.max(1, prev.page), totalPages) : 1;
         const resolved = typeof next === 'function' ? (next as (n: number) => number)(base) : next;
         const clamped = Math.max(1, Math.min(resolved, totalPages));
         return { key: filterKey, page: clamped };

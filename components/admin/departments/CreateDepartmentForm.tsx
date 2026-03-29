@@ -95,8 +95,8 @@ export default function CreateDepartmentForm({
           </div>
 
           <p className="text-sm text-gray-500 md:col-span-2 -mt-2">
-            Assign department head and elder in charge from the department detail window →
-            Settings after you create or open the department.
+            Assign department head and elder in charge from the department detail window → Settings
+            after you create or open the department.
           </p>
 
           {/* Status */}
