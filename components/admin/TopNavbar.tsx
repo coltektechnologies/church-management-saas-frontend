@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -19,8 +20,18 @@ import {
   CreditCard,
   ChevronRight,
 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { useChurchProfile, type SubscriptionStatus } from '@/components/admin/dashboard/contexts';
-import { mockNotifications, type MockNotification } from '@/components/admin/mock/mockData';
+import {
+  NOTIFICATIONS_LIST_QUERY_KEY,
+  NOTIFICATIONS_UNREAD_COUNT_KEY,
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+  useNotificationsListQuery,
+  useUnreadNotificationCountQuery,
+} from '@/hooks/useNotificationsInbox';
+import type { MockNotificationItem } from '@/services/notificationsMock';
+import { notificationsApiEnabled } from '@/services/notificationsService';
 import { performLogout } from '@/lib/churchSessionBrowser';
 
 function useIsMounted(): boolean {
@@ -73,15 +84,45 @@ function NavAvatar({ size, avatarUrl, adminName, primaryColor, isReady }: NavAva
   );
 }
 
-interface NotifRowProps {
-  n: MockNotification;
-  compact?: boolean;
-  onMark: (id: string | number) => void;
-  onDismiss: (id: string | number, e: React.MouseEvent) => void;
+type NavbarNotifTone = 'info' | 'success' | 'warning' | 'error';
+
+interface NavbarNotificationRow {
+  id: string;
+  title: string;
+  subtitle: string;
+  timeLabel: string;
+  read: boolean;
+  tone: NavbarNotifTone;
 }
 
-function NotifRow({ n, compact, onMark, onDismiss }: NotifRowProps) {
-  const DOT: Record<string, string> = {
+function mapInboxItemToNavbarRow(n: MockNotificationItem): NavbarNotificationRow {
+  let tone: NavbarNotifTone = 'info';
+  if (n.priority === 'URGENT' || n.status === 'FAILED') {
+    tone = 'error';
+  } else if (n.priority === 'HIGH') {
+    tone = 'warning';
+  }
+  const msg = (n.message || '').trim();
+  return {
+    id: n.id,
+    title: n.title,
+    subtitle: msg.length > 140 ? `${msg.slice(0, 137)}…` : msg,
+    timeLabel: formatDistanceToNow(new Date(n.created_at), { addSuffix: true }),
+    read: n.is_read,
+    tone,
+  };
+}
+
+interface NotifRowProps {
+  n: NavbarNotificationRow;
+  compact?: boolean;
+  showDismiss?: boolean;
+  onMark: (id: string) => void;
+  onDismiss?: (id: string, e: React.MouseEvent) => void;
+}
+
+function NotifRow({ n, compact, showDismiss = false, onMark, onDismiss }: NotifRowProps) {
+  const DOT: Record<NavbarNotifTone, string> = {
     info: '#3B82F6',
     success: '#10B981',
     warning: '#F59E0B',
@@ -102,7 +143,7 @@ function NotifRow({ n, compact, onMark, onDismiss }: NotifRowProps) {
       <div className="mt-2 shrink-0">
         <div
           className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: n.read ? '#D1D5DB' : DOT[n.type] }}
+          style={{ backgroundColor: n.read ? '#D1D5DB' : DOT[n.tone] }}
         />
       </div>
       <div className="flex-1 min-w-0">
@@ -112,31 +153,33 @@ function NotifRow({ n, compact, onMark, onDismiss }: NotifRowProps) {
         >
           {n.title}
         </p>
-        {!compact && (
+        {!compact && n.subtitle && (
           <p
             className="text-[11px] text-gray-400 mt-0.5 line-clamp-1"
             style={{ fontFamily: 'Inter, sans-serif' }}
           >
-            {(n as MockNotification & { description?: string }).description ?? ''}
+            {n.subtitle}
           </p>
         )}
         <p className="text-[10px] text-gray-300 mt-0.5" style={{ fontFamily: 'Inter, sans-serif' }}>
-          {(n as MockNotification & { time?: string }).time ?? ''}
+          {n.timeLabel}
         </p>
       </div>
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={(e) => onDismiss(n.id, e)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            onDismiss(n.id, e as unknown as React.MouseEvent);
-          }
-        }}
-        className="opacity-0 group-hover:opacity-100 shrink-0 mt-1 w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center transition-opacity cursor-pointer"
-      >
-        <X size={10} className="text-gray-400" />
-      </div>
+      {showDismiss && onDismiss && (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={(e) => onDismiss(n.id, e)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              onDismiss(n.id, e as unknown as React.MouseEvent);
+            }
+          }}
+          className="opacity-0 group-hover:opacity-100 shrink-0 mt-1 w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center transition-opacity cursor-pointer"
+        >
+          <X size={10} className="text-gray-400" />
+        </div>
+      )}
     </div>
   );
 }
@@ -199,16 +242,38 @@ export default function TopNavbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifHover, setNotifHover] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [notifs, setNotifs] = useState<MockNotification[]>(mockNotifications);
+
+  const queryClient = useQueryClient();
+  const useLiveNotifs = notificationsApiEnabled();
+  const inboxQuery = useNotificationsListQuery('inbox', { enabled: useLiveNotifs });
+  const unreadCountQuery = useUnreadNotificationCountQuery();
+  const markReadMutation = useMarkNotificationReadMutation();
+  const markAllMutation = useMarkAllNotificationsReadMutation();
+
+  const notifRows = useMemo(() => {
+    if (!useLiveNotifs || !inboxQuery.data) {
+      return [];
+    }
+    return inboxQuery.data.map(mapInboxItemToNavbarRow);
+  }, [useLiveNotifs, inboxQuery.data]);
+
+  const unread = useMemo(() => notifRows.filter((n) => !n.read), [notifRows]);
+  const readNotifs = useMemo(() => notifRows.filter((n) => n.read), [notifRows]);
+  const unreadCount = useLiveNotifs ? (unreadCountQuery.data ?? 0) : 0;
+  const notifListLoading = useLiveNotifs && inboxQuery.isLoading;
+  const notifListError = useLiveNotifs && inboxQuery.isError;
 
   const statusRef = useRef<HTMLDivElement>(null);
   const helpRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  const unread = notifs.filter((n) => !n.read);
-  const readNotifs = notifs.filter((n) => n.read);
-  const unreadCount = unread.length;
+  useEffect(() => {
+    if (notifOpen && useLiveNotifs) {
+      void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_LIST_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_UNREAD_COUNT_KEY });
+    }
+  }, [notifOpen, useLiveNotifs, queryClient]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -257,12 +322,21 @@ export default function TopNavbar() {
     [statusOpen, helpOpen, notifOpen, profileOpen, closeAll]
   );
 
-  const markAll = () => setNotifs((p) => p.map((n) => ({ ...n, read: true })));
-  const markOne = (id: string | number) =>
-    setNotifs((p) => p.map((n) => (String(n.id) === String(id) ? { ...n, read: true } : n)));
-  const dismiss = (id: string | number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setNotifs((p) => p.filter((n) => String(n.id) !== String(id)));
+  const markAll = () => {
+    if (useLiveNotifs && unreadCount > 0) {
+      markAllMutation.mutate();
+    }
+  };
+
+  const markOne = (id: string) => {
+    if (!useLiveNotifs) {
+      return;
+    }
+    const row = notifRows.find((r) => r.id === id);
+    if (row?.read) {
+      return;
+    }
+    markReadMutation.mutate(id);
   };
 
   const DarkIcon = mounted ? (
@@ -447,7 +521,7 @@ export default function TopNavbar() {
                 {unreadCount} unread
               </p>
               {unread.slice(0, 3).map((n) => (
-                <NotifRow key={n.id} n={n} compact onMark={markOne} onDismiss={dismiss} />
+                <NotifRow key={n.id} n={n} compact onMark={markOne} />
               ))}
             </div>
           )}
@@ -468,8 +542,10 @@ export default function TopNavbar() {
                 </p>
                 {unreadCount > 0 && (
                   <button
+                    type="button"
+                    disabled={markAllMutation.isPending}
                     onClick={markAll}
-                    className="flex items-center gap-1 text-[11px] font-semibold hover:underline"
+                    className="flex items-center gap-1 text-[11px] font-semibold hover:underline disabled:opacity-50"
                     style={{ color: pc }}
                   >
                     <CheckCheck size={13} /> Mark all read
@@ -477,45 +553,64 @@ export default function TopNavbar() {
                 )}
               </div>
               <div className="max-h-[340px] md:max-h-[380px] overflow-y-auto">
-                {unread.length > 0 && (
+                {!useLiveNotifs && (
+                  <div className="flex flex-col items-center justify-center px-4 py-10 text-center text-gray-400">
+                    <Bell size={28} className="mb-2 opacity-50" />
+                    <p className="text-[13px]">Sign in to load your notifications.</p>
+                  </div>
+                )}
+                {useLiveNotifs && notifListLoading && (
+                  <div className="px-4 py-10 text-center text-[13px] text-gray-400">
+                    Loading notifications…
+                  </div>
+                )}
+                {useLiveNotifs && notifListError && (
+                  <div className="px-4 py-10 text-center text-[13px] text-red-500">
+                    Could not load notifications.
+                  </div>
+                )}
+                {useLiveNotifs && !notifListLoading && !notifListError && unread.length > 0 && (
                   <>
                     <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
                       New
                     </p>
                     <div className="divide-y divide-gray-100">
                       {unread.map((n) => (
-                        <NotifRow key={n.id} n={n} onMark={markOne} onDismiss={dismiss} />
+                        <NotifRow key={n.id} n={n} onMark={markOne} />
                       ))}
                     </div>
                   </>
                 )}
-                {readNotifs.length > 0 && (
+                {useLiveNotifs && !notifListLoading && !notifListError && readNotifs.length > 0 && (
                   <>
                     <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-gray-300 uppercase tracking-widest">
                       Earlier
                     </p>
                     <div className="divide-y divide-gray-100">
                       {readNotifs.map((n) => (
-                        <NotifRow key={n.id} n={n} onMark={markOne} onDismiss={dismiss} />
+                        <NotifRow key={n.id} n={n} onMark={markOne} />
                       ))}
                     </div>
                   </>
                 )}
-                {notifs.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-10 text-gray-300">
-                    <Bell size={28} className="mb-2" />
-                    <p className="text-[13px]">All caught up!</p>
-                  </div>
-                )}
+                {useLiveNotifs &&
+                  !notifListLoading &&
+                  !notifListError &&
+                  notifRows.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+                      <Bell size={28} className="mb-2" />
+                      <p className="text-[13px]">You&apos;re all caught up.</p>
+                    </div>
+                  )}
               </div>
               <div className="px-4 py-2.5 border-t border-gray-100">
                 <Link
-                  href="/admin/notifications"
+                  href="/admin/announcements"
                   onClick={() => setNotifOpen(false)}
                   className="block text-center text-[12px] font-semibold hover:underline"
                   style={{ color: pc }}
                 >
-                  View all notifications
+                  Open notification center
                 </Link>
               </div>
             </div>

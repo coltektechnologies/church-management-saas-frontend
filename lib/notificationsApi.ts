@@ -107,9 +107,19 @@ export interface SendBulkBody {
 export async function fetchNotificationsList(params?: {
   page_size?: number;
   is_read?: boolean;
+  /** inbox (default) = to you; sent = composed by you (fetches …/outbox/) */
+  mailbox?: 'inbox' | 'sent';
 }): Promise<NotificationApiRow[]> {
+  const pageSize = String(params?.page_size ?? 100);
+  if (params?.mailbox === 'sent') {
+    const q = new URLSearchParams();
+    q.set('page_size', pageSize);
+    const url = `${notificationsRoot()}/outbox/?${q.toString()}`;
+    const data = await fetchAuth<unknown>(url, { method: 'GET' });
+    return normalizeList<NotificationApiRow>(data);
+  }
   const q = new URLSearchParams();
-  q.set('page_size', String(params?.page_size ?? 100));
+  q.set('page_size', pageSize);
   if (params?.is_read !== undefined) {
     q.set('is_read', String(params.is_read));
   }
@@ -159,16 +169,19 @@ export async function sendBulkNotificationApi(body: SendBulkBody): Promise<{
   });
 }
 
-/** GET …/accounts/users/ — staff users for targeting */
+/** GET …/auth/users/ — staff users for targeting (accounts routes live under api/auth/) */
 export interface AccountUserRow {
   id: string;
   email?: string;
+  phone?: string;
+  /** UserListSerializer may expose either pair or full_name */
   first_name?: string;
   last_name?: string;
+  full_name?: string;
 }
 
 export async function fetchAccountUsers(): Promise<AccountUserRow[]> {
-  const url = `${getApiBaseUrl()}/accounts/users/?page_size=200`;
+  const url = `${getApiBaseUrl()}/auth/users/?page_size=200`;
   const data = await fetchAuth<unknown>(url, { method: 'GET' });
   return normalizeList<AccountUserRow>(data);
 }

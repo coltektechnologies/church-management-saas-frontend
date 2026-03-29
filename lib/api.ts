@@ -440,6 +440,31 @@ export async function getMembers(): Promise<MemberListItem[]> {
   return Array.isArray(data) ? data : [];
 }
 
+/** Visitor rows from GET /members/visitors/ (church-scoped). */
+export interface VisitorListItem {
+  id: string;
+  full_name: string;
+  phone: string;
+  email?: string | null;
+}
+
+export async function getVisitors(): Promise<VisitorListItem[]> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return [];
+  }
+  const res = await fetch(`${base}/members/visitors/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    return [];
+  }
+  const raw = (await res.json().catch(() => [])) as unknown;
+  const data = Array.isArray(raw) ? raw : [];
+  return data as VisitorListItem[];
+}
+
 export interface MemberLocationDetail {
   id?: string;
   phone_primary?: string;
