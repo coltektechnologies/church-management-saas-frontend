@@ -36,6 +36,7 @@ type ReportCategory = {
 type ReportItem = {
   key: string;
   path: string;
+  fallbackPaths?: string[];
   title: string;
   description: string;
   icon: typeof Users;
@@ -44,6 +45,9 @@ type ReportItem = {
   membershipFilter?: boolean;
   announcementStatusFilter?: boolean;
 };
+
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
 const MEMBERSHIP_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'All statuses' },
@@ -160,6 +164,7 @@ const REPORT_CATEGORIES: ReportCategory[] = [
       {
         key: 'announcements',
         path: 'announcements/',
+        fallbackPaths: ['announcement/'],
         title: 'Announcements',
         description: 'Published and pipeline announcements with optional status filter.',
         icon: Megaphone,
@@ -186,6 +191,193 @@ function defaultDateRange(): { from: string; to: string } {
   return { from: iso(from), to: iso(to) };
 }
 
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function formatLabel(key: string): string {
+  return key
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
+
+function formatPrimitive(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value.toLocaleString() : String(value);
+  }
+  if (typeof value === 'string') {
+    const parsedDate = new Date(value);
+    if (value.length >= 10 && !Number.isNaN(parsedDate.getTime()) && /[-T:]/.test(value)) {
+      return parsedDate.toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: value.includes('T') ? 'short' : undefined,
+      });
+    }
+    return value;
+  }
+  return JSON.stringify(value);
+}
+
+function pickDisplayName(row: Record<string, unknown>): string | null {
+  const keys = ['name', 'full_name', 'member_name', 'title', 'display_name'];
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+function DataPreview({ value }: { value: unknown }) {
+  if (value === null || value === undefined) {
+    return <p style={{ color: 'var(--admin-text-muted)' }}>No data available.</p>;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return <p style={{ color: 'var(--admin-text-muted)' }}>No rows found for this report.</p>;
+    }
+
+    const allObjects = value.every((row) => isObjectRecord(row));
+    if (allObjects) {
+      const rows = value as Record<string, unknown>[];
+      const rawColumns = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+      const hasNameColumn = rawColumns.some((col) =>
+        ['name', 'full_name', 'member_name', 'title', 'display_name'].includes(col)
+      );
+      const columns = rawColumns.filter(
+        (column) => !(hasNameColumn && (column === 'id' || column.endsWith('_id')))
+      );
+      return (
+        <div
+          className="overflow-x-auto rounded-xl border"
+          style={{ borderColor: 'var(--admin-border)' }}
+        >
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--admin-border)' }}>
+                {columns.map((column) => (
+                  <th
+                    key={column}
+                    className="text-left py-2.5 px-3 font-semibold whitespace-nowrap"
+                    style={{ color: 'var(--admin-text)' }}
+                  >
+                    {formatLabel(column)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rowIndex) => (
+                <tr
+                  key={row.id ? String(row.id) : pickDisplayName(row) || `row-${rowIndex}`}
+                  style={{ borderBottom: '1px solid var(--admin-border)' }}
+                  className="last:border-0"
+                >
+                  {columns.map((column) => {
+                    const cellValue = row[column];
+                    const simpleCell =
+                      cellValue === null ||
+                      ['string', 'number', 'boolean', 'undefined'].includes(typeof cellValue);
+                    return (
+                      <td
+                        key={`${rowIndex}-${column}`}
+                        className="py-2.5 px-3 align-top"
+                        style={{ color: 'var(--admin-text-muted)' }}
+                      >
+                        {simpleCell ? (
+                          formatPrimitive(cellValue)
+                        ) : (
+                          <code className="text-xs">{JSON.stringify(cellValue)}</code>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {value.map((item, index) => (
+          <div
+            key={`item-${index}`}
+            className="rounded-lg border px-3 py-2 text-sm"
+            style={{
+              borderColor: 'var(--admin-border)',
+              backgroundColor: 'var(--admin-bg)',
+              color: 'var(--admin-text)',
+            }}
+          >
+            {formatPrimitive(item)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (isObjectRecord(value)) {
+    const entries = Object.entries(value);
+    if (entries.length === 0) {
+      return <p style={{ color: 'var(--admin-text-muted)' }}>No report details returned.</p>;
+    }
+
+    return (
+      <div className="space-y-4">
+        {entries.map(([key, fieldValue]) => {
+          const isSimple =
+            fieldValue === null ||
+            ['string', 'number', 'boolean', 'undefined'].includes(typeof fieldValue);
+          return (
+            <div
+              key={key}
+              className="rounded-xl border p-3.5"
+              style={{
+                borderColor: 'var(--admin-border)',
+                backgroundColor: 'var(--admin-bg)',
+              }}
+            >
+              <p
+                className="text-xs font-semibold uppercase tracking-wide mb-2"
+                style={{ color: 'var(--admin-text-muted)' }}
+              >
+                {formatLabel(key)}
+              </p>
+              {isSimple ? (
+                <p className="text-sm" style={{ color: 'var(--admin-text)' }}>
+                  {formatPrimitive(fieldValue)}
+                </p>
+              ) : (
+                <DataPreview value={fieldValue} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <p className="text-sm" style={{ color: 'var(--admin-text)' }}>
+      {formatPrimitive(value)}
+    </p>
+  );
+}
+
 export default function AdminReportsHub() {
   const initialRange = useMemo(() => defaultDateRange(), []);
   const [dateFrom, setDateFrom] = useState(initialRange.from);
@@ -196,8 +388,10 @@ export default function AdminReportsHub() {
   const [previewKey, setPreviewKey] = useState<string | null>(null);
   const [previewLabel, setPreviewLabel] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewData, setPreviewData] = useState<unknown | null>(null);
   const [previewJson, setPreviewJson] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [showRawPreview, setShowRawPreview] = useState(false);
 
   const [downloadState, setDownloadState] = useState<{
     key: string;
@@ -240,14 +434,63 @@ export default function AdminReportsHub() {
     [dateFrom, dateTo, membershipStatus, announcementStatus]
   );
 
+  const is404Error = (error: unknown): boolean => {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+    return /\b404\b/.test(error.message) || /not found/i.test(error.message);
+  };
+
+  const withReportPathFallback = async <T,>(
+    item: ReportItem,
+    run: (path: string) => Promise<T>
+  ): Promise<T> => {
+    const normalizeCandidates = (path: string): string[] => {
+      const trimmed = path.replace(/^\//, '');
+      if (!trimmed) {
+        return [];
+      }
+      const withoutTrailing = trimmed.replace(/\/+$/, '');
+      const withTrailing = `${withoutTrailing}/`;
+      return Array.from(new Set([withTrailing, withoutTrailing]));
+    };
+
+    const paths = Array.from(
+      new Set(
+        [item.path, ...(item.fallbackPaths || [])].flatMap((candidate) =>
+          normalizeCandidates(candidate)
+        )
+      )
+    );
+    let lastError: unknown = null;
+    for (let i = 0; i < paths.length; i += 1) {
+      const path = paths[i];
+      try {
+        return await run(path);
+      } catch (error) {
+        lastError = error;
+        const hasMore = i < paths.length - 1;
+        if (!hasMore || !is404Error(error)) {
+          throw error;
+        }
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error('Report request failed');
+  };
+
   const handlePreview = async (item: ReportItem) => {
     setPreviewKey(item.key);
     setPreviewLabel(item.title);
     setPreviewLoading(true);
     setPreviewError(null);
+    setShowRawPreview(false);
+    setPreviewData(null);
     setPreviewJson(null);
     try {
-      const data = await fetchReportJson(item.path, buildParams(item));
+      const data = await withReportPathFallback(item, (path) =>
+        fetchReportJson(path, buildParams(item))
+      );
+      setPreviewData(data);
       setPreviewJson(JSON.stringify(data, null, 2));
     } catch (e) {
       setPreviewError(e instanceof Error ? e.message : 'Preview failed');
@@ -260,7 +503,9 @@ export default function AdminReportsHub() {
     setDownloadState({ key: item.key, format });
     setActionError(null);
     try {
-      await downloadReportFile(item.path, format, buildParams(item));
+      await withReportPathFallback(item, (path) =>
+        downloadReportFile(path, format, buildParams(item))
+      );
     } catch (e) {
       setActionError(e instanceof Error ? e.message : 'Download failed');
     } finally {
@@ -283,8 +528,8 @@ export default function AdminReportsHub() {
           style={{ color: 'var(--admin-text-muted)' }}
         >
           Generate church-wide reports from live data. Choose a date range where applicable, preview
-          JSON in the browser, or download PDF, Excel, or CSV. Exports use the same filters as
-          preview.
+          results in the browser, or download PDF, Excel, or CSV. Exports use the same filters as
+          the preview.
         </p>
       </div>
 
@@ -571,19 +816,36 @@ export default function AdminReportsHub() {
             <h3 className="text-sm font-semibold" style={{ color: 'var(--admin-text)' }}>
               Preview{previewLabel ? `: ${previewLabel}` : ''}
             </h3>
-            <button
-              type="button"
-              onClick={() => {
-                setPreviewKey(null);
-                setPreviewJson(null);
-                setPreviewError(null);
-                setPreviewLabel('');
-              }}
-              className="text-xs font-medium px-2 py-1 rounded-md"
-              style={{ color: 'var(--admin-text-muted)' }}
-            >
-              Close
-            </button>
+            <div className="flex items-center gap-2">
+              {previewJson && (
+                <button
+                  type="button"
+                  onClick={() => setShowRawPreview((v) => !v)}
+                  className="text-xs font-medium px-2 py-1 rounded-md border"
+                  style={{
+                    color: 'var(--admin-text-muted)',
+                    borderColor: 'var(--admin-border)',
+                  }}
+                >
+                  {showRawPreview ? 'Show friendly view' : 'Show raw JSON'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewKey(null);
+                  setPreviewData(null);
+                  setPreviewJson(null);
+                  setPreviewError(null);
+                  setPreviewLabel('');
+                  setShowRawPreview(false);
+                }}
+                className="text-xs font-medium px-2 py-1 rounded-md"
+                style={{ color: 'var(--admin-text-muted)' }}
+              >
+                Close
+              </button>
+            </div>
           </div>
           <div className="p-4 max-h-[min(28rem,55vh)] overflow-auto">
             {previewLoading && (
@@ -598,7 +860,8 @@ export default function AdminReportsHub() {
             {previewError && (
               <p className="text-sm text-red-600 dark:text-red-400">{previewError}</p>
             )}
-            {previewJson && (
+            {previewData && !showRawPreview && <DataPreview value={previewData as JsonValue} />}
+            {previewJson && showRawPreview && (
               <pre
                 className="text-xs font-mono whitespace-pre-wrap break-words leading-relaxed"
                 style={{ color: 'var(--admin-text)' }}

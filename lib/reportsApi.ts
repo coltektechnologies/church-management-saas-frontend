@@ -95,6 +95,9 @@ export async function downloadReportFile(
     throw new Error(msg);
   }
   const blob = await res.blob();
+  if (blob.size === 0) {
+    throw new Error('Downloaded file is empty. Please try again.');
+  }
   const dispo = res.headers.get('Content-Disposition');
   const m = dispo?.match(/filename="?([^";]+)"?/i);
   const ext = format === 'xlsx' ? 'xlsx' : format;
@@ -107,7 +110,8 @@ export async function downloadReportFile(
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(objectUrl);
+  // Delay revoke to avoid race conditions in some browsers (commonly affects PDF downloads).
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 }
 
 export interface ScheduledReportRow {
