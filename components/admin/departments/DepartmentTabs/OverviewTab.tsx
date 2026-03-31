@@ -32,8 +32,7 @@ export default function OverviewTab({ department, departmentMembers }: Props) {
     department.assistantHeadDisplayName?.trim() ||
     departmentMembers.find((m) => m.role === 'Assistant')?.name ||
     'Not Assigned';
-  const elderInCharge =
-    department.elderInChargeDisplayName?.trim() || 'Not Assigned';
+  const elderInCharge = department.elderInChargeDisplayName?.trim() || 'Not Assigned';
 
   return (
     <>

@@ -421,7 +421,6 @@ export interface MemberListItem {
     city?: string | null;
     region?: string | null;
   };
-  [key: string]: unknown;
 }
 
 /** Get list of members for the current church. */
@@ -441,6 +440,31 @@ export async function getMembers(): Promise<MemberListItem[]> {
   return Array.isArray(data) ? data : [];
 }
 
+/** Visitor rows from GET /members/visitors/ (church-scoped). */
+export interface VisitorListItem {
+  id: string;
+  full_name: string;
+  phone: string;
+  email?: string | null;
+}
+
+export async function getVisitors(): Promise<VisitorListItem[]> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return [];
+  }
+  const res = await fetch(`${base}/members/visitors/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    return [];
+  }
+  const raw = (await res.json().catch(() => [])) as unknown;
+  const data = Array.isArray(raw) ? raw : [];
+  return data as VisitorListItem[];
+}
+
 export interface MemberLocationDetail {
   id?: string;
   phone_primary?: string;
@@ -452,7 +476,7 @@ export interface MemberLocationDetail {
   country?: string | null;
 }
 
-export interface MemberDetail extends MemberListItem {
+export interface MemberDetail extends Omit<MemberListItem, 'location'> {
   title?: string | null;
   middle_name?: string | null;
   date_of_birth?: string | null;
@@ -507,7 +531,7 @@ export async function updateMember(id: string, data: Partial<MemberDetail>): Pro
   if (!res.ok) {
     throw new Error(messageFromApiErrorJson(result, 'Failed to update member'));
   }
-  return result as MemberDetail;
+  return result as unknown as MemberDetail;
 }
 
 /** Delete member (soft delete). */

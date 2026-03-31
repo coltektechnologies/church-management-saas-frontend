@@ -656,7 +656,9 @@ export default function SettingsTab({
               </select>
             </div>
             {!headShowAllMembers && !headRoleFilter && (
-              <p className="text-xs text-gray-500">Select a role above or turn on Show all members.</p>
+              <p className="text-xs text-gray-500">
+                Select a role above or turn on Show all members.
+              </p>
             )}
             {leadershipError && <p className="text-sm text-red-600">{leadershipError}</p>}
             <div className="flex gap-2 justify-end pt-2">
@@ -693,8 +695,8 @@ export default function SettingsTab({
           <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <h4 className="text-lg font-semibold text-gray-900">Assistant department head</h4>
             <p className="text-sm text-gray-600">
-              Same picker as department head: filter by church role or show all members. The
-              primary head cannot be selected as assistant.
+              Same picker as department head: filter by church role or show all members. The primary
+              head cannot be selected as assistant.
             </p>
             {rolesLoadError && (
               <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
@@ -744,9 +746,7 @@ export default function SettingsTab({
               <select
                 value={pickAsstId}
                 disabled={
-                  leadershipBusy ||
-                  (!asstShowAllMembers && !asstRoleFilter) ||
-                  asstUsersLoading
+                  leadershipBusy || (!asstShowAllMembers && !asstRoleFilter) || asstUsersLoading
                 }
                 onChange={(e) => setPickAsstId(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
@@ -760,7 +760,9 @@ export default function SettingsTab({
               </select>
             </div>
             {!asstShowAllMembers && !asstRoleFilter && (
-              <p className="text-xs text-gray-500">Select a role above or turn on Show all members.</p>
+              <p className="text-xs text-gray-500">
+                Select a role above or turn on Show all members.
+              </p>
             )}
             {leadershipError && <p className="text-sm text-red-600">{leadershipError}</p>}
             <div className="flex flex-wrap gap-2 justify-end pt-2">
@@ -858,9 +860,7 @@ export default function SettingsTab({
               <select
                 value={pickElderId}
                 disabled={
-                  leadershipBusy ||
-                  (!elderShowAllMembers && !elderRoleFilter) ||
-                  elderUsersLoading
+                  leadershipBusy || (!elderShowAllMembers && !elderRoleFilter) || elderUsersLoading
                 }
                 onChange={(e) => setPickElderId(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
@@ -874,7 +874,9 @@ export default function SettingsTab({
               </select>
             </div>
             {!elderShowAllMembers && !elderRoleFilter && (
-              <p className="text-xs text-gray-500">Select a role above or turn on Show all members.</p>
+              <p className="text-xs text-gray-500">
+                Select a role above or turn on Show all members.
+              </p>
             )}
             {leadershipError && <p className="text-sm text-red-600">{leadershipError}</p>}
             <div className="flex flex-wrap gap-2 justify-end pt-2">

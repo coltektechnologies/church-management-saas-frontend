@@ -124,10 +124,8 @@ class AnnouncementService {
         page_size: 100,
         search: filters.search || undefined,
       });
-      const placeholder = 'Tap “View” or “Edit” to load full content from the server.';
-      let mapped = rows.map((r) =>
-        mapListItemToAnnouncement(r, rows.length > 0 ? placeholder : '')
-      );
+      // List API has no body; leave content empty so cards do not show an internal placeholder string.
+      let mapped = rows.map((r) => mapListItemToAnnouncement(r, ''));
 
       if (filters.category && filters.category !== 'All') {
         mapped = mapped.filter((a) => a.category === filters.category);

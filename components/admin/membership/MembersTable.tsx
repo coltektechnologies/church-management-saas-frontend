@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -88,7 +88,6 @@ export default function MembersTable({ filters }: MembersTableProps) {
   const router = useRouter();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -112,11 +111,38 @@ export default function MembersTable({ filters }: MembersTableProps) {
     filters || { search: '', status: 'all', department: 'all', dateRange: 'all' }
   );
 
-  useEffect(() => {
-    setPage(1);
-  }, [filters?.search, filters?.status, filters?.department, filters?.dateRange]);
+  const filterKey = useMemo(
+    () =>
+      [
+        filters?.search ?? '',
+        filters?.status ?? '',
+        filters?.department ?? '',
+        filters?.dateRange ?? '',
+      ].join('|'),
+    [filters?.search, filters?.status, filters?.department, filters?.dateRange]
+  );
 
   const totalPages = Math.max(1, Math.ceil(filteredMembers.length / perPage));
+
+  const [pagination, setPagination] = useState<{ key: string; page: number }>({
+    key: '',
+    page: 1,
+  });
+
+  const page =
+    pagination.key === filterKey ? Math.min(Math.max(1, pagination.page), totalPages) : 1;
+
+  const setPage = useCallback(
+    (next: number | ((p: number) => number)) => {
+      setPagination((prev) => {
+        const base = prev.key === filterKey ? Math.min(Math.max(1, prev.page), totalPages) : 1;
+        const resolved = typeof next === 'function' ? (next as (n: number) => number)(base) : next;
+        const clamped = Math.max(1, Math.min(resolved, totalPages));
+        return { key: filterKey, page: clamped };
+      });
+    },
+    [filterKey, totalPages]
+  );
   const paginated = filteredMembers.slice((page - 1) * perPage, page * perPage);
   const selectedCount = selectedIds.size;
   const isAllSelected = paginated.length > 0 && paginated.every((m) => selectedIds.has(m.id));

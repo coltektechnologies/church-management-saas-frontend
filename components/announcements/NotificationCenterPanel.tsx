@@ -24,10 +24,10 @@ import { NotificationDetailModal } from '@/components/announcements/Notification
 import { CreateNotificationModal } from '@/components/announcements/CreateNotificationModal';
 import { notificationsApiEnabled } from '@/services/notificationsService';
 import {
-  NOTIFICATIONS_INBOX_QUERY_KEY,
+  NOTIFICATIONS_LIST_QUERY_KEY,
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
-  useNotificationsInboxQuery,
+  useNotificationsListQuery,
 } from '@/hooks/useNotificationsInbox';
 import { toast } from 'sonner';
 
@@ -107,48 +107,105 @@ export function NotificationCenterPanel({
   const useApi = notificationsApiEnabled();
 
   const [mockItems, setMockItems] = useState<MockNotificationItem[]>(() => [...MOCK_NOTIFICATIONS]);
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  /** Inbox tab = merged feed (to you + sent by you); Unread = inbox unread only; Sent = outbox only. */
+  const [listTab, setListTab] = useState<'all' | 'unread' | 'sent'>('all');
   const [detailItem, setDetailItem] = useState<MockNotificationItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const {
-    data: apiItems,
-    isLoading: apiLoading,
-    error: apiError,
-    refetch,
-  } = useNotificationsInboxQuery();
+  const inboxQuery = useNotificationsListQuery('inbox', { enabled: useApi && open });
+  /** Load sent on Sent and on All so “All” can merge inbox + outbox (staff often only have sent). */
+  const sentQuery = useNotificationsListQuery('sent', {
+    enabled: useApi && open && (listTab === 'sent' || listTab === 'all'),
+  });
   const markReadMutation = useMarkNotificationReadMutation();
   const markAllMutation = useMarkAllNotificationsReadMutation();
 
-  const items = useMemo(
-    () => (useApi ? (apiItems ?? []) : mockItems),
-    [useApi, apiItems, mockItems]
+  const inboxItems = useMemo(
+    () => (useApi ? (inboxQuery.data ?? []) : mockItems),
+    [useApi, inboxQuery.data, mockItems]
   );
 
-  useEffect(() => {
-    if (apiError) {
-      toast.error(apiError instanceof Error ? apiError.message : 'Failed to load notifications');
+  const items = useMemo(() => {
+    if (!useApi) {
+      if (listTab === 'sent') {
+        return mockItems.filter(
+          (n) =>
+            n.audience_mode === 'batch' ||
+            (typeof n.recipient_count_estimate === 'number' && n.recipient_count_estimate > 1)
+        );
+      }
+      return mockItems;
     }
-  }, [apiError]);
+    if (listTab === 'sent') {
+      return sentQuery.data ?? [];
+    }
+    const inbox = inboxQuery.data ?? [];
+    if (listTab === 'all') {
+      const sent = sentQuery.data ?? [];
+      if (inbox.length === 0 && sent.length === 0) {
+        return [];
+      }
+      const byId = new Map<string, MockNotificationItem>();
+      for (const n of inbox) {
+        byId.set(n.id, { ...n, isComposerOutbox: false });
+      }
+      for (const n of sent) {
+        if (!byId.has(n.id)) {
+          byId.set(n.id, { ...n, isComposerOutbox: true });
+        }
+      }
+      return [...byId.values()].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+    return inbox;
+  }, [useApi, listTab, mockItems, inboxQuery.data, sentQuery.data]);
+
+  useEffect(() => {
+    if (!useApi || !open) {
+      return;
+    }
+    const err =
+      listTab === 'sent'
+        ? sentQuery.error
+        : listTab === 'all'
+          ? (inboxQuery.error ?? sentQuery.error)
+          : inboxQuery.error;
+    if (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load notifications');
+    }
+  }, [useApi, open, listTab, inboxQuery.error, sentQuery.error]);
 
   useEffect(() => {
     if (open && useApi) {
-      refetch();
+      void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_LIST_QUERY_KEY });
     }
-  }, [open, useApi, refetch]);
+  }, [open, useApi, queryClient]);
 
-  const unreadCount = useMemo(() => items.filter((n) => !n.is_read).length, [items]);
+  const unreadCount = useMemo(() => inboxItems.filter((n) => !n.is_read).length, [inboxItems]);
 
   useEffect(() => {
     onUnreadCountChange?.(unreadCount);
   }, [unreadCount, onUnreadCountChange]);
 
   const filtered = useMemo(() => {
-    if (filter === 'unread') {
+    if (listTab === 'sent') {
+      return items;
+    }
+    if (listTab === 'unread') {
       return items.filter((n) => !n.is_read);
     }
     return items;
-  }, [items, filter]);
+  }, [items, listTab]);
+
+  const isSentView = listTab === 'sent';
+  const apiLoading =
+    useApi &&
+    (listTab === 'sent'
+      ? sentQuery.isLoading
+      : listTab === 'all'
+        ? inboxQuery.isLoading || sentQuery.isLoading
+        : inboxQuery.isLoading);
 
   const markRead = useCallback(
     (id: string) => {
@@ -186,7 +243,7 @@ export function NotificationCenterPanel({
   const handleCreated = useCallback(
     (item: MockNotificationItem | null) => {
       if (useApi) {
-        queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_INBOX_QUERY_KEY });
+        queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_LIST_QUERY_KEY });
       } else if (item) {
         setMockItems((prev) => [item, ...prev]);
       }
@@ -200,6 +257,7 @@ export function NotificationCenterPanel({
         <NotificationDetailModal
           item={detailItem}
           open={!!detailItem}
+          isSentView={isSentView || Boolean(detailItem.isComposerOutbox)}
           onOpenChange={(o) => {
             if (!o) {
               setDetailItem(null);
@@ -252,7 +310,7 @@ export function NotificationCenterPanel({
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {useApi
-                    ? 'Live inbox · GET /notifications/notifications/'
+                    ? 'Inbox: messages to you and ones you sent. Unread: only unread addressed to you. Sent: only what you created.'
                     : 'Demo inbox · set NEXT_PUBLIC_USE_MOCK_NOTIFICATIONS=false for API'}
                 </p>
               </div>
@@ -280,25 +338,25 @@ export function NotificationCenterPanel({
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <div className="flex rounded-lg border border-border bg-background p-0.5">
+            <div className="flex flex-wrap rounded-lg border border-border bg-background p-0.5">
               <button
                 type="button"
-                onClick={() => setFilter('all')}
+                onClick={() => setListTab('all')}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  filter === 'all'
+                  'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3',
+                  listTab === 'all'
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                All
+                Inbox
               </button>
               <button
                 type="button"
-                onClick={() => setFilter('unread')}
+                onClick={() => setListTab('unread')}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  filter === 'unread'
+                  'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3',
+                  listTab === 'unread'
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
@@ -310,8 +368,20 @@ export function NotificationCenterPanel({
                   </span>
                 )}
               </button>
+              <button
+                type="button"
+                onClick={() => setListTab('sent')}
+                className={cn(
+                  'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3',
+                  listTab === 'sent'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Sent
+              </button>
             </div>
-            {unreadCount > 0 && (
+            {listTab !== 'sent' && unreadCount > 0 && (
               <Button
                 variant="outline"
                 size="sm"
@@ -338,7 +408,11 @@ export function NotificationCenterPanel({
               <div>
                 <p className="font-medium text-foreground">You&apos;re all caught up</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {filter === 'unread' ? 'No unread notifications.' : 'No notifications to show.'}
+                  {listTab === 'sent'
+                    ? 'No sent in-app notifications yet. They appear here when you create them for others.'
+                    : listTab === 'unread'
+                      ? 'No unread notifications in your inbox.'
+                      : 'No notifications yet. Inbox includes items sent to you and items you sent.'}
                 </p>
               </div>
             </div>
@@ -356,7 +430,7 @@ export function NotificationCenterPanel({
                       className={cn(
                         'group w-full rounded-xl border text-left transition-colors',
                         'hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                        n.is_read
+                        isSentView || n.is_read || n.isComposerOutbox
                           ? 'border-border/60 bg-card'
                           : 'border-primary/25 bg-primary/[0.04] shadow-sm'
                       )}
@@ -375,7 +449,7 @@ export function NotificationCenterPanel({
                             <p
                               className={cn(
                                 'pr-1 text-sm leading-snug',
-                                n.is_read
+                                isSentView || n.is_read || n.isComposerOutbox
                                   ? 'font-medium text-foreground'
                                   : 'font-semibold text-foreground'
                               )}
@@ -383,7 +457,7 @@ export function NotificationCenterPanel({
                               {n.title}
                             </p>
                             <div className="flex shrink-0 items-center gap-1">
-                              {!n.is_read && (
+                              {!isSentView && !n.is_read && !n.isComposerOutbox && (
                                 <span
                                   className="mt-1.5 size-2 rounded-full bg-primary"
                                   title="Unread"

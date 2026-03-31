@@ -6,19 +6,12 @@
  * Wire to: /api/notifications/notifications/
  */
 
-export type NotificationPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+import type { NotificationCategory, NotificationPriority } from '@/lib/notificationWizardOptions';
+
+export type { NotificationCategory, NotificationPriority } from '@/lib/notificationWizardOptions';
 
 /** Backend Notification.status */
 export type NotificationStatus = 'PENDING' | 'SENT' | 'READ' | 'FAILED';
-
-export type NotificationCategory =
-  | 'ANNOUNCEMENT'
-  | 'REMINDER'
-  | 'EVENT'
-  | 'BIRTHDAY'
-  | 'FINANCE'
-  | 'GENERAL'
-  | 'PROGRAM';
 
 /** UI-only: not on Notification model (delivery is separate); shown in list for demo */
 export type DeliveryChannel = 'IN_APP' | 'EMAIL' | 'SMS';
@@ -60,6 +53,8 @@ export interface MockNotificationItem {
   email_subject_line?: string;
   /** When admin picks specific departments in the wizard */
   department_ids?: string[];
+  /** Merged “All” list: row only from outbox (you composed it; not your inbox copy). */
+  isComposerOutbox?: boolean;
 }
 
 /** Mock church users for create form (user_id) */
@@ -144,26 +139,7 @@ export const MOCK_NOTIFICATION_VISITORS: { id: string; label: string }[] = [
   },
 ];
 
-export const CATEGORY_OPTIONS: { value: NotificationCategory; label: string }[] = [
-  { value: 'ANNOUNCEMENT', label: 'Announcement' },
-  { value: 'REMINDER', label: 'Reminder' },
-  { value: 'EVENT', label: 'Event' },
-  { value: 'BIRTHDAY', label: 'Birthday' },
-  { value: 'FINANCE', label: 'Finance' },
-  { value: 'GENERAL', label: 'General' },
-  { value: 'PROGRAM', label: 'Program' },
-];
-
-export const PRIORITY_OPTIONS: NotificationPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
-
-export const ICON_OPTIONS: { value: string; label: string }[] = [
-  { value: 'none', label: 'Default (none)' },
-  { value: 'bell', label: 'bell' },
-  { value: 'calendar', label: 'calendar' },
-  { value: 'megaphone', label: 'megaphone' },
-  { value: 'heart', label: 'heart' },
-  { value: 'wallet', label: 'wallet' },
-];
+export { CATEGORY_OPTIONS, PRIORITY_OPTIONS, ICON_OPTIONS } from '@/lib/notificationWizardOptions';
 
 export const MOCK_NOTIFICATIONS: MockNotificationItem[] = [
   {

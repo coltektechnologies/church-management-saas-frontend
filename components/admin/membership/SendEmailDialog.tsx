@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -61,13 +61,6 @@ export function SendEmailDialog({ open, onOpenChange, recipients, onSent }: Send
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setSubject('');
-      setBody('');
-    }
-  }, [open]);
-
   const resolved = recipients.map((r) => ({
     ...r,
     addr: usableEmail(r.email),
@@ -100,9 +93,13 @@ export function SendEmailDialog({ open, onOpenChange, recipients, onSent }: Send
     let lastError = '';
 
     for (const r of withEmail) {
+      const addr = r.addr;
+      if (!addr) {
+        continue;
+      }
       try {
         await sendNotificationEmail({
-          email_address: r.addr!,
+          email_address: addr,
           subject: sub,
           message_html: messageHtml,
           member_id: r.id,
@@ -135,7 +132,16 @@ export function SendEmailDialog({ open, onOpenChange, recipients, onSent }: Send
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) {
+          setSubject('');
+          setBody('');
+        }
+        onOpenChange(next);
+      }}
+    >
       <DialogContent
         className={cn(
           'sm:max-w-lg max-h-[min(90dvh,680px)] overflow-y-auto',
