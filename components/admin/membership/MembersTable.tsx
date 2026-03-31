@@ -273,75 +273,87 @@ export default function MembersTable({ filters }: MembersTableProps) {
     <div className="space-y-4 w-full">
       {/* Dynamic action bar when members are selected */}
       {selectedCount > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm w-full">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm w-full">
           <span className="text-sm font-medium text-gray-700">
             {selectedCount} member{selectedCount !== 1 ? 's' : ''} selected
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
             {selectedMemberId && (
-              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleBulkView}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 flex-1 sm:flex-none"
+                onClick={handleBulkView}
+              >
                 <Eye className="h-4 w-4" />
-                View
+                <span className="hidden sm:inline">View</span>
               </Button>
             )}
             {selectedMemberId && (
-              <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleBulkEdit}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 flex-1 sm:flex-none"
+                onClick={handleBulkEdit}
+              >
                 <Pencil className="h-4 w-4" />
-                Edit
+                <span className="hidden sm:inline">Edit</span>
               </Button>
             )}
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 gap-1.5 flex-1 sm:flex-none"
               onClick={handleBulkSendMessage}
             >
               <MessageCircle className="h-4 w-4" />
-              Send Message
+              <span className="hidden sm:inline">Send Message</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 gap-1.5 flex-1 sm:flex-none"
               onClick={handleBulkSendEmail}
             >
               <Mail className="h-4 w-4" />
-              Send Email
+              <span className="hidden sm:inline">Send Email</span>
             </Button>
-            <Button size="sm" className="h-8 gap-1.5 bg-green-600 hover:bg-green-700 text-white">
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
+            >
               <Download className="h-4 w-4" />
-              Export Selected
+              <span className="hidden sm:inline">Export Selected</span>
             </Button>
-            <Button variant="outline" size="sm" className="h-8 gap-1.5">
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 flex-1 sm:flex-none">
               <RefreshCw className="h-4 w-4" />
-              Update Status
+              <span className="hidden sm:inline">Update Status</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
+              className="h-8 gap-1.5 flex-1 sm:flex-none text-red-600 border-red-200 hover:bg-red-50"
               onClick={handleBulkDelete}
             >
               <UserMinus className="h-4 w-4" />
-              Delete
+              <span className="hidden sm:inline">Delete</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 text-gray-600 hover:text-gray-800"
+              className="h-8 gap-1.5 flex-1 sm:flex-none text-gray-600 hover:text-gray-800"
               onClick={clearSelection}
             >
               <X className="h-4 w-4" />
-              Clear
+              <span className="hidden sm:inline">Clear</span>
             </Button>
           </div>
         </div>
       )}
 
       <div
-        className="flex items-center justify-between px-4 w-full"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 w-full"
         style={{
-          height: 67,
           borderTopLeftRadius: 8,
           borderTopRightRadius: 8,
           borderBottom: '2px solid #F6F8FA',
@@ -349,10 +361,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
         }}
       >
         <h3 className="text-lg font-bold text-gray-900">All Members</h3>
-        <div
-          className="flex items-center justify-end gap-2 ml-auto rounded-[5px] shrink-0"
-          style={{ height: 32 }}
-        >
+        <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2 sm:ml-auto rounded-[5px] shrink-0">
           <Button variant="outline" size="sm" className="rounded-[5px] h-8">
             <LayoutGrid className="h-4 w-4" />
           </Button>
@@ -474,7 +483,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
                     {member.memberSince ? format(new Date(member.memberSince), 'MMM d, yyyy') : '—'}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                       <Link href={`/admin/members/${member.id}`}>
                         <Button
                           variant="ghost"
@@ -523,7 +532,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between pt-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-4">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
