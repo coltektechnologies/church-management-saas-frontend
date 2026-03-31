@@ -502,7 +502,9 @@ function inferProgramApprovalDepartment(
 }
 
 /** GET /api/programs/?status= */
-export async function fetchProgramsByStatus(status: ProgramApprovalStatus): Promise<ProgramListItem[]> {
+export async function fetchProgramsByStatus(
+  status: ProgramApprovalStatus
+): Promise<ProgramListItem[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
   sp.set('status', status);
@@ -518,7 +520,8 @@ export async function reviewProgramApproval(
   currentStatus?: ProgramApprovalStatus
 ): Promise<unknown> {
   const base = getApiBaseUrl();
-  const department = opts.department ?? (currentStatus ? inferProgramApprovalDepartment(currentStatus) : null);
+  const department =
+    opts.department ?? (currentStatus ? inferProgramApprovalDepartment(currentStatus) : null);
   if (!department) {
     throw new Error('Program is not in a reviewable approval stage.');
   }
