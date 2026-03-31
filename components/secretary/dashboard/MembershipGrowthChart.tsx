@@ -25,13 +25,6 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
 import { useAppData } from '@/components/secretary/contexts/AppDataContext';
 
-const CHART_TYPES = [
-  { id: 'bar', label: 'Bar' },
-  { id: 'line', label: 'Line' },
-  { id: 'area', label: 'Area' },
-  { id: 'pie', label: 'Pie' },
-];
-
 const MONTH_NAMES = [
   'Jan',
   'Feb',

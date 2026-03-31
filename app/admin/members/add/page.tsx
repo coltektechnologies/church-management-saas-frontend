@@ -23,10 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { createMember, CreateMemberPayload, getMemberStats } from '@/lib/api';
-import {
-  fetchDepartmentsList,
-  type DepartmentListRow,
-} from '@/lib/departmentsApi';
+import { fetchDepartmentsList, type DepartmentListRow } from '@/lib/departmentsApi';
 import { toast } from 'sonner';
 
 const TITLES = [
@@ -207,9 +204,7 @@ export default function AddMemberPage() {
     setDepartmentsError(null);
     fetchDepartmentsList()
       .then((rows) => {
-        const active = rows
-          .filter((d) => d.is_active)
-          .sort((a, b) => a.name.localeCompare(b.name));
+        const active = rows.filter((d) => d.is_active).sort((a, b) => a.name.localeCompare(b.name));
         setDepartments(active);
       })
       .catch((e) => {
