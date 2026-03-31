@@ -30,7 +30,11 @@ const PROGRAM_PENDING_STATUSES: ProgramApprovalStatus[] = [
   'SECRETARIAT_APPROVED',
 ];
 
-const EXPENSE_PENDING_STATUSES = ['SUBMITTED', 'DEPT_HEAD_APPROVED', 'FIRST_ELDER_APPROVED'] as const;
+const EXPENSE_PENDING_STATUSES = [
+  'SUBMITTED',
+  'DEPT_HEAD_APPROVED',
+  'FIRST_ELDER_APPROVED',
+] as const;
 
 function fmtDate(value?: string | null): string {
   if (!value) {
@@ -69,9 +73,9 @@ export default function ApprovalsPage() {
       Promise.all(PROGRAM_PENDING_STATUSES.map((s) => fetchProgramsByStatus(s))).then((groups) =>
         groups.flat()
       ),
-      Promise.all(EXPENSE_PENDING_STATUSES.map((s) => getExpenseRequests({ status: s, page_size: 200 }))).then(
-        (groups) => groups.flat()
-      ),
+      Promise.all(
+        EXPENSE_PENDING_STATUSES.map((s) => getExpenseRequests({ status: s, page_size: 200 }))
+      ).then((groups) => groups.flat()),
     ]);
 
     // Keep only items requiring approval; hide already approved/rejected.
@@ -142,7 +146,10 @@ export default function ApprovalsPage() {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold" style={{ color: 'var(--admin-text)' }}>
+            <h1
+              className="text-xl sm:text-2xl font-semibold"
+              style={{ color: 'var(--admin-text)' }}
+            >
               Approval Center
             </h1>
             <p className="text-sm mt-1" style={{ color: 'var(--admin-text-muted)' }}>
@@ -160,7 +167,8 @@ export default function ApprovalsPage() {
             {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
-        <div className="mt-4 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium"
+        <div
+          className="mt-4 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium"
           style={{
             backgroundColor: 'color-mix(in srgb, var(--color-primary) 14%, transparent)',
             color: 'var(--color-primary)',
@@ -172,7 +180,8 @@ export default function ApprovalsPage() {
       </section>
 
       {error && (
-        <div className="rounded-xl border px-4 py-3 text-sm"
+        <div
+          className="rounded-xl border px-4 py-3 text-sm"
           style={{
             backgroundColor: 'rgba(220, 38, 38, 0.08)',
             borderColor: 'rgba(220, 38, 38, 0.35)',
@@ -184,15 +193,21 @@ export default function ApprovalsPage() {
       )}
 
       {loading ? (
-        <div className="rounded-2xl border p-10 text-center text-sm"
-          style={{ backgroundColor: 'var(--admin-surface)', borderColor: 'var(--admin-border)', color: 'var(--admin-text-muted)' }}
+        <div
+          className="rounded-2xl border p-10 text-center text-sm"
+          style={{
+            backgroundColor: 'var(--admin-surface)',
+            borderColor: 'var(--admin-border)',
+            color: 'var(--admin-text-muted)',
+          }}
         >
           Loading approvals...
         </div>
       ) : (
         <div className="space-y-5">
           {/* Announcements */}
-          <section className="rounded-2xl border p-4 sm:p-5"
+          <section
+            className="rounded-2xl border p-4 sm:p-5"
             style={{ backgroundColor: 'var(--admin-surface)', borderColor: 'var(--admin-border)' }}
           >
             <div className="flex items-center gap-2 mb-3">
@@ -200,7 +215,8 @@ export default function ApprovalsPage() {
               <h2 className="font-semibold" style={{ color: 'var(--admin-text)' }}>
                 Announcements
               </h2>
-              <span className="text-xs px-2 py-0.5 rounded-full"
+              <span
+                className="text-xs px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: 'var(--admin-bg)', color: 'var(--admin-text-muted)' }}
               >
                 {announcements.length} pending
@@ -216,12 +232,19 @@ export default function ApprovalsPage() {
                   const key = `ann-${a.id}`;
                   const isBusy = busyKey === key;
                   return (
-                    <div key={a.id} className="rounded-xl border p-3"
-                      style={{ borderColor: 'var(--admin-border)', backgroundColor: 'var(--admin-bg)' }}
+                    <div
+                      key={a.id}
+                      className="rounded-xl border p-3"
+                      style={{
+                        borderColor: 'var(--admin-border)',
+                        backgroundColor: 'var(--admin-bg)',
+                      }}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium" style={{ color: 'var(--admin-text)' }}>{a.title}</p>
+                          <p className="font-medium" style={{ color: 'var(--admin-text)' }}>
+                            {a.title}
+                          </p>
                           <p className="text-xs mt-1" style={{ color: 'var(--admin-text-muted)' }}>
                             Status: {friendlyStatus(a.status)} • Created: {fmtDate(a.created_at)}
                           </p>
@@ -267,7 +290,8 @@ export default function ApprovalsPage() {
           </section>
 
           {/* Program approvals */}
-          <section className="rounded-2xl border p-4 sm:p-5"
+          <section
+            className="rounded-2xl border p-4 sm:p-5"
             style={{ backgroundColor: 'var(--admin-surface)', borderColor: 'var(--admin-border)' }}
           >
             <div className="flex items-center gap-2 mb-3">
@@ -275,7 +299,8 @@ export default function ApprovalsPage() {
               <h2 className="font-semibold" style={{ color: 'var(--admin-text)' }}>
                 Department Program Proposals
               </h2>
-              <span className="text-xs px-2 py-0.5 rounded-full"
+              <span
+                className="text-xs px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: 'var(--admin-bg)', color: 'var(--admin-text-muted)' }}
               >
                 {programs.length} pending
@@ -291,15 +316,22 @@ export default function ApprovalsPage() {
                   const key = `prog-${p.id}`;
                   const isBusy = busyKey === key;
                   return (
-                    <div key={p.id} className="rounded-xl border p-3"
-                      style={{ borderColor: 'var(--admin-border)', backgroundColor: 'var(--admin-bg)' }}
+                    <div
+                      key={p.id}
+                      className="rounded-xl border p-3"
+                      style={{
+                        borderColor: 'var(--admin-border)',
+                        backgroundColor: 'var(--admin-bg)',
+                      }}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium" style={{ color: 'var(--admin-text)' }}>{p.title}</p>
+                          <p className="font-medium" style={{ color: 'var(--admin-text)' }}>
+                            {p.title}
+                          </p>
                           <p className="text-xs mt-1" style={{ color: 'var(--admin-text-muted)' }}>
-                            {p.department_name || 'Department'} • Status: {friendlyStatus(p.status)}
-                            {' '}• Submitted: {fmtDate(p.submitted_at)}
+                            {p.department_name || 'Department'} • Status: {friendlyStatus(p.status)}{' '}
+                            • Submitted: {fmtDate(p.submitted_at)}
                           </p>
                         </div>
                         <div className="flex gap-2">
@@ -353,7 +385,8 @@ export default function ApprovalsPage() {
           </section>
 
           {/* Treasury approvals */}
-          <section className="rounded-2xl border p-4 sm:p-5"
+          <section
+            className="rounded-2xl border p-4 sm:p-5"
             style={{ backgroundColor: 'var(--admin-surface)', borderColor: 'var(--admin-border)' }}
           >
             <div className="flex items-center gap-2 mb-3">
@@ -361,7 +394,8 @@ export default function ApprovalsPage() {
               <h2 className="font-semibold" style={{ color: 'var(--admin-text)' }}>
                 Treasury Expense Requests
               </h2>
-              <span className="text-xs px-2 py-0.5 rounded-full"
+              <span
+                className="text-xs px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: 'var(--admin-bg)', color: 'var(--admin-text-muted)' }}
               >
                 {expenses.length} pending
@@ -378,8 +412,13 @@ export default function ApprovalsPage() {
                   const isBusy = busyKey === key;
                   const amount = Number.parseFloat(String(e.amount_requested || 0));
                   return (
-                    <div key={e.id} className="rounded-xl border p-3"
-                      style={{ borderColor: 'var(--admin-border)', backgroundColor: 'var(--admin-bg)' }}
+                    <div
+                      key={e.id}
+                      className="rounded-xl border p-3"
+                      style={{
+                        borderColor: 'var(--admin-border)',
+                        backgroundColor: 'var(--admin-bg)',
+                      }}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
@@ -387,8 +426,10 @@ export default function ApprovalsPage() {
                             {e.request_number} • {e.department_name}
                           </p>
                           <p className="text-xs mt-1" style={{ color: 'var(--admin-text-muted)' }}>
-                            Amount: {Number.isFinite(amount) ? amount.toLocaleString() : e.amount_requested}
-                            {' '}• Status: {friendlyStatus(e.status)} • Requested: {fmtDate(e.created_at)}
+                            Amount:{' '}
+                            {Number.isFinite(amount) ? amount.toLocaleString() : e.amount_requested}{' '}
+                            • Status: {friendlyStatus(e.status)} • Requested:{' '}
+                            {fmtDate(e.created_at)}
                           </p>
                         </div>
                         <div className="flex gap-2">
