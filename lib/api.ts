@@ -416,10 +416,10 @@ export interface MemberListItem {
   system_user_id?: string | null;
   location?: {
     phone_primary?: string;
-    email?: string;
+    email?: string | null;
     address?: string;
-    city?: string;
-    region?: string;
+    city?: string | null;
+    region?: string | null;
   };
   [key: string]: unknown;
 }

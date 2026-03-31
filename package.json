@@ -15,11 +15,7 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "npx prettier --write"
-    ],
-    "*.{json,css,md}": [
-      "npx prettier --write"
+      "npm exec -- eslint --fix"
     ]
   },
   "dependencies": {
