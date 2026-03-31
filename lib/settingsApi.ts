@@ -95,6 +95,7 @@ export interface ChurchApiResponse {
   timezone?: string;
   currency?: string;
   status?: string;
+  subscription_status?: string;
   subscription_plan?: string;
   billing_cycle?: string;
   trial_ends_at?: string;
@@ -114,6 +115,40 @@ export interface ChurchApiResponse {
   dark_mode?: boolean;
   service_times?: { id: string; day: string; time: string; label: string }[];
   [key: string]: unknown;
+}
+
+function normalizeSubscriptionStatus(church: ChurchApiResponse): 'trial' | 'active' | 'inactive' {
+  const fromExplicit = String(church.subscription_status ?? church.status ?? '')
+    .trim()
+    .toLowerCase();
+
+  if (fromExplicit) {
+    if (['trial', 'in_trial', 'trialing', 'on_trial'].includes(fromExplicit)) {
+      return 'trial';
+    }
+    if (['active', 'subscribed', 'paid', 'current', 'live', 'enabled'].includes(fromExplicit)) {
+      return 'active';
+    }
+    if (
+      ['inactive', 'expired', 'suspended', 'cancelled', 'canceled', 'disabled'].includes(
+        fromExplicit
+      )
+    ) {
+      return 'inactive';
+    }
+  }
+
+  if (church.is_trial_active === true) {
+    return 'trial';
+  }
+  if (church.is_subscription_active === true) {
+    return 'active';
+  }
+  if (church.is_subscription_active === false) {
+    return 'inactive';
+  }
+
+  return 'trial';
 }
 
 /** User API response */
@@ -325,6 +360,7 @@ export function mapChurchToProfile(church: ChurchApiResponse | null): Record<str
     address: church.address ?? '',
     mission: church.mission ?? '',
     website: church.website ?? '',
+    subscriptionStatus: normalizeSubscriptionStatus(church),
     darkMode: church.dark_mode ?? false,
     theme: church.dark_mode ? 'dark' : 'light',
   };
