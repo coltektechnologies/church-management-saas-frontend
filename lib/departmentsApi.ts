@@ -458,3 +458,76 @@ export async function deleteDepartmentActivity(
     );
   }
 }
+
+export type ProgramApprovalStatus =
+  | 'SUBMITTED'
+  | 'ELDER_APPROVED'
+  | 'SECRETARIAT_APPROVED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'DRAFT';
+
+export type ProgramApprovalDepartment = 'ELDER' | 'SECRETARIAT' | 'TREASURY';
+export type ProgramApprovalAction = 'APPROVE' | 'REJECT';
+
+export interface ProgramListItem {
+  id: string;
+  title: string;
+  department: string;
+  department_name?: string;
+  status: ProgramApprovalStatus;
+  status_display?: string;
+  start_date?: string;
+  end_date?: string;
+  location?: string;
+  submission_type?: string;
+  submitted_at?: string | null;
+  approved_at?: string | null;
+  requires_approval?: string[];
+}
+
+function inferProgramApprovalDepartment(
+  status: ProgramApprovalStatus
+): ProgramApprovalDepartment | null {
+  if (status === 'SUBMITTED') {
+    return 'ELDER';
+  }
+  if (status === 'ELDER_APPROVED') {
+    return 'SECRETARIAT';
+  }
+  if (status === 'SECRETARIAT_APPROVED') {
+    return 'TREASURY';
+  }
+  return null;
+}
+
+/** GET /api/programs/?status= */
+export async function fetchProgramsByStatus(status: ProgramApprovalStatus): Promise<ProgramListItem[]> {
+  const base = getApiBaseUrl();
+  const sp = new URLSearchParams();
+  sp.set('status', status);
+  sp.set('page_size', '200');
+  const data = await fetchAuth<unknown>(`${base}/programs/?${sp.toString()}`, { method: 'GET' });
+  return normalizeListResponse<ProgramListItem>(data);
+}
+
+/** POST /api/programs/{id}/review/ */
+export async function reviewProgramApproval(
+  programId: string,
+  opts: { action: ProgramApprovalAction; department?: ProgramApprovalDepartment; notes?: string },
+  currentStatus?: ProgramApprovalStatus
+): Promise<unknown> {
+  const base = getApiBaseUrl();
+  const department = opts.department ?? (currentStatus ? inferProgramApprovalDepartment(currentStatus) : null);
+  if (!department) {
+    throw new Error('Program is not in a reviewable approval stage.');
+  }
+  return fetchAuth(`${base}/programs/${programId}/review/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      department,
+      action: opts.action,
+      notes: opts.notes ?? '',
+    }),
+  });
+}
