@@ -363,7 +363,7 @@ export default function AddMemberPage() {
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex flex-row items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1
             style={{
@@ -393,7 +393,7 @@ export default function AddMemberPage() {
         </div>
         <Link
           href="/admin/members"
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 shrink-0 ml-auto"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 shrink-0 sm:ml-auto"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
@@ -401,7 +401,7 @@ export default function AddMemberPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Members', value: stats.total_members.toLocaleString() },
           { label: 'New Members This Month', value: stats.new_members_this_month.toLocaleString() },
@@ -435,14 +435,13 @@ export default function AddMemberPage() {
       {/* Form */}
       <div className="w-full max-w-full space-y-0">
         <div
-          className="flex items-center justify-between text-white w-full"
+          className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-white w-full"
           style={{
-            height: 67,
             borderTopLeftRadius: 8,
             borderTopRightRadius: 8,
-            padding: '20px 30px',
+            padding: '16px 18px',
             background: '#0B2A4A',
-            marginBottom: 38,
+            marginBottom: 24,
           }}
         >
           <h2 className="text-lg font-semibold" style={{ fontFamily: 'OV Soge, sans-serif' }}>
@@ -457,17 +456,7 @@ export default function AddMemberPage() {
         {error && <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
 
         <form onSubmit={handleSubmit} className="block w-full">
-          <div
-            className="w-full grid overflow-hidden"
-            style={{
-              gridTemplateColumns: '638px minmax(394px, 1fr)',
-              gridTemplateRows: 'auto auto 1fr',
-              gap: '0 24px',
-              minHeight: 1005,
-              marginLeft: 25,
-              marginRight: 25,
-            }}
-          >
+          <div className="w-full grid grid-cols-1 xl:grid-cols-[minmax(0,638px)_minmax(0,1fr)] gap-x-6 gap-y-0 overflow-hidden min-h-0 px-0 sm:px-2 lg:px-4">
             {/* Row 1 left: Personal Information */}
             <div
               className="flex flex-col p-6 overflow-y-auto border border-[#E9ECEF] border-b-0 bg-[#F8F9FA] rounded-tl-[10px]"
@@ -479,7 +468,7 @@ export default function AddMemberPage() {
                   Personal Information
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Title *</Label>
                       <select
@@ -525,7 +514,7 @@ export default function AddMemberPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>First Name *</Label>
                       <Input
@@ -558,7 +547,7 @@ export default function AddMemberPage() {
                       {invalid('last_name') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Date of Birth *</Label>
                       <Input
@@ -676,7 +665,7 @@ export default function AddMemberPage() {
                   Contact Information
                 </h3>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Primary Phone *</Label>
                       <div className="relative">
@@ -719,7 +708,7 @@ export default function AddMemberPage() {
                       {invalid('occupation') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Residential Address *</Label>
                       <div className="relative">
@@ -847,7 +836,7 @@ export default function AddMemberPage() {
                   Church Information
                 </h3>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Member Since *</Label>
                       <div className="relative">
