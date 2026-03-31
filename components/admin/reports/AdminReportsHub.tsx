@@ -46,9 +46,6 @@ type ReportItem = {
   announcementStatusFilter?: boolean;
 };
 
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
-
 const MEMBERSHIP_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'All statuses' },
   { value: 'ACTIVE', label: 'Active' },
@@ -861,7 +858,7 @@ export default function AdminReportsHub() {
               <p className="text-sm text-red-600 dark:text-red-400">{previewError}</p>
             )}
             {previewData !== null && previewData !== undefined && !showRawPreview && (
-              <DataPreview value={previewData as JsonValue} />
+              <DataPreview value={previewData} />
             )}
             {previewJson && showRawPreview && (
               <pre
