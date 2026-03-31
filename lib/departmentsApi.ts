@@ -95,6 +95,7 @@ export interface DepartmentDetailResponse {
   color?: string | null;
   is_active: boolean;
   member_count?: number;
+  head_name?: string | null;
   heads?: {
     id: string;
     name: string;

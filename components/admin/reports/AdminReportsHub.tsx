@@ -860,7 +860,9 @@ export default function AdminReportsHub() {
             {previewError && (
               <p className="text-sm text-red-600 dark:text-red-400">{previewError}</p>
             )}
-            {previewData && !showRawPreview && <DataPreview value={previewData as JsonValue} />}
+            {previewData !== null && previewData !== undefined && !showRawPreview && (
+              <DataPreview value={previewData as JsonValue} />
+            )}
             {previewJson && showRawPreview && (
               <pre
                 className="text-xs font-mono whitespace-pre-wrap break-words leading-relaxed"
