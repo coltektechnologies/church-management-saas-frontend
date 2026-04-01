@@ -68,30 +68,50 @@ function isMemberActivity(a: ActivityWithType): boolean {
 
 // ── Format large numbers on Y-axis ───────────────────────────────────────────
 function formatYAxis(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}k`;
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}k`;
+  }
   return String(value);
 }
 
 function niceMax(max: number): number {
-  if (max === 0) return 10;
+  if (max === 0) {
+    return 10;
+  }
   const withPadding = max * 1.15;
   const magnitude = Math.pow(10, Math.floor(Math.log10(withPadding)));
   return Math.ceil(withPadding / magnitude) * magnitude;
 }
 
 function deriveChartHeight(maxValue: number): number {
-  if (maxValue <= 200)    return 260;
-  if (maxValue <= 1_000)  return 300;
-  if (maxValue <= 5_000)  return 340;
-  if (maxValue <= 20_000) return 380;
+  if (maxValue <= 200) {
+    return 260;
+  }
+  if (maxValue <= 1_000) {
+    return 300;
+  }
+  if (maxValue <= 5_000) {
+    return 340;
+  }
+  if (maxValue <= 20_000) {
+    return 380;
+  }
   return 420;
 }
 
 function deriveTickCount(maxValue: number): number {
-  if (maxValue <= 200)   return 5;
-  if (maxValue <= 1_000) return 6;
-  if (maxValue <= 5_000) return 7;
+  if (maxValue <= 200) {
+    return 5;
+  }
+  if (maxValue <= 1_000) {
+    return 6;
+  }
+  if (maxValue <= 5_000) {
+    return 7;
+  }
   return 8;
 }
 
@@ -115,25 +135,45 @@ function useGrowthData(
       toMs   = new Date(customTo).getTime();
     } else {
       switch (presetRange) {
-        case '30d':  fromMs = toMs - 30  * 86_400_000; break;
-        case '90d':  fromMs = toMs - 90  * 86_400_000; break;
-        case '6m':   fromMs = toMs - 182 * 86_400_000; break;
-        case 'year': fromMs = new Date(year, 0, 1).getTime(); break;
-        default:     fromMs = 0;
+        case '30d': {
+          fromMs = toMs - 30  * 86_400_000;
+          break;
+        }
+        case '90d': {
+          fromMs = toMs - 90  * 86_400_000;
+          break;
+        }
+        case '6m': {
+          fromMs = toMs - 182 * 86_400_000;
+          break;
+        }
+        case 'year': {
+          fromMs = new Date(year, 0, 1).getTime();
+          break;
+        }
+        default: {
+          fromMs = 0;
+        }
       }
     }
 
     const buckets: Record<string, number> = {};
     for (const a of activities as ActivityWithType[]) {
       const ts = a.timestamp;
-      if (isNaN(ts) || ts < fromMs || ts > toMs) continue;
-      if (!isMemberActivity(a)) continue;
+      if (isNaN(ts) || ts < fromMs || ts > toMs) {
+        continue;
+      }
+      if (!isMemberActivity(a)) {
+        continue;
+      }
       const d   = new Date(ts);
       const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
       buckets[key] = (buckets[key] ?? 0) + 1;
     }
 
-    if (Object.keys(buckets).length === 0) return MOCK_DATA;
+    if (Object.keys(buckets).length === 0) {
+      return MOCK_DATA;
+    }
 
     return Object.keys(buckets)
       .sort()
@@ -160,7 +200,9 @@ interface CustomTooltipProps {
 }
 
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
-  if (!active || !payload?.length) return null;
+  if (!active || !payload?.length) {
+    return null;
+  }
   const item  = payload[0];
   const color = item?.fill ?? item?.stroke ?? item?.color ?? '#000';
   // FIX 2: prefer _original (real count) over the normalised 100 value
@@ -201,7 +243,9 @@ function toQuarterData(data: { name: string; members: number }[]) {
   };
   for (const d of data) {
     const q = monthToQ[d.name];
-    if (q) quarters[q] += d.members;
+    if (q) {
+      quarters[q] += d.members;
+    }
   }
   return Object.entries(quarters)
     .filter(([, v]) => v > 0)
@@ -210,7 +254,9 @@ function toQuarterData(data: { name: string; members: number }[]) {
 
 interface GridProps { show: boolean; style: 'dashed' | 'solid'; }
 function ChartGrid({ show, style }: GridProps) {
-  if (!show) return null;
+  if (!show) {
+    return null;
+  }
   return (
     <CartesianGrid
       horizontal vertical
@@ -235,16 +281,22 @@ function SmartDropdown({ open, onClose, trigger, children, minWidth = 220 }: Sma
   const [flip, setFlip] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) onClose();
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        onClose();
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open || !dropRef.current) return;
+    if (!open || !dropRef.current) {
+      return;
+    }
     const rect = dropRef.current.getBoundingClientRect();
     setFlip(rect.right > window.innerWidth - 8);
   }, [open]);
@@ -333,16 +385,22 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
   const hoveredFamily = CHART_FAMILIES.find((f) => f.id === hovered) ?? CHART_FAMILIES[0];
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
   useEffect(() => {
-    if (!open || !dropRef.current) return;
+    if (!open || !dropRef.current) {
+      return;
+    }
     const rect = dropRef.current.getBoundingClientRect();
     setFlip(rect.right > window.innerWidth - 8);
   }, [open]);
@@ -478,9 +536,15 @@ export function MembershipGrowthChart() {
   const yTickCount  = useMemo(() => deriveTickCount(maxValue),   [maxValue]);
 
   const yAxisWidth = useMemo(() => {
-    if (maxValue >= 1_000_000) return 48;
-    if (maxValue >= 10_000)    return 44;
-    if (maxValue >= 1_000)     return 40;
+    if (maxValue >= 1_000_000) {
+      return 48;
+    }
+    if (maxValue >= 10_000) {
+      return 44;
+    }
+    if (maxValue >= 1_000) {
+      return 40;
+    }
     return 32;
   }, [maxValue]);
 
@@ -488,12 +552,18 @@ export function MembershipGrowthChart() {
   // so stale index-keyed colors don't bleed onto different bars.
   const prevDataLenRef = useRef(filteredData.length);
   useEffect(() => {
+    // These state updates are intentional for rebase on new data range.
     if (filteredData.length !== prevDataLenRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBarColors({});
+       
       setSelectedBar(null);
       prevDataLenRef.current = filteredData.length;
     }
   }, [filteredData]);
+
+  const activeBarColors = barColors;
+  const activeSelectedBar = selectedBar;
 
   // FIX 2: memoised usingMockData (was a plain var, recalculated every render)
   const { activities } = useAppData();
@@ -504,7 +574,7 @@ export function MembershipGrowthChart() {
 
   const activeFamily = familyOfSub(chartType)?.id ?? 'bar';
 
-  const getColor = (i: number) => barColors[i] ?? colors[i % colors.length];
+  const getColor = (i: number) => activeBarColors[i] ?? colors[i % colors.length];
   const primarySeriesColor = colors[0] ?? pc;
   const margin    = { top: 8, right: 16, left: 0, bottom: 4 };
   const axisStyle = { fontSize: 11, fill: '#6B7280', fontFamily: 'inherit' };
@@ -531,8 +601,12 @@ export function MembershipGrowthChart() {
 
   type CurveType = 'linear' | 'monotone' | 'step';
   const curveFor = (): CurveType => {
-    if (chartType.includes('smooth'))                          return 'monotone';
-    if (chartType.includes('step') || chartType.includes('stepped')) return 'step';
+    if (chartType.includes('smooth')) {
+      return 'monotone';
+    }
+    if (chartType.includes('step') || chartType.includes('stepped')) {
+      return 'step';
+    }
     return 'linear';
   };
   const dotRadius = chartType === 'line-dots' ? 4 : 2.5;
@@ -573,8 +647,8 @@ export function MembershipGrowthChart() {
                 key={i}
                 fill={getColor(i)}
                 cursor="pointer"
-                opacity={selectedBar === null || selectedBar === i ? 1 : 0.35}
-                onClick={() => setSelectedBar(selectedBar === i ? null : i)}
+                opacity={activeSelectedBar === null || activeSelectedBar === i ? 1 : 0.35}
+                onClick={() => setSelectedBar(activeSelectedBar === i ? null : i)}
               />
             ))}
           </Pie>
@@ -710,13 +784,13 @@ export function MembershipGrowthChart() {
           cursor="pointer"
           maxBarSize={isHorizontal ? 22 : 48}
           stackId={isStacked ? 's' : undefined}
-          onClick={(_, i) => setSelectedBar(selectedBar === i ? null : i)}
+          onClick={(_, i) => setSelectedBar(activeSelectedBar === i ? null : i)}
         >
           {barData.map((_, i) => (
             <Cell
               key={i}
               fill={getColor(i)}
-              opacity={selectedBar === null || selectedBar === i ? 1 : 0.4}
+              opacity={activeSelectedBar === null || activeSelectedBar === i ? 1 : 0.4}
             />
           ))}
         </Bar>
@@ -727,10 +801,10 @@ export function MembershipGrowthChart() {
   const isPieFamily = activeFamily === 'pie';
 
   // FIX 1: selected-bar display reads from the correct array depending on chart family
-  const selectedLabel = selectedBar !== null
+  const selectedLabel = activeSelectedBar !== null
     ? isPieFamily
-      ? pieData[selectedBar]
-      : filteredData[selectedBar]
+      ? pieData[activeSelectedBar]
+      : filteredData[activeSelectedBar]
     : null;
 
   return (

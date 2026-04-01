@@ -47,7 +47,9 @@ const ChurchProfileTab = () => {
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     if (pendingLogoPreviewUrl) {
       URL.revokeObjectURL(pendingLogoPreviewUrl);
     }

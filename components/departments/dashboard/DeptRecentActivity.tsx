@@ -92,7 +92,7 @@ export default function DeptRecentActivity({ onViewAll }: Props) {
 
       {/* Activity rows */}
       <div className="space-y-0">
-        {items.map((item, idx) => (
+        {items.map((item, _idx) => (
           <div
             key={item.id}
             className="flex items-center justify-between py-3 border-b border-border last:border-0"
