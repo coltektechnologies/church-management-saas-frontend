@@ -70,13 +70,21 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
-function shouldSkipAuth(pathname: string): boolean {
-  if (pathname.startsWith('/secretary') && SKIP_SECRETARY_AUTH) return true;
-  if (pathname.startsWith('/admin') && SKIP_ADMIN_AUTH) return true;
-  if (pathname.startsWith('/departments') && SKIP_DEPARTMENT_AUTH) return true;
-  if (pathname.startsWith('/dashboard') && SKIP_DASHBOARD_AUTH) return true;
-  return false;
-}
+// function shouldSkipAuth(pathname: string): boolean {
+//   if (pathname.startsWith('/secretary') && SKIP_SECRETARY_AUTH) {
+//     return true;
+//   }
+//   if (pathname.startsWith('/admin') && SKIP_ADMIN_AUTH) {
+//     return true;
+//   }
+//   if (pathname.startsWith('/departments') && SKIP_DEPARTMENT_AUTH) {
+//     return true;
+//   }
+//   if (pathname.startsWith('/dashboard') && SKIP_DASHBOARD_AUTH) {
+//     return true;
+//   }
+//   return false;
+// }
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -89,9 +97,9 @@ export function proxy(request: NextRequest) {
   }
 
   // Allow paths where auth is skipped
-  if (shouldSkipAuth(pathname)) {
-    return NextResponse.next();
-  }
+  // if (shouldSkipAuth(pathname)) {
+  //   return NextResponse.next();
+  // }
 
   if (!sessionOk) {
     const login = request.nextUrl.clone();
