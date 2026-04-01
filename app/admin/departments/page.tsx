@@ -62,6 +62,12 @@ export default function DepartmentsPage() {
   }, [showCreate]);
 
   useEffect(() => {
+    if (!showCreate) {
+      setEditingDepartment(null);
+    }
+  }, [showCreate]);
+
+  useEffect(() => {
     void getMembers().then(setChurchMembers);
   }, []);
 
@@ -98,7 +104,7 @@ export default function DepartmentsPage() {
     void loadModalData(selectedDepartmentId);
   }, [selectedDepartmentId, loadModalData]);
 
-  const [formData, setFormData] = useState({
+  const emptyDepartmentForm = () => ({
     name: '',
     code: '',
     description: '',
@@ -106,6 +112,8 @@ export default function DepartmentsPage() {
     themeColor: 'navy' as Department['themeColor'],
     icon: 'prayer',
   });
+
+  const [formData, setFormData] = useState(emptyDepartmentForm);
 
   const totalDepartments = departments.length;
   const activeDepartments = departments.filter((d) => d.status === 'active').length;
@@ -183,14 +191,7 @@ export default function DepartmentsPage() {
         });
       }
 
-      setFormData({
-        name: '',
-        code: '',
-        description: '',
-        status: 'active',
-        themeColor: 'navy',
-        icon: 'prayer',
-      });
+      setFormData(emptyDepartmentForm());
       setShowCreate(false);
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'Could not save department');
@@ -244,7 +245,12 @@ export default function DepartmentsPage() {
 
           <button
             type="button"
-            onClick={() => setShowCreate(true)}
+            onClick={() => {
+              setEditingDepartment(null);
+              setFormError(null);
+              setFormData(emptyDepartmentForm());
+              setShowCreate(true);
+            }}
             className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-blue-700 shadow-sm hover:shadow-lg transition-all duration-200"
           >
             + Create Department
@@ -313,7 +319,12 @@ export default function DepartmentsPage() {
           </p>
           <button
             type="button"
-            onClick={() => setShowCreate(true)}
+            onClick={() => {
+              setEditingDepartment(null);
+              setFormError(null);
+              setFormData(emptyDepartmentForm());
+              setShowCreate(true);
+            }}
             className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition"
           >
             + Create First Department
@@ -377,6 +388,10 @@ export default function DepartmentsPage() {
           }}
           onAssignMember={async (memberId, role) => {
             await assignMember(selectedDepartment.id, memberId, role);
+          }}
+          onLeadershipSaved={async () => {
+            const detail = await fetchDepartmentDetail(selectedDepartment.id);
+            applyDepartmentDetail(selectedDepartment.id, detail);
           }}
         />
       )}

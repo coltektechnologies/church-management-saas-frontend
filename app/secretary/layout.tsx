@@ -7,7 +7,10 @@ import { SecretaryProfileProvider } from '@/components/secretary/contexts/Secret
 import { AppDataProvider } from '@/components/secretary/contexts/AppDataContext';
 import { EventsProvider } from '@/components/secretary/contexts/EventsContext';
 import { ActivityProvider } from '@/components/secretary/contexts/ActivityContext';
+import { EventsProvider } from '@/components/secretary/contexts/EventsContext';
+import { ActivityProvider } from '@/components/secretary/contexts/ActivityContext';
 import { ThemeProvider } from '@/components/secretary/ThemeProvider';
+import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine';
 import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine';
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
@@ -44,6 +47,7 @@ function SecretaryShell({ children }: { children: ReactNode }) {
       style={{ backgroundColor: mainBg }}
     >
       <ReminderEngine />
+      <ReminderEngine />
       <SecretaryTopbar />
       <div className="flex">
         <div className="sticky top-0 h-screen" style={{ zIndex: 20 }}>
@@ -65,6 +69,15 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
     <AuthProvider defaultRole="secretary">
       <ChurchProfileProvider>
         <SecretaryProfileProvider>
+          <ActivityProvider>
+            <AppDataProvider>
+              <EventsProvider>
+                <ThemeProvider>
+                  <SecretaryShell>{children}</SecretaryShell>
+                </ThemeProvider>
+              </EventsProvider>
+            </AppDataProvider>
+          </ActivityProvider>
           <ActivityProvider>
             <AppDataProvider>
               <EventsProvider>

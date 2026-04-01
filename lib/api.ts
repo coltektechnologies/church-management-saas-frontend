@@ -1,3 +1,5 @@
+import { messageFromApiErrorJson } from '@/lib/apiMessages';
+
 /**
  * API base URL for the church-management backend.
  * Set NEXT_PUBLIC_API_URL in .env.local (e.g. http://localhost:8000/api).
@@ -47,17 +49,46 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const first = (v: unknown) => (Array.isArray(v) ? v[0] : typeof v === 'string' ? v : undefined);
-    const message =
-      first(data?.email) ||
-      first(data?.password) ||
-      first(data?.non_field_errors) ||
-      data?.detail ||
-      'Login failed. Please check your email and password.';
-    throw new Error(typeof message === 'string' ? message : 'Login failed');
+    throw new Error(
+      messageFromApiErrorJson(data, 'Login failed. Please check your email and password.')
+    );
   }
 
   return data as LoginResponse;
+}
+
+/**
+ * Blacklist the refresh token on the server (POST /api/auth/logout/).
+ * No-op if tokens are missing or API base URL is not configured.
+ */
+export async function logoutToServer(): Promise<void> {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  let base: string;
+  try {
+    base = getApiBaseUrl();
+  } catch {
+    return;
+  }
+  const access = localStorage.getItem('access_token');
+  const refresh = localStorage.getItem('refresh_token');
+  if (!access || !refresh) {
+    return;
+  }
+
+  try {
+    await fetch(`${base}/auth/logout/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${access}`,
+      },
+      body: JSON.stringify({ refresh }),
+    });
+  } catch {
+    // Network errors — caller still clears local session
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -367,15 +398,7 @@ export async function createMember(payload: CreateMemberPayload): Promise<Create
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 
   if (!res.ok) {
-    const msg =
-      (typeof data?.detail === 'string' ? data.detail : null) ||
-      (data && typeof data === 'object'
-        ? Object.values(data)
-            .flat()
-            .filter((v): v is string => typeof v === 'string')[0]
-        : undefined) ||
-      'Failed to create member';
-    throw new Error(msg);
+    throw new Error(messageFromApiErrorJson(data, 'Failed to create member'));
   }
 
   return data as unknown as CreateMemberResponse;
@@ -389,14 +412,15 @@ export interface MemberListItem {
   membership_status: string;
   member_since: string;
   gender?: string;
+  /** Present when member has portal login; matches `User.id` for role assignments. */
+  system_user_id?: string | null;
   location?: {
     phone_primary?: string;
-    email?: string;
+    email?: string | null;
     address?: string;
-    city?: string;
-    region?: string;
+    city?: string | null;
+    region?: string | null;
   };
-  [key: string]: unknown;
 }
 
 /** Get list of members for the current church. */
@@ -416,20 +440,60 @@ export async function getMembers(): Promise<MemberListItem[]> {
   return Array.isArray(data) ? data : [];
 }
 
-export interface MemberDetail extends MemberListItem {
-  title?: string;
-  middle_name?: string;
-  date_of_birth?: string;
-  marital_status?: string;
-  national_id?: string;
-  baptism_status?: string;
-  education_level?: string;
-  occupation?: string;
-  employer?: string;
-  notes?: string;
-  emergency_contact_name?: string;
-  emergency_contact_phone?: string;
-  emergency_contact_relationship?: string;
+/** Visitor rows from GET /members/visitors/ (church-scoped). */
+export interface VisitorListItem {
+  id: string;
+  full_name: string;
+  phone: string;
+  email?: string | null;
+}
+
+export async function getVisitors(): Promise<VisitorListItem[]> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return [];
+  }
+  const res = await fetch(`${base}/members/visitors/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    return [];
+  }
+  const raw = (await res.json().catch(() => [])) as unknown;
+  const data = Array.isArray(raw) ? raw : [];
+  return data as VisitorListItem[];
+}
+
+export interface MemberLocationDetail {
+  id?: string;
+  phone_primary?: string;
+  phone_secondary?: string;
+  email?: string | null;
+  address?: string;
+  city?: string | null;
+  region?: string | null;
+  country?: string | null;
+}
+
+export interface MemberDetail extends Omit<MemberListItem, 'location'> {
+  title?: string | null;
+  middle_name?: string | null;
+  date_of_birth?: string | null;
+  marital_status?: string | null;
+  national_id?: string | null;
+  baptism_status?: string | null;
+  education_level?: string | null;
+  occupation?: string | null;
+  employer?: string | null;
+  notes?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  emergency_contact_relationship?: string | null;
+  notification_preference?: string;
+  is_active?: boolean;
+  has_system_access?: boolean;
+  location?: MemberLocationDetail;
 }
 
 /** Get member details by ID. */
@@ -465,11 +529,9 @@ export async function updateMember(id: string, data: Partial<MemberDetail>): Pro
   });
   const result = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
-    const msg =
-      (typeof result?.detail === 'string' ? result.detail : null) || 'Failed to update member';
-    throw new Error(msg);
+    throw new Error(messageFromApiErrorJson(result, 'Failed to update member'));
   }
-  return result as MemberDetail;
+  return result as unknown as MemberDetail;
 }
 
 /** Delete member (soft delete). */
@@ -485,9 +547,62 @@ export async function deleteMember(id: string): Promise<void> {
   });
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    const msg =
-      (typeof data?.detail === 'string' ? data.detail : null) || 'Failed to delete member';
-    throw new Error(msg);
+    throw new Error(messageFromApiErrorJson(data, 'Failed to delete member'));
+  }
+}
+
+export interface SendNotificationSmsPayload {
+  phone_number: string;
+  message: string;
+  member_id?: string;
+}
+
+export interface SendNotificationEmailPayload {
+  email_address: string;
+  subject: string;
+  message_html: string;
+  member_id?: string;
+}
+
+/** POST /api/notifications/send-sms/ — church plan must allow SMS. */
+export async function sendNotificationSms(payload: SendNotificationSmsPayload): Promise<void> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be logged in to send SMS');
+  }
+  const res = await fetch(`${base}/notifications/send-sms/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(messageFromApiErrorJson(data, 'Failed to send SMS'));
+  }
+}
+
+/** POST /api/notifications/send-email/ — church plan must allow email. */
+export async function sendNotificationEmail(payload: SendNotificationEmailPayload): Promise<void> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be logged in to send email');
+  }
+  const res = await fetch(`${base}/notifications/send-email/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(messageFromApiErrorJson(data, 'Failed to send email'));
   }
 }
 

@@ -51,7 +51,9 @@ export default function CreateDepartmentForm({
       className="bg-white max-w-5xl mx-auto p-8 rounded-2xl border border-gray-200 shadow-sm space-y-8"
     >
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-800">Create New Department</h2>
+        <h2 className="text-xl font-semibold text-gray-800">
+          {editingDepartment ? 'Edit Department' : 'Create New Department'}
+        </h2>
         <button onClick={() => setShowCreate(false)} className="text-gray-500 hover:text-gray-700">
           ✕
         </button>
@@ -92,13 +94,10 @@ export default function CreateDepartmentForm({
             />
           </div>
 
-          {/* Department Head */}
-          <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium text-gray-700">Department Head</label>
-            <select className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
-              <option>Select Department Head</option>
-            </select>
-          </div>
+          <p className="text-sm text-gray-500 md:col-span-2 -mt-2">
+            Assign department head and elder in charge from the department detail window → Settings
+            after you create or open the department.
+          </p>
 
           {/* Status */}
           <div className="flex flex-col space-y-2">

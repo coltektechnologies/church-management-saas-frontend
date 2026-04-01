@@ -21,7 +21,7 @@ export default function StatsCard({
 }: StatsCardProps) {
   return (
     <div
-      className="flex flex-col p-4 w-full max-w-[232px] min-h-[135px] min-w-0 shrink-0"
+      className="flex flex-col p-4 w-full min-h-[135px] min-w-0 shrink-0 md:max-w-[232px]"
       style={{
         background: '#FFFFFF',
         borderRadius: 10,

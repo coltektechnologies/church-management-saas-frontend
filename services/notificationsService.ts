@@ -85,11 +85,13 @@ export function mapApiRowToMockItem(row: NotificationApiRow): MockNotificationIt
   };
 }
 
-export async function fetchNotificationsForUi(): Promise<MockNotificationItem[]> {
+export async function fetchNotificationsForUi(
+  mailbox: 'inbox' | 'sent' = 'inbox'
+): Promise<MockNotificationItem[]> {
   if (!shouldUseLiveApi()) {
     throw new Error('Use mock notifications when API is disabled');
   }
-  const rows = await fetchNotificationsList({ page_size: 100 });
+  const rows = await fetchNotificationsList({ page_size: 100, mailbox });
   return rows.map(mapApiRowToMockItem);
 }
 

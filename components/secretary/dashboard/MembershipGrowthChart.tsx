@@ -25,26 +25,9 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
 import { useAppData } from '@/components/secretary/contexts/AppDataContext';
 
-const CHART_TYPES = [
-  { id: 'bar', label: 'Bar' },
-  { id: 'line', label: 'Line' },
-  { id: 'area', label: 'Area' },
-  { id: 'pie', label: 'Pie' },
-];
-
 const MONTH_NAMES = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
 // ── Extended activity shape ───────────────────────────────────────────────────
@@ -83,60 +66,36 @@ function isMemberActivity(a: ActivityWithType): boolean {
   );
 }
 
-// ── Format large numbers on Y-axis (e.g. 5000 → 5k) ─────────────────────────
+// ── Format large numbers on Y-axis ───────────────────────────────────────────
 function formatYAxis(value: number): string {
-  if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}M`;
-  }
-  if (value >= 1_000) {
-    return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}k`;
-  }
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}k`;
   return String(value);
 }
 
-// ── Derive a nice Y-axis upper bound with breathing room ─────────────────────
 function niceMax(max: number): number {
-  if (max === 0) {
-    return 10;
-  }
+  if (max === 0) return 10;
   const withPadding = max * 1.15;
   const magnitude = Math.pow(10, Math.floor(Math.log10(withPadding)));
-  const nice = Math.ceil(withPadding / magnitude) * magnitude;
-  return nice;
+  return Math.ceil(withPadding / magnitude) * magnitude;
 }
 
-// ── Derive chart container height from data magnitude ─────────────────────────
 function deriveChartHeight(maxValue: number): number {
-  if (maxValue <= 200) {
-    return 260;
-  }
-  if (maxValue <= 1_000) {
-    return 300;
-  }
-  if (maxValue <= 5_000) {
-    return 340;
-  }
-  if (maxValue <= 20_000) {
-    return 380;
-  }
+  if (maxValue <= 200)    return 260;
+  if (maxValue <= 1_000)  return 300;
+  if (maxValue <= 5_000)  return 340;
+  if (maxValue <= 20_000) return 380;
   return 420;
 }
 
-// ── Y-axis tick count: more members → more ticks for readability ──────────────
 function deriveTickCount(maxValue: number): number {
-  if (maxValue <= 200) {
-    return 5;
-  }
-  if (maxValue <= 1_000) {
-    return 6;
-  }
-  if (maxValue <= 5_000) {
-    return 7;
-  }
+  if (maxValue <= 200)   return 5;
+  if (maxValue <= 1_000) return 6;
+  if (maxValue <= 5_000) return 7;
   return 8;
 }
 
-// ── Live growth data derived from activity log ────────────────────────────────
+// ── Live growth data ──────────────────────────────────────────────────────────
 function useGrowthData(
   rangeMode: 'preset' | 'custom',
   presetRange: string,
@@ -146,55 +105,35 @@ function useGrowthData(
   const { activities } = useAppData();
 
   return useMemo(() => {
-    const now = new Date();
+    const now  = new Date();
     const year = now.getFullYear();
-
     let fromMs = 0;
-    let toMs = now.getTime();
+    let toMs   = now.getTime();
 
     if (rangeMode === 'custom' && customFrom && customTo) {
       fromMs = new Date(customFrom).getTime();
-      toMs = new Date(customTo).getTime();
+      toMs   = new Date(customTo).getTime();
     } else {
       switch (presetRange) {
-        case '30d':
-          fromMs = toMs - 30 * 86_400_000;
-          break;
-        case '90d':
-          fromMs = toMs - 90 * 86_400_000;
-          break;
-        case '6m':
-          fromMs = toMs - 182 * 86_400_000;
-          break;
-        case 'year':
-          fromMs = new Date(year, 0, 1).getTime();
-          break;
-        default:
-          fromMs = 0;
+        case '30d':  fromMs = toMs - 30  * 86_400_000; break;
+        case '90d':  fromMs = toMs - 90  * 86_400_000; break;
+        case '6m':   fromMs = toMs - 182 * 86_400_000; break;
+        case 'year': fromMs = new Date(year, 0, 1).getTime(); break;
+        default:     fromMs = 0;
       }
     }
 
     const buckets: Record<string, number> = {};
-
     for (const a of activities as ActivityWithType[]) {
       const ts = a.timestamp;
-      if (isNaN(ts) || ts < fromMs || ts > toMs) {
-        continue;
-      }
-      if (!isMemberActivity(a)) {
-        continue;
-      }
-
-      const d = new Date(ts);
+      if (isNaN(ts) || ts < fromMs || ts > toMs) continue;
+      if (!isMemberActivity(a)) continue;
+      const d   = new Date(ts);
       const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
       buckets[key] = (buckets[key] ?? 0) + 1;
     }
 
-    const hasRealData = Object.keys(buckets).length > 0;
-
-    if (!hasRealData) {
-      return MOCK_DATA;
-    }
+    if (Object.keys(buckets).length === 0) return MOCK_DATA;
 
     return Object.keys(buckets)
       .sort()
@@ -211,6 +150,8 @@ interface TooltipPayloadItem {
   fill?: string;
   stroke?: string;
   color?: string;
+  // FIX 2: carry original value for bar-100 display
+  payload?: { members: number; _original?: number };
 }
 interface CustomTooltipProps {
   active?: boolean;
@@ -219,21 +160,20 @@ interface CustomTooltipProps {
 }
 
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
-  if (!active || !payload?.length) {
-    return null;
-  }
-  const item = payload[0];
+  if (!active || !payload?.length) return null;
+  const item  = payload[0];
   const color = item?.fill ?? item?.stroke ?? item?.color ?? '#000';
-  const value = item?.value ?? 0;
+  // FIX 2: prefer _original (real count) over the normalised 100 value
+  const value = item?.payload?._original ?? item?.value ?? 0;
   return (
     <div
       style={{
-        background: 'hsl(var(--card))',
-        border: '1px solid hsl(var(--border))',
+        background:   'hsl(var(--card))',
+        border:       '1px solid hsl(var(--border))',
         borderRadius: '6px',
-        padding: '5px 10px',
-        fontSize: 11,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.13)',
+        padding:      '5px 10px',
+        fontSize:     11,
+        boxShadow:    '0 2px 8px rgba(0,0,0,0.13)',
       }}
     >
       <p style={{ color: 'hsl(var(--muted-foreground))', marginBottom: 2, fontSize: 10 }}>
@@ -254,42 +194,26 @@ function renderPieLabel(props: PieLabelRenderProps) {
 function toQuarterData(data: { name: string; members: number }[]) {
   const quarters: Record<string, number> = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
   const monthToQ: Record<string, keyof typeof quarters> = {
-    Jan: 'Q1',
-    Feb: 'Q1',
-    Mar: 'Q1',
-    Apr: 'Q2',
-    May: 'Q2',
-    Jun: 'Q2',
-    Jul: 'Q3',
-    Aug: 'Q3',
-    Sep: 'Q3',
-    Oct: 'Q4',
-    Nov: 'Q4',
-    Dec: 'Q4',
+    Jan: 'Q1', Feb: 'Q1', Mar: 'Q1',
+    Apr: 'Q2', May: 'Q2', Jun: 'Q2',
+    Jul: 'Q3', Aug: 'Q3', Sep: 'Q3',
+    Oct: 'Q4', Nov: 'Q4', Dec: 'Q4',
   };
   for (const d of data) {
     const q = monthToQ[d.name];
-    if (q) {
-      quarters[q] += d.members;
-    }
+    if (q) quarters[q] += d.members;
   }
   return Object.entries(quarters)
     .filter(([, v]) => v > 0)
     .map(([name, members]) => ({ name, members }));
 }
 
-interface GridProps {
-  show: boolean;
-  style: 'dashed' | 'solid';
-}
+interface GridProps { show: boolean; style: 'dashed' | 'solid'; }
 function ChartGrid({ show, style }: GridProps) {
-  if (!show) {
-    return null;
-  }
+  if (!show) return null;
   return (
     <CartesianGrid
-      horizontal
-      vertical
+      horizontal vertical
       strokeDasharray={style === 'dashed' ? '3 3' : ''}
       stroke="#C8C8C8"
       strokeWidth={0.75}
@@ -311,22 +235,16 @@ function SmartDropdown({ open, onClose, trigger, children, minWidth = 220 }: Sma
   const [flip, setFlip] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        onClose();
-      }
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) onClose();
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open || !dropRef.current) {
-      return;
-    }
+    if (!open || !dropRef.current) return;
     const rect = dropRef.current.getBoundingClientRect();
     setFlip(rect.right > window.innerWidth - 8);
   }, [open]);
@@ -339,12 +257,12 @@ function SmartDropdown({ open, onClose, trigger, children, minWidth = 220 }: Sma
           ref={dropRef}
           className="absolute bg-card border border-border rounded-lg shadow-xl p-3"
           style={{
-            top: '100%',
-            left: flip ? 'auto' : '0',
-            right: flip ? '0' : 'auto',
+            top:      '100%',
+            left:     flip ? 'auto' : '0',
+            right:    flip ? '0'    : 'auto',
             marginTop: '4px',
             minWidth,
-            zIndex: 300,
+            zIndex:   300,
           }}
         >
           {children}
@@ -354,187 +272,126 @@ function SmartDropdown({ open, onClose, trigger, children, minWidth = 220 }: Sma
   );
 }
 
-// ── ChartTypePicker — two-level dropdown (family + sub) ───────────────────────
-//
-// Replaces the flat <select> for chart type. Renders a trigger button that
-// shows the current sub-type label, and on click opens a two-column panel:
-//   left  → family list  (Bar/Column, Line, Area, Pie/Donut)
-//   right → sub-options grid for the hovered family
-//
-// The trigger button uses `width: max-content` so it only takes as much
-// horizontal space as the selected label actually needs — no fixed width.
-
-interface ChartSubOption {
-  id: string;
-  label: string;
-  icon: string;
-  desc: string;
-}
-interface ChartFamily {
-  id: string;
-  label: string;
-  icon: string;
-  subs: ChartSubOption[];
-}
+// ── ChartTypePicker ───────────────────────────────────────────────────────────
+interface ChartSubOption { id: string; label: string; icon: string; desc: string; }
+interface ChartFamily    { id: string; label: string; icon: string; subs: ChartSubOption[]; }
 
 const CHART_FAMILIES: ChartFamily[] = [
   {
-    id: 'bar',
-    label: 'Bar / Column',
-    icon: '▐',
+    id: 'bar', label: 'Bar / Column', icon: '▐',
     subs: [
-      { id: 'bar', label: 'Clustered Column', icon: '▐▐', desc: 'Side-by-side columns' },
-      { id: 'bar-stacked', label: 'Stacked Column', icon: '▐̲', desc: 'Columns stacked to total' },
-      { id: 'bar-100', label: '100% Stacked', icon: '%', desc: 'Normalised to 100%' },
-      { id: 'bar-horizontal', label: 'Horizontal Bar', icon: '═', desc: 'Bars run left → right' },
+      { id: 'bar',             label: 'Clustered Column', icon: '▐▐', desc: 'Side-by-side columns' },
+      { id: 'bar-stacked',     label: 'Stacked Column',   icon: '▐̲',  desc: 'Columns stacked to total' },
+      { id: 'bar-100',         label: '100% Stacked',     icon: '%',  desc: 'Normalised to 100%' },
+      { id: 'bar-horizontal',  label: 'Horizontal Bar',   icon: '═',  desc: 'Bars run left → right' },
     ],
   },
   {
-    id: 'line',
-    label: 'Line',
-    icon: '╱',
+    id: 'line', label: 'Line', icon: '╱',
     subs: [
-      { id: 'line', label: 'Line', icon: '╱', desc: 'Straight segments' },
-      { id: 'line-smooth', label: 'Smooth Line', icon: '∿', desc: 'Curved monotone' },
-      { id: 'line-stepped', label: 'Step Line', icon: '⌐', desc: 'Staircase steps' },
-      { id: 'line-dots', label: 'Line + Markers', icon: '•╱•', desc: 'Dots at every point' },
+      { id: 'line',         label: 'Line',           icon: '╱',   desc: 'Straight segments' },
+      { id: 'line-smooth',  label: 'Smooth Line',    icon: '∿',   desc: 'Curved monotone' },
+      { id: 'line-stepped', label: 'Step Line',      icon: '⌐',   desc: 'Staircase steps' },
+      { id: 'line-dots',    label: 'Line + Markers', icon: '•╱•', desc: 'Dots at every point' },
     ],
   },
   {
-    id: 'area',
-    label: 'Area',
-    icon: '◺',
+    id: 'area', label: 'Area', icon: '◺',
     subs: [
-      { id: 'area', label: 'Gradient Area', icon: '◺', desc: 'Filled with gradient' },
-      { id: 'area-solid', label: 'Solid Area', icon: '▬', desc: 'Flat solid fill' },
-      { id: 'area-stacked', label: 'Stacked Area', icon: '◺◺', desc: 'Multiple series stacked' },
-      { id: 'area-stepped', label: 'Step Area', icon: '⌐▬', desc: 'Step-filled area' },
+      { id: 'area',         label: 'Gradient Area', icon: '◺',   desc: 'Filled with gradient' },
+      { id: 'area-solid',   label: 'Solid Area',    icon: '▬',   desc: 'Flat solid fill' },
+      { id: 'area-stacked', label: 'Stacked Area',  icon: '◺◺',  desc: 'Multiple series stacked' },
+      { id: 'area-stepped', label: 'Step Area',     icon: '⌐▬',  desc: 'Step-filled area' },
     ],
   },
   {
-    id: 'pie',
-    label: 'Pie / Donut',
-    icon: '◉',
+    id: 'pie', label: 'Pie / Donut', icon: '◉',
     subs: [
-      { id: 'pie', label: 'Donut', icon: '◉', desc: 'Ring with centre total' },
-      { id: 'pie-pie', label: 'Pie', icon: '●', desc: 'Classic filled pie' },
-      { id: 'pie-semi', label: 'Semi', icon: '◓', desc: 'Half-donut gauge' },
+      { id: 'pie',         label: 'Donut',     icon: '◉', desc: 'Ring with centre total' },
+      { id: 'pie-pie',     label: 'Pie',       icon: '●', desc: 'Classic filled pie' },
+      { id: 'pie-semi',    label: 'Semi',      icon: '◓', desc: 'Half-donut gauge' },
       { id: 'pie-quarter', label: 'Quarterly', icon: '◑', desc: 'Grouped by quarter' },
     ],
   },
 ];
 
-const ALL_SUBS = CHART_FAMILIES.flatMap((f) => f.subs);
-const subById = (id: string) => ALL_SUBS.find((s) => s.id === id);
-const familyOfSub = (subId: string) =>
-  CHART_FAMILIES.find((f) => f.subs.some((s) => s.id === subId));
+const ALL_SUBS      = CHART_FAMILIES.flatMap((f) => f.subs);
+const subById       = (id: string) => ALL_SUBS.find((s) => s.id === id);
+const familyOfSub   = (subId: string) => CHART_FAMILIES.find((f) => f.subs.some((s) => s.id === subId));
 
-interface ChartTypePickerProps {
-  value: string;
-  onChange: (id: string) => void;
-}
+interface ChartTypePickerProps { value: string; onChange: (id: string) => void; }
 
 function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen]     = useState(false);
   const [hovered, setHovered] = useState(() => familyOfSub(value)?.id ?? 'bar');
   const wrapRef = useRef<HTMLDivElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
-  const [flip, setFlip] = useState(false);
+  const [flip, setFlip]     = useState(false);
 
-  const currentSub = subById(value);
+  const currentSub    = subById(value);
   const currentFamily = familyOfSub(value);
   const hoveredFamily = CHART_FAMILIES.find((f) => f.id === hovered) ?? CHART_FAMILIES[0];
 
-  // Close on outside click
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // Flip panel left if it would overflow viewport
   useEffect(() => {
-    if (!open || !dropRef.current) {
-      return;
-    }
+    if (!open || !dropRef.current) return;
     const rect = dropRef.current.getBoundingClientRect();
     setFlip(rect.right > window.innerWidth - 8);
   }, [open]);
 
   return (
     <div ref={wrapRef} className="relative">
-      {/* ── Trigger button — width hugs the label text ── */}
       <button
-        onClick={() => {
-          setOpen((o) => !o);
-          setHovered(familyOfSub(value)?.id ?? 'bar');
-        }}
+        onClick={() => { setOpen((o) => !o); setHovered(familyOfSub(value)?.id ?? 'bar'); }}
         className="flex items-center gap-1 text-[9px] sm:text-[10px] border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground hover:bg-muted transition-colors"
         style={{ width: 'max-content' }}
       >
         <span style={{ fontSize: 13, lineHeight: 1 }}>{currentSub?.icon ?? '▐▐'}</span>
-        <span className="truncate" style={{ maxWidth: 96 }}>
-          {currentSub?.label ?? 'Chart type'}
-        </span>
+        <span className="truncate" style={{ maxWidth: 96 }}>{currentSub?.label ?? 'Chart type'}</span>
         <ChevronDown size={10} className="text-muted-foreground shrink-0" />
       </button>
 
-      {/* ── Drop panel ── */}
       {open && (
         <div
           ref={dropRef}
           className="absolute bg-card border border-border rounded-xl shadow-2xl p-3"
           style={{
-            top: '100%',
-            left: flip ? 'auto' : '0',
-            right: flip ? '0' : 'auto',
+            top:      '100%',
+            left:     flip ? 'auto' : '0',
+            right:    flip ? '0'    : 'auto',
             marginTop: 4,
-            zIndex: 300,
-            // Width is driven by content; two columns side-by-side
-            width: 'max-content',
+            zIndex:   300,
+            width:    'max-content',
             minWidth: 340,
             maxWidth: '95vw',
           }}
         >
           <div style={{ display: 'flex', gap: 0 }}>
-            {/* ── Left: family list ── */}
-            <div
-              style={{
-                // Width fits the longest family label — no fixed px
-                width: 'max-content',
-                minWidth: 110,
-                borderRight: '1px solid hsl(var(--border))',
-                paddingRight: 8,
-                flexShrink: 0,
-              }}
-            >
-              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold mb-2 pl-1">
-                Type
-              </p>
+            {/* Family list */}
+            <div style={{ width: 'max-content', minWidth: 110, borderRight: '1px solid hsl(var(--border))', paddingRight: 8, flexShrink: 0 }}>
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold mb-2 pl-1">Type</p>
               {CHART_FAMILIES.map((f) => {
                 const isActive = currentFamily?.id === f.id;
-                const isHov = hovered === f.id;
+                const isHov    = hovered === f.id;
                 return (
                   <button
                     key={f.id}
                     onMouseEnter={() => setHovered(f.id)}
-                    onClick={() => {
-                      onChange(f.subs[0].id);
-                      setOpen(false);
-                    }}
+                    onClick={() => { onChange(f.subs[0].id); setOpen(false); }}
                     className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors"
                     style={{
                       background: isHov ? 'hsl(var(--muted))' : 'transparent',
                       fontWeight: isActive ? 700 : 400,
-                      color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--foreground))',
-                      fontSize: 11,
+                      color:      isActive ? 'hsl(var(--primary))' : 'hsl(var(--foreground))',
+                      fontSize:   11,
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -545,58 +402,29 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
               })}
             </div>
 
-            {/* ── Right: sub-option grid ── */}
+            {/* Sub-option grid */}
             <div style={{ flex: 1, paddingLeft: 10 }}>
-              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">
-                {hoveredFamily.label}
-              </p>
-              <div
-                style={{
-                  display: 'grid',
-                  // Two columns; each column fits its content — no fixed width
-                  gridTemplateColumns: 'repeat(2, max-content)',
-                  gap: 6,
-                }}
-              >
+              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">{hoveredFamily.label}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, max-content)', gap: 6 }}>
                 {hoveredFamily.subs.map((s) => {
                   const active = value === s.id;
                   return (
                     <button
                       key={s.id}
-                      onClick={() => {
-                        onChange(s.id);
-                        setOpen(false);
-                      }}
+                      onClick={() => { onChange(s.id); setOpen(false); }}
                       className="flex flex-col items-start gap-1 rounded-xl p-2 border transition-all text-left hover:shadow-md"
                       style={{
-                        border: active
-                          ? '2px solid hsl(var(--primary))'
-                          : '1.5px solid hsl(var(--border))',
-                        background: active ? 'hsl(var(--primary) / 0.07)' : 'hsl(var(--card))',
-                        // Width hugs content — no overflow, no fixed px
-                        width: 'max-content',
-                        minWidth: 100,
+                        border:     active ? '2px solid hsl(var(--primary))' : '1.5px solid hsl(var(--border))',
+                        background: active ? 'hsl(var(--primary) / 0.07)'    : 'hsl(var(--card))',
+                        width:      'max-content',
+                        minWidth:   100,
                       }}
                     >
                       <span style={{ fontSize: 20, lineHeight: 1.1, opacity: 0.82 }}>{s.icon}</span>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          fontWeight: active ? 700 : 500,
-                          color: 'hsl(var(--foreground))',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                      <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: 'hsl(var(--foreground))', whiteSpace: 'nowrap' }}>
                         {s.label}
                       </span>
-                      <span
-                        style={{
-                          fontSize: 9,
-                          color: 'hsl(var(--muted-foreground))',
-                          lineHeight: 1.3,
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                      <span style={{ fontSize: 9, color: 'hsl(var(--muted-foreground))', lineHeight: 1.3, whiteSpace: 'nowrap' }}>
                         {s.desc}
                       </span>
                     </button>
@@ -617,112 +445,110 @@ export function MembershipGrowthChart() {
 
   const isDark = isReady ? profile.darkMode : false;
   const pc = isReady
-    ? isDark
-      ? profile.darkPrimaryColor || '#1A3F6B'
-      : profile.primaryColor || '#0B2A4A'
+    ? isDark ? profile.darkPrimaryColor || '#1A3F6B' : profile.primaryColor || '#0B2A4A'
     : '#0B2A4A';
   const ac = isReady
-    ? isDark
-      ? profile.darkAccentColor || '#2FC4B2'
-      : profile.accentColor || '#2FC4B2'
+    ? isDark ? profile.darkAccentColor || '#2FC4B2' : profile.accentColor || '#2FC4B2'
     : '#2FC4B2';
 
   const DEFAULT_COLORS = [pc, ac, '#E4002B', '#FFB020', '#6366F1', '#EC4899', '#14B8A6', '#F97316'];
 
-  // chartType now stores the sub-option id (e.g. 'bar', 'line-smooth', 'pie', …)
-  // The render logic below maps sub-ids → Recharts components.
-  const [chartType, setChartType] = useState('bar');
-  const [rangeMode, setRangeMode] = useState<'preset' | 'custom'>('preset');
-  const [presetRange, setPresetRange] = useState('all');
-  const [customFrom, setCustomFrom] = useState('');
-  const [customTo, setCustomTo] = useState('');
-  const [showGrid, setShowGrid] = useState(true);
-  const [gridStyle, setGridStyle] = useState<'dashed' | 'solid'>('solid');
-  const [colors, setColors] = useState([pc, ac]);
+  const [chartType,       setChartType]       = useState('bar');
+  const [rangeMode,       setRangeMode]       = useState<'preset' | 'custom'>('preset');
+  const [presetRange,     setPresetRange]     = useState('all');
+  const [customFrom,      setCustomFrom]      = useState('');
+  const [customTo,        setCustomTo]        = useState('');
+  const [showGrid,        setShowGrid]        = useState(true);
+  const [gridStyle,       setGridStyle]       = useState<'dashed' | 'solid'>('solid');
+  const [colors,          setColors]          = useState([pc, ac]);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [barColors, setBarColors] = useState<Record<number, string>>({});
-  const [selectedBar, setSelectedBar] = useState<number | null>(null);
-  const [showBorder, setShowBorder] = useState(false);
+  const [barColors,       setBarColors]       = useState<Record<number, string>>({});
+  const [selectedBar,     setSelectedBar]     = useState<number | null>(null);
+  const [showBorder,      setShowBorder]      = useState(false);
 
   const filteredData = useGrowthData(rangeMode, presetRange, customFrom, customTo);
 
-  const maxValue = useMemo(
-    () => Math.max(0, ...filteredData.map((d) => d.members)),
-    [filteredData]
-  );
-  const yDomainMax = useMemo(() => niceMax(maxValue), [maxValue]);
+  // FIX 1 & 2: derive pieData here so both renderChart and the selected-bar
+  // display paragraph can reference the same array.
+  const pieData = useMemo(() => toQuarterData(filteredData), [filteredData]);
+
+  const maxValue    = useMemo(() => Math.max(0, ...filteredData.map((d) => d.members)), [filteredData]);
+  const yDomainMax  = useMemo(() => niceMax(maxValue),          [maxValue]);
   const chartHeight = useMemo(() => deriveChartHeight(maxValue), [maxValue]);
-  const yTickCount = useMemo(() => deriveTickCount(maxValue), [maxValue]);
+  const yTickCount  = useMemo(() => deriveTickCount(maxValue),   [maxValue]);
 
   const yAxisWidth = useMemo(() => {
-    if (maxValue >= 1_000_000) {
-      return 48;
-    }
-    if (maxValue >= 10_000) {
-      return 44;
-    }
-    if (maxValue >= 1_000) {
-      return 40;
-    }
+    if (maxValue >= 1_000_000) return 48;
+    if (maxValue >= 10_000)    return 44;
+    if (maxValue >= 1_000)     return 40;
     return 32;
   }, [maxValue]);
 
+  // FIX 3: reset barColors when filteredData identity changes (range switched)
+  // so stale index-keyed colors don't bleed onto different bars.
+  const prevDataLenRef = useRef(filteredData.length);
+  useEffect(() => {
+    if (filteredData.length !== prevDataLenRef.current) {
+      setBarColors({});
+      setSelectedBar(null);
+      prevDataLenRef.current = filteredData.length;
+    }
+  }, [filteredData]);
+
+  // FIX 2: memoised usingMockData (was a plain var, recalculated every render)
+  const { activities } = useAppData();
+  const usingMockData = useMemo(
+    () => !(activities as ActivityWithType[]).some(isMemberActivity),
+    [activities]
+  );
+
+  const activeFamily = familyOfSub(chartType)?.id ?? 'bar';
+
   const getColor = (i: number) => barColors[i] ?? colors[i % colors.length];
   const primarySeriesColor = colors[0] ?? pc;
-  const margin = { top: 8, right: 16, left: 0, bottom: 4 };
+  const margin    = { top: 8, right: 16, left: 0, bottom: 4 };
   const axisStyle = { fontSize: 11, fill: '#6B7280', fontFamily: 'inherit' };
 
   const xAxisProps = {
     dataKey: 'name' as const,
-    tick: axisStyle,
+    tick:     axisStyle,
     axisLine: { stroke: '#D1D5DB', strokeWidth: 1 },
     tickLine: { stroke: '#D1D5DB', strokeWidth: 1 },
     tickSize: 3,
   };
 
   const yAxisProps = {
-    tick: axisStyle,
-    axisLine: { stroke: '#D1D5DB', strokeWidth: 1 },
-    tickLine: { stroke: '#D1D5DB', strokeWidth: 1 },
-    tickSize: 3,
-    width: yAxisWidth,
-    domain: [0, yDomainMax] as [number, number],
-    tickCount: yTickCount,
-    tickFormatter: formatYAxis,
+    tick:             axisStyle,
+    axisLine:         { stroke: '#D1D5DB', strokeWidth: 1 },
+    tickLine:         { stroke: '#D1D5DB', strokeWidth: 1 },
+    tickSize:         3,
+    width:            yAxisWidth,
+    domain:           [0, yDomainMax] as [number, number],
+    tickCount:        yTickCount,
+    tickFormatter:    formatYAxis,
     allowDataOverflow: false,
   };
 
-  const { activities } = useAppData();
-  const usingMockData = !(activities as ActivityWithType[]).some(isMemberActivity);
-
-  // Derive the family from the chosen sub-id
-  const activeFamily = familyOfSub(chartType)?.id ?? 'bar';
-
-  // Curve / stepped helpers for line + area
   type CurveType = 'linear' | 'monotone' | 'step';
   const curveFor = (): CurveType => {
-    if (chartType.includes('smooth')) {
-      return 'monotone';
-    }
-    if (chartType.includes('step') || chartType.includes('stepped')) {
-      return 'step';
-    }
+    if (chartType.includes('smooth'))                          return 'monotone';
+    if (chartType.includes('step') || chartType.includes('stepped')) return 'step';
     return 'linear';
   };
   const dotRadius = chartType === 'line-dots' ? 4 : 2.5;
 
   const renderChart = () => {
     // ── PIE / DONUT ───────────────────────────────────────────────────────────
+    // FIX 1: use the memoised pieData derived above, not a local variable
     if (activeFamily === 'pie') {
-      const pieData = toQuarterData(filteredData);
-      const total = pieData.reduce((s, d) => s + d.members, 0);
-      const isSolid = chartType === 'pie-pie';
-      const isSemi = chartType === 'pie-semi';
-      const innerRadius = isSolid ? '0%' : isSemi ? '55%' : '48%';
+      const total      = pieData.reduce((s, d) => s + d.members, 0);
+      const isSolid    = chartType === 'pie-pie';
+      const isSemi     = chartType === 'pie-semi';
+      const innerRadius = isSolid ? '0%'  : isSemi ? '55%' : '48%';
       const outerRadius = '70%';
-      const startAngle = isSemi ? 180 : 0;
-      const endAngle = isSemi ? 0 : 360;
-      const cy = isSemi ? '70%' : '50%';
+      const startAngle  = isSemi ? 180 : 0;
+      const endAngle    = isSemi ? 0   : 360;
+      const cy          = isSemi ? '70%' : '50%';
 
       return (
         <PieChart>
@@ -752,30 +578,14 @@ export function MembershipGrowthChart() {
               />
             ))}
           </Pie>
-          {/* Centre label — ring variants only */}
           {!isSolid && !isSemi && (
             <>
-              <text
-                x="50%"
-                y="46%"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                style={{
-                  fontSize: 22,
-                  fontWeight: 700,
-                  fill: 'hsl(var(--foreground))',
-                  fontFamily: 'inherit',
-                }}
-              >
+              <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle"
+                style={{ fontSize: 22, fontWeight: 700, fill: 'hsl(var(--foreground))', fontFamily: 'inherit' }}>
                 {formatYAxis(total)}
               </text>
-              <text
-                x="50%"
-                y="57%"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                style={{ fontSize: 10, fill: '#6B7280', fontFamily: 'inherit' }}
-              >
+              <text x="50%" y="57%" textAnchor="middle" dominantBaseline="middle"
+                style={{ fontSize: 10, fill: '#6B7280', fontFamily: 'inherit' }}>
                 members
               </text>
             </>
@@ -786,9 +596,7 @@ export function MembershipGrowthChart() {
             formatter={(value, entry) => (
               <span style={{ color: '#6B7280' }}>
                 {value} —{' '}
-                {(
-                  (entry as { payload?: { members: number } }).payload?.members ?? 0
-                ).toLocaleString()}
+                {((entry as { payload?: { members: number } }).payload?.members ?? 0).toLocaleString()}
               </span>
             )}
           />
@@ -804,7 +612,7 @@ export function MembershipGrowthChart() {
           {!isSolidFill && (
             <defs>
               <linearGradient id="areaGradSec" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={primarySeriesColor} stopOpacity={0.25} />
+                <stop offset="5%"  stopColor={primarySeriesColor} stopOpacity={0.25} />
                 <stop offset="95%" stopColor={primarySeriesColor} stopOpacity={0.02} />
               </linearGradient>
             </defs>
@@ -846,11 +654,16 @@ export function MembershipGrowthChart() {
       );
     }
 
-    // ── BAR (clustered / stacked / 100% / horizontal) ─────────────────────────
+    // ── BAR ───────────────────────────────────────────────────────────────────
     const isHorizontal = chartType === 'bar-horizontal';
     const isStacked100 = chartType === 'bar-100';
-    const isStacked = chartType === 'bar-stacked' || isStacked100;
-    const barData = isStacked100 ? filteredData.map((d) => ({ ...d, members: 100 })) : filteredData;
+    const isStacked    = chartType === 'bar-stacked' || isStacked100;
+
+    // FIX 2: for bar-100, keep a `_original` field so the tooltip can show the
+    // real count while the bar height is normalised to 100.
+    const barData = isStacked100
+      ? filteredData.map((d) => ({ ...d, _original: d.members, members: 100 }))
+      : filteredData;
 
     return (
       <BarChart
@@ -911,7 +724,14 @@ export function MembershipGrowthChart() {
     );
   };
 
-  const isPieOrRadar = activeFamily === 'pie';
+  const isPieFamily = activeFamily === 'pie';
+
+  // FIX 1: selected-bar display reads from the correct array depending on chart family
+  const selectedLabel = selectedBar !== null
+    ? isPieFamily
+      ? pieData[selectedBar]
+      : filteredData[selectedBar]
+    : null;
 
   return (
     <Card className="bg-card">
@@ -937,10 +757,7 @@ export function MembershipGrowthChart() {
                 <option value="preset">Preset</option>
                 <option value="custom">Date Range</option>
               </select>
-              <ChevronDown
-                size={10}
-                className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-              />
+              <ChevronDown size={10} className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" />
             </div>
 
             {rangeMode === 'preset' ? (
@@ -956,10 +773,7 @@ export function MembershipGrowthChart() {
                   <option value="6m">6 Months</option>
                   <option value="year">This Year</option>
                 </select>
-                <ChevronDown
-                  size={10}
-                  className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-                />
+                <ChevronDown size={10} className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" />
               </div>
             ) : (
               <div className="flex items-center gap-1">
@@ -979,8 +793,8 @@ export function MembershipGrowthChart() {
               </div>
             )}
 
-            {/* Grid + Border toggles — hidden for pie */}
-            {!isPieOrRadar && (
+            {/* Grid + Border toggles */}
+            {!isPieFamily && (
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setShowGrid((g) => !g)}
@@ -1041,9 +855,7 @@ export function MembershipGrowthChart() {
               }
             >
               <p className="text-[10px] font-semibold mb-1">Chart Colors</p>
-              <p className="text-[9px] text-muted-foreground mb-2">
-                Applied across all chart types
-              </p>
+              <p className="text-[9px] text-muted-foreground mb-2">Applied across all chart types</p>
               <div className="space-y-1.5">
                 {colors.map((c, i) => (
                   <div key={i} className="flex items-center gap-2">
@@ -1057,9 +869,7 @@ export function MembershipGrowthChart() {
                       }}
                       className="w-6 h-6 rounded cursor-pointer border-0 shrink-0"
                     />
-                    <span className="text-[10px] text-muted-foreground font-mono flex-1 truncate">
-                      {c}
-                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono flex-1 truncate">{c}</span>
                     {colors.length > 1 && (
                       <button
                         onClick={() => setColors(colors.filter((_, j) => j !== i))}
@@ -1081,10 +891,7 @@ export function MembershipGrowthChart() {
               )}
               {Object.keys(barColors).length > 0 && (
                 <button
-                  onClick={() => {
-                    setBarColors({});
-                    setSelectedBar(null);
-                  }}
+                  onClick={() => { setBarColors({}); setSelectedBar(null); }}
                   className="mt-2 w-full text-[10px] text-destructive font-medium hover:underline"
                 >
                   Reset individual colors
@@ -1092,13 +899,10 @@ export function MembershipGrowthChart() {
               )}
             </SmartDropdown>
 
-            {/* ── Chart type picker — two-level, auto-sizing ── */}
+            {/* Chart type picker */}
             <ChartTypePicker
               value={chartType}
-              onChange={(id) => {
-                setChartType(id);
-                setSelectedBar(null);
-              }}
+              onChange={(id) => { setChartType(id); setSelectedBar(null); }}
             />
           </div>
         </div>
@@ -1110,10 +914,10 @@ export function MembershipGrowthChart() {
         <div
           className="w-full rounded-sm transition-all duration-300"
           style={{
-            height: chartHeight,
+            height:     chartHeight,
             background: 'hsl(var(--card))',
-            border: showBorder ? '1px solid #E5E7EB' : 'none',
-            padding: '6px 2px 4px 0',
+            border:     showBorder ? '1px solid #E5E7EB' : 'none',
+            padding:    '6px 2px 4px 0',
           }}
         >
           <ResponsiveContainer width="100%" height="100%">
@@ -1127,10 +931,10 @@ export function MembershipGrowthChart() {
             : `Live data · ${filteredData.reduce((s, d) => s + d.members, 0).toLocaleString()} total events in view · updates automatically`}
         </p>
 
-        {selectedBar !== null && (
+        {/* FIX 1: reads from the correct array (pieData vs filteredData) */}
+        {selectedLabel && (
           <p className="text-[10px] text-muted-foreground mt-1 text-center">
-            Selected: {filteredData[selectedBar]?.name} —{' '}
-            {filteredData[selectedBar]?.members.toLocaleString()} members
+            Selected: {selectedLabel.name} — {selectedLabel.members.toLocaleString()} members
           </p>
         )}
       </CardContent>

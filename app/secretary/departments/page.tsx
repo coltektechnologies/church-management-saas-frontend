@@ -188,6 +188,10 @@ export default function SecretaryDepartmentsPage() {
           onAssignMember={async (memberId, role) => {
             await assignMember(selectedDepartment.id, memberId, role);
           }}
+          onLeadershipSaved={async () => {
+            const detail = await fetchDepartmentDetail(selectedDepartment.id);
+            applyDepartmentDetail(selectedDepartment.id, detail);
+          }}
         />
       )}
     </div>

@@ -30,6 +30,7 @@ import type { PresentationPreset } from '@/services/presentationPresets';
 import { Search, Presentation, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 import {
   Select,
@@ -188,14 +189,25 @@ export default function AnnouncementsPage() {
     setFilters({ dateRange: { ...current, [type]: value } });
   };
 
-  // View handler — opens detail modal
+  // View handler — list rows omit body; fetch detail like handleEdit so modal shows real content
   const handleView = useCallback(
-    (id: string) => {
-      const ann = announcements.find((a) => a.id === id);
-      if (ann) {
-        setDetailAnnouncement(ann);
-        setIsDetailOpen(true);
+    async (id: string) => {
+      let ann = announcements.find((a) => a.id === id);
+      if (!ann) {
+        return;
       }
+      const needsDetail =
+        !ann.content?.trim() || (ann.content.includes('Tap') && ann.content.includes('View'));
+      if (needsDetail) {
+        try {
+          ann = await announcementService.getAnnouncementById(id);
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : 'Could not load announcement');
+          return;
+        }
+      }
+      setDetailAnnouncement(ann);
+      setIsDetailOpen(true);
     },
     [announcements]
   );

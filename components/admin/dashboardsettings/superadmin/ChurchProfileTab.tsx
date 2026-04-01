@@ -29,7 +29,6 @@ const ChurchProfileTab = () => {
     churchSize: '',
   });
 
-  /** New logo chosen in this session — uploaded via multipart on save (not base64 in JSON). */
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const [pendingLogoPreviewUrl, setPendingLogoPreviewUrl] = useState<string | null>(null);
 
@@ -48,9 +47,7 @@ const ChurchProfileTab = () => {
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
     if (pendingLogoPreviewUrl) {
       URL.revokeObjectURL(pendingLogoPreviewUrl);
     }

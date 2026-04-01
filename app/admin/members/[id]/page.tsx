@@ -17,6 +17,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getMember, deleteMember, type MemberDetail } from '@/lib/api';
+import { toast } from 'sonner';
+import { DeleteMemberDialog } from '@/components/admin/membership/DeleteMemberDialog';
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: 'border-green-500 text-green-600 bg-white',
@@ -79,6 +81,7 @@ export default function MemberDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -90,19 +93,20 @@ export default function MemberDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleDelete = async () => {
-    if (
-      !id ||
-      !confirm('Are you sure you want to delete this member? This action cannot be undone.')
-    ) {
+  const handleDeleteConfirm = async () => {
+    if (!id) {
       return;
     }
     setDeleting(true);
     try {
       await deleteMember(id);
+      toast.success('Member removed', { description: 'Returning to the members list.' });
+      setDeleteDialogOpen(false);
       router.push('/admin/members');
-    } catch {
-      setError('Failed to delete member');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to delete member';
+      setError(msg);
+      toast.error('Could not delete member', { description: msg });
     } finally {
       setDeleting(false);
     }
@@ -176,10 +180,10 @@ export default function MemberDetailPage() {
             variant="outline"
             size="sm"
             className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
-            onClick={handleDelete}
+            onClick={() => setDeleteDialogOpen(true)}
             disabled={deleting}
           >
-            {deleting ? 'Deleting...' : 'Delete Member'}
+            Delete Member
           </Button>
         </div>
       </div>
@@ -276,6 +280,14 @@ export default function MemberDetailPage() {
           <p className="text-sm text-gray-700 whitespace-pre-wrap">{member.notes}</p>
         </Section>
       )}
+
+      <DeleteMemberDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        names={[fullName]}
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }
