@@ -50,7 +50,7 @@ const AdminManagementTab = () => {
           ? payload.name
           : payload.email.split('@')[0],
       email: payload.email,
-      role: (('role' in payload ? payload.role : 'Viewer') as AdminUser['role']),
+      role: ('role' in payload ? payload.role : 'Viewer') as AdminUser['role'],
       status: 'Active',
     };
     setAdmins((prev) => [...prev, newAdmin]);
