@@ -15,6 +15,12 @@ import type { NextRequest } from 'next/server';
 const CHURCH_SESSION_COOKIE = 'church_session';
 const CHURCH_SESSION_COOKIE_VALUE = '1';
 
+// Environment variables for skipping auth in development
+const SKIP_SECRETARY_AUTH = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
+const SKIP_ADMIN_AUTH = process.env.NEXT_PUBLIC_SKIP_ADMIN_AUTH === 'true';
+const SKIP_DEPARTMENT_AUTH = process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true';
+const SKIP_DASHBOARD_AUTH = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
+
 /** Exact paths that never require a session cookie */
 const PUBLIC_EXACT = new Set([
   '/',
@@ -64,22 +70,28 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
-function isNextOrStaticAsset(pathname: string): boolean {
-  if (pathname.startsWith('/_next') || pathname.startsWith('/_vercel')) {
-    return true;
-  }
-  if (pathname.startsWith('/.well-known')) {
-    return true;
-  }
-  return /\.(ico|png|jpg|jpeg|svg|gif|webp|txt|xml|json|webmanifest|woff2?|ttf|map)$/i.test(
-    pathname
-  );
+function shouldSkipAuth(pathname: string): boolean {
+  if (pathname.startsWith('/secretary') && SKIP_SECRETARY_AUTH) return true;
+  if (pathname.startsWith('/admin') && SKIP_ADMIN_AUTH) return true;
+  if (pathname.startsWith('/departments') && SKIP_DEPARTMENT_AUTH) return true;
+  if (pathname.startsWith('/dashboard') && SKIP_DASHBOARD_AUTH) return true;
+  return false;
 }
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionOk =
     request.cookies.get(CHURCH_SESSION_COOKIE)?.value === CHURCH_SESSION_COOKIE_VALUE;
+
+  // Allow public paths without session
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Allow paths where auth is skipped
+  if (shouldSkipAuth(pathname)) {
+    return NextResponse.next();
+  }
 
   if (!sessionOk) {
     const login = request.nextUrl.clone();

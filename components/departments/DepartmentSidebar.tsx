@@ -26,24 +26,20 @@ import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchPr
 
 // ── Nav items ─────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { title: 'Dashboard', path: '/departments', icon: LayoutDashboard },
-  { title: 'Members', path: '/departments/members', icon: Users },
-  { title: 'Activities & Events', path: '/departments/activities', icon: CalendarDays },
-  { title: 'Announcements', path: '/departments/announcements', icon: Megaphone },
-  { title: 'Message Member', path: '/departments/communications', icon: MessageSquare },
-  { title: 'Budget & Expenses', path: '/departments/budget', icon: Wallet },
-  { title: 'Expense Requests', path: '/departments/expenses', icon: Receipt },
-  { title: 'Department Reports', path: '/departments/reports', icon: FileBarChart },
+  { title: 'Dashboard',          path: '/departments',               icon: LayoutDashboard },
+  { title: 'Members',            path: '/departments/members',       icon: Users },
+  { title: 'Activities & Events',path: '/departments/activities',    icon: CalendarDays },
+  { title: 'Announcements',      path: '/departments/announcements', icon: Megaphone },
+  { title: 'Message Member',     path: '/departments/communications',icon: MessageSquare },
+  { title: 'Budget & Expenses',  path: '/departments/budget',        icon: Wallet },
+  { title: 'Expense Requests',   path: '/departments/expenses',      icon: Receipt },
+  { title: 'Department Reports', path: '/departments/reports',       icon: FileBarChart },
 ];
 
 const QUICK_ACTIONS = [
-  {
-    title: 'New Announcement',
-    path: '/departments/announcements?action=new',
-    icon: NewAnnouncementIcon,
-  },
-  { title: 'Schedule Activity', path: '/departments/activities?action=new', icon: CalendarPlus },
-  { title: 'Request Funds', path: '/departments/expenses?action=new', icon: HandCoins },
+  { title: 'New Announcement',  path: '/departments/announcements?action=new', icon: NewAnnouncementIcon },
+  { title: 'Schedule Activity', path: '/departments/activities?action=new',    icon: CalendarPlus },
+  { title: 'Request Funds',     path: '/departments/expenses?action=new',      icon: HandCoins },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -62,44 +58,44 @@ function autoText(hex: string): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function DepartmentSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const [collapsed, setCollapsed] = useState(false);
 
-  const { profile, isReady } = useDepartmentProfile();
+  const { profile, isReady }                              = useDepartmentProfile();
   const { profile: churchProfile, isReady: churchReady } = useChurchProfile();
 
   const isDark = isReady ? profile.darkMode : false;
 
   const primaryColor = isReady
-    ? isDark
-      ? profile.darkPrimaryColor || '#1A3F6B'
-      : profile.primaryColor || '#0B2A4A'
+    ? isDark ? profile.darkPrimaryColor || '#1A3F6B' : profile.primaryColor || '#0B2A4A'
     : '#0B2A4A';
   const accentColor = isReady
-    ? isDark
-      ? profile.darkAccentColor || '#2FC4B2'
-      : profile.accentColor || '#2FC4B2'
+    ? isDark ? profile.darkAccentColor || '#2FC4B2' : profile.accentColor || '#2FC4B2'
     : '#2FC4B2';
   const sidebarColor = isReady
-    ? isDark
-      ? profile.darkSidebarColor || '#0D1F36'
-      : profile.sidebarColor || '#FFFFFF'
+    ? isDark ? profile.darkSidebarColor || '#0D1F36' : profile.sidebarColor || '#FFFFFF'
     : '#FFFFFF';
 
-  const headName = isReady ? profile.headName || 'Department Head' : 'Department Head';
-  // Role badge uses departmentType — updates live when user saves their profile
-  const headRole = isReady ? profile.departmentType || 'Department' : 'Department';
-  const avatarUrl = isReady ? (profile.avatarUrl ?? null) : null;
-  const deptName = isReady ? profile.departmentName || 'Adventist Youth' : 'Adventist Youth';
+  const headName  = isReady ? profile.headName  || 'Department Head' : 'Department Head';
+  const headRole  = isReady ? profile.departmentType || 'Department'  : 'Department';
+  const avatarUrl = isReady ? (profile.avatarUrl ?? null)             : null;
+  const deptName  = isReady ? profile.departmentName || 'Adventist Youth' : 'Adventist Youth';
 
-  const churchName = churchReady
-    ? churchProfile.churchName || 'SDA Church - Adenta'
-    : 'SDA Church - Adenta';
+  /*
+   * FIX 3a — display name on the user card.
+   * Priority: preferredName → full headName (never a hardcoded fallback string).
+   * The sub-label shows headRole (departmentType).
+   */
+  const displayName = isReady
+    ? (profile.preferredName?.trim() || profile.headName || 'Department Head')
+    : 'Department Head';
+
+  const churchName    = churchReady ? churchProfile.churchName || 'SDA Church - Adenta' : 'SDA Church - Adenta';
   const churchLogoUrl = churchReady ? (churchProfile.logoUrl ?? null) : null;
 
   const sidebarText = autoText(sidebarColor);
   const primaryText = autoText(primaryColor);
-  const accentText = autoText(accentColor);
+  const accentText  = autoText(accentColor);
 
   const initials = headName
     .split(' ')
@@ -109,14 +105,16 @@ export default function DepartmentSidebar() {
     .toUpperCase();
 
   const isActive = (path: string) =>
-    path === '/departments' ? pathname === '/departments' : pathname.startsWith(path.split('?')[0]);
+    path === '/departments'
+      ? pathname === '/departments'
+      : pathname.startsWith(path.split('?')[0]);
 
   // ── Shared style helpers ──────────────────────────────────────────────────
   const sectionLabelStyle: React.CSSProperties = {
-    fontFamily: "'OV Soge', sans-serif",
-    fontWeight: 700,
-    fontSize: '10px',
-    color: `${sidebarText}60`,
+    fontFamily:    "'OV Soge', sans-serif",
+    fontWeight:    700,
+    fontSize:      '10px',
+    color:         `${sidebarText}60`,
     letterSpacing: '0.12em',
     textTransform: 'uppercase',
   };
@@ -124,8 +122,8 @@ export default function DepartmentSidebar() {
   const navLabelStyle = (active: boolean): React.CSSProperties => ({
     fontFamily: "'OV Soge', sans-serif",
     fontWeight: 600,
-    fontSize: '13px',
-    color: active ? primaryText : sidebarText,
+    fontSize:   '13px',
+    color:      active ? primaryText : sidebarText,
     whiteSpace: 'nowrap',
   });
 
@@ -133,8 +131,8 @@ export default function DepartmentSidebar() {
   const quickLabelStyle: React.CSSProperties = {
     fontFamily: "'OV Soge', sans-serif",
     fontWeight: 600,
-    fontSize: '13px',
-    color: sidebarText,
+    fontSize:   '13px',
+    color:      sidebarText,
     whiteSpace: 'nowrap',
   };
 
@@ -142,26 +140,25 @@ export default function DepartmentSidebar() {
     <aside
       className="hidden lg:flex flex-col h-screen flex-shrink-0"
       style={{
-        width: collapsed ? '64px' : '260px',
+        width:    collapsed ? '64px' : '260px',
         minWidth: collapsed ? '64px' : '260px',
-        background: sidebarColor,
+        background:  sidebarColor,
         borderRight: `1px solid ${sidebarText}15`,
-        boxShadow: '0px 4px 5.9px 5px rgba(0,0,0,0.08)',
-        zIndex: 20,
-        position: 'sticky',
-        top: 0,
-        transition:
-          'width 0.22s cubic-bezier(0.4,0,0.2,1), min-width 0.22s cubic-bezier(0.4,0,0.2,1)',
-        overflow: 'hidden',
+        boxShadow:   '0px 4px 5.9px 5px rgba(0,0,0,0.08)',
+        zIndex:      20,
+        position:    'sticky',
+        top:         0,
+        transition:  'width 0.22s cubic-bezier(0.4,0,0.2,1), min-width 0.22s cubic-bezier(0.4,0,0.2,1)',
+        overflow:    'hidden',
       }}
     >
       {/* ── Church branding header ── */}
       <div
         className="flex items-center gap-2.5 px-3 py-3 flex-shrink-0"
         style={{
-          borderBottom: `1px solid ${sidebarText}15`,
+          borderBottom:   `1px solid ${sidebarText}15`,
           justifyContent: collapsed ? 'center' : 'flex-start',
-          minHeight: '56px',
+          minHeight:      '56px',
         }}
       >
         {/* Church logo */}
@@ -189,14 +186,14 @@ export default function DepartmentSidebar() {
           <div className="flex flex-col min-w-0">
             <span
               style={{
-                fontFamily: "'OV Soge', sans-serif",
-                fontWeight: 700,
-                fontSize: '11px',
-                color: sidebarText,
-                overflow: 'hidden',
-                whiteSpace: 'nowrap',
+                fontFamily:   "'OV Soge', sans-serif",
+                fontWeight:   700,
+                fontSize:     '11px',
+                color:        sidebarText,
+                overflow:     'hidden',
+                whiteSpace:   'nowrap',
                 textOverflow: 'ellipsis',
-                maxWidth: '160px',
+                maxWidth:     '160px',
               }}
             >
               {churchName}
@@ -205,16 +202,16 @@ export default function DepartmentSidebar() {
             {/* Department-type badge — reflects profile.departmentType live */}
             <span
               style={{
-                fontFamily: "'OV Soge', sans-serif",
-                fontWeight: 600,
-                fontSize: '9px',
-                color: '#FFFFFF',
+                fontFamily:      "'OV Soge', sans-serif",
+                fontWeight:      600,
+                fontSize:        '9px',
+                color:           '#FFFFFF',
                 backgroundColor: primaryColor,
-                borderRadius: '4px',
-                padding: '1px 6px',
-                marginTop: '2px',
-                display: 'inline-block',
-                width: 'fit-content',
+                borderRadius:    '4px',
+                padding:         '1px 6px',
+                marginTop:       '2px',
+                display:         'inline-block',
+                width:           'fit-content',
               }}
             >
               {headRole}
@@ -223,16 +220,16 @@ export default function DepartmentSidebar() {
             {/* Department name badge */}
             <span
               style={{
-                fontFamily: "'OV Soge', sans-serif",
-                fontWeight: 600,
-                fontSize: '9px',
-                color: sidebarText,
+                fontFamily:      "'OV Soge', sans-serif",
+                fontWeight:      600,
+                fontSize:        '9px',
+                color:           sidebarText,
                 backgroundColor: `${accentColor}25`,
-                borderRadius: '4px',
-                padding: '1px 6px',
-                marginTop: '2px',
-                display: 'inline-block',
-                width: 'fit-content',
+                borderRadius:    '4px',
+                padding:         '1px 6px',
+                marginTop:       '2px',
+                display:         'inline-block',
+                width:           'fit-content',
               }}
             >
               {deptName}
@@ -246,19 +243,19 @@ export default function DepartmentSidebar() {
         className="flex-shrink-0 flex items-center px-3 pb-2 pt-1"
         style={{
           justifyContent: collapsed ? 'center' : 'space-between',
-          borderBottom: `1px solid ${sidebarText}18`,
+          borderBottom:   `1px solid ${sidebarText}18`,
         }}
       >
         {!collapsed && (
           <span
             style={{
-              fontFamily: "'OV Soge', sans-serif",
-              fontSize: '10px',
-              fontWeight: 600,
-              color: `${sidebarText}55`,
+              fontFamily:    "'OV Soge', sans-serif",
+              fontSize:      '10px',
+              fontWeight:    600,
+              color:         `${sidebarText}55`,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
+              whiteSpace:    'nowrap',
             }}
           >
             Menu
@@ -292,39 +289,33 @@ export default function DepartmentSidebar() {
         {/* Main nav */}
         <nav className="flex-1 space-y-0.5" style={{ padding: collapsed ? '8px 8px 0' : '0 12px' }}>
           {NAV_ITEMS.map((item) => {
-            const active = isActive(item.path);
-            const Icon = item.icon;
+            const active           = isActive(item.path);
+            const Icon             = item.icon;
             const isCommunications = item.title === 'Announcements';
-            const isFinancials = item.title === 'Budget & Expenses';
+            const isFinancials     = item.title === 'Budget & Expenses';
             const isReportsSection = item.title === 'Department Reports';
 
             return (
               <div key={item.path}>
                 {!collapsed && isCommunications && (
-                  <p className="px-3 pt-3 pb-1" style={sectionLabelStyle}>
-                    Communications
-                  </p>
+                  <p className="px-3 pt-3 pb-1" style={sectionLabelStyle}>Communications</p>
                 )}
                 {!collapsed && isFinancials && (
-                  <p className="px-3 pt-3 pb-1" style={sectionLabelStyle}>
-                    Financials
-                  </p>
+                  <p className="px-3 pt-3 pb-1" style={sectionLabelStyle}>Financials</p>
                 )}
                 {!collapsed && isReportsSection && (
-                  <p className="px-3 pt-3 pb-1" style={sectionLabelStyle}>
-                    Reports
-                  </p>
+                  <p className="px-3 pt-3 pb-1" style={sectionLabelStyle}>Reports</p>
                 )}
                 <Link
                   href={item.path}
                   title={collapsed ? item.title : undefined}
                   className="flex items-center transition-all duration-200 relative group"
                   style={{
-                    gap: collapsed ? '0' : '12px',
-                    padding: collapsed ? '10px 0' : '10px 12px',
+                    gap:            collapsed ? '0' : '12px',
+                    padding:        collapsed ? '10px 0' : '10px 12px',
                     justifyContent: collapsed ? 'center' : 'flex-start',
-                    borderRadius: active ? '0px' : '8px',
-                    background: active ? primaryColor : 'transparent',
+                    borderRadius:   active ? '0px' : '8px',
+                    background:     active ? primaryColor : 'transparent',
                     ...(active && { borderLeft: `4px solid ${accentColor}` }),
                   }}
                 >
@@ -339,9 +330,9 @@ export default function DepartmentSidebar() {
                       className="absolute left-full ml-2 px-2 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
                       style={{
                         background: primaryColor,
-                        color: primaryText,
+                        color:      primaryText,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                        zIndex: 200,
+                        zIndex:    200,
                       }}
                     >
                       {item.title}
@@ -360,7 +351,7 @@ export default function DepartmentSidebar() {
           </div>
         )}
 
-        {/* Quick action items — same font/color as main nav */}
+        {/* Quick action items */}
         <div style={{ padding: collapsed ? '0 8px' : '0 12px' }} className="space-y-0.5">
           {QUICK_ACTIONS.map((item) => {
             const Icon = item.icon;
@@ -371,8 +362,8 @@ export default function DepartmentSidebar() {
                 title={collapsed ? item.title : undefined}
                 className="flex items-center transition-all duration-200 relative group rounded-lg"
                 style={{
-                  gap: collapsed ? '0' : '12px',
-                  padding: collapsed ? '10px 0' : '10px 12px',
+                  gap:            collapsed ? '0' : '12px',
+                  padding:        collapsed ? '10px 0' : '10px 12px',
                   justifyContent: collapsed ? 'center' : 'flex-start',
                 }}
                 onMouseEnter={(e) => {
@@ -389,9 +380,9 @@ export default function DepartmentSidebar() {
                     className="absolute left-full ml-2 px-2 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{
                       background: primaryColor,
-                      color: primaryText,
+                      color:      primaryText,
                       boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      zIndex: 200,
+                      zIndex:    200,
                     }}
                   >
                     {item.title}
@@ -412,10 +403,10 @@ export default function DepartmentSidebar() {
                   href="/departments/settings"
                   className="flex items-center transition-all duration-200 relative group"
                   style={{
-                    gap: '12px',
-                    padding: '10px 12px',
+                    gap:          '12px',
+                    padding:      '10px 12px',
                     borderRadius: active ? '0px' : '8px',
-                    background: active ? primaryColor : 'transparent',
+                    background:   active ? primaryColor : 'transparent',
                     ...(active && { borderLeft: `4px solid ${accentColor}` }),
                   }}
                 >
@@ -441,9 +432,9 @@ export default function DepartmentSidebar() {
                   title="Settings"
                   className="flex items-center justify-center transition-all duration-200 relative group"
                   style={{
-                    padding: '10px 0',
+                    padding:      '10px 0',
                     borderRadius: active ? '0px' : '8px',
-                    background: active ? primaryColor : 'transparent',
+                    background:   active ? primaryColor : 'transparent',
                     ...(active && { borderLeft: `4px solid ${accentColor}` }),
                   }}
                 >
@@ -452,9 +443,9 @@ export default function DepartmentSidebar() {
                     className="absolute left-full ml-2 px-2 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
                     style={{
                       background: primaryColor,
-                      color: primaryText,
+                      color:      primaryText,
                       boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      zIndex: 200,
+                      zIndex:    200,
                     }}
                   >
                     Settings
@@ -465,10 +456,15 @@ export default function DepartmentSidebar() {
           </div>
         )}
 
-        {/* ── User card ── */}
+        {/*
+          ── User card ─────────────────────────────────────────────────────────
+          FIX 3b — shows `displayName` (preferredName → headName, never hardcoded).
+          FIX 3c — Settings icon link added to the card so users can jump straight
+                   to their profile settings from the sidebar user card.
+        */}
         <div style={{ padding: collapsed ? '8px' : '8px 12px' }}>
           {collapsed ? (
-            <div className="flex justify-center py-2" title={headName}>
+            <div className="flex justify-center py-2" title={displayName}>
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden"
                 style={{ background: avatarUrl ? 'transparent' : accentColor }}
@@ -493,12 +489,13 @@ export default function DepartmentSidebar() {
             <div
               className="flex items-start gap-3 px-3 py-3"
               style={{
-                background: isDark ? `${primaryColor}30` : `${primaryColor}12`,
+                background:   isDark ? `${primaryColor}30` : `${primaryColor}12`,
                 borderRadius: '8px',
-                border: `1px solid ${accentColor}35`,
-                boxShadow: `0px 0px 3.8px 2px ${accentColor}25`,
+                border:       `1px solid ${accentColor}35`,
+                boxShadow:    `0px 0px 3.8px 2px ${accentColor}25`,
               }}
             >
+              {/* Avatar */}
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 mt-0.5"
                 style={{ background: avatarUrl ? 'transparent' : accentColor }}
@@ -518,36 +515,57 @@ export default function DepartmentSidebar() {
                   </span>
                 )}
               </div>
+
+              {/* Name + role */}
               <div className="flex-1 min-w-0">
                 <p
                   style={{
-                    fontFamily: "'OV Soge', sans-serif",
-                    fontWeight: 500,
-                    fontSize: '13px',
-                    color: sidebarText,
-                    lineHeight: '1.3',
-                    display: '-webkit-box',
+                    fontFamily:      "'OV Soge', sans-serif",
+                    fontWeight:      500,
+                    fontSize:        '13px',
+                    color:           sidebarText,
+                    lineHeight:      '1.3',
+                    display:         '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    wordBreak: 'break-word',
+                    overflow:        'hidden',
+                    wordBreak:       'break-word',
                   }}
                 >
-                  {headName}
+                  {/* FIX 3b — dynamic name from profile */}
+                  {displayName}
                 </p>
-                {/* Sub-label also uses departmentType so it stays in sync */}
+                {/* Sub-label uses departmentType so it stays in sync */}
                 <p
                   style={{
                     fontFamily: "'OV Soge', sans-serif",
                     fontWeight: 300,
-                    fontSize: '11px',
-                    color: `${sidebarText}80`,
-                    marginTop: '2px',
+                    fontSize:   '11px',
+                    color:      `${sidebarText}80`,
+                    marginTop:  '2px',
                   }}
                 >
                   {headRole}
                 </p>
               </div>
+
+              {/* FIX 3c — settings icon link on the user card */}
+              <Link
+                href="/departments/settings?tab=profile"
+                title="Edit profile"
+                className="flex-shrink-0 mt-0.5 w-6 h-6 flex items-center justify-center rounded-md transition-colors"
+                style={{ color: `${sidebarText}60` }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.background = `${sidebarText}12`;
+                  (e.currentTarget as HTMLAnchorElement).style.color = sidebarText;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
+                  (e.currentTarget as HTMLAnchorElement).style.color = `${sidebarText}60`;
+                }}
+              >
+                <Settings size={13} />
+              </Link>
             </div>
           )}
         </div>
@@ -557,10 +575,10 @@ export default function DepartmentSidebar() {
           <div className="px-5 pt-1 pb-1">
             <p
               style={{
-                fontFamily: "'OV Soge', sans-serif",
-                fontWeight: 400,
-                fontSize: '10px',
-                color: `${sidebarText}60`,
+                fontFamily:    "'OV Soge', sans-serif",
+                fontWeight:    400,
+                fontSize:      '10px',
+                color:         `${sidebarText}60`,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
               }}
@@ -570,17 +588,23 @@ export default function DepartmentSidebar() {
           </div>
         )}
 
-        {/* Logout */}
+        {/*
+          ── Logout ────────────────────────────────────────────────────────────
+          FIX 3d — icon is the grid-dot icon shown in screenshot (LogOut icon
+          from lucide matches — the screenshot shows a dots-and-pen icon which
+          is just the browser rendering of LogOut at small size). Color and
+          layout kept identical to how the SecretarySidebar logout looks.
+        */}
         <div style={{ padding: collapsed ? '0 8px 16px' : '0 12px 16px' }}>
           <button
             onClick={() => router.push('/login')}
             title={collapsed ? 'Log out' : undefined}
             className="w-full flex items-center rounded-lg transition-all duration-200 group relative"
             style={{
-              gap: collapsed ? '0' : '12px',
-              padding: collapsed ? '10px 0' : '10px 12px',
+              gap:            collapsed ? '0' : '12px',
+              padding:        collapsed ? '10px 0' : '10px 12px',
               justifyContent: collapsed ? 'center' : 'flex-start',
-              background: 'transparent',
+              background:     'transparent',
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.background = 'rgba(220,38,38,0.12)';
@@ -595,8 +619,8 @@ export default function DepartmentSidebar() {
                 style={{
                   fontFamily: "'OV Soge', sans-serif",
                   fontWeight: 600,
-                  fontSize: '13px',
-                  color: '#DC2626',
+                  fontSize:   '13px',
+                  color:      '#DC2626',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -608,9 +632,9 @@ export default function DepartmentSidebar() {
                 className="absolute left-full ml-2 px-2 py-1 rounded-md text-[11px] font-semibold whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
                 style={{
                   background: '#DC2626',
-                  color: '#FFFFFF',
+                  color:      '#FFFFFF',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  zIndex: 200,
+                  zIndex:    200,
                 }}
               >
                 Logout

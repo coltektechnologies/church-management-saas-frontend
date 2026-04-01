@@ -10,19 +10,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Upload, X, User, Info, ShieldCheck, Link2 } from 'lucide-react';
 
-// ─── Options ──────────────────────────────────────────────────────────────────
+// ─── Suggestion lists (datalist — user can still type anything freely) ─────────
 
-const DEPT_TYPES: string[] = [
+const DEPT_TYPE_SUGGESTIONS: string[] = [
   'Youth',
   'Choir',
   'Finance',
@@ -44,9 +37,9 @@ const DEPT_TYPES: string[] = [
 
 /**
  * Must stay in sync with CHURCH_LINKS in AddAdminModal so pre-filled
- * values match selectable options.
+ * values match selectable suggestions.
  */
-const CHURCH_ROLES: string[] = [
+const CHURCH_ROLE_SUGGESTIONS: string[] = [
   'Pastor',
   'Associate Pastor',
   'Elder',
@@ -64,12 +57,65 @@ const CHURCH_ROLES: string[] = [
   'Other',
 ];
 
+// ─── Reusable free-type input with datalist suggestions ───────────────────────
+
+function SuggestInput({
+  id,
+  value,
+  onChange,
+  placeholder,
+  suggestions,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  suggestions: string[];
+}) {
+  const listId = `${id}-list`;
+  return (
+    <>
+      <div className="relative">
+        <input
+          id={id}
+          list={listId}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          autoComplete="off"
+          className="w-full h-12 rounded-xl px-4 text-sm font-semibold outline-none transition-all"
+          style={{
+            background:   'hsl(var(--muted) / 0.2)',
+            border:       '1.5px solid transparent',
+            color:        'hsl(var(--foreground))',
+            // Placeholder colour via inline style is not possible in React —
+            // the global CSS handles ::placeholder; we keep the class below for it.
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.border = '1.5px solid hsl(var(--primary) / 0.4)';
+            e.currentTarget.style.background = 'hsl(var(--muted) / 0.35)';
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.border = '1.5px solid transparent';
+            e.currentTarget.style.background = 'hsl(var(--muted) / 0.2)';
+          }}
+        />
+      </div>
+      <datalist id={listId}>
+        {suggestions.map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
+    </>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DeptMyProfileTab() {
   const { profile, updateProfile } = useDepartmentProfile();
-  const { getActiveAdmins } = useChurchProfile();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const { getActiveAdmins }        = useChurchProfile();
+  const fileRef                    = useRef<HTMLInputElement>(null);
 
   const activeAdmins = getActiveAdmins();
 
@@ -92,21 +138,22 @@ export default function DeptMyProfileTab() {
      * userRole is pre-filled from matchedGrant.churchLink — the official
      * church position set in AddAdminModal, not the system permission level.
      */
-    userRole: profile.userRole || matchedGrant?.churchLink || '',
+    userRole:    profile.userRole    || matchedGrant?.churchLink || '',
     headName:
       profile.headName ||
       (matchedGrant ? `${matchedGrant.first_name} ${matchedGrant.last_name}` : ''),
     preferredName: profile.preferredName || '',
-    headEmail: profile.headEmail || matchedGrant?.email || '',
-    headPhone: profile.headPhone || matchedGrant?.phone || '',
-    avatarUrl: profile.avatarUrl ?? (null as string | null),
+    headEmail:     profile.headEmail || matchedGrant?.email || '',
+    headPhone:     profile.headPhone || matchedGrant?.phone || '',
+    avatarUrl:     profile.avatarUrl ?? (null as string | null),
   });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setForm((prev) => ({ ...prev, avatarUrl: reader.result as string }));
+      reader.onloadend = () =>
+        setForm((prev) => ({ ...prev, avatarUrl: reader.result as string }));
       reader.readAsDataURL(file);
     }
   };
@@ -120,7 +167,9 @@ export default function DeptMyProfileTab() {
     .toUpperCase();
 
   const topbarPreview =
-    form.preferredName.trim() || form.headName.split(' ').filter(Boolean).slice(-1)[0] || 'You';
+    form.preferredName.trim() ||
+    form.headName.split(' ').filter(Boolean).slice(-1)[0] ||
+    'You';
 
   const handleSave = () => {
     /**
@@ -131,16 +180,33 @@ export default function DeptMyProfileTab() {
     updateProfile({
       departmentName: form.departmentName,
       departmentType: form.departmentType,
-      userRole: form.userRole,
-      headName: form.headName,
-      preferredName: form.preferredName,
-      headEmail: form.headEmail,
-      headPhone: form.headPhone,
-      avatarUrl: form.avatarUrl,
+      userRole:       form.userRole,
+      headName:       form.headName,
+      preferredName:  form.preferredName,
+      headEmail:      form.headEmail,
+      headPhone:      form.headPhone,
+      avatarUrl:      form.avatarUrl,
     });
     toast.success('Profile updated successfully', {
       description: 'Your name and photo are now live across the sidebar and topbar.',
     });
+  };
+
+  // ── Shared input style — consistent focus ring, no border by default ──────
+  const inputClass =
+    'h-12 rounded-xl px-4 text-sm font-semibold outline-none transition-all w-full';
+  const inputStyle: React.CSSProperties = {
+    background: 'hsl(var(--muted) / 0.2)',
+    border:     '1.5px solid transparent',
+    color:      'hsl(var(--foreground))',
+  };
+  const inputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.border     = '1.5px solid hsl(var(--primary) / 0.4)';
+    e.currentTarget.style.background = 'hsl(var(--muted) / 0.35)';
+  };
+  const inputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.currentTarget.style.border     = '1.5px solid transparent';
+    e.currentTarget.style.background = 'hsl(var(--muted) / 0.2)';
   };
 
   return (
@@ -148,7 +214,7 @@ export default function DeptMyProfileTab() {
       <div>
         <h3 className="text-lg font-black text-foreground">My Profile</h3>
         <p className="text-xs text-muted-foreground font-medium">
-          Your personal info and department details — shown in the sidebar and topbar.
+          Your personal info and department details shown in the sidebar and topbar.
         </p>
       </div>
 
@@ -161,9 +227,9 @@ export default function DeptMyProfileTab() {
               Your profile was pre-filled from your system access record granted on{' '}
               <span className="font-black">
                 {new Date(matchedGrant.granted_at).toLocaleDateString('en-GB', {
-                  day: '2-digit',
+                  day:   '2-digit',
                   month: 'short',
-                  year: 'numeric',
+                  year:  'numeric',
                 })}
               </span>
               .
@@ -227,26 +293,18 @@ export default function DeptMyProfileTab() {
 
       {/* Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {/* Department Type */}
+
         <div className="space-y-2">
           <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
             Department / Ministry Type
           </Label>
-          <Select
+          <SuggestInput
+            id="dept-type"
             value={form.departmentType}
-            onValueChange={(v) => setForm({ ...form, departmentType: v })}
-          >
-            <SelectTrigger className="h-12 bg-muted/20 border-none font-bold rounded-xl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DEPT_TYPES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(v) => setForm({ ...form, departmentType: v })}
+            placeholder="e.g. Youth, Choir, Finance…"
+            suggestions={DEPT_TYPE_SUGGESTIONS}
+          />
           <p className="text-[10px] text-muted-foreground ml-1">
             Also shown as your role badge in the sidebar.
           </p>
@@ -257,34 +315,28 @@ export default function DeptMyProfileTab() {
           <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
             Department / Ministry Name
           </Label>
-          <Input
-            className="h-12 bg-muted/20 border-none font-bold rounded-xl"
+          <input
+            className={inputClass}
+            style={inputStyle}
             value={form.departmentName}
             placeholder="e.g. Adventist Youth Society"
             onChange={(e) => setForm({ ...form, departmentName: e.target.value })}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
           />
         </div>
 
-        {/*
-          Church Link / Role — pre-filled from matchedGrant.churchLink.
-          Stored as profile.userRole — a separate concept from departmentType.
-        */}
         <div className="space-y-2">
           <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
             Church Link / Position
           </Label>
-          <Select value={form.userRole} onValueChange={(v) => setForm({ ...form, userRole: v })}>
-            <SelectTrigger className="h-12 bg-muted/20 border-none font-bold rounded-xl">
-              <SelectValue placeholder="e.g. Youth Director" />
-            </SelectTrigger>
-            <SelectContent>
-              {CHURCH_ROLES.map((r) => (
-                <SelectItem key={r} value={r}>
-                  {r}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SuggestInput
+            id="church-role"
+            value={form.userRole}
+            onChange={(v) => setForm({ ...form, userRole: v })}
+            placeholder="e.g. Youth Director, Elder…"
+            suggestions={CHURCH_ROLE_SUGGESTIONS}
+          />
           <p className="text-[10px] text-muted-foreground ml-1">
             Your official position within the church.
           </p>
@@ -295,11 +347,14 @@ export default function DeptMyProfileTab() {
           <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
             Full Name
           </Label>
-          <Input
-            className="h-12 bg-muted/20 border-none font-bold rounded-xl"
+          <input
+            className={inputClass}
+            style={inputStyle}
             value={form.headName}
             placeholder="e.g. Bro. John Doe"
             onChange={(e) => setForm({ ...form, headName: e.target.value })}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
           />
           <p className="text-[10px] text-muted-foreground ml-1">Shown in full on the sidebar.</p>
         </div>
@@ -310,16 +365,20 @@ export default function DeptMyProfileTab() {
             Preferred Name{' '}
             <span className="ml-1 normal-case font-normal text-muted-foreground">(topbar)</span>
           </Label>
-          <Input
-            className="h-12 bg-muted/20 border-none font-bold rounded-xl"
+          <input
+            className={inputClass}
+            style={inputStyle}
             value={form.preferredName}
             placeholder="e.g. John"
             onChange={(e) => setForm({ ...form, preferredName: e.target.value })}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
           />
           <div className="flex items-center gap-1.5 ml-1">
             <Info size={10} className="text-muted-foreground flex-shrink-0" />
             <p className="text-[10px] text-muted-foreground">
-              Topbar will show: <span className="font-bold text-foreground">{topbarPreview}</span>
+              Topbar will show:{' '}
+              <span className="font-bold text-foreground">{topbarPreview}</span>
             </p>
           </div>
         </div>
@@ -329,11 +388,15 @@ export default function DeptMyProfileTab() {
           <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
             Email Address
           </Label>
-          <Input
+          <input
             type="email"
-            className="h-12 bg-muted/20 border-none font-bold rounded-xl"
+            className={inputClass}
+            style={inputStyle}
             value={form.headEmail}
+            placeholder="e.g. john@church.org"
             onChange={(e) => setForm({ ...form, headEmail: e.target.value })}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
           />
         </div>
 
@@ -342,11 +405,15 @@ export default function DeptMyProfileTab() {
           <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
             Phone Number
           </Label>
-          <Input
+          <input
             type="tel"
-            className="h-12 bg-muted/20 border-none font-bold rounded-xl"
+            className={inputClass}
+            style={inputStyle}
             value={form.headPhone}
+            placeholder="e.g. +233 24 000 0000"
             onChange={(e) => setForm({ ...form, headPhone: e.target.value })}
+            onFocus={inputFocus}
+            onBlur={inputBlur}
           />
         </div>
       </div>
