@@ -346,7 +346,23 @@ export default function SecretaryTopbar() {
           <div className="absolute left-0 top-0 h-full w-[280px] bg-card shadow-xl flex flex-col">
             <div className="p-4 flex items-center justify-between border-b border-border">
               <div className="flex items-center gap-2 min-w-0">
-                <Church className="w-5 h-5 text-primary flex-shrink-0" />
+                <div
+                  className="w-8 h-8 rounded-lg items-center justify-center overflow-hidden flex-shrink-0 flex"
+                  style={{ background: logoBg }}
+                >
+                  {logoUrl ? (
+                    <Image
+                      src={logoUrl}
+                      alt="logo"
+                      width={32}
+                      height={32}
+                      className="object-cover w-full h-full"
+                      unoptimized
+                    />
+                  ) : (
+                    <Church className="w-4 h-4 text-white" />
+                  )}
+                </div>
                 <span className="text-sm font-semibold text-foreground leading-tight">
                   {churchName}
                 </span>

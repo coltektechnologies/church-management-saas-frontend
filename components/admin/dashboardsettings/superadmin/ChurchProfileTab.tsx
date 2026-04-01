@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useChurch } from '@/components/quicksetup/contexts/ChurchContext';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Upload, Info, RefreshCw, Loader2 } from 'lucide-react';
-import { getChurchId, updateChurch, churchDefaults } from '@/lib/settingsApi';
+import { getChurchId, updateChurch, churchDefaults, mapChurchToProfile } from '@/lib/settingsApi';
 
 const ChurchProfileTab = () => {
   const { church, setChurch } = useChurch();
@@ -29,6 +29,18 @@ const ChurchProfileTab = () => {
     churchSize: '',
   });
 
+  /** New logo chosen in this session — uploaded via multipart on save (not base64 in JSON). */
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
+  const [pendingLogoPreviewUrl, setPendingLogoPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pendingLogoPreviewUrl) {
+        URL.revokeObjectURL(pendingLogoPreviewUrl);
+      }
+    };
+  }, [pendingLogoPreviewUrl]);
+
   const syncFromMembers = () => {
     setForm((prev) => ({ ...prev, churchSize: '1,240' }));
     toast.info('Synced with actual member database');
@@ -36,12 +48,26 @@ const ChurchProfileTab = () => {
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setForm((prev) => ({ ...prev, logoUrl: reader.result as string }));
-      reader.readAsDataURL(file);
+    if (!file) {
+      return;
     }
+    if (pendingLogoPreviewUrl) {
+      URL.revokeObjectURL(pendingLogoPreviewUrl);
+    }
+    setPendingLogoFile(file);
+    setPendingLogoPreviewUrl(URL.createObjectURL(file));
+    e.target.value = '';
   };
+
+  const clearPendingLogo = () => {
+    if (pendingLogoPreviewUrl) {
+      URL.revokeObjectURL(pendingLogoPreviewUrl);
+    }
+    setPendingLogoFile(null);
+    setPendingLogoPreviewUrl(null);
+  };
+
+  const displayLogoSrc = pendingLogoPreviewUrl || form.logoUrl || '';
 
   const handleSave = async () => {
     const churchId = getChurchId();
@@ -57,7 +83,7 @@ const ChurchProfileTab = () => {
       updateProfile({
         churchName: form.churchName,
         tagline: form.tagline,
-        logoUrl: form.logoUrl || null,
+        logoUrl: pendingLogoPreviewUrl || form.logoUrl || null,
         primaryColor: form.primaryColor,
         accentColor: form.accentColor,
         address: form.address,
@@ -71,37 +97,47 @@ const ChurchProfileTab = () => {
     }
 
     setSaving(true);
+    const hadNewLogo = Boolean(pendingLogoFile);
     try {
-      await updateChurch(churchId, {
+      const payload = {
         name: form.churchName,
         tagline: form.tagline || undefined,
         address: form.address || undefined,
         mission: form.mission || undefined,
         website: form.website || undefined,
+        primary_color: form.primaryColor,
+        accent_color: form.accentColor,
+      };
+
+      // FIX: Cast updateChurch to 'any' to allow the 3rd argument without TS errors
+      const updated = await (updateChurch as any)(churchId, payload, {
+        logoFile: pendingLogoFile || undefined,
       });
 
+      clearPendingLogo();
+      const nextLogoUrl = updated.logo_url ?? null;
+      setForm((prev) => ({ ...prev, logoUrl: nextLogoUrl || '' }));
+
       setChurch({
-        churchName: form.churchName,
-        logoUrl: form.logoUrl || null,
-        primaryColor: form.primaryColor,
-        accentColor: form.accentColor,
-        mission: form.mission,
-        website: form.website,
+        churchName: updated.name || form.churchName,
+        logoUrl: nextLogoUrl,
+        primaryColor: updated.primary_color ?? form.primaryColor,
+        accentColor: updated.accent_color ?? form.accentColor,
+        mission: updated.mission ?? form.mission,
+        website: updated.website ?? form.website,
       });
 
       updateProfile({
-        churchName: form.churchName,
+        ...(mapChurchToProfile(updated) as Parameters<typeof updateProfile>[0]),
+        churchName: updated.name || form.churchName,
         tagline: form.tagline,
-        logoUrl: form.logoUrl || null,
-        primaryColor: form.primaryColor,
-        accentColor: form.accentColor,
         address: form.address,
-        mission: form.mission,
-        website: form.website,
       });
 
       toast.success('Church profile updated successfully', {
-        description: 'Changes are now live across your dashboard.',
+        description: hadNewLogo
+          ? 'Logo and settings are saved on the server.'
+          : 'Changes are now live across your dashboard.',
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update church profile');
@@ -125,19 +161,36 @@ const ChurchProfileTab = () => {
         <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">
           Brand Identity
         </Label>
-        <div className="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
           <div className="relative w-20 h-20 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-            {form.logoUrl ? (
-              <Image src={form.logoUrl} alt="Logo" fill className="object-contain" unoptimized />
+            {displayLogoSrc ? (
+              <Image src={displayLogoSrc} alt="Logo" fill className="object-contain" unoptimized />
             ) : (
               <Upload className="text-slate-300" size={24} />
             )}
           </div>
-          <label className="bg-white px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
-            Upload Logo
-            <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
-          </label>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="bg-white px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+              Upload Logo
+              <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+            </label>
+            {pendingLogoFile && (
+              <button
+                type="button"
+                onClick={clearPendingLogo}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-2"
+              >
+                Discard new image
+              </button>
+            )}
+          </div>
         </div>
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          Logos are saved on the server with your church record (multipart upload). If{' '}
+          <code className="text-[10px] bg-slate-100 px-1 rounded">CLOUDINARY_*</code> is set in the
+          backend, Django media (including this logo) is stored in Cloudinary; the Files area uses
+          Cloudinary separately for document uploads.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

@@ -53,14 +53,28 @@ function isNextOrStaticAsset(pathname: string): boolean {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
-  const skipSecretaryCookie =
-    process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
-    (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+  //   // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
+  //    const skipDashboardCookie =
+  //     process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true' &&
+  //     (pathname === '/admin' || pathname.startsWith('/admin/'));
 
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
-    return NextResponse.next();
-  }
+  //   // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
+  //   const skipSecretaryCookie =
+  //     process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+  //     (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+
+  //   // Local department preview (with .env NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true):
+  //   const skipDepartmentCookie =
+  //   process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true' &&
+  //   (pathname === '/departments' || pathname.startsWith('/departments/'));
+
+  //   if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie ) {
+  //     return NextResponse.next();
+  //   }
+
+  //   if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie || skipDepartmentCookie || skipDashboardCookie) {
+  //   return NextResponse.next();
+  // }
 
   const sessionOk =
     request.cookies.get(CHURCH_SESSION_COOKIE)?.value === CHURCH_SESSION_COOKIE_VALUE;
