@@ -128,15 +128,21 @@ function HelpPopover({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
 
   return (
     <div
@@ -399,7 +405,9 @@ export default function DepartmentTopbar() {
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = hoverBg)}
                 onMouseLeave={(e) => {
-                  if (!helpOpen) e.currentTarget.style.backgroundColor = 'transparent';
+                  if (!helpOpen) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
                 }}
                 aria-label="Help"
               >

@@ -275,7 +275,9 @@ export default function DeptColorThemeTab() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (!isReady || initialisedRef.current) return;
+    if (!isReady || initialisedRef.current) {
+      return;
+    }
     initialisedRef.current = true;
     setLight({
       primary: profile.primaryColor     || LIGHT_DEFAULTS.primary,
@@ -311,13 +313,17 @@ export default function DeptColorThemeTab() {
       setDark((prev) => {
         const next = { ...prev, [key]: value };
         // Keep topbar in sync with sidebar if they were the same
-        if (key === 'sidebar' && prev.topbar === prev.sidebar) next.topbar = value;
+        if (key === 'sidebar' && prev.topbar === prev.sidebar) {
+          next.topbar = value;
+        }
         return next;
       });
     } else {
       setLight((prev) => {
         const next = { ...prev, [key]: value };
-        if (key === 'sidebar' && prev.topbar === prev.sidebar) next.topbar = value;
+        if (key === 'sidebar' && prev.topbar === prev.sidebar) {
+          next.topbar = value;
+        }
         return next;
       });
     }
