@@ -30,33 +30,33 @@ import DeptNotificationsDropdown from '@/components/departments/DeptNotification
 import DeptUserDropdown from '@/components/departments/DeptUserDropdown';
 
 const mobileNavItems = [
-  { title: 'Dashboard',           path: '/departments',                icon: LayoutDashboard },
-  { title: 'Members',             path: '/departments/members',        icon: Users },
-  { title: 'Activities & Events', path: '/departments/activities',     icon: CalendarDays },
-  { title: 'Announcements',       path: '/departments/announcements',  icon: Megaphone },
-  { title: 'Message Member',      path: '/departments/communications', icon: MessageSquare },
-  { title: 'Budget & Expenses',   path: '/departments/budget',         icon: Wallet },
-  { title: 'Expense Requests',    path: '/departments/expenses',       icon: Receipt },
-  { title: 'Department Reports',  path: '/departments/reports',        icon: FileBarChart },
-  { title: 'Settings',            path: '/departments/settings',       icon: Settings },
+  { title: 'Dashboard', path: '/departments', icon: LayoutDashboard },
+  { title: 'Members', path: '/departments/members', icon: Users },
+  { title: 'Activities & Events', path: '/departments/activities', icon: CalendarDays },
+  { title: 'Announcements', path: '/departments/announcements', icon: Megaphone },
+  { title: 'Message Member', path: '/departments/communications', icon: MessageSquare },
+  { title: 'Budget & Expenses', path: '/departments/budget', icon: Wallet },
+  { title: 'Expense Requests', path: '/departments/expenses', icon: Receipt },
+  { title: 'Department Reports', path: '/departments/reports', icon: FileBarChart },
+  { title: 'Settings', path: '/departments/settings', icon: Settings },
 ];
 
 const PAGE_TITLES: Record<string, string> = {
-  '/departments':               'Department Dashboard',
-  '/departments/members':       'Department Members',
-  '/departments/activities':    'Activities & Events',
+  '/departments': 'Department Dashboard',
+  '/departments/members': 'Department Members',
+  '/departments/activities': 'Activities & Events',
   '/departments/announcements': 'Announcements',
-  '/departments/communications':'Message Member',
-  '/departments/budget':        'Budget & Expenses',
-  '/departments/expenses':      'Expense Requests',
-  '/departments/reports':       'Department Reports',
-  '/departments/settings':      'Settings',
+  '/departments/communications': 'Message Member',
+  '/departments/budget': 'Budget & Expenses',
+  '/departments/expenses': 'Expense Requests',
+  '/departments/reports': 'Department Reports',
+  '/departments/settings': 'Settings',
 };
 
 const HELP_LINKS = [
-  { icon: BookOpen,      label: 'Documentation', desc: 'Guides & feature docs',        href: '#' },
-  { icon: LifeBuoy,      label: 'Support Center', desc: 'Get help from our team',       href: '#' },
-  { icon: MessageCircle, label: 'Send Feedback',  desc: 'Report issues or suggestions', href: '#' },
+  { icon: BookOpen, label: 'Documentation', desc: 'Guides & feature docs', href: '#' },
+  { icon: LifeBuoy, label: 'Support Center', desc: 'Get help from our team', href: '#' },
+  { icon: MessageCircle, label: 'Send Feedback', desc: 'Report issues or suggestions', href: '#' },
 ];
 
 function autoText(hex: string): '#0B2A4A' | '#FFFFFF' {
@@ -259,11 +259,11 @@ function HelpPopover({
 
 export default function DepartmentTopbar() {
   const { resolvedTheme, setTheme, mounted } = useDeptTheme();
-  const { profile, isReady }                 = useDepartmentProfile();
+  const { profile, isReady } = useDepartmentProfile();
   const { profile: churchProfile, isReady: churchReady } = useChurchProfile();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [helpOpen, setHelpOpen]     = useState(false);
-  const pathname                    = usePathname();
+  const [helpOpen, setHelpOpen] = useState(false);
+  const pathname = usePathname();
 
   const isDark = mounted ? resolvedTheme === 'dark' : false;
 
@@ -276,25 +276,25 @@ export default function DepartmentTopbar() {
   const cardBg = isReady
     ? isDark
       ? profile.darkTopbarColor || '#0D1F36'
-      : profile.topbarColor     || '#FFFFFF'
+      : profile.topbarColor || '#FFFFFF'
     : '#FFFFFF';
 
   // Outer strip is transparent in light (page bg shows), matches card in dark
   const stripBg = isDark ? cardBg : 'transparent';
 
   const textColor = autoText(cardBg);
-  const hoverBg   = `${textColor}10`;
+  const hoverBg = `${textColor}10`;
   const pillOffBg = `${textColor}20`;
 
   const accentColor = isReady
     ? isDark
       ? profile.darkAccentColor || '#2FC4B2'
-      : profile.accentColor     || '#2FC4B2'
+      : profile.accentColor || '#2FC4B2'
     : '#2FC4B2';
 
-  const deptName    = isReady ? profile.departmentName || 'Adventist Youth' : 'Adventist Youth';
-  const avatarUrl   = isReady ? (profile.avatarUrl ?? null) : null;
-  const headName    = isReady ? profile.headName || 'Department Head' : 'Department Head';
+  const deptName = isReady ? profile.departmentName || 'Adventist Youth' : 'Adventist Youth';
+  const avatarUrl = isReady ? (profile.avatarUrl ?? null) : null;
+  const headName = isReady ? profile.headName || 'Department Head' : 'Department Head';
   const triggerName = isReady
     ? profile.preferredName?.trim() || headName.split(' ').filter(Boolean).slice(-1)[0] || 'User'
     : 'User';
@@ -332,12 +332,12 @@ export default function DepartmentTopbar() {
         <div
           className="w-full flex items-center justify-between px-5"
           style={{
-            height:       '64px',
-            background:   cardBg,
+            height: '64px',
+            background: cardBg,
             borderRadius: '8px',
-            boxShadow:    '0 1px 6px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05)',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05)',
             // Smooth colour transition when theme changes
-            transition:   'background-color 0.25s ease',
+            transition: 'background-color 0.25s ease',
           }}
         >
           {/* Left: hamburger (mobile) + bold page title + teal breadcrumb */}
@@ -356,25 +356,25 @@ export default function DepartmentTopbar() {
             <div className="min-w-0">
               <h1
                 style={{
-                  fontFamily:   "'OV Soge', sans-serif",
-                  fontWeight:   900,
-                  fontSize:     '20px',
-                  color:        textColor,
-                  lineHeight:   '1.2',
-                  whiteSpace:   'nowrap',
-                  overflow:     'hidden',
+                  fontFamily: "'OV Soge', sans-serif",
+                  fontWeight: 900,
+                  fontSize: '20px',
+                  color: textColor,
+                  lineHeight: '1.2',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  maxWidth:     '400px',
+                  maxWidth: '400px',
                 }}
               >
                 {pageTitle}
               </h1>
               <p
                 style={{
-                  fontSize:   '11px',
-                  color:      `${textColor}70`,
+                  fontSize: '11px',
+                  color: `${textColor}70`,
                   fontWeight: 400,
-                  marginTop:  '2px',
+                  marginTop: '2px',
                 }}
               >
                 <span style={{ color: accentColor, fontWeight: 600 }}>{deptName}</span>
@@ -400,7 +400,7 @@ export default function DepartmentTopbar() {
                 onClick={() => setHelpOpen((o) => !o)}
                 className="w-8 h-8 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                 style={{
-                  color:           textColor,
+                  color: textColor,
                   backgroundColor: helpOpen ? hoverBg : 'transparent',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = hoverBg)}
