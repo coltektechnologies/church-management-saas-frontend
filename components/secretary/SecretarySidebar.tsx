@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
-import { performLogout } from '@/lib/churchSessionBrowser';
 
 const navItems = [
   { title: 'Dashboard', path: '/secretary', icon: LayoutDashboard },
@@ -83,6 +82,7 @@ export default function SecretarySidebar() {
   const sidebarText = autoText(sidebarColor);
   const primaryText = autoText(primaryColor);
   const accentText = autoText(accentColor);
+
   const initials = userName
     .split(' ')
     .map((w) => w[0])
@@ -113,11 +113,7 @@ export default function SecretarySidebar() {
       {/* Topbar spacer — matches topbar height */}
       <div style={{ height: '56px', flexShrink: 0 }} />
 
-      {/*
-        ── Collapse toggle  ────────────────────────────────────────────────────
-        Sits ABOVE the church card, flush with the divider line.
-        flex-shrink-0 keeps it always visible even when sidebar scrolls.
-      */}
+      {/* ── Collapse toggle ── */}
       <div
         className="flex-shrink-0 flex items-center px-3 pb-2 pt-1"
         style={{
@@ -125,7 +121,6 @@ export default function SecretarySidebar() {
           borderBottom: `1px solid ${sidebarText}18`,
         }}
       >
-        {/* Church name micro-label — only shown when expanded */}
         {!collapsed && (
           <span
             style={{
@@ -157,7 +152,7 @@ export default function SecretarySidebar() {
         </button>
       </div>
 
-      {/* Scrollable body */}
+      {/* ── Scrollable body ── */}
       <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden min-h-0">
         {/* Church / tagline card */}
         {!collapsed && (
@@ -204,7 +199,7 @@ export default function SecretarySidebar() {
           </div>
         )}
 
-        {/* Nav */}
+        {/* ── Nav ── */}
         <nav
           className="flex-1 mt-4 space-y-0.5"
           style={{ padding: collapsed ? '0 8px' : '0 12px' }}
@@ -263,7 +258,7 @@ export default function SecretarySidebar() {
           })}
         </nav>
 
-        {/* User card */}
+        {/* ── User card ── */}
         <div style={{ padding: collapsed ? '8px' : '8px 12px' }}>
           {collapsed ? (
             <div className="flex justify-center py-2" title={userName}>
@@ -349,7 +344,7 @@ export default function SecretarySidebar() {
           )}
         </div>
 
-        {/* Management label */}
+        {/* ── Management label ── */}
         {!collapsed && (
           <div className="px-5 pt-3 pb-2">
             <p
@@ -367,13 +362,10 @@ export default function SecretarySidebar() {
           </div>
         )}
 
-        {/* Logout */}
+        {/* ── Logout ── */}
         <div style={{ padding: collapsed ? '0 8px 16px' : '0 12px 16px' }}>
           <button
-            onClick={async () => {
-              await performLogout();
-              router.push('/login');
-            }}
+            onClick={() => router.push('/login')}
             title={collapsed ? 'Log out' : undefined}
             className="w-full flex items-center rounded-lg transition-all duration-200 group relative"
             style={{

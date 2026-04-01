@@ -76,7 +76,7 @@ function isMemberActivity(a: ActivityWithType): boolean {
   );
 }
 
-// ── Format large numbers on Y-axis (e.g. 5000 → 5k) ─────────────────────────
+// ── Format large numbers on Y-axis ───────────────────────────────────────────
 function formatYAxis(value: number): string {
   if (value >= 1_000_000) {
     return `${(value / 1_000_000).toFixed(1)}M`;
@@ -87,18 +87,15 @@ function formatYAxis(value: number): string {
   return String(value);
 }
 
-// ── Derive a nice Y-axis upper bound with breathing room ─────────────────────
 function niceMax(max: number): number {
   if (max === 0) {
     return 10;
   }
   const withPadding = max * 1.15;
   const magnitude = Math.pow(10, Math.floor(Math.log10(withPadding)));
-  const nice = Math.ceil(withPadding / magnitude) * magnitude;
-  return nice;
+  return Math.ceil(withPadding / magnitude) * magnitude;
 }
 
-// ── Derive chart container height from data magnitude ─────────────────────────
 function deriveChartHeight(maxValue: number): number {
   if (maxValue <= 200) {
     return 260;
@@ -115,7 +112,6 @@ function deriveChartHeight(maxValue: number): number {
   return 420;
 }
 
-// ── Y-axis tick count: more members → more ticks for readability ──────────────
 function deriveTickCount(maxValue: number): number {
   if (maxValue <= 200) {
     return 5;
@@ -129,7 +125,7 @@ function deriveTickCount(maxValue: number): number {
   return 8;
 }
 
-// ── Live growth data derived from activity log ────────────────────────────────
+// ── Live growth data ──────────────────────────────────────────────────────────
 function useGrowthData(
   rangeMode: 'preset' | 'custom',
   presetRange: string,
@@ -141,7 +137,6 @@ function useGrowthData(
   return useMemo(() => {
     const now = new Date();
     const year = now.getFullYear();
-
     let fromMs = 0;
     let toMs = now.getTime();
 
@@ -150,25 +145,29 @@ function useGrowthData(
       toMs = new Date(customTo).getTime();
     } else {
       switch (presetRange) {
-        case '30d':
+        case '30d': {
           fromMs = toMs - 30 * 86_400_000;
           break;
-        case '90d':
+        }
+        case '90d': {
           fromMs = toMs - 90 * 86_400_000;
           break;
-        case '6m':
+        }
+        case '6m': {
           fromMs = toMs - 182 * 86_400_000;
           break;
-        case 'year':
+        }
+        case 'year': {
           fromMs = new Date(year, 0, 1).getTime();
           break;
-        default:
+        }
+        default: {
           fromMs = 0;
+        }
       }
     }
 
     const buckets: Record<string, number> = {};
-
     for (const a of activities as ActivityWithType[]) {
       const ts = a.timestamp;
       if (isNaN(ts) || ts < fromMs || ts > toMs) {
@@ -177,15 +176,12 @@ function useGrowthData(
       if (!isMemberActivity(a)) {
         continue;
       }
-
       const d = new Date(ts);
       const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, '0')}`;
       buckets[key] = (buckets[key] ?? 0) + 1;
     }
 
-    const hasRealData = Object.keys(buckets).length > 0;
-
-    if (!hasRealData) {
+    if (Object.keys(buckets).length === 0) {
       return MOCK_DATA;
     }
 
@@ -204,6 +200,8 @@ interface TooltipPayloadItem {
   fill?: string;
   stroke?: string;
   color?: string;
+  // FIX 2: carry original value for bar-100 display
+  payload?: { members: number; _original?: number };
 }
 interface CustomTooltipProps {
   active?: boolean;
@@ -217,7 +215,8 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   }
   const item = payload[0];
   const color = item?.fill ?? item?.stroke ?? item?.color ?? '#000';
-  const value = item?.value ?? 0;
+  // FIX 2: prefer _original (real count) over the normalised 100 value
+  const value = item?.payload?._original ?? item?.value ?? 0;
   return (
     <div
       style={{
@@ -347,16 +346,7 @@ function SmartDropdown({ open, onClose, trigger, children, minWidth = 220 }: Sma
   );
 }
 
-// ── ChartTypePicker — two-level dropdown (family + sub) ───────────────────────
-//
-// Replaces the flat <select> for chart type. Renders a trigger button that
-// shows the current sub-type label, and on click opens a two-column panel:
-//   left  → family list  (Bar/Column, Line, Area, Pie/Donut)
-//   right → sub-options grid for the hovered family
-//
-// The trigger button uses `width: max-content` so it only takes as much
-// horizontal space as the selected label actually needs — no fixed width.
-
+// ── ChartTypePicker ───────────────────────────────────────────────────────────
 interface ChartSubOption {
   id: string;
   label: string;
@@ -438,7 +428,6 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
   const currentFamily = familyOfSub(value);
   const hoveredFamily = CHART_FAMILIES.find((f) => f.id === hovered) ?? CHART_FAMILIES[0];
 
-  // Close on outside click
   useEffect(() => {
     if (!open) {
       return;
@@ -452,7 +441,6 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // Flip panel left if it would overflow viewport
   useEffect(() => {
     if (!open || !dropRef.current) {
       return;
@@ -463,7 +451,6 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
 
   return (
     <div ref={wrapRef} className="relative">
-      {/* ── Trigger button — width hugs the label text ── */}
       <button
         onClick={() => {
           setOpen((o) => !o);
@@ -479,7 +466,6 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
         <ChevronDown size={10} className="text-muted-foreground shrink-0" />
       </button>
 
-      {/* ── Drop panel ── */}
       {open && (
         <div
           ref={dropRef}
@@ -490,17 +476,15 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
             right: flip ? '0' : 'auto',
             marginTop: 4,
             zIndex: 300,
-            // Width is driven by content; two columns side-by-side
             width: 'max-content',
             minWidth: 340,
             maxWidth: '95vw',
           }}
         >
           <div style={{ display: 'flex', gap: 0 }}>
-            {/* ── Left: family list ── */}
+            {/* Family list */}
             <div
               style={{
-                // Width fits the longest family label — no fixed px
                 width: 'max-content',
                 minWidth: 110,
                 borderRight: '1px solid hsl(var(--border))',
@@ -538,18 +522,13 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
               })}
             </div>
 
-            {/* ── Right: sub-option grid ── */}
+            {/* Sub-option grid */}
             <div style={{ flex: 1, paddingLeft: 10 }}>
               <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-semibold mb-2">
                 {hoveredFamily.label}
               </p>
               <div
-                style={{
-                  display: 'grid',
-                  // Two columns; each column fits its content — no fixed width
-                  gridTemplateColumns: 'repeat(2, max-content)',
-                  gap: 6,
-                }}
+                style={{ display: 'grid', gridTemplateColumns: 'repeat(2, max-content)', gap: 6 }}
               >
                 {hoveredFamily.subs.map((s) => {
                   const active = value === s.id;
@@ -566,7 +545,6 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
                           ? '2px solid hsl(var(--primary))'
                           : '1.5px solid hsl(var(--border))',
                         background: active ? 'hsl(var(--primary) / 0.07)' : 'hsl(var(--card))',
-                        // Width hugs content — no overflow, no fixed px
                         width: 'max-content',
                         minWidth: 100,
                       }}
@@ -622,8 +600,6 @@ export function MembershipGrowthChart() {
 
   const DEFAULT_COLORS = [pc, ac, '#E4002B', '#FFB020', '#6366F1', '#EC4899', '#14B8A6', '#F97316'];
 
-  // chartType now stores the sub-option id (e.g. 'bar', 'line-smooth', 'pie', …)
-  // The render logic below maps sub-ids → Recharts components.
   const [chartType, setChartType] = useState('bar');
   const [rangeMode, setRangeMode] = useState<'preset' | 'custom'>('preset');
   const [presetRange, setPresetRange] = useState('all');
@@ -638,6 +614,10 @@ export function MembershipGrowthChart() {
   const [showBorder, setShowBorder] = useState(false);
 
   const filteredData = useGrowthData(rangeMode, presetRange, customFrom, customTo);
+
+  // FIX 1 & 2: derive pieData here so both renderChart and the selected-bar
+  // display paragraph can reference the same array.
+  const pieData = useMemo(() => toQuarterData(filteredData), [filteredData]);
 
   const maxValue = useMemo(
     () => Math.max(0, ...filteredData.map((d) => d.members)),
@@ -660,7 +640,33 @@ export function MembershipGrowthChart() {
     return 32;
   }, [maxValue]);
 
-  const getColor = (i: number) => barColors[i] ?? colors[i % colors.length];
+  // FIX 3: reset barColors when filteredData identity changes (range switched)
+  // so stale index-keyed colors don't bleed onto different bars.
+  const prevDataLenRef = useRef(filteredData.length);
+  useEffect(() => {
+    // These state updates are intentional for rebase on new data range.
+    if (filteredData.length !== prevDataLenRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBarColors({});
+
+      setSelectedBar(null);
+      prevDataLenRef.current = filteredData.length;
+    }
+  }, [filteredData]);
+
+  const activeBarColors = barColors;
+  const activeSelectedBar = selectedBar;
+
+  // FIX 2: memoised usingMockData (was a plain var, recalculated every render)
+  const { activities } = useAppData();
+  const usingMockData = useMemo(
+    () => !(activities as ActivityWithType[]).some(isMemberActivity),
+    [activities]
+  );
+
+  const activeFamily = familyOfSub(chartType)?.id ?? 'bar';
+
+  const getColor = (i: number) => activeBarColors[i] ?? colors[i % colors.length];
   const primarySeriesColor = colors[0] ?? pc;
   const margin = { top: 8, right: 16, left: 0, bottom: 4 };
   const axisStyle = { fontSize: 11, fill: '#6B7280', fontFamily: 'inherit' };
@@ -685,13 +691,6 @@ export function MembershipGrowthChart() {
     allowDataOverflow: false,
   };
 
-  const { activities } = useAppData();
-  const usingMockData = !(activities as ActivityWithType[]).some(isMemberActivity);
-
-  // Derive the family from the chosen sub-id
-  const activeFamily = familyOfSub(chartType)?.id ?? 'bar';
-
-  // Curve / stepped helpers for line + area
   type CurveType = 'linear' | 'monotone' | 'step';
   const curveFor = (): CurveType => {
     if (chartType.includes('smooth')) {
@@ -706,8 +705,8 @@ export function MembershipGrowthChart() {
 
   const renderChart = () => {
     // ── PIE / DONUT ───────────────────────────────────────────────────────────
+    // FIX 1: use the memoised pieData derived above, not a local variable
     if (activeFamily === 'pie') {
-      const pieData = toQuarterData(filteredData);
       const total = pieData.reduce((s, d) => s + d.members, 0);
       const isSolid = chartType === 'pie-pie';
       const isSemi = chartType === 'pie-semi';
@@ -740,12 +739,11 @@ export function MembershipGrowthChart() {
                 key={i}
                 fill={getColor(i)}
                 cursor="pointer"
-                opacity={selectedBar === null || selectedBar === i ? 1 : 0.35}
-                onClick={() => setSelectedBar(selectedBar === i ? null : i)}
+                opacity={activeSelectedBar === null || activeSelectedBar === i ? 1 : 0.35}
+                onClick={() => setSelectedBar(activeSelectedBar === i ? null : i)}
               />
             ))}
           </Pie>
-          {/* Centre label — ring variants only */}
           {!isSolid && !isSemi && (
             <>
               <text
@@ -839,11 +837,16 @@ export function MembershipGrowthChart() {
       );
     }
 
-    // ── BAR (clustered / stacked / 100% / horizontal) ─────────────────────────
+    // ── BAR ───────────────────────────────────────────────────────────────────
     const isHorizontal = chartType === 'bar-horizontal';
     const isStacked100 = chartType === 'bar-100';
     const isStacked = chartType === 'bar-stacked' || isStacked100;
-    const barData = isStacked100 ? filteredData.map((d) => ({ ...d, members: 100 })) : filteredData;
+
+    // FIX 2: for bar-100, keep a `_original` field so the tooltip can show the
+    // real count while the bar height is normalised to 100.
+    const barData = isStacked100
+      ? filteredData.map((d) => ({ ...d, _original: d.members, members: 100 }))
+      : filteredData;
 
     return (
       <BarChart
@@ -890,13 +893,13 @@ export function MembershipGrowthChart() {
           cursor="pointer"
           maxBarSize={isHorizontal ? 22 : 48}
           stackId={isStacked ? 's' : undefined}
-          onClick={(_, i) => setSelectedBar(selectedBar === i ? null : i)}
+          onClick={(_, i) => setSelectedBar(activeSelectedBar === i ? null : i)}
         >
           {barData.map((_, i) => (
             <Cell
               key={i}
               fill={getColor(i)}
-              opacity={selectedBar === null || selectedBar === i ? 1 : 0.4}
+              opacity={activeSelectedBar === null || activeSelectedBar === i ? 1 : 0.4}
             />
           ))}
         </Bar>
@@ -904,7 +907,15 @@ export function MembershipGrowthChart() {
     );
   };
 
-  const isPieOrRadar = activeFamily === 'pie';
+  const isPieFamily = activeFamily === 'pie';
+
+  // FIX 1: selected-bar display reads from the correct array depending on chart family
+  const selectedLabel =
+    activeSelectedBar !== null
+      ? isPieFamily
+        ? pieData[activeSelectedBar]
+        : filteredData[activeSelectedBar]
+      : null;
 
   return (
     <Card className="bg-card">
@@ -972,8 +983,8 @@ export function MembershipGrowthChart() {
               </div>
             )}
 
-            {/* Grid + Border toggles — hidden for pie */}
-            {!isPieOrRadar && (
+            {/* Grid + Border toggles */}
+            {!isPieFamily && (
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setShowGrid((g) => !g)}
@@ -1085,7 +1096,7 @@ export function MembershipGrowthChart() {
               )}
             </SmartDropdown>
 
-            {/* ── Chart type picker — two-level, auto-sizing ── */}
+            {/* Chart type picker */}
             <ChartTypePicker
               value={chartType}
               onChange={(id) => {
@@ -1120,10 +1131,10 @@ export function MembershipGrowthChart() {
             : `Live data · ${filteredData.reduce((s, d) => s + d.members, 0).toLocaleString()} total events in view · updates automatically`}
         </p>
 
-        {selectedBar !== null && (
+        {/* FIX 1: reads from the correct array (pieData vs filteredData) */}
+        {selectedLabel && (
           <p className="text-[10px] text-muted-foreground mt-1 text-center">
-            Selected: {filteredData[selectedBar]?.name} —{' '}
-            {filteredData[selectedBar]?.members.toLocaleString()} members
+            Selected: {selectedLabel.name} — {selectedLabel.members.toLocaleString()} members
           </p>
         )}
       </CardContent>

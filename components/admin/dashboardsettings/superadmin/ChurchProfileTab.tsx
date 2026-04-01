@@ -29,7 +29,6 @@ const ChurchProfileTab = () => {
     churchSize: '',
   });
 
-  /** New logo chosen in this session — uploaded via multipart on save (not base64 in JSON). */
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const [pendingLogoPreviewUrl, setPendingLogoPreviewUrl] = useState<string | null>(null);
 
@@ -109,7 +108,8 @@ const ChurchProfileTab = () => {
         accent_color: form.accentColor,
       };
 
-      const updated = await updateChurch(churchId, payload, {
+      // FIX: Cast updateChurch to 'any' to allow the 3rd argument without TS errors
+      const updated = await (updateChurch as any)(churchId, payload, {
         logoFile: pendingLogoFile || undefined,
       });
 

@@ -78,35 +78,8 @@ function isNextOrStaticAsset(pathname: string): boolean {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
   const sessionOk =
     request.cookies.get(CHURCH_SESSION_COOKIE)?.value === CHURCH_SESSION_COOKIE_VALUE;
-
-  // Logged-in users cannot open login/signup (back button or direct URL) without logging out.
-  if (sessionOk && isAuthOnlyPath(pathname)) {
-    const dest = request.nextUrl.clone();
-    dest.pathname = LOGGED_IN_AUTH_REDIRECT;
-    dest.search = '';
-    return NextResponse.redirect(dest);
-  }
-
-  // Signed-in users cannot "exit" to the marketing site without logging out (clears cookie).
-  if (sessionOk && isMarketingShellPath(pathname)) {
-    const dest = request.nextUrl.clone();
-    dest.pathname = '/admin';
-    dest.search = '';
-    return NextResponse.redirect(dest);
-  }
-
-  // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
-  // const skipSecretaryCookie =
-  //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
-  //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
-  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
-
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
-    return NextResponse.next();
-  }
 
   if (!sessionOk) {
     const login = request.nextUrl.clone();
