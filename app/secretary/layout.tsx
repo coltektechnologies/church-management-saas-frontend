@@ -12,7 +12,7 @@ import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine'
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
-import { RequireAuth } from '@/components/auth/RequireAuth';
+// import { RequireAuth } from '@/components/auth/RequireAuth';
 
 /*
  * Optional local preview without login:

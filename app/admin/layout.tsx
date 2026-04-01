@@ -7,7 +7,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { useSettingsApiSync } from '@/hooks/useSettingsApiSync';
 import AdminSidebar from '@/components/admin/adminSidebar';
 import TopNavbar from '@/components/admin/TopNavbar';
-import { RequireAuth } from '@/components/auth/RequireAuth';
+// import { RequireAuth } from '@/components/auth/RequireAuth';
 
 /*
  * Optional local preview without login:
