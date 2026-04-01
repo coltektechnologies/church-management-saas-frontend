@@ -19,17 +19,17 @@ import { toast } from 'sonner';
 
 const DARK_DEFAULTS = {
   primary: '#1A3F6B',
-  accent:  '#2FC4B2',
+  accent: '#2FC4B2',
   sidebar: '#0D1F36',
-  topbar:  '#0D1F36',
-  bg:      '#0A1628',
+  topbar: '#0D1F36',
+  bg: '#0A1628',
 };
 const LIGHT_DEFAULTS = {
   primary: '#0B2A4A',
-  accent:  '#2FC4B2',
+  accent: '#2FC4B2',
   sidebar: '#FFFFFF',
-  topbar:  '#FFFFFF',
-  bg:      '#F5F7FA',
+  topbar: '#FFFFFF',
+  bg: '#F5F7FA',
 };
 
 type Colors = { primary: string; accent: string; sidebar: string; topbar: string; bg: string };
@@ -68,20 +68,20 @@ function DarkModePill({
       aria-checked={isDark}
       className="relative focus:outline-none flex-shrink-0"
       style={{
-        width:           '44px',
-        height:          '24px',
-        borderRadius:    '12px',
+        width: '44px',
+        height: '24px',
+        borderRadius: '12px',
         backgroundColor: isDark ? accentColor : '#D1D5DB',
-        transition:      'background-color 0.25s ease',
+        transition: 'background-color 0.25s ease',
       }}
     >
       <span
         className="absolute bg-white rounded-full shadow"
         style={{
-          top:        '3px',
-          width:      '18px',
-          height:     '18px',
-          left:       isDark ? '23px' : '3px',
+          top: '3px',
+          width: '18px',
+          height: '18px',
+          left: isDark ? '23px' : '3px',
           transition: 'left 0.25s ease',
         }}
       />
@@ -106,13 +106,13 @@ function DashboardPreview({
    * never hardcoded. This means changing the topbar colour in the Custom tab
    * immediately updates both the preview and the real topbar card.
    */
-  const topbarBg   = c.topbar;
+  const topbarBg = c.topbar;
   const sidebarText = autoText(c.sidebar);
-  const topbarText  = autoText(topbarBg);
+  const topbarText = autoText(topbarBg);
   const primaryText = autoText(c.primary);
-  const bgText      = autoText(c.bg);
-  const borderCol   = isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB';
-  const cardBg      = isDark ? `${c.primary}22` : '#FFFFFF';
+  const bgText = autoText(c.bg);
+  const borderCol = isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB';
+  const cardBg = isDark ? `${c.primary}22` : '#FFFFFF';
   const NAV = ['Dashboard', 'Members', 'Activities', 'Reports', 'Settings'];
 
   return (
@@ -155,8 +155,8 @@ function DashboardPreview({
                 className="flex items-center gap-1.5 px-1.5 py-1.5"
                 style={{
                   backgroundColor: a ? c.primary : 'transparent',
-                  borderLeft:      `2px solid ${a ? c.accent : 'transparent'}`,
-                  borderRadius:    a ? '0 4px 4px 0' : '4px',
+                  borderLeft: `2px solid ${a ? c.accent : 'transparent'}`,
+                  borderRadius: a ? '0 4px 4px 0' : '4px',
                 }}
               >
                 <div
@@ -199,19 +199,19 @@ function DashboardPreview({
           <div
             className="relative"
             style={{
-              width:           '22px',
-              height:          '12px',
-              borderRadius:    '6px',
+              width: '22px',
+              height: '12px',
+              borderRadius: '6px',
               backgroundColor: isDark ? c.accent : 'rgba(0,0,0,0.15)',
             }}
           >
             <div
               className="absolute bg-white rounded-full shadow"
               style={{
-                top:        '1px',
-                width:      '10px',
-                height:     '10px',
-                left:       isDark ? '11px' : '1px',
+                top: '1px',
+                width: '10px',
+                height: '10px',
+                left: isDark ? '11px' : '1px',
                 transition: 'left 0.25s ease',
               }}
             />
@@ -271,7 +271,7 @@ export default function DeptColorThemeTab() {
 
   const initialisedRef = useRef(false);
   const [light, setLight] = useState<Colors>(LIGHT_DEFAULTS);
-  const [dark, setDark]   = useState<Colors>(DARK_DEFAULTS);
+  const [dark, setDark] = useState<Colors>(DARK_DEFAULTS);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -280,18 +280,18 @@ export default function DeptColorThemeTab() {
     }
     initialisedRef.current = true;
     setLight({
-      primary: profile.primaryColor     || LIGHT_DEFAULTS.primary,
-      accent:  profile.accentColor      || LIGHT_DEFAULTS.accent,
-      sidebar: profile.sidebarColor     || LIGHT_DEFAULTS.sidebar,
-      topbar:  profile.topbarColor      || LIGHT_DEFAULTS.topbar,
-      bg:      profile.backgroundColor  || LIGHT_DEFAULTS.bg,
+      primary: profile.primaryColor || LIGHT_DEFAULTS.primary,
+      accent: profile.accentColor || LIGHT_DEFAULTS.accent,
+      sidebar: profile.sidebarColor || LIGHT_DEFAULTS.sidebar,
+      topbar: profile.topbarColor || LIGHT_DEFAULTS.topbar,
+      bg: profile.backgroundColor || LIGHT_DEFAULTS.bg,
     });
     setDark({
-      primary: profile.darkPrimaryColor    || DARK_DEFAULTS.primary,
-      accent:  profile.darkAccentColor     || DARK_DEFAULTS.accent,
-      sidebar: profile.darkSidebarColor    || DARK_DEFAULTS.sidebar,
-      topbar:  profile.darkTopbarColor     || DARK_DEFAULTS.topbar,
-      bg:      profile.darkBackgroundColor || DARK_DEFAULTS.bg,
+      primary: profile.darkPrimaryColor || DARK_DEFAULTS.primary,
+      accent: profile.darkAccentColor || DARK_DEFAULTS.accent,
+      sidebar: profile.darkSidebarColor || DARK_DEFAULTS.sidebar,
+      topbar: profile.darkTopbarColor || DARK_DEFAULTS.topbar,
+      bg: profile.darkBackgroundColor || DARK_DEFAULTS.bg,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady]);
@@ -301,10 +301,10 @@ export default function DeptColorThemeTab() {
   const handlePalette = (p: Palette) => {
     setLight({
       primary: p.primary,
-      accent:  p.accent,
+      accent: p.accent,
       sidebar: p.sidebar,
-      topbar:  p.topbar,
-      bg:      p.bg,
+      topbar: p.topbar,
+      bg: p.bg,
     });
   };
 
@@ -331,15 +331,15 @@ export default function DeptColorThemeTab() {
 
   const handleSave = useCallback(() => {
     updateProfile({
-      primaryColor:        light.primary,
-      accentColor:         light.accent,
-      sidebarColor:        light.sidebar,
-      topbarColor:         light.topbar,
-      backgroundColor:     light.bg,
-      darkPrimaryColor:    dark.primary,
-      darkAccentColor:     dark.accent,
-      darkSidebarColor:    dark.sidebar,
-      darkTopbarColor:     dark.topbar,
+      primaryColor: light.primary,
+      accentColor: light.accent,
+      sidebarColor: light.sidebar,
+      topbarColor: light.topbar,
+      backgroundColor: light.bg,
+      darkPrimaryColor: dark.primary,
+      darkAccentColor: dark.accent,
+      darkSidebarColor: dark.sidebar,
+      darkTopbarColor: dark.topbar,
       darkBackgroundColor: dark.bg,
     });
     setSaved(true);
@@ -351,23 +351,35 @@ export default function DeptColorThemeTab() {
     setLight({ ...LIGHT_DEFAULTS });
     setDark({ ...DARK_DEFAULTS });
     updateProfile({
-      primaryColor:        LIGHT_DEFAULTS.primary,
-      accentColor:         LIGHT_DEFAULTS.accent,
-      sidebarColor:        LIGHT_DEFAULTS.sidebar,
-      topbarColor:         LIGHT_DEFAULTS.topbar,
-      backgroundColor:     LIGHT_DEFAULTS.bg,
-      darkPrimaryColor:    DARK_DEFAULTS.primary,
-      darkAccentColor:     DARK_DEFAULTS.accent,
-      darkSidebarColor:    DARK_DEFAULTS.sidebar,
-      darkTopbarColor:     DARK_DEFAULTS.topbar,
+      primaryColor: LIGHT_DEFAULTS.primary,
+      accentColor: LIGHT_DEFAULTS.accent,
+      sidebarColor: LIGHT_DEFAULTS.sidebar,
+      topbarColor: LIGHT_DEFAULTS.topbar,
+      backgroundColor: LIGHT_DEFAULTS.bg,
+      darkPrimaryColor: DARK_DEFAULTS.primary,
+      darkAccentColor: DARK_DEFAULTS.accent,
+      darkSidebarColor: DARK_DEFAULTS.sidebar,
+      darkTopbarColor: DARK_DEFAULTS.topbar,
       darkBackgroundColor: DARK_DEFAULTS.bg,
     });
     toast.info('Theme reset to Default.');
   }, [updateProfile]);
 
   const currentCustom: PaletteGridCustomColors = isDark
-    ? { primary: dark.primary,  accent: dark.accent,  sidebar: dark.sidebar,  topbar: dark.topbar,  bg: dark.bg  }
-    : { primary: light.primary, accent: light.accent, sidebar: light.sidebar, topbar: light.topbar, bg: light.bg };
+    ? {
+        primary: dark.primary,
+        accent: dark.accent,
+        sidebar: dark.sidebar,
+        topbar: dark.topbar,
+        bg: dark.bg,
+      }
+    : {
+        primary: light.primary,
+        accent: light.accent,
+        sidebar: light.sidebar,
+        topbar: light.topbar,
+        bg: light.bg,
+      };
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-500">
@@ -437,7 +449,7 @@ export default function DeptColorThemeTab() {
           <PaletteGrid
             selected={{
               primary: isDark ? dark.primary : light.primary,
-              accent:  isDark ? dark.accent  : light.accent,
+              accent: isDark ? dark.accent : light.accent,
             }}
             onSelect={handlePalette}
             customColors={currentCustom}

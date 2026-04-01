@@ -85,9 +85,9 @@ function SuggestInput({
           autoComplete="off"
           className="w-full h-12 rounded-xl px-4 text-sm font-semibold outline-none transition-all"
           style={{
-            background:   'hsl(var(--muted) / 0.2)',
-            border:       '1.5px solid transparent',
-            color:        'hsl(var(--foreground))',
+            background: 'hsl(var(--muted) / 0.2)',
+            border: '1.5px solid transparent',
+            color: 'hsl(var(--foreground))',
             // Placeholder colour via inline style is not possible in React —
             // the global CSS handles ::placeholder; we keep the class below for it.
           }}
@@ -114,8 +114,8 @@ function SuggestInput({
 
 export default function DeptMyProfileTab() {
   const { profile, updateProfile } = useDepartmentProfile();
-  const { getActiveAdmins }        = useChurchProfile();
-  const fileRef                    = useRef<HTMLInputElement>(null);
+  const { getActiveAdmins } = useChurchProfile();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const activeAdmins = getActiveAdmins();
 
@@ -138,22 +138,21 @@ export default function DeptMyProfileTab() {
      * userRole is pre-filled from matchedGrant.churchLink — the official
      * church position set in AddAdminModal, not the system permission level.
      */
-    userRole:    profile.userRole    || matchedGrant?.churchLink || '',
+    userRole: profile.userRole || matchedGrant?.churchLink || '',
     headName:
       profile.headName ||
       (matchedGrant ? `${matchedGrant.first_name} ${matchedGrant.last_name}` : ''),
     preferredName: profile.preferredName || '',
-    headEmail:     profile.headEmail || matchedGrant?.email || '',
-    headPhone:     profile.headPhone || matchedGrant?.phone || '',
-    avatarUrl:     profile.avatarUrl ?? (null as string | null),
+    headEmail: profile.headEmail || matchedGrant?.email || '',
+    headPhone: profile.headPhone || matchedGrant?.phone || '',
+    avatarUrl: profile.avatarUrl ?? (null as string | null),
   });
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () =>
-        setForm((prev) => ({ ...prev, avatarUrl: reader.result as string }));
+      reader.onloadend = () => setForm((prev) => ({ ...prev, avatarUrl: reader.result as string }));
       reader.readAsDataURL(file);
     }
   };
@@ -167,9 +166,7 @@ export default function DeptMyProfileTab() {
     .toUpperCase();
 
   const topbarPreview =
-    form.preferredName.trim() ||
-    form.headName.split(' ').filter(Boolean).slice(-1)[0] ||
-    'You';
+    form.preferredName.trim() || form.headName.split(' ').filter(Boolean).slice(-1)[0] || 'You';
 
   const handleSave = () => {
     /**
@@ -180,12 +177,12 @@ export default function DeptMyProfileTab() {
     updateProfile({
       departmentName: form.departmentName,
       departmentType: form.departmentType,
-      userRole:       form.userRole,
-      headName:       form.headName,
-      preferredName:  form.preferredName,
-      headEmail:      form.headEmail,
-      headPhone:      form.headPhone,
-      avatarUrl:      form.avatarUrl,
+      userRole: form.userRole,
+      headName: form.headName,
+      preferredName: form.preferredName,
+      headEmail: form.headEmail,
+      headPhone: form.headPhone,
+      avatarUrl: form.avatarUrl,
     });
     toast.success('Profile updated successfully', {
       description: 'Your name and photo are now live across the sidebar and topbar.',
@@ -197,15 +194,15 @@ export default function DeptMyProfileTab() {
     'h-12 rounded-xl px-4 text-sm font-semibold outline-none transition-all w-full';
   const inputStyle: React.CSSProperties = {
     background: 'hsl(var(--muted) / 0.2)',
-    border:     '1.5px solid transparent',
-    color:      'hsl(var(--foreground))',
+    border: '1.5px solid transparent',
+    color: 'hsl(var(--foreground))',
   };
   const inputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.border     = '1.5px solid hsl(var(--primary) / 0.4)';
+    e.currentTarget.style.border = '1.5px solid hsl(var(--primary) / 0.4)';
     e.currentTarget.style.background = 'hsl(var(--muted) / 0.35)';
   };
   const inputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.border     = '1.5px solid transparent';
+    e.currentTarget.style.border = '1.5px solid transparent';
     e.currentTarget.style.background = 'hsl(var(--muted) / 0.2)';
   };
 
@@ -227,9 +224,9 @@ export default function DeptMyProfileTab() {
               Your profile was pre-filled from your system access record granted on{' '}
               <span className="font-black">
                 {new Date(matchedGrant.granted_at).toLocaleDateString('en-GB', {
-                  day:   '2-digit',
+                  day: '2-digit',
                   month: 'short',
-                  year:  'numeric',
+                  year: 'numeric',
                 })}
               </span>
               .
@@ -293,7 +290,6 @@ export default function DeptMyProfileTab() {
 
       {/* Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
         <div className="space-y-2">
           <Label className="text-[10px] font-black uppercase text-muted-foreground ml-1">
             Department / Ministry Type
@@ -377,8 +373,7 @@ export default function DeptMyProfileTab() {
           <div className="flex items-center gap-1.5 ml-1">
             <Info size={10} className="text-muted-foreground flex-shrink-0" />
             <p className="text-[10px] text-muted-foreground">
-              Topbar will show:{' '}
-              <span className="font-bold text-foreground">{topbarPreview}</span>
+              Topbar will show: <span className="font-bold text-foreground">{topbarPreview}</span>
             </p>
           </div>
         </div>
