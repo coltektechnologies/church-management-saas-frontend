@@ -7,10 +7,7 @@ import { SecretaryProfileProvider } from '@/components/secretary/contexts/Secret
 import { AppDataProvider } from '@/components/secretary/contexts/AppDataContext';
 import { EventsProvider } from '@/components/secretary/contexts/EventsContext';
 import { ActivityProvider } from '@/components/secretary/contexts/ActivityContext';
-import { EventsProvider } from '@/components/secretary/contexts/EventsContext';
-import { ActivityProvider } from '@/components/secretary/contexts/ActivityContext';
 import { ThemeProvider } from '@/components/secretary/ThemeProvider';
-import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine';
 import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine';
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
