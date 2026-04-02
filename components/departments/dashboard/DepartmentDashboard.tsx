@@ -7,22 +7,10 @@ import DeptBudgetStatus from '@/components/departments/dashboard/DeptBudgetStatu
 import DeptRecentActivity from '@/components/departments/dashboard/DeptRecentActivity';
 import DeptPeriodFilter from '@/components/departments/dashboard/DeptPeriodFilter';
 import type { Period } from '@/components/departments/dashboard/DeptPeriodFilter';
-import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 
 export default function DepartmentDashboard() {
   // null = no filter selected; Period = a filter card is active
   const [period, setPeriod] = useState<Period | null>(null);
-
-  const { profile, isReady } = useDepartmentProfile();
-
-  const isDark = isReady ? profile.darkMode : false;
-  const accentColor = isReady
-    ? isDark
-      ? profile.darkAccentColor || '#2FC4B2'
-      : profile.accentColor || '#2FC4B2'
-    : '#2FC4B2';
-
-  const deptName = isReady ? profile.departmentName || 'Adventist Youth' : 'Adventist Youth';
 
   // onApply from filter — updates the active period driving KPI card data
   const handleApply = (p: Period | null) => {
