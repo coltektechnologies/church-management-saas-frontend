@@ -44,7 +44,6 @@ function SecretaryShell({ children }: { children: ReactNode }) {
       style={{ backgroundColor: mainBg }}
     >
       <ReminderEngine />
-      <ReminderEngine />
       <SecretaryTopbar />
       <div className="flex">
         <div className="sticky top-0 h-screen" style={{ zIndex: 20 }}>
@@ -75,15 +74,6 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
               </EventsProvider>
             </AppDataProvider>
           </ActivityProvider>
-          <ActivityProvider>
-            <AppDataProvider>
-              <EventsProvider>
-                <ThemeProvider>
-                  <SecretaryShell>{children}</SecretaryShell>
-                </ThemeProvider>
-              </EventsProvider>
-            </AppDataProvider>
-          </ActivityProvider>
         </SecretaryProfileProvider>
       </ChurchProfileProvider>
     </AuthProvider>
@@ -94,4 +84,5 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
   //   return tree;
   // }
   // return <RequireAuth>{tree}</RequireAuth>;
+  return tree;
 }

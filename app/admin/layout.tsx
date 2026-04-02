@@ -16,7 +16,7 @@ import TopNavbar from '@/components/admin/TopNavbar';
  * 3) In proxy.ts, uncomment skipDepartmentCookie and the combined `if` line
  * 4) Restart dev
  *
- * Otherwise: normal auth — login first, then /secretary.
+ * Otherwise: normal auth — login first, then /admin.
  */
 
 // const skipAuth = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
@@ -90,4 +90,5 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   //   return tree;
   // }
   // return <RequireAuth>{tree}</RequireAuth>;
+  return tree;
 }
