@@ -7,19 +7,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { useSettingsApiSync } from '@/hooks/useSettingsApiSync';
 import AdminSidebar from '@/components/admin/adminSidebar';
 import TopNavbar from '@/components/admin/TopNavbar';
-// import { RequireAuth } from '@/components/auth/RequireAuth';
-
-/*
- * Optional local preview without login:
- * 1) Uncomment NEXT_PUBLIC_SKIP_DASHBOARD_AUTH=true in .env.local
- * 2) Uncomment skipAuth + the if/return block at the bottom of DaLayout
- * 3) In proxy.ts, uncomment skipDepartmentCookie and the combined `if` line
- * 4) Restart dev
- *
- * Otherwise: normal auth — login first, then /secretary.
- */
-
-// const skipAuth = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 
 function useIsMounted(): boolean {
   return useSyncExternalStore(
@@ -68,7 +56,9 @@ function AdminShell({ children }: { children: ReactNode }) {
           className="flex-1 overflow-y-auto transition-colors duration-300"
           style={{ backgroundColor: tokens.bg }}
         >
-          <div className="px-6 py-6 max-w-screen-2xl mx-auto w-full">{children}</div>
+          <div className="px-4 py-6 sm:px-6 max-w-screen-2xl mx-auto w-full min-w-0">
+            {children}
+          </div>
         </main>
       </div>
     </div>
@@ -76,18 +66,15 @@ function AdminShell({ children }: { children: ReactNode }) {
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const tree = (
-    <AuthProvider defaultRole="admin">
-      <ChurchProfileProvider>
-        <AppDataProvider>
-          <AdminShell>{children}</AdminShell>
-        </AppDataProvider>
-      </ChurchProfileProvider>
-    </AuthProvider>
+  return (
+    <RequireAuth>
+      <AuthProvider defaultRole="admin">
+        <ChurchProfileProvider>
+          <AppDataProvider>
+            <AdminShell>{children}</AdminShell>
+          </AppDataProvider>
+        </ChurchProfileProvider>
+      </AuthProvider>
+    </RequireAuth>
   );
-
-  // if (skipAuth) {
-  //   return tree;
-  // }
-  // return <RequireAuth>{tree}</RequireAuth>;
 }

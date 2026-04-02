@@ -12,7 +12,7 @@ import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine'
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
-// import { RequireAuth } from '@/components/auth/RequireAuth';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 
 /*
  * Optional local preview without login:
@@ -23,8 +23,7 @@ import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryPr
  *
  * Otherwise: normal auth — login first, then /secretary.
  */
-
-// const skipAuth = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
+const skipAuth = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
 
 function SecretaryShell({ children }: { children: ReactNode }) {
   const { profile, isReady } = useSecretaryProfile();
@@ -43,7 +42,6 @@ function SecretaryShell({ children }: { children: ReactNode }) {
       className="min-h-screen transition-colors duration-300"
       style={{ backgroundColor: mainBg }}
     >
-      <ReminderEngine />
       <ReminderEngine />
       <SecretaryTopbar />
       <div className="flex">
@@ -75,23 +73,13 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
               </EventsProvider>
             </AppDataProvider>
           </ActivityProvider>
-          <ActivityProvider>
-            <AppDataProvider>
-              <EventsProvider>
-                <ThemeProvider>
-                  <SecretaryShell>{children}</SecretaryShell>
-                </ThemeProvider>
-              </EventsProvider>
-            </AppDataProvider>
-          </ActivityProvider>
         </SecretaryProfileProvider>
       </ChurchProfileProvider>
     </AuthProvider>
   );
 
-  // When preview is enabled: uncomment skipAuth above and these two lines:
-  // if (skipAuth) {
-  //   return tree;
-  // }
-  // return <RequireAuth>{tree}</RequireAuth>;
+  if (skipAuth) {
+    return tree;
+  }
+  return <RequireAuth>{tree}</RequireAuth>;
 }

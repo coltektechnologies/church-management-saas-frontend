@@ -269,8 +269,56 @@ export default function MembersTable({ filters }: MembersTableProps) {
 
   const deleteBusy = Boolean(deletingId) || bulkDeleteLoading;
 
+  const renderRowActions = (member: MemberRow, compact?: boolean) => (
+    <div
+      className={
+        compact ? 'flex flex-wrap items-center gap-1' : 'flex flex-wrap items-center gap-1 sm:gap-2'
+      }
+    >
+      <Link href={`/admin/members/${member.id}`}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-gray-500 hover:text-gray-700"
+          title="View"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      </Link>
+      <Link href={`/admin/members/${member.id}/edit`}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-gray-500 hover:text-gray-700"
+          title="Edit"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </Link>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-gray-500 hover:text-gray-700"
+        title="Send Message"
+        onClick={() => handleSendMessage(member.id)}
+      >
+        <MessageCircle className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
+        title="Delete"
+        onClick={(e) => handleDeleteClick(member.id, e)}
+        disabled={deleteBusy}
+      >
+        <UserMinus className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="space-y-4 w-full">
+    <div className="space-y-4 w-full min-w-0">
       {/* Dynamic action bar when members are selected */}
       {selectedCount > 0 && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm w-full">
@@ -380,8 +428,113 @@ export default function MembersTable({ filters }: MembersTableProps) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white w-full overflow-x-auto">
-        <Table>
+      {/* Narrow screens: stacked cards (no horizontal squeeze) */}
+      <div className="md:hidden space-y-3 w-full min-w-0">
+        {loading ? (
+          <div className="rounded-xl border border-gray-200 bg-white py-12 text-center text-gray-500 text-sm">
+            Loading members...
+          </div>
+        ) : paginated.length === 0 ? (
+          <div className="rounded-xl border border-gray-200 bg-white py-12 text-center text-gray-500 text-sm">
+            No members found
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-[#F6F8FA] px-3 py-2">
+              <input
+                type="checkbox"
+                className="h-5 w-5 min-w-5 shrink-0 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                checked={isAllSelected}
+                ref={(el) => {
+                  if (el) {
+                    el.indeterminate = isSomeSelected && !isAllSelected;
+                  }
+                }}
+                onChange={toggleAll}
+                aria-label="Select all members on this page"
+              />
+              <span className="text-sm text-gray-700">Select all on this page</span>
+            </div>
+            {paginated.map((member) => (
+              <div
+                key={member.id}
+                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm space-y-3 min-w-0"
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 min-w-5 shrink-0 mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                    checked={selectedIds.has(member.id)}
+                    onChange={() => toggleMember(member.id)}
+                    aria-label={`Select ${member.name}`}
+                  />
+                  <Avatar className="h-10 w-10 shrink-0 bg-green-100">
+                    <AvatarFallback className="bg-green-100 text-green-700 text-sm">
+                      {getInitials(member.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-gray-900 break-words">{member.name}</p>
+                    <p className="text-xs text-gray-500 font-mono">{member.memberId}</p>
+                  </div>
+                  <span
+                    className={`shrink-0 inline-flex px-2 py-1 rounded-full text-xs font-medium border ${
+                      statusStyles[member.status] || 'border-gray-300 text-gray-600'
+                    }`}
+                  >
+                    {member.status?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <dl className="grid grid-cols-1 gap-2 text-sm border-t border-gray-100 pt-3">
+                  <div>
+                    <dt className="text-gray-500 text-xs uppercase tracking-wide">Phone</dt>
+                    <dd className="text-gray-900 break-all">{member.phone}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-500 text-xs uppercase tracking-wide">Email</dt>
+                    <dd className="text-gray-900 break-all">{member.email}</dd>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    <div>
+                      <dt className="text-gray-500 text-xs uppercase tracking-wide">Department</dt>
+                      <dd className="text-gray-800 break-words">{member.department}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-gray-500 text-xs uppercase tracking-wide">Role</dt>
+                      <dd>
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                            roleStyles[member.role] || 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {member.role}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-gray-500 text-xs uppercase tracking-wide">
+                        Member since
+                      </dt>
+                      <dd className="text-gray-700">
+                        {member.memberSince
+                          ? format(new Date(member.memberSince), 'MMM d, yyyy')
+                          : '—'}
+                      </dd>
+                    </div>
+                  </div>
+                </dl>
+                <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-gray-100">
+                  {renderRowActions(member, true)}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* md+: wide table with horizontal scroll when viewport is narrower than columns */}
+      <div className="hidden md:block rounded-2xl border border-gray-200 bg-white w-full min-w-0 shadow-sm">
+        <Table className="min-w-[920px]">
           <TableHeader>
             <TableRow
               className="border-gray-200 hover:bg-transparent"
@@ -402,13 +555,17 @@ export default function MembersTable({ filters }: MembersTableProps) {
               </TableHead>
               <TableHead className="font-semibold text-gray-900">Member</TableHead>
               <TableHead className="font-semibold text-gray-900">Contact</TableHead>
-              <TableHead className="font-semibold text-gray-900 min-w-[180px]">
+              <TableHead className="font-semibold text-gray-900 min-w-[160px]">
                 Department
               </TableHead>
-              <TableHead className="font-semibold text-gray-900 min-w-[120px]">Role</TableHead>
+              <TableHead className="font-semibold text-gray-900 min-w-[112px]">Role</TableHead>
               <TableHead className="font-semibold text-gray-900">Status</TableHead>
-              <TableHead className="font-semibold text-gray-900">Member Since</TableHead>
-              <TableHead className="font-semibold text-gray-900">Action</TableHead>
+              <TableHead className="font-semibold text-gray-900 whitespace-nowrap">
+                Member Since
+              </TableHead>
+              <TableHead className="font-semibold text-gray-900 w-[1%] whitespace-nowrap">
+                Action
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -431,7 +588,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
                   className="border-gray-200"
                   style={{ height: 70, borderBottom: '1px solid #e5e7eb' }}
                 >
-                  <TableCell>
+                  <TableCell className="align-middle">
                     <input
                       type="checkbox"
                       className="h-5 w-5 min-w-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
@@ -440,28 +597,30 @@ export default function MembersTable({ filters }: MembersTableProps) {
                     />
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 bg-green-100">
+                    <div className="flex items-center gap-3 min-w-0 max-w-[220px]">
+                      <Avatar className="h-10 w-10 shrink-0 bg-green-100">
                         <AvatarFallback className="bg-green-100 text-green-700 text-sm">
                           {getInitials(member.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <p className="font-medium text-gray-900">{member.name}</p>
-                        <p className="text-sm text-gray-500">{member.memberId}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate" title={member.name}>
+                          {member.name}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">{member.memberId}</p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="min-w-[140px] max-w-[180px] break-words whitespace-normal leading-tight">
+                  <TableCell className="min-w-[140px] max-w-[200px] break-words whitespace-normal align-top leading-tight">
                     <div>
-                      <p className="font-medium text-gray-900">{member.phone}</p>
-                      <p className="text-sm text-gray-500">{member.email}</p>
+                      <p className="font-medium text-gray-900 break-all">{member.phone}</p>
+                      <p className="text-sm text-gray-500 break-all">{member.email}</p>
                     </div>
                   </TableCell>
-                  <TableCell className="text-gray-700 min-w-[180px] max-w-[200px] break-words whitespace-normal leading-tight">
+                  <TableCell className="text-gray-700 min-w-[160px] max-w-[220px] break-words whitespace-normal align-top leading-tight">
                     {member.department}
                   </TableCell>
-                  <TableCell className="min-w-[120px]">
+                  <TableCell className="min-w-[112px] align-middle">
                     <span
                       className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${
                         roleStyles[member.role] || 'bg-gray-100 text-gray-800'
@@ -470,7 +629,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
                       {member.role}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="align-middle">
                     <span
                       className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${
                         statusStyles[member.status] || 'border-gray-300 text-gray-600'
@@ -479,52 +638,10 @@ export default function MembersTable({ filters }: MembersTableProps) {
                       {member.status?.replace(/_/g, ' ')}
                     </span>
                   </TableCell>
-                  <TableCell className="text-gray-600">
+                  <TableCell className="text-gray-600 whitespace-nowrap align-middle">
                     {member.memberSince ? format(new Date(member.memberSince), 'MMM d, yyyy') : '—'}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-                      <Link href={`/admin/members/${member.id}`}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-500 hover:text-gray-700"
-                          title="View"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Link href={`/admin/members/${member.id}/edit`}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-500 hover:text-gray-700"
-                          title="Edit"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-500 hover:text-gray-700"
-                        title="Send Message"
-                        onClick={() => handleSendMessage(member.id)}
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
-                        title="Delete"
-                        onClick={(e) => handleDeleteClick(member.id, e)}
-                        disabled={deleteBusy}
-                      >
-                        <UserMinus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  <TableCell className="align-middle">{renderRowActions(member)}</TableCell>
                 </TableRow>
               ))
             )}

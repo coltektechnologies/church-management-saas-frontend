@@ -88,16 +88,33 @@ function shouldSkipAuth(pathname: string): boolean {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
   const sessionOk =
     request.cookies.get(CHURCH_SESSION_COOKIE)?.value === CHURCH_SESSION_COOKIE_VALUE;
 
-  // Allow public paths without session
-  if (isPublicPath(pathname)) {
-    return NextResponse.next();
+  // Logged-in users cannot open login/signup (back button or direct URL) without logging out.
+  if (sessionOk && isAuthOnlyPath(pathname)) {
+    const dest = request.nextUrl.clone();
+    dest.pathname = LOGGED_IN_AUTH_REDIRECT;
+    dest.search = '';
+    return NextResponse.redirect(dest);
   }
 
-  // Allow paths where auth is skipped
-  if (shouldSkipAuth(pathname)) {
+  // Signed-in users cannot "exit" to the marketing site without logging out (clears cookie).
+  if (sessionOk && isMarketingShellPath(pathname)) {
+    const dest = request.nextUrl.clone();
+    dest.pathname = '/admin';
+    dest.search = '';
+    return NextResponse.redirect(dest);
+  }
+
+  // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
+  // const skipSecretaryCookie =
+  //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+  //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
+
+  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
     return NextResponse.next();
   }
 
