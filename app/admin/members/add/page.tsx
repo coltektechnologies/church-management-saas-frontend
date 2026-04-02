@@ -296,10 +296,7 @@ export default function AddMemberPage() {
       toast.error('Form incomplete', { description: msg });
       return;
     }
-    if (
-      (form.send_credentials_via_email || form.send_credentials_via_sms) &&
-      !form.email.trim()
-    ) {
+    if ((form.send_credentials_via_email || form.send_credentials_via_sms) && !form.email.trim()) {
       const msg =
         'Add an email address to create portal login and send credentials (required by the server).';
       setError(msg);
@@ -356,8 +353,7 @@ export default function AddMemberPage() {
       }
       if (result.credentials_delivery_queued) {
         extras.push(
-          result.credentials_delivery_note ||
-            'Credential email/SMS is sending in the background.',
+          result.credentials_delivery_note || 'Credential email/SMS is sending in the background.'
         );
       }
       if (result.credentials_delivery_skipped_reason) {
