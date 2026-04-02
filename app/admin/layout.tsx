@@ -56,7 +56,9 @@ function AdminShell({ children }: { children: ReactNode }) {
           className="flex-1 overflow-y-auto transition-colors duration-300"
           style={{ backgroundColor: tokens.bg }}
         >
-          <div className="px-6 py-6 max-w-screen-2xl mx-auto w-full">{children}</div>
+          <div className="px-4 py-6 sm:px-6 max-w-screen-2xl mx-auto w-full min-w-0">
+            {children}
+          </div>
         </main>
       </div>
     </div>
