@@ -118,11 +118,10 @@ export function proxy(request: NextRequest) {
   //   return NextResponse.next();
   // }
 
-
   // Uncomment for local preview route
-//   if (isPublicPath(pathname) || shouldSkipAuth(pathname)) {
-//   return NextResponse.next();
-// }
+  //   if (isPublicPath(pathname) || shouldSkipAuth(pathname)) {
+  //   return NextResponse.next();
+  // }
 
   if (!sessionOk) {
     const login = request.nextUrl.clone();

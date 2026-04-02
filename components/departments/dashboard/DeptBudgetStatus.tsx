@@ -25,7 +25,7 @@ const STYLE = {
   titleFontWeight: '700',
   // Button style — updated to 8px radius
   btnBg: '#EEEEEF',
-  btnRadius: '8px', 
+  btnRadius: '8px',
   btnShadow: '0px 1px 3px rgba(15,23,42,0.08)',
   btnTextLight: '#111111',
   btnTextDark: '#F0F4F8',
@@ -87,7 +87,7 @@ export default function DeptBudgetStatus({
     fontFamily: 'Poppins',
     flexShrink: 0,
     minWidth: STYLE.btnMinWidth,
-    marginLeft: '12px', 
+    marginLeft: '12px',
     border: 'none',
     padding: '6px 18px',
   };
@@ -105,10 +105,10 @@ export default function DeptBudgetStatus({
       <div className="flex items-center justify-between w-full overflow-hidden">
         <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
           <div style={{ color: accentColor, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            <Wallet size={26} strokeWidth={2.5} /> 
+            <Wallet size={26} strokeWidth={2.5} />
           </div>
           <h3
-            className="whitespace-nowrap" 
+            className="whitespace-nowrap"
             style={{
               color: accentColor,
               fontSize: STYLE.titleFontSize,
@@ -122,7 +122,7 @@ export default function DeptBudgetStatus({
             Budget Status
           </h3>
         </div>
-        
+
         <button
           onClick={() => router.push(BUDGET_ROUTE)}
           className="transition-all duration-200 hover:brightness-95 cursor-pointer flex-shrink-0"
@@ -137,16 +137,22 @@ export default function DeptBudgetStatus({
 
       {/* Allocated vs Spent row */}
       <div className="flex justify-between gap-2 flex-wrap">
-        <p style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}>
+        <p
+          style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}
+        >
           Allocated:{' '}
           <span style={{ color: valueColor, fontWeight: '500' }}>
-            {currencySymbol}{allocated.toLocaleString()}
+            {currencySymbol}
+            {allocated.toLocaleString()}
           </span>
         </p>
-        <p style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}>
+        <p
+          style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}
+        >
           Spent:{' '}
           <span style={{ color: valueColor, fontWeight: '500' }}>
-            {currencySymbol}{spent.toLocaleString()}
+            {currencySymbol}
+            {spent.toLocaleString()}
           </span>
         </p>
       </div>
@@ -155,7 +161,11 @@ export default function DeptBudgetStatus({
       <div>
         <div
           className="w-full overflow-hidden"
-          style={{ height: STYLE.barHeight, backgroundColor: barTrack, borderRadius: STYLE.barRadius }}
+          style={{
+            height: STYLE.barHeight,
+            backgroundColor: barTrack,
+            borderRadius: STYLE.barRadius,
+          }}
         >
           <div
             className="h-full transition-all duration-700"
@@ -169,13 +179,23 @@ export default function DeptBudgetStatus({
 
         {/* Remaining + % used */}
         <div className="flex justify-between mt-2 gap-2 flex-wrap">
-          <p style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}>
+          <p
+            style={{
+              color: labelColor,
+              fontSize: '13px',
+              fontWeight: '400',
+              fontFamily: 'Poppins',
+            }}
+          >
             Remaining:{' '}
             <span style={{ color: remainingColor, fontWeight: '500' }}>
-              {currencySymbol}{remaining.toLocaleString()}
+              {currencySymbol}
+              {remaining.toLocaleString()}
             </span>
           </p>
-          <p style={{ color: barColor, fontSize: '13px', fontWeight: '300', fontFamily: 'Poppins' }}>
+          <p
+            style={{ color: barColor, fontSize: '13px', fontWeight: '300', fontFamily: 'Poppins' }}
+          >
             {pctUsed}% used
           </p>
         </div>
