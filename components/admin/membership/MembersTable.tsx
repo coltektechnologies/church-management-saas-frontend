@@ -272,9 +272,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
   const renderRowActions = (member: MemberRow, compact?: boolean) => (
     <div
       className={
-        compact
-          ? 'flex flex-wrap items-center gap-1'
-          : 'flex flex-wrap items-center gap-1 sm:gap-2'
+        compact ? 'flex flex-wrap items-center gap-1' : 'flex flex-wrap items-center gap-1 sm:gap-2'
       }
     >
       <Link href={`/admin/members/${member.id}`}>
@@ -514,7 +512,9 @@ export default function MembersTable({ filters }: MembersTableProps) {
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-gray-500 text-xs uppercase tracking-wide">Member since</dt>
+                      <dt className="text-gray-500 text-xs uppercase tracking-wide">
+                        Member since
+                      </dt>
                       <dd className="text-gray-700">
                         {member.memberSince
                           ? format(new Date(member.memberSince), 'MMM d, yyyy')
