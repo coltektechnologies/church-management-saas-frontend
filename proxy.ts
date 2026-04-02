@@ -16,10 +16,10 @@ const CHURCH_SESSION_COOKIE = 'church_session';
 const CHURCH_SESSION_COOKIE_VALUE = '1';
 
 // Environment variables for skipping auth in development
-const SKIP_SECRETARY_AUTH = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
-const SKIP_ADMIN_AUTH = process.env.NEXT_PUBLIC_SKIP_ADMIN_AUTH === 'true';
-const SKIP_DEPARTMENT_AUTH = process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true';
-const SKIP_DASHBOARD_AUTH = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
+// const SKIP_SECRETARY_AUTH = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
+// const SKIP_ADMIN_AUTH = process.env.NEXT_PUBLIC_SKIP_ADMIN_AUTH === 'true';
+// const SKIP_DEPARTMENT_AUTH = process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true';
+// const SKIP_DASHBOARD_AUTH = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
 
 /** Exact paths that never require a session cookie */
 const PUBLIC_EXACT = new Set([
@@ -70,21 +70,21 @@ function isPublicPath(pathname: string): boolean {
   return false;
 }
 
-function shouldSkipAuth(pathname: string): boolean {
-  if (pathname.startsWith('/secretary') && SKIP_SECRETARY_AUTH) {
-    return true;
-  }
-  if (pathname.startsWith('/admin') && SKIP_ADMIN_AUTH) {
-    return true;
-  }
-  if (pathname.startsWith('/departments') && SKIP_DEPARTMENT_AUTH) {
-    return true;
-  }
-  if (pathname.startsWith('/dashboard') && SKIP_DASHBOARD_AUTH) {
-    return true;
-  }
-  return false;
-}
+// function shouldSkipAuth(pathname: string): boolean {
+//   if (pathname.startsWith('/secretary') && SKIP_SECRETARY_AUTH) {
+//     return true;
+//   }
+//   if (pathname.startsWith('/admin') && SKIP_ADMIN_AUTH) {
+//     return true;
+//   }
+//   if (pathname.startsWith('/departments') && SKIP_DEPARTMENT_AUTH) {
+//     return true;
+//   }
+//   if (pathname.startsWith('/dashboard') && SKIP_DASHBOARD_AUTH) {
+//     return true;
+//   }
+//   return false;
+// }
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -114,9 +114,15 @@ export function proxy(request: NextRequest) {
   //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
   // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
 
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
-    return NextResponse.next();
-  }
+  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
+  //   return NextResponse.next();
+  // }
+
+
+  // Uncomment for local preview route
+//   if (isPublicPath(pathname) || shouldSkipAuth(pathname)) {
+//   return NextResponse.next();
+// }
 
   if (!sessionOk) {
     const login = request.nextUrl.clone();
