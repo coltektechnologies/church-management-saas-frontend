@@ -296,6 +296,16 @@ export default function AddMemberPage() {
       toast.error('Form incomplete', { description: msg });
       return;
     }
+    if (
+      (form.send_credentials_via_email || form.send_credentials_via_sms) &&
+      !form.email.trim()
+    ) {
+      const msg =
+        'Add an email address to create portal login and send credentials (required by the server).';
+      setError(msg);
+      toast.error('Email required for credentials', { description: msg });
+      return;
+    }
 
     const payload: CreateMemberPayload = {
       title: form.title,
@@ -343,6 +353,15 @@ export default function AddMemberPage() {
       }
       if (result.sms_sent) {
         extras.push('Credentials sent by SMS');
+      }
+      if (result.credentials_delivery_queued) {
+        extras.push(
+          result.credentials_delivery_note ||
+            'Credential email/SMS is sending in the background.',
+        );
+      }
+      if (result.credentials_delivery_skipped_reason) {
+        extras.push(`Not sent: ${result.credentials_delivery_skipped_reason}`);
       }
       toast.success(result.message || 'Member created successfully', {
         description: extras.length ? extras.join(' · ') : undefined,
