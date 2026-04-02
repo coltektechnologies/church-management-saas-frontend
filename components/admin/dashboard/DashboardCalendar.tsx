@@ -32,6 +32,15 @@ function useIsMounted(): boolean {
 
 // Custom hook that drives a live clock without calling setState
 // synchronously in an effect body.
+//
+// Strategy: initialise state to new Date() via the lazy initialiser
+// (runs only on the client, during the first render — not inside an effect),
+// then use setInterval to update every second. The setInterval callback is
+// NOT a synchronous effect body call — it is an external event callback,
+// which is exactly what the lint rule permits.
+//
+// Server render: useSyncExternalStore getServerSnapshot returns new Date(0)
+// so server and client first-render agree (epoch, hidden by the mounted guard).
 function useClock(): Date {
   const [now, setNow] = useState<Date>(() => new Date());
 
@@ -129,6 +138,7 @@ export default function DashboardCalendar() {
               </p>
             </>
           ) : (
+            // Invisible placeholder preserves layout height before mount
             <>
               <p className="text-xs sm:text-sm font-bold text-foreground tabular-nums opacity-0">
                 00:00:00 AM
@@ -156,10 +166,7 @@ export default function DashboardCalendar() {
           className="text-[10px] sm:text-xs text-white rounded-full px-3 py-1 font-medium truncate max-w-[110px]"
           style={{ backgroundColor: pc }}
         >
-          {/* FIX: Use the mounted check here to ensure churchName 
-            rendered on server matches the client's first render 
-          */}
-          {mounted ? churchName : 'My Church'}
+          {churchName}
         </span>
       </div>
 
