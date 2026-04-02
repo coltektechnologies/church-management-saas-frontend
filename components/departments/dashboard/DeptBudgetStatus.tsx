@@ -6,41 +6,38 @@ import { useDepartmentProfile } from '@/components/departments/contexts/Departme
 
 // ─── Soft-coded style constants ───────────────────────────────────────────────
 const STYLE = {
-  containerRadius: '10px', // Outer card corner radius
-  containerBgLight: '#FFFFFF', // Card background light mode
-  containerBgDark: '#1A2B45', // Card background dark mode
-  containerBorderLight: '#E5E7EB', // Card border light mode
-  containerBorderDark: '#2A3F5F', // Card border dark mode
-  containerMinWidth: '320px', // Min width so title + button never squash
-  labelColorLight: '#6B7280', // Sub-label text light
-  labelColorDark: '#94A3B8', // Sub-label text dark
-  valueColorLight: '#111111', // Value text light
-  valueColorDark: '#F0F4F8', // Value text dark
-  barTrackLight: '#E5E7EB', // Progress bar track light
-  barTrackDark: '#2A3F5F', // Progress bar track dark
-  barRadius: '999px', // Progress bar pill radius
-  barHeight: '10px', // Progress bar height
-  remainingLabelLight: '#111111', // Remaining value text light
-  remainingLabelDark: '#F0F4F8', // Remaining value text dark
-  titleFontSize: '24px', // Uniform title font size — matches other cards
-  titleFontWeight: '700', // Title font weight
-  // Button style
-  btnBg: '#EEEEEF', // Button background
-  btnBorder: '#A29D9D', // Button border
-  btnRadius: '7px', // Button corner radius
-  btnShadow: '0px 4px 4px rgba(0,0,0,0.25)', // Button shadow
-  btnTextLight: '#111111', // Button text light
-  btnTextDark: '#F0F4F8', // Button text dark
-  btnFontSize: '13px', // Button font size
+  containerRadius: '10px',
+  containerBgLight: '#FFFFFF',
+  containerBgDark: '#1A2B45',
+  containerBorderLight: '#E5E7EB',
+  containerBorderDark: '#2A3F5F',
+  labelColorLight: '#6B7280',
+  labelColorDark: '#94A3B8',
+  valueColorLight: '#111111',
+  valueColorDark: '#F0F4F8',
+  barTrackLight: '#E5E7EB',
+  barTrackDark: '#2A3F5F',
+  barRadius: '999px',
+  barHeight: '10px',
+  remainingLabelLight: '#111111',
+  remainingLabelDark: '#F0F4F8',
+  titleFontSize: '24px',
+  titleFontWeight: '700',
+  // Button style — updated to 8px radius
+  btnBg: '#EEEEEF',
+  btnRadius: '8px',
+  btnShadow: '0px 1px 3px rgba(15,23,42,0.08)',
+  btnTextLight: '#111111',
+  btnTextDark: '#F0F4F8',
+  btnFontSize: '13px',
+  btnMinWidth: '80px',
+  headerBtnMarginLeft: 'auto',
   // Bar thresholds
-  barAmber: '#F59E0B', // Bar color 60–85% used
-  barRed: '#EF4444', // Bar color >85% used
+  barAmber: '#F59E0B',
+  barRed: '#EF4444',
 };
 
-// Budget details route
 const BUDGET_ROUTE = '/departments/budget';
-
-// Dummy defaults — replace with live API data
 const DUMMY_ALLOCATED = 8000;
 const DUMMY_SPENT = 3750;
 
@@ -64,14 +61,11 @@ export default function DeptBudgetStatus({
     : '#2FC4B2';
 
   const currency = isReady ? profile.currency || 'GHS' : 'GHS';
-  // Currency symbol mapping — soft-coded for easy extension
   const currencySymbol =
     currency === 'GHS' ? 'GHS' : currency === 'USD' ? '$' : currency === 'GBP' ? '£' : '€';
 
   const remaining = allocated - spent;
   const pctUsed = allocated > 0 ? Math.round((spent / allocated) * 100) : 0;
-
-  // Bar color: accent < 60%, amber 60–85%, red > 85%
   const barColor = pctUsed < 60 ? accentColor : pctUsed < 85 ? STYLE.barAmber : STYLE.barRed;
 
   const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
@@ -83,15 +77,19 @@ export default function DeptBudgetStatus({
   const btnText = isDark ? STYLE.btnTextDark : STYLE.btnTextLight;
   const dividerColor = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
 
-  const detailsBtnStyle = {
+  const detailsBtnStyle: React.CSSProperties = {
     backgroundColor: STYLE.btnBg,
-    border: `1px solid ${STYLE.btnBorder}`,
     borderRadius: STYLE.btnRadius,
     boxShadow: STYLE.btnShadow,
     color: btnText,
     fontSize: STYLE.btnFontSize,
-    fontWeight: '600',
-    flexShrink: 0, // Button never shrinks — title gets all remaining space
+    fontWeight: '500',
+    fontFamily: 'Poppins',
+    flexShrink: 0,
+    minWidth: STYLE.btnMinWidth,
+    marginLeft: '12px',
+    border: 'none',
+    padding: '6px 18px',
   };
 
   return (
@@ -101,29 +99,33 @@ export default function DeptBudgetStatus({
         borderRadius: STYLE.containerRadius,
         backgroundColor: containerBg,
         borderColor: containerBorder,
-        minWidth: STYLE.containerMinWidth, // Container expands to fit title + button on one line
       }}
     >
-      {/* Header — title takes all available width, button fixed on right */}
-      <div className="flex items-center justify-between gap-3">
-        {/* Title wrapper grows to fill all space not taken by the button */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <Wallet size={20} style={{ color: accentColor, flexShrink: 0 }} />
+      {/* Header */}
+      <div className="flex items-center justify-between w-full overflow-hidden">
+        <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+          <div style={{ color: accentColor, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <Wallet size={26} strokeWidth={2.5} />
+          </div>
           <h3
-            className="font-black whitespace-nowrap"
+            className="whitespace-nowrap"
             style={{
               color: accentColor,
-              fontSize: STYLE.titleFontSize, // 24px — same as other cards
+              fontSize: STYLE.titleFontSize,
               fontWeight: STYLE.titleFontWeight,
+              fontFamily: 'Poppins',
+              lineHeight: '1',
+              margin: 0,
+              letterSpacing: '-0.01em',
             }}
           >
             Budget Status
           </h3>
         </div>
-        {/* Details button — never shrinks, always right-aligned */}
+
         <button
           onClick={() => router.push(BUDGET_ROUTE)}
-          className="px-3 py-1.5 transition-colors"
+          className="transition-all duration-200 hover:brightness-95 cursor-pointer flex-shrink-0"
           style={detailsBtnStyle}
         >
           Details
@@ -135,16 +137,20 @@ export default function DeptBudgetStatus({
 
       {/* Allocated vs Spent row */}
       <div className="flex justify-between gap-2 flex-wrap">
-        <p style={{ color: labelColor, fontSize: '13px', fontWeight: '500' }}>
+        <p
+          style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}
+        >
           Allocated:{' '}
-          <span style={{ color: valueColor, fontWeight: '800' }}>
+          <span style={{ color: valueColor, fontWeight: '500' }}>
             {currencySymbol}
             {allocated.toLocaleString()}
           </span>
         </p>
-        <p style={{ color: labelColor, fontSize: '13px', fontWeight: '500' }}>
+        <p
+          style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}
+        >
           Spent:{' '}
-          <span style={{ color: valueColor, fontWeight: '800' }}>
+          <span style={{ color: valueColor, fontWeight: '500' }}>
             {currencySymbol}
             {spent.toLocaleString()}
           </span>
@@ -173,22 +179,42 @@ export default function DeptBudgetStatus({
 
         {/* Remaining + % used */}
         <div className="flex justify-between mt-2 gap-2 flex-wrap">
-          <p style={{ color: labelColor, fontSize: '13px', fontWeight: '500' }}>
+          <p
+            style={{
+              color: labelColor,
+              fontSize: '13px',
+              fontWeight: '400',
+              fontFamily: 'Poppins',
+            }}
+          >
             Remaining:{' '}
-            <span style={{ color: remainingColor, fontWeight: '800' }}>
+            <span style={{ color: remainingColor, fontWeight: '500' }}>
               {currencySymbol}
               {remaining.toLocaleString()}
             </span>
           </p>
-          <p style={{ color: barColor, fontSize: '13px', fontWeight: '700' }}>{pctUsed}% used</p>
+          <p
+            style={{ color: barColor, fontSize: '13px', fontWeight: '300', fontFamily: 'Poppins' }}
+          >
+            {pctUsed}% used
+          </p>
         </div>
       </div>
 
       {/* Bottom full-width Details button */}
       <button
         onClick={() => router.push(BUDGET_ROUTE)}
-        className="w-full py-2.5 transition-colors"
-        style={{ ...detailsBtnStyle, fontWeight: '700', fontSize: '14px' }}
+        className="w-full py-2.5 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+        style={{
+          backgroundColor: STYLE.btnBg,
+          borderRadius: STYLE.btnRadius, // Now 8px
+          boxShadow: STYLE.btnShadow,
+          color: btnText,
+          fontSize: STYLE.btnFontSize,
+          fontWeight: '400',
+          fontFamily: 'Poppins',
+          border: 'none',
+        }}
       >
         Details
       </button>

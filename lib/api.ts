@@ -374,8 +374,14 @@ export interface CreateMemberResponse {
   message: string;
   system_access_created?: boolean;
   email?: string;
+  username?: string;
+  password?: string;
+  /** Omitted when delivery is async */
   email_sent?: boolean;
   sms_sent?: boolean;
+  credentials_delivery_queued?: boolean;
+  credentials_delivery_skipped_reason?: string;
+  credentials_delivery_note?: string;
 }
 
 /** Create a new member. Requires authenticated user with church context. */

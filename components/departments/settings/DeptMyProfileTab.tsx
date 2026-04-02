@@ -7,7 +7,6 @@ import {
   useChurchProfile,
   type GrantedAdmin,
 } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';

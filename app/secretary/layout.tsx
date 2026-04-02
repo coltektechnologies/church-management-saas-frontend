@@ -12,7 +12,7 @@ import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine'
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
-// import { RequireAuth } from '@/components/auth/RequireAuth';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 
 /*
  * Optional local preview without login:
@@ -23,7 +23,6 @@ import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryPr
  *
  * Otherwise: normal auth — login first, then /secretary.
  */
-
 // const skipAuth = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
 
 function SecretaryShell({ children }: { children: ReactNode }) {
@@ -83,6 +82,6 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
   // if (skipAuth) {
   //   return tree;
   // }
-  // return <RequireAuth>{tree}</RequireAuth>;
-  return tree;
+  return <RequireAuth>{tree}</RequireAuth>;
+  // return tree;
 }

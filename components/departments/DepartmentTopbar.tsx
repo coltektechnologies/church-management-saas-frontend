@@ -25,7 +25,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvider';
-import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import DeptNotificationsDropdown from '@/components/departments/DeptNotificationsDropdown';
 import DeptUserDropdown from '@/components/departments/DeptUserDropdown';
 
@@ -260,7 +259,6 @@ function HelpPopover({
 export default function DepartmentTopbar() {
   const { resolvedTheme, setTheme, mounted } = useDeptTheme();
   const { profile, isReady } = useDepartmentProfile();
-  const { profile: churchProfile, isReady: churchReady } = useChurchProfile();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const pathname = usePathname();
