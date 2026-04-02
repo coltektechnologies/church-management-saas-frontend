@@ -330,9 +330,10 @@ export default function DepartmentTopbar() {
           so changing the colour theme tab immediately updates the topbar.
         */}
         <div
-          className="w-full flex items-center justify-between px-5"
+          className="w-full flex items-center justify-between px-3 sm:px-5 gap-2"
           style={{
-            height: '64px',
+            minHeight: '64px',
+            height: 'auto',
             background: cardBg,
             borderRadius: '8px',
             boxShadow: '0 1px 6px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.05)',
@@ -341,11 +342,11 @@ export default function DepartmentTopbar() {
           }}
         >
           {/* Left: hamburger (mobile) + bold page title + teal breadcrumb */}
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden p-1.5 rounded-md transition-colors flex-shrink-0"
+              className="lg:hidden p-1 rounded-md transition-colors flex-shrink-0"
               style={{ color: textColor }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = hoverBg)}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
@@ -353,39 +354,38 @@ export default function DepartmentTopbar() {
               <Menu className="w-5 h-5" />
             </button>
 
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h1
+                className="overflow-hidden text-ellipsis truncate text-xs sm:text-sm md:text-base lg:text-lg font-black"
                 style={{
                   fontFamily: "'OV Soge', sans-serif",
-                  fontWeight: 900,
-                  fontSize: '20px',
                   color: textColor,
                   lineHeight: '1.2',
+                  maxWidth: '100%',
                   whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '400px',
                 }}
               >
                 {pageTitle}
               </h1>
               <p
+                className="mt-1 text-[10px] sm:text-xs md:text-sm font-medium overflow-hidden text-ellipsis truncate"
                 style={{
-                  fontSize: '11px',
                   color: `${textColor}70`,
-                  fontWeight: 400,
-                  marginTop: '2px',
+                  maxWidth: '100%',
+                  whiteSpace: 'nowrap',
+                  letterSpacing: '0.01em',
                 }}
               >
-                <span style={{ color: accentColor, fontWeight: 600 }}>{deptName}</span>
-                {' / '}
-                {pageTitle}
+                <span style={{ color: accentColor, fontWeight: 600, marginRight: '0.25rem' }}>
+                  {deptName}
+                </span>
+                / {pageTitle}
               </p>
             </div>
           </div>
 
           {/* Right: dark mode toggle + help + notifications + user */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <DarkModePill
               isDark={isDark}
               onToggle={() => setTheme(isDark ? 'light' : 'dark')}

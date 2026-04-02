@@ -15,11 +15,11 @@ import type { NextRequest } from 'next/server';
 const CHURCH_SESSION_COOKIE = 'church_session';
 const CHURCH_SESSION_COOKIE_VALUE = '1';
 
-// Environment variables for skipping auth in development
-const SKIP_SECRETARY_AUTH = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
-const SKIP_ADMIN_AUTH = process.env.NEXT_PUBLIC_SKIP_ADMIN_AUTH === 'true';
-const SKIP_DEPARTMENT_AUTH = process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true';
-const SKIP_DASHBOARD_AUTH = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
+// // Environment variables for skipping auth in development
+// const SKIP_SECRETARY_AUTH = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
+// const SKIP_ADMIN_AUTH = process.env.NEXT_PUBLIC_SKIP_ADMIN_AUTH === 'true';
+// const SKIP_DEPARTMENT_AUTH = process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true';
+// const SKIP_DASHBOARD_AUTH = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
 
 /** Exact paths that never require a session cookie */
 const PUBLIC_EXACT = new Set([
