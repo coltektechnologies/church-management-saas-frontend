@@ -13,7 +13,9 @@ export default function ExpenseRequestsPage() {
   const departmentId = department?.id ?? '';
 
   useEffect(() => {
-    if (!departmentId) {return;}
+    if (!departmentId) {
+      return;
+    }
     router.replace(`/departments/${departmentId}/expenses/new`);
   }, [departmentId, router]);
 

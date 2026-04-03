@@ -3,12 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDepartments } from '@/context/DepartmentsContext';
-import {
-  FaClipboardList,
-  FaClock,
-  FaFileAlt,
-  FaCoins,
-} from 'react-icons/fa';
+import { FaClipboardList, FaClock, FaFileAlt, FaCoins } from 'react-icons/fa';
 import { CheckCircle, XCircle, Clock, FileEdit, Plus } from 'lucide-react';
 import { Expense } from '@/types/expense';
 
@@ -27,28 +22,36 @@ function formatDate(dateString: string): string {
 }
 
 function hasDraft(departmentId: string): boolean {
-  if (typeof window === 'undefined') {return false;}
+  if (typeof window === 'undefined') {
+    return false;
+  }
   return !!localStorage.getItem(`expense_draft_${departmentId}`);
 }
 
 // ── Status badge ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: Expense['status'] | 'draft' }) {
-  if (status === 'approved') {return (
-    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-medium">
-      <CheckCircle size={11} /> Approved
-    </span>
-  );}
-  if (status === 'rejected') {return (
-    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium">
-      <XCircle size={11} /> Rejected
-    </span>
-  );}
-  if (status === 'draft') {return (
-    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
-      <FileEdit size={11} /> Draft
-    </span>
-  );}
+  if (status === 'approved') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+        <CheckCircle size={11} /> Approved
+      </span>
+    );
+  }
+  if (status === 'rejected') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium">
+        <XCircle size={11} /> Rejected
+      </span>
+    );
+  }
+  if (status === 'draft') {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
+        <FileEdit size={11} /> Draft
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
       <Clock size={11} /> Pending
@@ -71,7 +74,9 @@ function StatCard({
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-      <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
+      <div
+        className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}
+      >
         {icon}
       </div>
       <div>
@@ -101,7 +106,9 @@ export default function BudgetExpensesPage() {
   const expenses = departmentExpensesMap[departmentId] ?? [];
 
   useEffect(() => {
-    if (!departmentId) {return;}
+    if (!departmentId) {
+      return;
+    }
     void loadDepartmentExpenseRequests(departmentId);
     void syncDepartmentBudgetFromApi(departmentId);
   }, [departmentId, loadDepartmentExpenseRequests, syncDepartmentBudgetFromApi]);
@@ -135,7 +142,6 @@ export default function BudgetExpensesPage() {
 
   return (
     <div className="space-y-8">
-
       {/* Page heading */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Budget & Expenses</h1>
@@ -179,9 +185,12 @@ export default function BudgetExpensesPage() {
             <FaCoins size={28} className="text-teal-500" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-gray-900">Hi, you have zero or no budget so far!!</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Hi, you have zero or no budget so far!!
+            </h3>
             <p className="text-sm text-gray-500 max-w-sm">
-              Submit a budget request for the year to get started. It will be reviewed and approved by the appropriate authorities.
+              Submit a budget request for the year to get started. It will be reviewed and approved
+              by the appropriate authorities.
             </p>
           </div>
           <button
@@ -205,8 +214,8 @@ export default function BudgetExpensesPage() {
                 budgetPercentage >= 90
                   ? 'bg-red-500'
                   : budgetPercentage >= 60
-                  ? 'bg-amber-500'
-                  : 'bg-teal-500'
+                    ? 'bg-amber-500'
+                    : 'bg-teal-500'
               }`}
               style={{ width: `${budgetPercentage}%` }}
             />
@@ -255,11 +264,21 @@ export default function BudgetExpensesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">Date</th>
-                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">Description</th>
-                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">Category</th>
-                    <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">Amount</th>
-                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">Status</th>
+                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">
+                      Date
+                    </th>
+                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">
+                      Description
+                    </th>
+                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">
+                      Category
+                    </th>
+                    <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">
+                      Amount
+                    </th>
+                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wide px-6 py-3">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -271,12 +290,12 @@ export default function BudgetExpensesPage() {
                       <td className="px-6 py-4">
                         <p className="text-sm font-medium text-gray-900">{expense.title}</p>
                         {expense.expenseRef && (
-                          <p className="text-xs font-mono text-blue-500 mt-0.5">{expense.expenseRef}</p>
+                          <p className="text-xs font-mono text-blue-500 mt-0.5">
+                            {expense.expenseRef}
+                          </p>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {expense.category || '—'}
-                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{expense.category || '—'}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right whitespace-nowrap">
                         GHS{expense.amount.toLocaleString()}
                       </td>
@@ -298,7 +317,9 @@ export default function BudgetExpensesPage() {
           <div className="flex items-center gap-3">
             <FileEdit size={18} className="text-amber-600" />
             <div>
-              <p className="text-sm font-semibold text-amber-800">You have an unfinished expense request</p>
+              <p className="text-sm font-semibold text-amber-800">
+                You have an unfinished expense request
+              </p>
               <p className="text-xs text-amber-600">Continue filling in your saved draft</p>
             </div>
           </div>
@@ -310,7 +331,6 @@ export default function BudgetExpensesPage() {
           </button>
         </div>
       )}
-
     </div>
   );
 }
