@@ -25,7 +25,7 @@ const PUBLIC_EXACT = new Set([
 ]);
 
 /** Prefixes: path === prefix or path starts with prefix + '/' */
-const PUBLIC_PREFIXES = ['/login', '/signup', '/features'];
+const PUBLIC_PREFIXES = ['/login', '/signup', '/features', '/developers', '/contact', '/pricing'];
 
 /** Where to send users who already have a session cookie but hit login/signup. */
 const LOGGED_IN_AUTH_REDIRECT = '/dashboard';
@@ -99,12 +99,11 @@ export function proxy(request: NextRequest) {
   }
 
   // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
-  // const skipSecretaryCookie =
-  //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
-  //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
-  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
-
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
+  const skipSecretaryCookie =
+    process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+    (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
+    // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
     return NextResponse.next();
   }
 
