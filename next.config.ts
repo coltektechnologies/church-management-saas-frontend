@@ -1,6 +1,15 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+    ],
+  },
   async rewrites() {
     // Optional: same-origin /api in dev (no browser CORS). Set in .env.local:
     //   NEXT_DEV_PROXY_DJANGO_URL=http://127.0.0.1:8000
