@@ -38,6 +38,7 @@ import {
   applyMemberFilters,
   type FilterableMemberRow,
 } from '@/lib/memberFilters';
+import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 
 type MemberRow = FilterableMemberRow;
 
@@ -86,6 +87,7 @@ export interface MembersTableProps {
 
 export default function MembersTable({ filters }: MembersTableProps) {
   const router = useRouter();
+  const { membersBasePath } = useMembersPortal();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [perPage, setPerPage] = useState(10);
@@ -171,8 +173,8 @@ export default function MembersTable({ filters }: MembersTableProps) {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const _handleView = (id: string) => router.push(`/admin/members/${id}`);
-  const _handleEdit = (id: string) => router.push(`/admin/members/${id}/edit`);
+  const _handleView = (id: string) => router.push(`${membersBasePath}/${id}`);
+  const _handleEdit = (id: string) => router.push(`${membersBasePath}/${id}/edit`);
 
   const handleSendMessage = (id: string) => {
     setSmsRecipientIds([id]);
@@ -232,12 +234,12 @@ export default function MembersTable({ filters }: MembersTableProps) {
 
   const handleBulkView = () => {
     if (selectedMemberId) {
-      router.push(`/admin/members/${selectedMemberId}`);
+      router.push(`${membersBasePath}/${selectedMemberId}`);
     }
   };
   const handleBulkEdit = () => {
     if (selectedMemberId) {
-      router.push(`/admin/members/${selectedMemberId}/edit`);
+      router.push(`${membersBasePath}/${selectedMemberId}/edit`);
     }
   };
   const handleBulkSendMessage = () => {
@@ -275,7 +277,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
         compact ? 'flex flex-wrap items-center gap-1' : 'flex flex-wrap items-center gap-1 sm:gap-2'
       }
     >
-      <Link href={`/admin/members/${member.id}`}>
+      <Link href={`${membersBasePath}/${member.id}`}>
         <Button
           variant="ghost"
           size="icon"
@@ -285,7 +287,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
           <Eye className="h-4 w-4" />
         </Button>
       </Link>
-      <Link href={`/admin/members/${member.id}/edit`}>
+      <Link href={`${membersBasePath}/${member.id}/edit`}>
         <Button
           variant="ghost"
           size="icon"
