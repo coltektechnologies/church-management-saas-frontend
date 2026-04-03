@@ -9,6 +9,7 @@ import {
   MEMBERSHIP_STATUS_OPTIONS,
   DATE_RANGE_OPTIONS,
 } from '@/lib/memberFilters';
+import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 
 export interface MemberFiltersProps {
   filters: MemberFilterState;
@@ -21,6 +22,7 @@ export default function MemberFilters({
   onFiltersChange,
   departmentOptions = [],
 }: MemberFiltersProps) {
+  const { membersBasePath } = useMembersPortal();
   const update = (key: keyof MemberFilterState, value: string) => {
     onFiltersChange({ ...filters, [key]: value });
   };
@@ -78,7 +80,7 @@ export default function MemberFilters({
             ))}
           </select>
         </div>
-        <Link href="/admin/members/add" className="w-full md:w-auto">
+        <Link href={`${membersBasePath}/add`} className="w-full md:w-auto">
           <Button
             className="flex w-full md:w-[156px] items-center justify-center shrink-0 hover:opacity-90"
             style={{

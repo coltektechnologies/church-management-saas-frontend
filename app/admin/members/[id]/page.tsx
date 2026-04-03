@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getMember, deleteMember, type MemberDetail } from '@/lib/api';
 import { toast } from 'sonner';
 import { DeleteMemberDialog } from '@/components/admin/membership/DeleteMemberDialog';
+import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: 'border-green-500 text-green-600 bg-white',
@@ -75,6 +76,7 @@ function Section({
 
 export default function MemberDetailPage() {
   const router = useRouter();
+  const { membersBasePath } = useMembersPortal();
   const params = useParams();
   const id = params.id as string;
   const [member, setMember] = useState<MemberDetail | null>(null);
@@ -102,7 +104,7 @@ export default function MemberDetailPage() {
       await deleteMember(id);
       toast.success('Member removed', { description: 'Returning to the members list.' });
       setDeleteDialogOpen(false);
-      router.push('/admin/members');
+      router.push(membersBasePath);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to delete member';
       setError(msg);
@@ -124,14 +126,14 @@ export default function MemberDetailPage() {
     return (
       <div className="space-y-4">
         <Link
-          href="/admin/members"
+          href={membersBasePath}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Members
         </Link>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-700">{error || 'Member not found'}</p>
-          <Button variant="outline" className="mt-4" onClick={() => router.push('/admin/members')}>
+          <Button variant="outline" className="mt-4" onClick={() => router.push(membersBasePath)}>
             Return to Members
           </Button>
         </div>
@@ -158,7 +160,7 @@ export default function MemberDetailPage() {
       <div className="flex flex-row items-start justify-between gap-4">
         <div>
           <Link
-            href="/admin/members"
+            href={membersBasePath}
             className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Members
@@ -171,7 +173,7 @@ export default function MemberDetailPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/admin/members/${id}/edit`}>
+          <Link href={`${membersBasePath}/${id}/edit`}>
             <Button variant="outline" size="sm" className="gap-2">
               Edit Member
             </Button>
