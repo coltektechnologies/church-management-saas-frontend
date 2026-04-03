@@ -16,6 +16,8 @@ export default function FeatureFooter() {
           <div className="flex gap-4 flex-wrap">
             <FooterLink href={ROUTES.home}>Home</FooterLink>
             <FooterLink href={ROUTES.features}>Features</FooterLink>
+            <FooterLink href={ROUTES.developers}>Developers</FooterLink>
+            <FooterLink href={ROUTES.contact}>Contact</FooterLink>
             <FooterLink href={ROUTES.pricing}>Pricing</FooterLink>
             <FooterLink href={ROUTES.solutions}>Solutions</FooterLink>
           </div>

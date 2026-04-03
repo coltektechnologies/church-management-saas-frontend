@@ -23,23 +23,26 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import {
-  CATEGORY_OPTIONS,
-  MOCK_BATCH_SEGMENTS,
-  MOCK_DEPARTMENTS_FOR_NOTIFICATIONS,
-  MOCK_NOTIFICATION_MEMBERS,
-  MOCK_NOTIFICATION_USERS,
-  MOCK_NOTIFICATION_VISITORS,
-  PRIORITY_OPTIONS,
-  type MockNotificationItem,
-  type NotificationCategory,
-  type NotificationPriority,
-  type DeliveryChannel,
+import { CATEGORY_OPTIONS, PRIORITY_OPTIONS } from '@/lib/notificationWizardOptions';
+import type {
+  MockNotificationItem,
+  NotificationCategory,
+  NotificationPriority,
+  DeliveryChannel,
 } from '@/services/notificationsMock';
 import { toast } from 'sonner';
 import type { DepartmentListRow } from '@/lib/departmentsApi';
 import { fetchDepartmentsList } from '@/lib/departmentsApi';
 import { fetchAccountUsers } from '@/lib/notificationsApi';
+import {
+  getAccessToken,
+  getMember,
+  getMembers,
+  getVisitors,
+  sendNotificationEmail,
+  sendNotificationSms,
+  type MemberListItem,
+} from '@/lib/api';
 import {
   createNotificationFromWizard,
   notificationsApiEnabled,
@@ -49,6 +52,7 @@ import {
   Bell,
   CalendarClock,
   Layers,
+  Loader2,
   Mail,
   Send,
   Smartphone,
@@ -91,11 +95,11 @@ const defaultForm = () => ({
   icon: 'none',
   audienceMode: 'single' as 'single' | 'batch',
   recipientType: 'user' as 'user' | 'member' | 'visitor',
-  userId: MOCK_NOTIFICATION_USERS[0]?.id ?? '',
-  memberId: MOCK_NOTIFICATION_MEMBERS[0]?.id ?? '',
-  visitorId: MOCK_NOTIFICATION_VISITORS[0]?.id ?? '',
+  userId: '',
+  memberId: '',
+  visitorId: '',
+  /** Batch: only `all_members` is supported with the live send-bulk API (exclusive with departments). */
   batchSegmentIds: [] as string[],
-  /** Specific ministries from “Choose departments” (mock IDs) */
   batchDepartmentIds: [] as string[],
   channelInApp: true,
   channelEmail: false,
@@ -119,39 +123,129 @@ export function CreateNotificationModal({
   const [form, setForm] = useState(defaultForm);
   const [departmentPickerOpen, setDepartmentPickerOpen] = useState(false);
   const [apiDepartments, setApiDepartments] = useState<DepartmentListRow[] | null>(null);
-  const [apiUsers, setApiUsers] = useState<{ id: string; label: string }[] | null>(null);
+  const [apiUsers, setApiUsers] = useState<
+    { id: string; label: string; email?: string; phone?: string }[] | null
+  >(null);
+  const [apiMembers, setApiMembers] = useState<{ id: string; label: string }[] | null>(null);
+  const [apiVisitors, setApiVisitors] = useState<{ id: string; label: string }[] | null>(null);
+  /** `null` = still loading for this modal open; then arrays (possibly empty) from API */
+  const [audienceReady, setAudienceReady] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reset = useCallback(() => {
     setForm(defaultForm());
   }, []);
 
   useEffect(() => {
-    if (!open || !notificationsApiEnabled()) {
+    if (!open) {
+      setIsSubmitting(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      setAudienceReady(false);
+      setApiDepartments(null);
+      setApiUsers(null);
+      setApiMembers(null);
+      setApiVisitors(null);
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) {
+      setAudienceReady(true);
+      setApiDepartments([]);
+      setApiUsers([]);
+      setApiMembers([]);
+      setApiVisitors([]);
       return;
     }
     let cancelled = false;
+    setAudienceReady(false);
     (async () => {
       try {
-        const [depts, users] = await Promise.all([fetchDepartmentsList(), fetchAccountUsers()]);
+        const [deptR, userR, memR, visR] = await Promise.allSettled([
+          fetchDepartmentsList(),
+          fetchAccountUsers(),
+          getMembers(),
+          getVisitors(),
+        ]);
         if (cancelled) {
           return;
         }
+
+        const loadFailures: string[] = [];
+        const depts =
+          deptR.status === 'fulfilled' ? deptR.value : (loadFailures.push('departments'), []);
+        const users =
+          userR.status === 'fulfilled' ? userR.value : (loadFailures.push('staff users'), []);
+        const membersRaw =
+          memR.status === 'fulfilled' ? memR.value : (loadFailures.push('members'), []);
+        const visitorsRaw =
+          visR.status === 'fulfilled' ? visR.value : (loadFailures.push('visitors'), []);
+
+        if (loadFailures.length > 0) {
+          toast.error(`Could not load ${loadFailures.join(', ')} from the API.`);
+        }
+
         setApiDepartments(depts);
-        const rows = users.map((u) => ({
-          id: u.id,
-          label: `${[u.first_name, u.last_name].filter(Boolean).join(' ') || 'User'}${
-            u.email ? ` — ${u.email}` : ''
-          }`,
-        }));
-        setApiUsers(rows);
+        const userRows = users.map((u) => {
+          const name =
+            [u.first_name, u.last_name].filter(Boolean).join(' ').trim() ||
+            (u.full_name && String(u.full_name).trim()) ||
+            'User';
+          const email = u.email?.trim() || undefined;
+          const phone = u.phone?.trim() || undefined;
+          return {
+            id: u.id,
+            label: `${name}${email ? ` — ${email}` : ''}`,
+            email,
+            phone,
+          };
+        });
+        setApiUsers(userRows);
+
+        const memberRows = membersRaw.map((m: MemberListItem) => {
+          const name =
+            m.full_name || [m.first_name, m.last_name].filter(Boolean).join(' ') || 'Member';
+          const email = m.location?.email;
+          return {
+            id: m.id,
+            label: email && String(email).trim() ? `${name} — ${email}` : name,
+          };
+        });
+        setApiMembers(memberRows);
+
+        const visitorRows = visitorsRaw.map((v) => {
+          const bits = [v.full_name, v.phone].filter(Boolean);
+          if (v.email && String(v.email).trim()) {
+            bits.push(String(v.email));
+          }
+          return { id: v.id, label: bits.join(' — ') };
+        });
+        setApiVisitors(visitorRows);
+
         setForm((f) => ({
           ...f,
-          userId: users.some((u) => u.id === f.userId) ? f.userId : (users[0]?.id ?? f.userId),
+          userId: users.some((u) => u.id === f.userId) ? f.userId : (users[0]?.id ?? ''),
+          memberId: memberRows.some((r) => r.id === f.memberId)
+            ? f.memberId
+            : (memberRows[0]?.id ?? ''),
+          visitorId: visitorRows.some((r) => r.id === f.visitorId)
+            ? f.visitorId
+            : (visitorRows[0]?.id ?? ''),
         }));
       } catch {
         if (!cancelled) {
-          setApiDepartments(null);
-          setApiUsers(null);
+          toast.error('Could not load audience data from the API.');
+          setApiDepartments([]);
+          setApiUsers([]);
+          setApiMembers([]);
+          setApiVisitors([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setAudienceReady(true);
         }
       }
     })();
@@ -161,20 +255,35 @@ export function CreateNotificationModal({
   }, [open]);
 
   const departmentOptions = useMemo(() => {
-    if (apiDepartments?.length) {
-      return apiDepartments.map((d) => ({
-        id: d.id,
-        name: d.name,
-        memberCount: d.member_count ?? 0,
-      }));
+    if (!apiDepartments?.length) {
+      return [] as { id: string; name: string; memberCount: number }[];
     }
-    return MOCK_DEPARTMENTS_FOR_NOTIFICATIONS;
+    return apiDepartments.map((d) => ({
+      id: d.id,
+      name: d.name,
+      memberCount: d.member_count ?? 0,
+    }));
   }, [apiDepartments]);
 
-  const userOptions = useMemo(
-    () => (apiUsers?.length ? apiUsers : MOCK_NOTIFICATION_USERS),
-    [apiUsers]
-  );
+  const userOptions = useMemo(() => (apiUsers === null ? [] : apiUsers), [apiUsers]);
+
+  const memberOptions = useMemo(() => (apiMembers === null ? [] : apiMembers), [apiMembers]);
+
+  const visitorOptions = useMemo(() => (apiVisitors === null ? [] : apiVisitors), [apiVisitors]);
+
+  /** Batch “segments” backed by send-bulk: all members (count from members API) only; departments are separate. */
+  const batchSegments = useMemo(() => {
+    const n = apiMembers === null ? 0 : apiMembers.length;
+    return [
+      {
+        id: 'all_members',
+        label: 'All church members',
+        count: n,
+        description:
+          'Active members from GET /members/members/. Use departments below only if you want a subset — not both at once.',
+      },
+    ];
+  }, [apiMembers]);
 
   const update = useCallback(
     <K extends keyof ReturnType<typeof defaultForm>>(
@@ -204,10 +313,8 @@ export function CreateNotificationModal({
     if (form.audienceMode !== 'batch') {
       return null as null | { labels: string; est: number };
     }
-    const segParts = MOCK_BATCH_SEGMENTS.filter((s) => form.batchSegmentIds.includes(s.id));
-    const deptParts = MOCK_DEPARTMENTS_FOR_NOTIFICATIONS.filter((d) =>
-      form.batchDepartmentIds.includes(d.id)
-    );
+    const segParts = batchSegments.filter((s) => form.batchSegmentIds.includes(s.id));
+    const deptParts = departmentOptions.filter((d) => form.batchDepartmentIds.includes(d.id));
     if (segParts.length === 0 && deptParts.length === 0) {
       return null;
     }
@@ -218,7 +325,13 @@ export function CreateNotificationModal({
       segParts.reduce((sum, p) => sum + p.count, 0) +
       deptParts.reduce((sum, d) => sum + d.memberCount, 0);
     return { labels, est };
-  }, [form.audienceMode, form.batchSegmentIds, form.batchDepartmentIds]);
+  }, [
+    form.audienceMode,
+    form.batchSegmentIds,
+    form.batchDepartmentIds,
+    departmentOptions,
+    batchSegments,
+  ]);
 
   const validateStep = (s: number): string => {
     if (s === 1) {
@@ -230,18 +343,35 @@ export function CreateNotificationModal({
       }
     }
     if (s === 2) {
+      if (!audienceReady) {
+        return 'Loading audience data from the API…';
+      }
       if (form.audienceMode === 'single') {
         if (form.recipientType === 'user' && !form.userId) {
           return 'Select a user.';
         }
+        if (form.recipientType === 'user' && userOptions.length === 0) {
+          return 'No staff users returned from GET /auth/users/.';
+        }
         if (form.recipientType === 'member' && !form.memberId) {
           return 'Select a member.';
+        }
+        if (form.recipientType === 'member' && memberOptions.length === 0) {
+          return 'No members found for your church.';
         }
         if (form.recipientType === 'visitor' && !form.visitorId) {
           return 'Select a visitor.';
         }
-      } else if (form.batchSegmentIds.length === 0 && form.batchDepartmentIds.length === 0) {
-        return 'Select at least one audience option above, or choose one or more departments.';
+        if (form.recipientType === 'visitor' && visitorOptions.length === 0) {
+          return 'No visitors found for your church.';
+        }
+      } else {
+        if (form.batchSegmentIds.includes('all_members') && form.batchDepartmentIds.length > 0) {
+          return 'Choose either all members or specific departments — not both (send-bulk API).';
+        }
+        if (form.batchSegmentIds.length === 0 && form.batchDepartmentIds.length === 0) {
+          return 'Select “All church members” and/or one or more departments.';
+        }
       }
     }
     if (s === 3) {
@@ -314,6 +444,9 @@ export function CreateNotificationModal({
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) {
+      return;
+    }
     const err = validateStep(1) || validateStep(2) || validateStep(3);
     if (err) {
       toast.error(err);
@@ -325,50 +458,116 @@ export function CreateNotificationModal({
     if (notificationsApiEnabled()) {
       if (form.scheduleMode === 'recurring') {
         toast.error(
-          'Recurring sends are not wired in this wizard. Use mock mode or POST /notifications/recurring-schedules/.'
+          'Recurring sends are not wired in this wizard yet. Use one-time or instant, or POST /notifications/recurring-schedules/.'
+        );
+        return;
+      }
+      if (form.audienceMode === 'single' && form.recipientType === 'visitor') {
+        toast.error(
+          'In-app POST /notifications/ supports user or member only — pick a staff user or member, or use SMS/email flows for visitors.'
         );
         return;
       }
 
+      setIsSubmitting(true);
       try {
         if (form.audienceMode === 'single') {
-          if (form.recipientType === 'visitor') {
-            toast.error(
-              'Visitor-only recipient is not supported by POST /notifications/ — choose a user or member, or use mock mode.'
-            );
-            return;
+          const title = form.title.trim();
+          const body = form.message.trim();
+          const emailSubject = form.emailSubject.trim() || title;
+          const htmlBody = `<p>${body.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+
+          let sentSomething = false;
+
+          if (form.channelInApp) {
+            await createNotificationFromWizard({
+              user_id: form.recipientType === 'user' ? form.userId : undefined,
+              member_id: form.recipientType === 'member' ? form.memberId : undefined,
+              title,
+              message: body,
+              priority: form.priority,
+              category: form.category,
+              link: form.link.trim() || null,
+              icon: form.icon === 'none' ? null : form.icon,
+              scheduled_for: scheduled,
+            });
+            sentSomething = true;
           }
-          await createNotificationFromWizard({
-            user_id: form.recipientType === 'user' ? form.userId : undefined,
-            member_id: form.recipientType === 'member' ? form.memberId : undefined,
-            title: form.title.trim(),
-            message: form.message.trim(),
-            priority: form.priority,
-            category: form.category,
-            link: form.link.trim() || null,
-            icon: form.icon === 'none' ? null : form.icon,
-            scheduled_for: scheduled,
-          });
-          toast.success(`Notification created. ${scheduleSummary}`);
+
+          if (form.recipientType === 'member' && (form.channelSms || form.channelEmail)) {
+            const detail = await getMember(form.memberId);
+            const phone = detail?.location?.phone_primary?.trim();
+            const email = detail?.location?.email?.trim();
+            if (form.channelSms) {
+              if (!phone) {
+                toast.error('This member has no primary phone on file; cannot send SMS.');
+              } else {
+                await sendNotificationSms({
+                  phone_number: phone,
+                  message: body,
+                  member_id: form.memberId,
+                });
+                sentSomething = true;
+              }
+            }
+            if (form.channelEmail) {
+              if (!email) {
+                toast.error('This member has no email on file; cannot send email.');
+              } else {
+                await sendNotificationEmail({
+                  email_address: email,
+                  subject: emailSubject,
+                  message_html: htmlBody,
+                  member_id: form.memberId,
+                });
+                sentSomething = true;
+              }
+            }
+          }
+
+          if (form.recipientType === 'user' && (form.channelSms || form.channelEmail)) {
+            const u = userOptions.find((row) => row.id === form.userId);
+            if (form.channelSms) {
+              const phone = u?.phone?.trim();
+              if (!phone) {
+                toast.error('This staff user has no phone on file; cannot send SMS.');
+              } else {
+                await sendNotificationSms({ phone_number: phone, message: body });
+                sentSomething = true;
+              }
+            }
+            if (form.channelEmail) {
+              const email = u?.email?.trim();
+              if (!email) {
+                toast.error('This staff user has no email on file; cannot send email.');
+              } else {
+                await sendNotificationEmail({
+                  email_address: email,
+                  subject: emailSubject,
+                  message_html: htmlBody,
+                });
+                sentSomething = true;
+              }
+            }
+          }
+
+          if (sentSomething) {
+            toast.success(`Notification sent. ${scheduleSummary}`);
+          }
         } else {
-          const visitorOnly =
-            form.batchSegmentIds.includes('visitors') &&
-            form.batchSegmentIds.every((s) => s === 'visitors') &&
-            form.batchDepartmentIds.length === 0;
-          if (visitorOnly) {
-            toast.error(
-              'send-bulk has no visitors-only target. Add “All church members” and/or departments.'
-            );
-            return;
-          }
           const wantsAll = form.batchSegmentIds.includes('all_members');
           const deptIds = [...form.batchDepartmentIds];
-          const target: 'all_members' | 'departments' | 'specific' =
-            deptIds.length > 0 ? 'departments' : 'all_members';
-          if (!wantsAll && deptIds.length === 0) {
-            toast.error('Select “All church members” and/or one or more departments.');
+          if (wantsAll && deptIds.length > 0) {
+            toast.error(
+              'Choose either all members or specific departments — not both (one send-bulk request).'
+            );
             return;
           }
+          if (!wantsAll && deptIds.length === 0) {
+            toast.error('Select “All church members” or at least one department.');
+            return;
+          }
+          const target: 'all_members' | 'departments' = wantsAll ? 'all_members' : 'departments';
           await sendBulkFromWizard({
             title: form.title.trim(),
             message: form.message.trim(),
@@ -385,96 +584,103 @@ export function CreateNotificationModal({
         onOpenChange(false);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : 'Request failed');
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
 
-    const now = new Date().toISOString();
+    setIsSubmitting(true);
+    try {
+      const now = new Date().toISOString();
 
-    let recipient_label = '';
-    let recipient_id: string | undefined;
-    let recipient_type: 'user' | 'member' | 'visitor' | undefined;
+      let recipient_label = '';
+      let recipient_id: string | undefined;
+      let recipient_type: 'user' | 'member' | 'visitor' | undefined;
 
-    if (form.audienceMode === 'single') {
-      recipient_type = form.recipientType;
-      if (form.recipientType === 'user') {
-        recipient_id = form.userId;
-        recipient_label = userOptions.find((u) => u.id === form.userId)?.label ?? form.userId;
-      } else if (form.recipientType === 'member') {
-        recipient_id = form.memberId;
-        recipient_label =
-          MOCK_NOTIFICATION_MEMBERS.find((m) => m.id === form.memberId)?.label ?? form.memberId;
+      if (form.audienceMode === 'single') {
+        recipient_type = form.recipientType;
+        if (form.recipientType === 'user') {
+          recipient_id = form.userId;
+          recipient_label = userOptions.find((u) => u.id === form.userId)?.label ?? form.userId;
+        } else if (form.recipientType === 'member') {
+          recipient_id = form.memberId;
+          recipient_label =
+            memberOptions.find((m) => m.id === form.memberId)?.label ?? form.memberId;
+        } else {
+          recipient_id = form.visitorId;
+          recipient_label =
+            visitorOptions.find((v) => v.id === form.visitorId)?.label ?? form.visitorId;
+        }
       } else {
-        recipient_id = form.visitorId;
-        recipient_label =
-          MOCK_NOTIFICATION_VISITORS.find((v) => v.id === form.visitorId)?.label ?? form.visitorId;
+        recipient_type = 'user';
+        recipient_id = userOptions[0]?.id;
+        recipient_label = batchSummary
+          ? `Batch: ${batchSummary.labels} (~${batchSummary.est.toLocaleString()} recipients)`
+          : 'Batch audience';
       }
-    } else {
-      recipient_type = 'user';
-      recipient_id = MOCK_NOTIFICATION_USERS[0]?.id;
-      recipient_label = batchSummary
-        ? `Batch: ${batchSummary.labels} (~${batchSummary.est.toLocaleString()} recipients)`
-        : 'Batch audience';
+
+      const pending =
+        scheduled !== null ||
+        (form.audienceMode === 'batch' && form.queueBatchJob) ||
+        form.scheduleMode === 'recurring';
+
+      const item: MockNotificationItem = {
+        id: crypto.randomUUID(),
+        title: form.title.trim(),
+        message: form.message.trim(),
+        priority: form.priority,
+        category: form.category,
+        link: form.link.trim() || null,
+        icon: form.icon === 'none' ? null : form.icon,
+        status: pending ? 'PENDING' : 'SENT',
+        is_read: false,
+        read_at: null,
+        created_at: now,
+        sent_at: pending ? null : now,
+        scheduled_for: scheduled,
+        recipient_type,
+        recipient_id,
+        recipient_label,
+        channels: channelsList.length ? channelsList : ['IN_APP'],
+        audience_mode: form.audienceMode,
+        batch_segment_ids: form.audienceMode === 'batch' ? [...form.batchSegmentIds] : undefined,
+        department_ids:
+          form.audienceMode === 'batch' && form.batchDepartmentIds.length > 0
+            ? [...form.batchDepartmentIds]
+            : undefined,
+        batch_summary:
+          form.audienceMode === 'batch' && batchSummary ? batchSummary.labels : undefined,
+        recipient_count_estimate:
+          form.audienceMode === 'batch' && batchSummary ? batchSummary.est : 1,
+        schedule_mode:
+          form.scheduleMode === 'instant'
+            ? 'instant'
+            : form.scheduleMode === 'one_time'
+              ? 'one_time'
+              : 'recurring',
+        recurring_pattern: form.scheduleMode === 'recurring' ? form.recurringPattern : undefined,
+        recurring_time_local: form.scheduleMode === 'recurring' ? form.recurringTime : undefined,
+        recurring_weekdays:
+          form.scheduleMode === 'recurring' && form.recurringPattern === 'weekly'
+            ? [...form.recurringWeekdays].sort((a, b) => a - b)
+            : undefined,
+        queue_as_batch_job: form.audienceMode === 'batch' ? form.queueBatchJob : false,
+        respect_quiet_hours: form.respectQuietHours,
+        email_subject_line: form.channelEmail ? form.emailSubject.trim() : undefined,
+      };
+
+      onCreated(item);
+      toast.success(
+        `Notification queued (mock). ${scheduleSummary}${
+          form.audienceMode === 'batch' && form.queueBatchJob ? ' · Batch job' : ''
+        }`
+      );
+      reset();
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const pending =
-      scheduled !== null ||
-      (form.audienceMode === 'batch' && form.queueBatchJob) ||
-      form.scheduleMode === 'recurring';
-
-    const item: MockNotificationItem = {
-      id: crypto.randomUUID(),
-      title: form.title.trim(),
-      message: form.message.trim(),
-      priority: form.priority,
-      category: form.category,
-      link: form.link.trim() || null,
-      icon: form.icon === 'none' ? null : form.icon,
-      status: pending ? 'PENDING' : 'SENT',
-      is_read: false,
-      read_at: null,
-      created_at: now,
-      sent_at: pending ? null : now,
-      scheduled_for: scheduled,
-      recipient_type,
-      recipient_id,
-      recipient_label,
-      channels: channelsList.length ? channelsList : ['IN_APP'],
-      audience_mode: form.audienceMode,
-      batch_segment_ids: form.audienceMode === 'batch' ? [...form.batchSegmentIds] : undefined,
-      department_ids:
-        form.audienceMode === 'batch' && form.batchDepartmentIds.length > 0
-          ? [...form.batchDepartmentIds]
-          : undefined,
-      batch_summary:
-        form.audienceMode === 'batch' && batchSummary ? batchSummary.labels : undefined,
-      recipient_count_estimate:
-        form.audienceMode === 'batch' && batchSummary ? batchSummary.est : 1,
-      schedule_mode:
-        form.scheduleMode === 'instant'
-          ? 'instant'
-          : form.scheduleMode === 'one_time'
-            ? 'one_time'
-            : 'recurring',
-      recurring_pattern: form.scheduleMode === 'recurring' ? form.recurringPattern : undefined,
-      recurring_time_local: form.scheduleMode === 'recurring' ? form.recurringTime : undefined,
-      recurring_weekdays:
-        form.scheduleMode === 'recurring' && form.recurringPattern === 'weekly'
-          ? [...form.recurringWeekdays].sort((a, b) => a - b)
-          : undefined,
-      queue_as_batch_job: form.audienceMode === 'batch' ? form.queueBatchJob : false,
-      respect_quiet_hours: form.respectQuietHours,
-      email_subject_line: form.channelEmail ? form.emailSubject.trim() : undefined,
-    };
-
-    onCreated(item);
-    toast.success(
-      `Notification queued (mock). ${scheduleSummary}${
-        form.audienceMode === 'batch' && form.queueBatchJob ? ' · Batch job' : ''
-      }`
-    );
-    reset();
-    onOpenChange(false);
   };
 
   const toggleSegment = (id: string) => {
@@ -531,10 +737,9 @@ export function CreateNotificationModal({
               Create New Notification
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Step-by-step wizard — audience, channels (in-app / email / SMS), scheduling & batch.
-              {notificationsApiEnabled()
-                ? ' Live: POST /notifications/notifications/ and /notifications/send-bulk/.'
-                : ' Mock mode: set NEXT_PUBLIC_USE_MOCK_NOTIFICATIONS=false with auth to use API.'}
+              Step-by-step wizard — audience from your church API, then channels (in-app / email /
+              SMS) and scheduling. Submit uses POST /notifications/notifications/ and
+              /notifications/send-bulk/ when live notifications are enabled.
             </p>
           </DialogHeader>
 
@@ -635,11 +840,16 @@ export function CreateNotificationModal({
               {/* Step 2 — Audience */}
               {form.step === 2 && (
                 <div className="animate-in fade-in slide-in-from-right-4 space-y-6 duration-300">
+                  {!audienceReady && (
+                    <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+                      <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                      Loading staff users, members, visitors, and departments from the API…
+                    </div>
+                  )}
                   <p className="text-sm text-muted-foreground">
-                    <strong>Single</strong> = one staff user, one member, or one visitor/guest.{' '}
-                    <strong>Batch</strong> = saved groups (including visitors &amp; guests). You’ll
-                    pick SMS/email/in-app in the next step — the groups here are only <em>who</em>{' '}
-                    is in the list.
+                    <strong>Single</strong> = one staff user (GET /auth/users/), one member, or one
+                    visitor (GET /members/visitors/). <strong>Batch</strong> = all members and/or
+                    selected departments (send-bulk). Step 3 sets in-app / email / SMS.
                   </p>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <button
@@ -732,7 +942,7 @@ export function CreateNotificationModal({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {MOCK_NOTIFICATION_MEMBERS.map((m) => (
+                            {memberOptions.map((m) => (
                               <SelectItem key={m.id} value={m.id}>
                                 {m.label}
                               </SelectItem>
@@ -753,7 +963,7 @@ export function CreateNotificationModal({
                               <SelectValue placeholder="Select a visitor" />
                             </SelectTrigger>
                             <SelectContent>
-                              {MOCK_NOTIFICATION_VISITORS.map((v) => (
+                              {visitorOptions.map((v) => (
                                 <SelectItem key={v.id} value={v.id}>
                                   {v.label}
                                 </SelectItem>
@@ -769,11 +979,11 @@ export function CreateNotificationModal({
                     <div className="space-y-3">
                       <Label className="text-base">Who should receive this?</Label>
                       <p className="text-xs text-muted-foreground">
-                        Check one or more groups. Numbers are demo counts. Step 3 is where you turn
-                        on app, email, or text.
+                        Member counts come from your directory. Do not select “All church members”
+                        and departments together — pick one strategy per send.
                       </p>
                       <div className="grid gap-2">
-                        {MOCK_BATCH_SEGMENTS.map((seg) => (
+                        {batchSegments.map((seg) => (
                           <label
                             key={seg.id}
                             className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent/40"
@@ -787,7 +997,7 @@ export function CreateNotificationModal({
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <span className="font-medium">{seg.label}</span>
                                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                                  ~{seg.count} people
+                                  {seg.count} {seg.id === 'all_members' ? 'members' : 'people'}
                                 </span>
                               </div>
                               <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
@@ -1097,10 +1307,8 @@ export function CreateNotificationModal({
                               form.recipientType === 'user'
                                 ? userOptions.find((u) => u.id === form.userId)?.label
                                 : form.recipientType === 'member'
-                                  ? MOCK_NOTIFICATION_MEMBERS.find((m) => m.id === form.memberId)
-                                      ?.label
-                                  : MOCK_NOTIFICATION_VISITORS.find((v) => v.id === form.visitorId)
-                                      ?.label
+                                  ? memberOptions.find((m) => m.id === form.memberId)?.label
+                                  : visitorOptions.find((v) => v.id === form.visitorId)?.label
                             }`
                           : batchSummary
                             ? `${batchSummary.labels} (~${batchSummary.est})`
@@ -1123,8 +1331,8 @@ export function CreateNotificationModal({
                   </div>
                   <p className="text-[11px] text-muted-foreground">
                     {notificationsApiEnabled()
-                      ? 'Submits to the live notifications API (single create or send-bulk).'
-                      : 'Mock: row is local only. Enable API with NEXT_PUBLIC_USE_MOCK_NOTIFICATIONS=false.'}
+                      ? 'Submits to the notifications API (single create or send-bulk).'
+                      : 'Preview only: enable live notifications (token + NEXT_PUBLIC_USE_MOCK_NOTIFICATIONS=false) to POST to the API.'}
                   </p>
                 </div>
               )}
@@ -1144,13 +1352,27 @@ export function CreateNotificationModal({
                 Cancel
               </Button>
               {form.step < 4 ? (
-                <Button type="button" onClick={goNext}>
+                <Button type="button" onClick={goNext} disabled={isSubmitting}>
                   Next
                 </Button>
               ) : (
-                <Button type="button" className="gap-2" onClick={handleSubmit}>
-                  <Send className="size-4" />
-                  Create notification
+                <Button
+                  type="button"
+                  className="gap-2 min-w-[200px]"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+                      Sending notification…
+                    </>
+                  ) : (
+                    <>
+                      <Send className="size-4 shrink-0" aria-hidden />
+                      Create notification
+                    </>
+                  )}
                 </Button>
               )}
             </div>
@@ -1165,8 +1387,8 @@ export function CreateNotificationModal({
               Select departments
             </DialogTitle>
             <DialogDescription>
-              Check every ministry that should receive this notification. This list is mock data —
-              in production it comes from GET /departments/ when the API is enabled.
+              Ministries from GET /departments/ for your church. Selected IDs are sent with
+              send-bulk when you target departments only.
             </DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-2">

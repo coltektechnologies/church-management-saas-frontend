@@ -35,6 +35,7 @@ interface Props {
   onDeleteActivity: (activityId: string) => void;
   expenses: Expense[];
   onAssignMember: (memberId: string, role: string) => Promise<void>;
+  onLeadershipSaved: () => Promise<void>;
 }
 
 type TabKey = 'overview' | 'members' | 'activities' | 'budget' | 'settings';
@@ -51,6 +52,7 @@ export default function DepartmentDetailsModal({
   onUpdateDepartment,
   expenses,
   onAssignMember,
+  onLeadershipSaved,
 }: Props) {
   const { can } = usePermissions();
 
@@ -147,7 +149,13 @@ export default function DepartmentDetailsModal({
           )}
           {activeTab === 'budget' && <BudgetTab department={department} expenses={expenses} />}
           {activeTab === 'settings' && can('canViewSettings') && (
-            <SettingsTab department={department} onUpdateDepartment={onUpdateDepartment} />
+            <SettingsTab
+              department={department}
+              onUpdateDepartment={onUpdateDepartment}
+              churchMembers={churchMembers}
+              departmentMembers={departmentMembers}
+              onLeadershipSaved={onLeadershipSaved}
+            />
           )}
         </div>
       </div>

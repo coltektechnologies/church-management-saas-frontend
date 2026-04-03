@@ -51,7 +51,7 @@ export default function MembershipDashboardPage() {
   }, []);
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8">
+    <div className="w-full max-w-7xl mx-auto min-w-0 space-y-8">
       {/* Header & Breadcrumb */}
       <div>
         <h1

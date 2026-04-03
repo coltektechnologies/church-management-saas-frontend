@@ -1,9 +1,10 @@
 export const ROUTES = {
   home: '/',
   features: '/features',
-  pricing: '#',
+  developers: '/developers',
+  pricing: '/pricing',
   solutions: '#',
-  contact: '#',
+  contact: '/contact',
   testimonials: '#',
   privacy: '#',
 

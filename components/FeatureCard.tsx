@@ -1,12 +1,18 @@
 'use client';
 
+import Image from 'next/image';
+import type { ReactNode } from 'react';
+
 type Props = {
   title: string;
   summary: string;
-  details: React.ReactNode;
+  details: ReactNode;
+  /** Professional hero image (e.g. Unsplash direct URL). */
+  imageUrl?: string;
+  imageAlt?: string;
 };
 
-export default function FeatureCard({ title, summary, details }: Props) {
+export default function FeatureCard({ title, summary, details, imageUrl, imageAlt }: Props) {
   return (
     <div className="group bg-[#083b5c] text-white rounded-3xl overflow-hidden shadow-xl transition-all duration-500 max-w-5xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 p-10 items-center">
@@ -21,8 +27,20 @@ export default function FeatureCard({ title, summary, details }: Props) {
           </button>
         </div>
 
-        {/* IMAGE PLACEHOLDER */}
-        <div className="w-full h-64 lg:h-72 bg-gray-400 rounded-2xl" />
+        {imageUrl ? (
+          <div className="relative w-full h-64 lg:h-72 rounded-2xl overflow-hidden shadow-lg ring-1 ring-white/10">
+            <Image
+              src={imageUrl}
+              alt={imageAlt ?? title}
+              fill
+              className="object-cover transition duration-500 group-hover:scale-[1.02]"
+              sizes="(max-width: 1024px) 100vw, 42rem"
+              priority={false}
+            />
+          </div>
+        ) : (
+          <div className="w-full h-64 lg:h-72 bg-gray-400 rounded-2xl" aria-hidden />
+        )}
       </div>
 
       {/* EXPANDED CONTENT */}

@@ -10,8 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import logo from '@/assets/logo.svg';
+import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
 
 const ForgotPassword = () => {
+  useRedirectIfAuthenticated();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);

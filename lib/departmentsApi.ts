@@ -95,7 +95,15 @@ export interface DepartmentDetailResponse {
   color?: string | null;
   is_active: boolean;
   member_count?: number;
-  heads?: { id: string; name: string; assigned_at?: string }[];
+  /** Present on some API shapes; list/detail may omit when `heads` is populated */
+  head_name?: string | null;
+  heads?: {
+    id: string;
+    name: string;
+    assigned_at?: string;
+    /** API: HEAD | ASSISTANT; omit for legacy rows */
+    head_role?: string;
+  }[];
   elder_in_charge?: string | null;
   elder_in_charge_name?: string | null;
   current_budget?: {
@@ -191,6 +199,9 @@ export function mergeDepartmentDetail(
     ? new Date(detail.created_at).toLocaleDateString()
     : base.dateEstablished;
 
+  const heads = detail.heads ?? [];
+  const primaryHead = heads.find((h) => (h.head_role ?? 'HEAD') === 'HEAD') ?? heads[0];
+  const assistantHead = heads.find((h) => h.head_role === 'ASSISTANT');
   return {
     ...base,
     name: detail.name,
@@ -204,6 +215,12 @@ export function mergeDepartmentDetail(
     themeColor,
     icon,
     dateEstablished: est,
+    headMemberId: primaryHead?.id ?? null,
+    headDisplayName: primaryHead?.name ?? null,
+    assistantHeadMemberId: assistantHead?.id ?? null,
+    assistantHeadDisplayName: assistantHead?.name ?? null,
+    elderInChargeMemberId: detail.elder_in_charge ?? null,
+    elderInChargeDisplayName: detail.elder_in_charge_name ?? null,
   };
 }
 
@@ -283,14 +300,40 @@ export async function createDepartment(
   });
 }
 
+/** PATCH body; `elder_in_charge` is member UUID or null to clear (update only). */
+export type UpdateDepartmentBody = Partial<CreateDepartmentBody> & {
+  elder_in_charge?: string | null;
+};
+
 export async function updateDepartment(
   id: string,
-  body: Partial<CreateDepartmentBody>
+  body: UpdateDepartmentBody
 ): Promise<DepartmentDetailResponse> {
   const base = getApiBaseUrl();
   return fetchAuth<DepartmentDetailResponse>(`${base}/departments/${id}/`, {
     method: 'PATCH',
     body: JSON.stringify(body),
+  });
+}
+
+/** Assign department head (`member_id` = church member UUID). */
+export async function setDepartmentHead(departmentId: string, memberId: string): Promise<void> {
+  const base = getApiBaseUrl();
+  await fetchAuth<unknown>(`${base}/departments/${departmentId}/head/`, {
+    method: 'PUT',
+    body: JSON.stringify({ member_id: memberId }),
+  });
+}
+
+/** Assign assistant head, or pass `null` to remove. */
+export async function setDepartmentAssistantHead(
+  departmentId: string,
+  memberId: string | null
+): Promise<void> {
+  const base = getApiBaseUrl();
+  await fetchAuth<unknown>(`${base}/departments/${departmentId}/assistant-head/`, {
+    method: 'PUT',
+    body: JSON.stringify({ member_id: memberId }),
   });
 }
 
@@ -414,4 +457,80 @@ export async function deleteDepartmentActivity(
       (typeof data?.detail === 'string' ? data.detail : null) || `Request failed: ${res.status}`
     );
   }
+}
+
+export type ProgramApprovalStatus =
+  | 'SUBMITTED'
+  | 'ELDER_APPROVED'
+  | 'SECRETARIAT_APPROVED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'DRAFT';
+
+export type ProgramApprovalDepartment = 'ELDER' | 'SECRETARIAT' | 'TREASURY';
+export type ProgramApprovalAction = 'APPROVE' | 'REJECT';
+
+export interface ProgramListItem {
+  id: string;
+  title: string;
+  department: string;
+  department_name?: string;
+  status: ProgramApprovalStatus;
+  status_display?: string;
+  start_date?: string;
+  end_date?: string;
+  location?: string;
+  submission_type?: string;
+  submitted_at?: string | null;
+  approved_at?: string | null;
+  requires_approval?: string[];
+}
+
+function inferProgramApprovalDepartment(
+  status: ProgramApprovalStatus
+): ProgramApprovalDepartment | null {
+  if (status === 'SUBMITTED') {
+    return 'ELDER';
+  }
+  if (status === 'ELDER_APPROVED') {
+    return 'SECRETARIAT';
+  }
+  if (status === 'SECRETARIAT_APPROVED') {
+    return 'TREASURY';
+  }
+  return null;
+}
+
+/** GET /api/programs/?status= */
+export async function fetchProgramsByStatus(
+  status: ProgramApprovalStatus
+): Promise<ProgramListItem[]> {
+  const base = getApiBaseUrl();
+  const sp = new URLSearchParams();
+  sp.set('status', status);
+  sp.set('page_size', '200');
+  const data = await fetchAuth<unknown>(`${base}/programs/?${sp.toString()}`, { method: 'GET' });
+  return normalizeListResponse<ProgramListItem>(data);
+}
+
+/** POST /api/programs/{id}/review/ */
+export async function reviewProgramApproval(
+  programId: string,
+  opts: { action: ProgramApprovalAction; department?: ProgramApprovalDepartment; notes?: string },
+  currentStatus?: ProgramApprovalStatus
+): Promise<unknown> {
+  const base = getApiBaseUrl();
+  const department =
+    opts.department ?? (currentStatus ? inferProgramApprovalDepartment(currentStatus) : null);
+  if (!department) {
+    throw new Error('Program is not in a reviewable approval stage.');
+  }
+  return fetchAuth(`${base}/programs/${programId}/review/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      department,
+      action: opts.action,
+      notes: opts.notes ?? '',
+    }),
+  });
 }

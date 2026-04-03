@@ -78,6 +78,8 @@ export interface AnnouncementCategoryApi {
 export interface AnnouncementListItemApi {
   id: string;
   title: string;
+  /** Included for admin list cards / search; same field as detail. */
+  content?: string;
   status: string;
   status_display?: string;
   priority: string;

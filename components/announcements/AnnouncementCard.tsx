@@ -118,7 +118,16 @@ export function AnnouncementCard({
       </CardHeader>
 
       <CardContent className="flex-grow pb-4">
-        <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{announcement.content}</p>
+        <p className="text-sm text-muted-foreground line-clamp-3 mb-4 min-h-[3lh]">
+          {announcement.content?.trim() ? (
+            announcement.content
+          ) : (
+            <span className="italic text-muted-foreground/85">
+              Open <span className="not-italic font-medium text-muted-foreground">View</span> to
+              read the full announcement.
+            </span>
+          )}
+        </p>
 
         <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5" title="Author">

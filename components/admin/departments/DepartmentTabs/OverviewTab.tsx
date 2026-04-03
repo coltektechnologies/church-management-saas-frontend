@@ -24,15 +24,22 @@ export default function OverviewTab({ department, departmentMembers }: Props) {
       ? 0
       : Math.min((department.budgetUsed / department.annualBudget) * 100, 100);
 
-  const departmentHead = departmentMembers.find((m) => m.role === 'Leader')?.name ?? 'Not Assigned';
+  const departmentHead =
+    department.headDisplayName?.trim() ||
+    departmentMembers.find((m) => m.role === 'Leader')?.name ||
+    'Not Assigned';
   const assistantHead =
-    departmentMembers.find((m) => m.role === 'Assistant')?.name ?? 'Not Assigned';
+    department.assistantHeadDisplayName?.trim() ||
+    departmentMembers.find((m) => m.role === 'Assistant')?.name ||
+    'Not Assigned';
+  const elderInCharge = department.elderInChargeDisplayName?.trim() || 'Not Assigned';
 
   return (
     <>
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         <InfoCard title="Department Head" value={departmentHead} />
         <InfoCard title="Assistant Head" value={assistantHead} />
+        <InfoCard title="Elder in charge" value={elderInCharge} />
         <InfoCard
           title="Status"
           value={department.status === 'active' ? 'Active' : 'Inactive'}

@@ -1,5 +1,7 @@
-import DashboardPage from '@/components/secretary/dashboard/DashboardPage';
+'use client';
+
+import SecretaryDashboard from '@/components/secretary/dashboard/SecretaryDashboard';
 
 export default function SecretaryPage() {
-  return <DashboardPage />;
+  return <SecretaryDashboard />;
 }

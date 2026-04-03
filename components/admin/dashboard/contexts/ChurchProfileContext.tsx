@@ -14,6 +14,18 @@ import {
 export type SubscriptionStatus = 'trial' | 'active' | 'inactive';
 export type ThemeMode = 'light' | 'dark';
 
+/** Department settings pre-fill; wire to API / superadmin store when available. */
+export interface GrantedAdmin {
+  email: string;
+  first_name: string;
+  last_name: string;
+  department?: string;
+  departmentType?: string;
+  churchLink?: string;
+  phone?: string;
+  granted_at: string;
+}
+
 export interface ChurchProfile {
   churchName: string;
   tagline: string;
@@ -61,6 +73,8 @@ interface ChurchProfileContextType {
   updateProfile: (partial: Partial<ChurchProfile>) => void;
   toggleDarkMode: () => void;
   isReady: boolean;
+  /** Active admins for department profile pre-fill; returns [] until backed by API. */
+  getActiveAdmins: () => GrantedAdmin[];
 }
 
 const ChurchProfileContext = createContext<ChurchProfileContextType | undefined>(undefined);
@@ -139,8 +153,14 @@ export const ChurchProfileProvider = ({ children }: { children: ReactNode }) => 
     });
   }, []);
 
+  const getActiveAdmins = useCallback((): GrantedAdmin[] => {
+    return [];
+  }, []);
+
   return (
-    <ChurchProfileContext.Provider value={{ profile, updateProfile, toggleDarkMode, isReady }}>
+    <ChurchProfileContext.Provider
+      value={{ profile, updateProfile, toggleDarkMode, isReady, getActiveAdmins }}
+    >
       {children}
     </ChurchProfileContext.Provider>
   );
