@@ -113,12 +113,12 @@ export function proxy(request: NextRequest) {
   // //create env.local with NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true to skip auth for /departments in dev, then restart dev server. Never enable that in production.
 
   // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
-  const skipSecretaryCookie =
-    process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
-    (pathname === '/secretary' || pathname.startsWith('/secretary/'));
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
-    // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
-    return NextResponse.next();
+  // const skipSecretaryCookie =
+  //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+  //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
+    if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
+      return NextResponse.next();
   }
 
   if (!sessionOk) {

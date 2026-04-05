@@ -76,3 +76,12 @@ export async function fetchUserRolesForRole(roleId: string): Promise<UserRoleRow
   });
   return normalizeList<UserRoleRow>(data).filter((ur) => ur.is_active !== false);
 }
+
+/** POST …/auth/user-roles/ — assign a role within the signed-in user's church. */
+export async function createUserRole(userId: string, roleId: string): Promise<UserRoleRow> {
+  const base = getApiBaseUrl();
+  return fetchAuth<UserRoleRow>(`${base}/auth/user-roles/`, {
+    method: 'POST',
+    body: JSON.stringify({ user: userId, role: roleId }),
+  });
+}

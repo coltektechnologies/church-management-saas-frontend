@@ -420,6 +420,8 @@ export interface MemberListItem {
   gender?: string;
   /** Present when member has portal login; matches `User.id` for role assignments. */
   system_user_id?: string | null;
+  /** Active department assignments from `MemberDepartment` (GET list/detail). */
+  department_names?: string[];
   location?: {
     phone_primary?: string;
     email?: string | null;

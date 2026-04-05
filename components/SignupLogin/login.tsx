@@ -13,7 +13,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '@/assets/logo.svg';
 import { login as apiLogin } from '@/lib/api';
-import { getSafeReturnPath } from '@/lib/safeReturnPath';
+import {
+  resolvePostLoginPath,
+  type PostLoginUser,
+} from '@/lib/postLoginRedirect';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
 import { toast } from 'sonner';
@@ -78,7 +81,7 @@ const Login = () => {
       localStorage.setItem('user', JSON.stringify(user));
       setChurchSessionCookie();
       const next = searchParams.get('next');
-      const dest = getSafeReturnPath(next);
+      const dest = resolvePostLoginPath(next, user as PostLoginUser);
       toast.success('Signed in successfully', {
         description:
           typeof user.email === 'string' && user.email
