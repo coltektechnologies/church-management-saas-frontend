@@ -1,5 +1,6 @@
 import { Wallet } from 'lucide-react';
 import DeptComingSoon from '@/components/departments/DeptComingSoon';
+import BudgetExpenses from '@/components/departments/BudgetAndExpenses/DepartmentBudgetAndExpense';
 export default function BudgetPage() {
-  return <DeptComingSoon title="Budget & Expenses" icon={<Wallet size={56} strokeWidth={1.2} />} />;
+  return <BudgetExpenses />;
 }
