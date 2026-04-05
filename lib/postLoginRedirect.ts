@@ -27,9 +27,9 @@ export function defaultHomePathForUser(user: PostLoginUser | null | undefined): 
     return lv < bestLv ? r : best;
   });
 
-  const name = String(primary?.name ?? '').trim();
+  const name = String(primary?.name ?? '').trim().toLowerCase();
 
-  if (name === 'Secretary') {
+  if (name === 'secretary') {
     return '/secretary';
   }
 

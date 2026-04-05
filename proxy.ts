@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { getSafeInternalPath } from '@/lib/safeReturnPath';
+
 /**
  * Next.js 16+: edge guard before App Router. Cookie must match login (see `churchSessionBrowser.ts`).
  *
@@ -84,9 +86,12 @@ export function proxy(request: NextRequest) {
 
   // Logged-in users cannot open login/signup (back button or direct URL) without logging out.
   if (sessionOk && isAuthOnlyPath(pathname)) {
+    const nextParam = request.nextUrl.searchParams.get('next');
+    const safeNext = getSafeInternalPath(nextParam);
     const dest = request.nextUrl.clone();
-    dest.pathname = LOGGED_IN_AUTH_REDIRECT;
     dest.search = '';
+    // Prefer ?next= when safe; otherwise /dashboard (client picks /secretary vs /admin from localStorage).
+    dest.pathname = safeNext ?? LOGGED_IN_AUTH_REDIRECT;
     return NextResponse.redirect(dest);
   }
 
