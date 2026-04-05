@@ -98,19 +98,19 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(dest);
   }
 
-  // Uncomment for local department preview (with .env NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true): and
-  // comment out the skipSecretaryCookie block below, then restart dev. Never enable that in production.
-  // 1. Define the skip logic based on your environment variable
-  const skipDepartmentsAuth =
-    process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true' &&
-    (pathname === '/departments' || pathname.startsWith('/departments/'));
+  // // Uncomment for local department preview (with .env NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true): and
+  // // comment out the skipSecretaryCookie block below, then restart dev. Never enable that in production.
+  // // 1. Define the skip logic based on your environment variable
+  // const skipDepartmentsAuth =
+  //   process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true' &&
+  //   (pathname === '/departments' || pathname.startsWith('/departments/'));
 
-  // 2. Add it to your existing public path conditional, Uncomment for local department preview (with .env NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true): and
-  // comment out the skipSecretaryCookie block below, then restart dev. Never enable that in production.
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipDepartmentsAuth) {
-    return NextResponse.next();
-  }
-  //create env.local with NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true to skip auth for /departments in dev, then restart dev server. Never enable that in production.
+  // // 2. Add it to your existing public path conditional, Uncomment for local department preview (with .env NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true): and
+  // // comment out the skipSecretaryCookie block below, then restart dev. Never enable that in production.
+  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipDepartmentsAuth) {
+  //   return NextResponse.next();
+  // }
+  // //create env.local with NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true to skip auth for /departments in dev, then restart dev server. Never enable that in production.
 
   // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
   const skipSecretaryCookie =
