@@ -3,33 +3,36 @@
 import { useRouter } from 'next/navigation';
 import { CalendarDays } from 'lucide-react';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
+import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvider';
 
 // ─── Soft-coded style constants ───────────────────────────────────────────────
 const STYLE = {
-  containerRadius: '10px', // Outer card corner radius
-  containerBgLight: '#FFFFFF', // Card background light mode
-  containerBgDark: '#1A2B45', // Card background dark mode
-  containerBorderLight: '#E5E7EB', // Card border light mode
-  containerBorderDark: '#2A3F5F', // Card border dark mode
-  titleColorLight: '#2FC4B2', // Title + icon color light (accentColor from profile)
-  dividerColorLight: '#E5E7EB', // Divider line color light
-  dividerColorDark: '#2A3F5F', // Divider line color dark
-  // Activity placeholder card
-  itemBg: '#EEEEEF', // Placeholder card background
-  itemRadius: '10px', // Placeholder card corner radius
-  itemTextColor: '#111111', // Placeholder card text color
-  itemSubColor: '#6B7280', // Placeholder card sub-text color
-  itemDateColor: '#6B7280', // Date badge on right side
-  // View All button
-  btnBg: '#EEEEEF', // Button background
-  btnBorder: '#6B7280', // Button border color
-  btnRadius: '8px', // Button corner radius
-  btnShadow: '0px 1px 3px rgba(15,23,42,0.08)', // Button shadow
-  btnTextLight: '#111111', // Button text light mode
-  btnTextDark: '#F0F4F8', // Button text dark mode
+  containerRadius: '10px',        // Outer card corner radius
+  containerBgLight: '#FFFFFF',    // Card background light mode
+  containerBgDark: '#1A2B45',     // Card background dark mode
+  containerBorderLight: '#E5E7EB',
+  containerBorderDark: '#2A3F5F',
+  dividerColorLight: '#E5E7EB',
+  dividerColorDark: '#2A3F5F',
+  // Activity item card
+  itemBgLight: '#EEEEEF',         // Placeholder card bg light
+  itemBgDark: '#152A44',          // Placeholder card bg dark
+  itemRadius: '10px',
+  itemTextColorLight: '#111111',
+  itemTextColorDark: '#F0F4F8',
+  itemSubColorLight: '#6B7280',
+  itemSubColorDark: '#94A3B8',
+  itemDateColorLight: '#6B7280',
+  itemDateColorDark: '#94A3B8',
+  // View All button — themed
+  btnBgLight: '#EEEEEF',
+  btnBgDark: '#1E3A5F',
+  btnRadius: '8px',
+  btnShadow: '0px 1px 3px rgba(15,23,42,0.08)',
+  btnTextLight: '#111111',
+  btnTextDark: '#F0F4F8',
 };
 
-// Activities route — linked to the activities page
 const ACTIVITIES_ROUTE = '/departments/activities';
 
 export interface DeptActivity {
@@ -41,7 +44,6 @@ export interface DeptActivity {
   status?: 'upcoming' | 'completed' | 'cancelled';
 }
 
-// Dummy data for testing — replace with live API data
 const DEFAULT_ACTIVITIES: DeptActivity[] = [
   {
     id: '1',
@@ -68,18 +70,38 @@ interface Props {
 export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES }: Props) {
   const router = useRouter();
   const { profile, isReady } = useDepartmentProfile();
+  // ── Use mounted guard to prevent hydration mismatch ───────────────────────
+  const { resolvedTheme, mounted } = useDeptTheme();
+  const isDark = mounted ? resolvedTheme === 'dark' : false;
 
-  const isDark = isReady ? profile.darkMode : false;
   const accentColor = isReady
     ? isDark
       ? profile.darkAccentColor || '#2FC4B2'
-      : profile.accentColor || '#2FC4B2'
+      : profile.accentColor    || '#2FC4B2'
     : '#2FC4B2';
 
-  const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
+  // ── All colours derived after mount so SSR and client agree ───────────────
+  const containerBg     = isDark ? STYLE.containerBgDark     : STYLE.containerBgLight;
   const containerBorder = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
-  const dividerColor = isDark ? STYLE.dividerColorDark : STYLE.dividerColorLight;
-  const btnText = isDark ? STYLE.btnTextDark : STYLE.btnTextLight;
+  const dividerColor    = isDark ? STYLE.dividerColorDark    : STYLE.dividerColorLight;
+  const itemBg          = isDark ? STYLE.itemBgDark          : STYLE.itemBgLight;
+  const itemTextColor   = isDark ? STYLE.itemTextColorDark   : STYLE.itemTextColorLight;
+  const itemSubColor    = isDark ? STYLE.itemSubColorDark    : STYLE.itemSubColorLight;
+  const itemDateColor   = isDark ? STYLE.itemDateColorDark   : STYLE.itemDateColorLight;
+  const btnBg           = isDark ? STYLE.btnBgDark           : STYLE.btnBgLight;
+  const btnText         = isDark ? STYLE.btnTextDark         : STYLE.btnTextLight;
+
+  const btnStyle: React.CSSProperties = {
+    backgroundColor: btnBg,
+    borderRadius: STYLE.btnRadius,
+    boxShadow: STYLE.btnShadow,
+    color: btnText,
+    fontFamily: 'Poppins',
+    fontWeight: '400',
+    fontSize: '13px',
+    border: `1px solid ${isDark ? STYLE.containerBorderDark : 'transparent'}`,
+    transition: 'background-color 0.2s ease, color 0.2s ease',
+  };
 
   return (
     <div
@@ -88,9 +110,10 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
         borderRadius: STYLE.containerRadius,
         backgroundColor: containerBg,
         borderColor: containerBorder,
+        transition: 'background-color 0.3s ease, border-color 0.3s ease',
       }}
     >
-      {/* Header row — title + icon + View All button */}
+      {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <CalendarDays size={18} style={{ color: accentColor }} />
@@ -106,25 +129,16 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
             Upcoming Activities
           </h3>
         </div>
-        {/* View All — navigates to activities page */}
         <button
           onClick={() => router.push(ACTIVITIES_ROUTE)}
-          className="text-xs sm:text-sm font-semibold px-3 py-1.5 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-          style={{
-            backgroundColor: STYLE.btnBg,
-            borderRadius: STYLE.btnRadius,
-            boxShadow: STYLE.btnShadow,
-            color: btnText,
-            fontFamily: 'Poppins',
-            fontWeight: '400',
-            fontSize: '13px',
-          }}
+          className="text-xs sm:text-sm font-semibold px-3 py-1.5 transition-all duration-200"
+          style={btnStyle}
         >
           View All
         </button>
       </div>
 
-      {/* Divider  inset from edges to match screenshot */}
+      {/* Divider */}
       <div
         className="mb-4"
         style={{ height: '1px', backgroundColor: dividerColor, marginLeft: 0, marginRight: 0 }}
@@ -137,7 +151,7 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
             <CalendarDays size={32} style={{ color: accentColor, opacity: 0.3 }} className="mb-2" />
             <p
               className="text-sm font-medium"
-              style={{ color: STYLE.itemSubColor, fontFamily: 'Poppins' }}
+              style={{ color: itemSubColor, fontFamily: 'Poppins' }}
             >
               No upcoming activities
             </p>
@@ -148,8 +162,10 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
               key={activity.id}
               className="flex items-center justify-between p-4"
               style={{
-                backgroundColor: STYLE.itemBg, // #EEEEEF placeholder card bg
-                borderRadius: STYLE.itemRadius, // 10px card radius
+                backgroundColor: itemBg,
+                borderRadius: STYLE.itemRadius,
+                border: `1px solid ${isDark ? STYLE.containerBorderDark : 'transparent'}`,
+                transition: 'background-color 0.3s ease',
               }}
             >
               {/* Left: icon + name + date/time/location */}
@@ -158,7 +174,7 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
                 <div className="min-w-0">
                   <p
                     style={{
-                      color: STYLE.itemTextColor,
+                      color: itemTextColor,
                       fontFamily: 'Poppins',
                       fontWeight: '500',
                       fontSize: '14px',
@@ -168,7 +184,7 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
                   </p>
                   <p
                     className="text-xs md:text-sm mt-0.5"
-                    style={{ color: STYLE.itemSubColor, fontFamily: 'Poppins', fontWeight: '400' }}
+                    style={{ color: itemSubColor, fontFamily: 'Poppins', fontWeight: '400' }}
                   >
                     {activity.date} at {activity.time} • {activity.location}
                   </p>
@@ -178,7 +194,7 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
               {/* Right: date badge */}
               <span
                 className="text-xs font-medium flex-shrink-0 ml-3"
-                style={{ color: STYLE.itemDateColor, fontFamily: 'Poppins' }}
+                style={{ color: itemDateColor, fontFamily: 'Poppins' }}
               >
                 {activity.date}
               </span>

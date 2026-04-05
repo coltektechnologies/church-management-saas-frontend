@@ -1,6 +1,7 @@
-import { FileBarChart } from 'lucide-react';
-import ComingSoon from '@/components/secretary/ComingSoon';
+'use client';
 
-export default function ReportsPage() {
-  return <ComingSoon title="Reports" icon={<FileBarChart className="w-10 h-10 text-primary" />} />;
+import AdminReportsHub from '@/components/admin/reports/AdminReportsHub';
+
+export default function SecretaryReportsPage() {
+  return <AdminReportsHub variant="secretary" />;
 }
