@@ -1,5 +1,5 @@
-import { Users } from 'lucide-react';
-import DeptComingSoon from '@/components/departments/DeptComingSoon';
+import DepartmentMembersPage from '@/components/departments/members/DepartmentMembersPage';
+
 export default function MembersPage() {
-  return <DeptComingSoon title="Members" icon={<Users size={56} strokeWidth={1.2} />} />;
+  return <DepartmentMembersPage />;
 }
