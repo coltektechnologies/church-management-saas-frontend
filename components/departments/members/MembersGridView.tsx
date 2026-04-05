@@ -112,8 +112,7 @@ export default function MembersGridView({
               border: `1px solid ${borderColor}`,
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLDivElement).style.boxShadow =
-                '0 4px 20px rgba(0,0,0,0.10)';
+              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.10)';
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';

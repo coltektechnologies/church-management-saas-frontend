@@ -18,17 +18,17 @@ function autoText(hex: string): string {
   const g = parseInt(h.slice(2, 4), 16) / 255;
   const b = parseInt(h.slice(4, 6), 16) / 255;
   const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-  const L   = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
   return L > 0.179 ? '#111827' : '#FFFFFF';
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface MemberRegistrationSuccessProps {
-  memberId:     string;
-  memberName:   string;
+  memberId: string;
+  memberName: string;
   onAddAnother: () => void;
-  onDashboard:  () => void;
+  onDashboard: () => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -40,53 +40,55 @@ export default function MemberRegistrationSuccess({
   onDashboard,
 }: MemberRegistrationSuccessProps) {
   const [visible, setVisible] = useState(false);
-  const { profile, isReady }  = useDepartmentProfile();
+  const { profile, isReady } = useDepartmentProfile();
   const { resolvedTheme, mounted } = useDeptTheme();
 
   const isDark = mounted ? resolvedTheme === 'dark' : false;
 
   // ── Palette from Image ──────────────────────────────────────────────────────
-  const mintBg      = '#FAF6F6';   // The soft off-white/mint background
-  const successGreen = '#24D427';   // The vibrant green for the check circle
-  const forestGreen  = '#419443';   // The deep green for the heading
-  const darkText     = '#111827';   // Primary body text
-  const mutedGray    = '#6B7280';   // Muted notes/subtext
-  const borderGray   = '#E5E7EB';   // Subtle borders
+  const mintBg = '#FAF6F6'; // The soft off-white/mint background
+  const successGreen = '#24D427'; // The vibrant green for the check circle
+  const forestGreen = '#419443'; // The deep green for the heading
+  const darkText = '#111827'; // Primary body text
+  const mutedGray = '#6B7280'; // Muted notes/subtext
+  const borderGray = '#E5E7EB'; // Subtle borders
 
   // ── Theme Overrides ─────────────────────────────────────────────────────────
   const primary = isReady
-    ? (isDark ? profile.darkPrimaryColor  || '#1A3F6B' : profile.primaryColor  || '#0B2A4A')
+    ? isDark
+      ? profile.darkPrimaryColor || '#1A3F6B'
+      : profile.primaryColor || '#0B2A4A'
     : '#0B2A4A';
 
   // Card background and shadows
-  const cardBg      = isDark ? (isReady ? profile.darkSidebarColor || '#0D1F36' : '#0D1F36') : mintBg;
-  const cardBorder  = isDark ? 'rgba(255,255,255,0.08)' : borderGray;
-  const cardShadow  = isDark
+  const cardBg = isDark ? (isReady ? profile.darkSidebarColor || '#0D1F36' : '#0D1F36') : mintBg;
+  const cardBorder = isDark ? 'rgba(255,255,255,0.08)' : borderGray;
+  const cardShadow = isDark
     ? `0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px ${primary}40`
     : '0 24px 80px rgba(0,0,0,0.10)';
 
   // Text Colors
-  const headingClr  = isDark ? '#2FC4B2' : forestGreen; 
-  const bodyText    = isDark ? '#F1F5F9' : darkText;
-  const mutedText   = isDark ? 'rgba(241,245,249,0.55)' : mutedGray;
+  const headingClr = isDark ? '#2FC4B2' : forestGreen;
+  const bodyText = isDark ? '#F1F5F9' : darkText;
+  const mutedText = isDark ? 'rgba(241,245,249,0.55)' : mutedGray;
 
   // Member-ID chip
-  const chipBg      = isDark ? `${primary}30` : mintBg;
-  const chipBorder  = isDark ? `${primary}55` : borderGray;
-  const chipText    = isDark ? '#F1F5F9'       : darkText;
+  const chipBg = isDark ? `${primary}30` : mintBg;
+  const chipBorder = isDark ? `${primary}55` : borderGray;
+  const chipText = isDark ? '#F1F5F9' : darkText;
 
   // Check circle
-  const circleBg    = isDark ? '#2FC4B2' : successGreen;
-  const circleText  = autoText(circleBg);
+  const circleBg = isDark ? '#2FC4B2' : successGreen;
+  const circleText = autoText(circleBg);
 
   // Buttons
-  const addBtnBg     = isDark ? 'rgba(255,255,255,0.06)' : mintBg;
+  const addBtnBg = isDark ? 'rgba(255,255,255,0.06)' : mintBg;
   const addBtnBorder = isDark ? 'rgba(255,255,255,0.12)' : borderGray;
-  const addBtnText   = isDark ? '#CBD5E1'                : '#374151';
+  const addBtnText = isDark ? '#CBD5E1' : '#374151';
 
-  const dashBtnBg    = '#2A7A2C';
-  const dashBtnText  = autoText(primary);
-  const dashShadow   = `0 4px 16px ${primary}55`;
+  const dashBtnBg = '#2A7A2C';
+  const dashBtnText = autoText(primary);
+  const dashShadow = `0 4px 16px ${primary}55`;
 
   // Entrance animation
   useEffect(() => {
@@ -222,12 +224,15 @@ export default function MemberRegistrationSuccess({
           minHeight: '500px',
           boxSizing: 'border-box',
           width: '100%',
-          background: isDark ? (isReady ? profile.darkBackgroundColor || '#0A1628' : '#0A1628') : '#F5F7FA',
+          background: isDark
+            ? isReady
+              ? profile.darkBackgroundColor || '#0A1628'
+              : '#0A1628'
+            : '#F5F7FA',
           transition: 'background 0.3s ease',
         }}
       >
         <div className={`mrs-card${visible ? ' visible' : ''}`}>
-
           <div className="mrs-icon">
             <Check size={34} color="#fff" strokeWidth={1} />
           </div>
@@ -236,8 +241,8 @@ export default function MemberRegistrationSuccess({
 
           <p className="mrs-sub">
             Congratulations!! You have successfully registered{' '}
-            <span style={{ color: bodyText, fontWeight: 700 }}>{memberName}</span>{' '}
-            to your Department.
+            <span style={{ color: bodyText, fontWeight: 700 }}>{memberName}</span> to your
+            Department.
           </p>
 
           <div className="mrs-chip">
@@ -259,7 +264,6 @@ export default function MemberRegistrationSuccess({
               Dashboard
             </button>
           </div>
-
         </div>
       </div>
     </>

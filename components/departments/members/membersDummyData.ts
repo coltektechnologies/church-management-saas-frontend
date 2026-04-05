@@ -7,14 +7,14 @@ export type MemberStatus = 'Active' | 'Inactive' | 'Pending';
 export interface DepartmentMember {
   id: string;
   name: string;
-  memberId: string;     // e.g. SDA2026-014
+  memberId: string; // e.g. SDA2026-014
   avatarUrl: string | null;
   phone: string;
   email: string;
   departments: string[]; // can belong to multiple depts
   role: MemberRole;
   status: MemberStatus;
-  memberSince: string;   // ISO date string
+  memberSince: string; // ISO date string
 }
 
 export const DUMMY_MEMBERS: DepartmentMember[] = [

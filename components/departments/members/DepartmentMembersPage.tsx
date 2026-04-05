@@ -15,18 +15,20 @@ import { DUMMY_MEMBERS, type DepartmentMember } from './membersDummyData';
 // ─────────────────────────────────────────────────────────────────────────────
 // localStorage helpers
 // ─────────────────────────────────────────────────────────────────────────────
-const STORAGE_KEY_ADDED  = 'dept_members_added_v1';
+const STORAGE_KEY_ADDED = 'dept_members_added_v1';
 const STORAGE_KEY_DRAFTS = 'dept_drafts_v1';
 
 /** Read user-added members from localStorage and merge with baseline. */
 function readPersistedMembers(): DepartmentMember[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_ADDED);
-    if (!raw) { return DUMMY_MEMBERS; }
+    if (!raw) {
+      return DUMMY_MEMBERS;
+    }
     const added: DepartmentMember[] = JSON.parse(raw);
     // Exclude any stored item whose id collides with a dummy member (safety guard)
-    const dummyIds  = new Set(DUMMY_MEMBERS.map(m => m.id));
-    const safeAdded = added.filter(m => !dummyIds.has(m.id));
+    const dummyIds = new Set(DUMMY_MEMBERS.map((m) => m.id));
+    const safeAdded = added.filter((m) => !dummyIds.has(m.id));
     // Added members appear first (top of list), dummy members always follow
     return [...safeAdded, ...DUMMY_MEMBERS];
   } catch {
@@ -46,16 +48,20 @@ function readPersistedDrafts(): DepartmentMember[] {
 /** Save only user-added members (not dummy baseline) to keep storage lean. */
 function persistMembers(members: DepartmentMember[]) {
   try {
-    const dummyIds = new Set(DUMMY_MEMBERS.map(m => m.id));
-    const added    = members.filter(m => !dummyIds.has(m.id));
+    const dummyIds = new Set(DUMMY_MEMBERS.map((m) => m.id));
+    const added = members.filter((m) => !dummyIds.has(m.id));
     localStorage.setItem(STORAGE_KEY_ADDED, JSON.stringify(added));
-  } catch { /* quota exceeded or private browsing — ignore */ }
+  } catch {
+    /* quota exceeded or private browsing — ignore */
+  }
 }
 
 function persistDrafts(drafts: DepartmentMember[]) {
   try {
     localStorage.setItem(STORAGE_KEY_DRAFTS, JSON.stringify(drafts));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,23 +76,35 @@ export default function DepartmentMembersPage() {
   // ── Lazy initialisers: read localStorage once on first render ─────────────
   // This is the canonical pattern — no useEffect + setState needed.
   const [members, setMembers] = useState<DepartmentMember[]>(() => {
-    if (typeof window === 'undefined') { return DUMMY_MEMBERS; }
+    if (typeof window === 'undefined') {
+      return DUMMY_MEMBERS;
+    }
     return readPersistedMembers();
   });
 
   const [drafts, setDrafts] = useState<DepartmentMember[]>(() => {
-    if (typeof window === 'undefined') { return []; }
+    if (typeof window === 'undefined') {
+      return [];
+    }
     return readPersistedDrafts();
   });
 
   // ── Persist whenever state changes ────────────────────────────────────────
   // These effects only write to external storage — no setState inside, so no
   // cascading renders and no lint violation.
-  useEffect(() => { persistMembers(members); }, [members]);
-  useEffect(() => { persistDrafts(drafts); },   [drafts]);
+  useEffect(() => {
+    persistMembers(members);
+  }, [members]);
+  useEffect(() => {
+    persistDrafts(drafts);
+  }, [drafts]);
 
   // ── UI state ──────────────────────────────────────────────────────────────
-  const [filters, setFilters]   = useState<MembersFilterValues>({ search: '', status: 'All', role: 'All' });
+  const [filters, setFilters] = useState<MembersFilterValues>({
+    search: '',
+    status: 'All',
+    role: 'All',
+  });
   const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   const [showAddMember, setShowAddMember] = useState(false);
@@ -96,22 +114,23 @@ export default function DepartmentMembersPage() {
   // ── Combined list: drafts first (Pending badge), then active members ──────
   const allTableMembers = useMemo<DepartmentMember[]>(
     () => [...drafts, ...members],
-    [drafts, members],
+    [drafts, members]
   );
 
   // ── Filtered list ─────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
-    return allTableMembers.filter(m => {
+    return allTableMembers.filter((m) => {
       const matchSearch =
         !q ||
         m.name.toLowerCase().includes(q) ||
         m.memberId.toLowerCase().includes(q) ||
         m.email.toLowerCase().includes(q) ||
         m.phone.includes(q) ||
-        m.departments.some(d => d.toLowerCase().includes(q));
+        m.departments.some((d) => d.toLowerCase().includes(q));
       const matchStatus = filters.status === 'All' || m.status === filters.status;
-      const matchRole   = filters.role   === 'All' || m.role.toLowerCase().includes(filters.role.toLowerCase());
+      const matchRole =
+        filters.role === 'All' || m.role.toLowerCase().includes(filters.role.toLowerCase());
       return matchSearch && matchStatus && matchRole;
     });
   }, [allTableMembers, filters]);
@@ -122,25 +141,25 @@ export default function DepartmentMembersPage() {
   const handleAddMember = useCallback(
     (data: Omit<DepartmentMember, 'id'>) => {
       if (editingMember) {
-        const wasDraft = drafts.some(d => d.id === editingMember.id);
+        const wasDraft = drafts.some((d) => d.id === editingMember.id);
         if (wasDraft) {
           // Promote draft → active member
-          setDrafts(prev => prev.filter(d => d.id !== editingMember.id));
-          setMembers(prev => [{ ...data, id: `added-${Date.now()}` }, ...prev]);
+          setDrafts((prev) => prev.filter((d) => d.id !== editingMember.id));
+          setMembers((prev) => [{ ...data, id: `added-${Date.now()}` }, ...prev]);
         } else {
           // Update existing active member in-place
-          setMembers(prev =>
-            prev.map(m => m.id === editingMember.id ? { ...m, ...data } : m),
+          setMembers((prev) =>
+            prev.map((m) => (m.id === editingMember.id ? { ...m, ...data } : m))
           );
         }
         setEditingMember(null);
       } else {
         // New member → prepend with a unique id
-        setMembers(prev => [{ ...data, id: `added-${Date.now()}` }, ...prev]);
+        setMembers((prev) => [{ ...data, id: `added-${Date.now()}` }, ...prev]);
       }
       // ⚠️ Do NOT call setShowAddMember(false) — AddMemberPage shows success screen
     },
-    [editingMember, drafts],
+    [editingMember, drafts]
   );
 
   // ── onSaveDraft ────────────────────────────────────────────────────────────
@@ -148,23 +167,18 @@ export default function DepartmentMembersPage() {
   const handleSaveDraft = useCallback(
     (data: Omit<DepartmentMember, 'id'>) => {
       if (editingMember) {
-        const wasDraft = drafts.some(d => d.id === editingMember.id);
+        const wasDraft = drafts.some((d) => d.id === editingMember.id);
         if (wasDraft) {
-          setDrafts(prev =>
-            prev.map(d =>
-              d.id === editingMember.id ? { ...d, ...data, status: 'Pending' } : d,
-            ),
+          setDrafts((prev) =>
+            prev.map((d) => (d.id === editingMember.id ? { ...d, ...data, status: 'Pending' } : d))
           );
         }
       } else {
-        setDrafts(prev => [
-          { ...data, id: `draft-${Date.now()}`, status: 'Pending' },
-          ...prev,
-        ]);
+        setDrafts((prev) => [{ ...data, id: `draft-${Date.now()}`, status: 'Pending' }, ...prev]);
       }
       // ⚠️ Do NOT close — AddMemberPage handles toast + navigation
     },
-    [editingMember, drafts],
+    [editingMember, drafts]
   );
 
   // ── closeForm — called by AddMemberPage when it wants to navigate back ────
@@ -189,8 +203,8 @@ export default function DepartmentMembersPage() {
 
   const handleRemove = useCallback((m: DepartmentMember) => {
     if (window.confirm(`Remove ${m.name}?`)) {
-      setDrafts(prev => prev.filter(d => d.id !== m.id));
-      setMembers(prev => prev.filter(x => x.id !== m.id));
+      setDrafts((prev) => prev.filter((d) => d.id !== m.id));
+      setMembers((prev) => prev.filter((x) => x.id !== m.id));
     }
   }, []);
 
@@ -199,10 +213,10 @@ export default function DepartmentMembersPage() {
   }, []);
 
   // ── Theme ─────────────────────────────────────────────────────────────────
-  const cardBg    = isDark ? '#0D1F36' : '#FFFFFF';
+  const cardBg = isDark ? '#0D1F36' : '#FFFFFF';
   const borderClr = isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB';
-  const headName  = isReady
-    ? (profile.preferredName?.trim() || profile.headName || 'Department Head')
+  const headName = isReady
+    ? profile.preferredName?.trim() || profile.headName || 'Department Head'
     : 'Department Head';
 
   // ── Render: form ──────────────────────────────────────────────────────────
@@ -224,7 +238,10 @@ export default function DepartmentMembersPage() {
       <MembersFilterBar
         values={filters}
         onChange={setFilters}
-        onAddMember={() => { setEditingMember(null); setShowAddMember(true); }}
+        onAddMember={() => {
+          setEditingMember(null);
+          setShowAddMember(true);
+        }}
       />
 
       <div
@@ -235,7 +252,7 @@ export default function DepartmentMembersPage() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           totalCount={filtered.length}
-          onExport={fmt => setExportTrigger(fmt)}
+          onExport={(fmt) => setExportTrigger(fmt)}
         />
 
         {viewMode === 'table' ? (

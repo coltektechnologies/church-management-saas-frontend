@@ -60,7 +60,7 @@ export default function DeptBudgetStatus({
   const accentColor = isReady
     ? isDark
       ? profile.darkAccentColor || '#2FC4B2'
-      : profile.accentColor    || '#2FC4B2'
+      : profile.accentColor || '#2FC4B2'
     : '#2FC4B2';
 
   const currency = isReady ? profile.currency || 'GHS' : 'GHS';
@@ -68,19 +68,19 @@ export default function DeptBudgetStatus({
     currency === 'GHS' ? 'GHS' : currency === 'USD' ? '$' : currency === 'GBP' ? '£' : '€';
 
   const remaining = allocated - spent;
-  const pctUsed   = allocated > 0 ? Math.round((spent / allocated) * 100) : 0;
-  const barColor  = pctUsed < 60 ? accentColor : pctUsed < 85 ? STYLE.barAmber : STYLE.barRed;
+  const pctUsed = allocated > 0 ? Math.round((spent / allocated) * 100) : 0;
+  const barColor = pctUsed < 60 ? accentColor : pctUsed < 85 ? STYLE.barAmber : STYLE.barRed;
 
   // ── All colours derived after mount so SSR and client agree ───────────────
-  const containerBg     = isDark ? STYLE.containerBgDark     : STYLE.containerBgLight;
+  const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
   const containerBorder = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
-  const labelColor      = isDark ? STYLE.labelColorDark      : STYLE.labelColorLight;
-  const valueColor      = isDark ? STYLE.valueColorDark      : STYLE.valueColorLight;
-  const barTrack        = isDark ? STYLE.barTrackDark        : STYLE.barTrackLight;
-  const remainingColor  = isDark ? STYLE.remainingLabelDark  : STYLE.remainingLabelLight;
-  const btnBg           = isDark ? STYLE.btnBgDark           : STYLE.btnBgLight;
-  const btnText         = isDark ? STYLE.btnTextDark         : STYLE.btnTextLight;
-  const dividerColor    = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
+  const labelColor = isDark ? STYLE.labelColorDark : STYLE.labelColorLight;
+  const valueColor = isDark ? STYLE.valueColorDark : STYLE.valueColorLight;
+  const barTrack = isDark ? STYLE.barTrackDark : STYLE.barTrackLight;
+  const remainingColor = isDark ? STYLE.remainingLabelDark : STYLE.remainingLabelLight;
+  const btnBg = isDark ? STYLE.btnBgDark : STYLE.btnBgLight;
+  const btnText = isDark ? STYLE.btnTextDark : STYLE.btnTextLight;
+  const dividerColor = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
 
   const detailsBtnStyle: React.CSSProperties = {
     backgroundColor: btnBg,
@@ -156,16 +156,22 @@ export default function DeptBudgetStatus({
 
       {/* Allocated vs Spent row */}
       <div className="flex justify-between gap-2 flex-wrap">
-        <p style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}>
+        <p
+          style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}
+        >
           Allocated:{' '}
           <span style={{ color: valueColor, fontWeight: '500' }}>
-            {currencySymbol}{allocated.toLocaleString()}
+            {currencySymbol}
+            {allocated.toLocaleString()}
           </span>
         </p>
-        <p style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}>
+        <p
+          style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}
+        >
           Spent:{' '}
           <span style={{ color: valueColor, fontWeight: '500' }}>
-            {currencySymbol}{spent.toLocaleString()}
+            {currencySymbol}
+            {spent.toLocaleString()}
           </span>
         </p>
       </div>
@@ -192,13 +198,23 @@ export default function DeptBudgetStatus({
 
         {/* Remaining + % used */}
         <div className="flex justify-between mt-2 gap-2 flex-wrap">
-          <p style={{ color: labelColor, fontSize: '13px', fontWeight: '400', fontFamily: 'Poppins' }}>
+          <p
+            style={{
+              color: labelColor,
+              fontSize: '13px',
+              fontWeight: '400',
+              fontFamily: 'Poppins',
+            }}
+          >
             Remaining:{' '}
             <span style={{ color: remainingColor, fontWeight: '500' }}>
-              {currencySymbol}{remaining.toLocaleString()}
+              {currencySymbol}
+              {remaining.toLocaleString()}
             </span>
           </p>
-          <p style={{ color: barColor, fontSize: '13px', fontWeight: '300', fontFamily: 'Poppins' }}>
+          <p
+            style={{ color: barColor, fontSize: '13px', fontWeight: '300', fontFamily: 'Poppins' }}
+          >
             {pctUsed}% used
           </p>
         </div>

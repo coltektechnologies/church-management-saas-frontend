@@ -7,16 +7,16 @@ import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvide
 
 // ─── Soft-coded style constants ───────────────────────────────────────────────
 const STYLE = {
-  containerRadius: '10px',        // Outer card corner radius
-  containerBgLight: '#FFFFFF',    // Card background light mode
-  containerBgDark: '#1A2B45',     // Card background dark mode
+  containerRadius: '10px', // Outer card corner radius
+  containerBgLight: '#FFFFFF', // Card background light mode
+  containerBgDark: '#1A2B45', // Card background dark mode
   containerBorderLight: '#E5E7EB',
   containerBorderDark: '#2A3F5F',
   dividerColorLight: '#E5E7EB',
   dividerColorDark: '#2A3F5F',
   // Activity item card
-  itemBgLight: '#EEEEEF',         // Placeholder card bg light
-  itemBgDark: '#152A44',          // Placeholder card bg dark
+  itemBgLight: '#EEEEEF', // Placeholder card bg light
+  itemBgDark: '#152A44', // Placeholder card bg dark
   itemRadius: '10px',
   itemTextColorLight: '#111111',
   itemTextColorDark: '#F0F4F8',
@@ -77,19 +77,19 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
   const accentColor = isReady
     ? isDark
       ? profile.darkAccentColor || '#2FC4B2'
-      : profile.accentColor    || '#2FC4B2'
+      : profile.accentColor || '#2FC4B2'
     : '#2FC4B2';
 
   // ── All colours derived after mount so SSR and client agree ───────────────
-  const containerBg     = isDark ? STYLE.containerBgDark     : STYLE.containerBgLight;
+  const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
   const containerBorder = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
-  const dividerColor    = isDark ? STYLE.dividerColorDark    : STYLE.dividerColorLight;
-  const itemBg          = isDark ? STYLE.itemBgDark          : STYLE.itemBgLight;
-  const itemTextColor   = isDark ? STYLE.itemTextColorDark   : STYLE.itemTextColorLight;
-  const itemSubColor    = isDark ? STYLE.itemSubColorDark    : STYLE.itemSubColorLight;
-  const itemDateColor   = isDark ? STYLE.itemDateColorDark   : STYLE.itemDateColorLight;
-  const btnBg           = isDark ? STYLE.btnBgDark           : STYLE.btnBgLight;
-  const btnText         = isDark ? STYLE.btnTextDark         : STYLE.btnTextLight;
+  const dividerColor = isDark ? STYLE.dividerColorDark : STYLE.dividerColorLight;
+  const itemBg = isDark ? STYLE.itemBgDark : STYLE.itemBgLight;
+  const itemTextColor = isDark ? STYLE.itemTextColorDark : STYLE.itemTextColorLight;
+  const itemSubColor = isDark ? STYLE.itemSubColorDark : STYLE.itemSubColorLight;
+  const itemDateColor = isDark ? STYLE.itemDateColorDark : STYLE.itemDateColorLight;
+  const btnBg = isDark ? STYLE.btnBgDark : STYLE.btnBgLight;
+  const btnText = isDark ? STYLE.btnTextDark : STYLE.btnTextLight;
 
   const btnStyle: React.CSSProperties = {
     backgroundColor: btnBg,

@@ -28,7 +28,7 @@ import MemberRegistrationSuccess from './MemberRegistrationSuccess';
 
 function generateMemberId(): string {
   const year = new Date().getFullYear();
-  const num  = String(Math.floor(Math.random() * 900) + 100);
+  const num = String(Math.floor(Math.random() * 900) + 100);
   return `SDA${year}-${num}`;
 }
 
@@ -44,7 +44,9 @@ function generateUsername(first: string, last: string): string {
  */
 function isValidPhone(value: string): boolean {
   const trimmed = value.trim();
-  if (!trimmed) { return false; }
+  if (!trimmed) {
+    return false;
+  }
   const digits = trimmed.replace(/\D/g, '');
   return digits.length >= 7 && /^[+\d\s\-().]+$/.test(trimmed);
 }
@@ -55,7 +57,9 @@ function isValidPhone(value: string): boolean {
  * Returns true when it matches a standard email pattern.
  */
 function isValidEmail(value: string): boolean {
-  if (!value.trim()) { return true; }
+  if (!value.trim()) {
+    return true;
+  }
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
 }
 
@@ -91,26 +95,64 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  title: '', gender: '', firstName: '', middleName: '', lastName: '',
-  dateOfBirth: '', maritalStatus: '', nationalId: '',
-  phone: '', email: '', occupation: '', address: '', city: '', region: '',
+  title: '',
+  gender: '',
+  firstName: '',
+  middleName: '',
+  lastName: '',
+  dateOfBirth: '',
+  maritalStatus: '',
+  nationalId: '',
+  phone: '',
+  email: '',
+  occupation: '',
+  address: '',
+  city: '',
+  region: '',
   memberSince: new Date().toISOString().slice(0, 10),
-  membershipStatus: '', educationalLevel: '', baptized: '',
-  departments: [], skills: '',
-  emergencyName: '', emergencyRelationship: '', emergencyPhone: '',
-  username: '', adminNotes: '', role: 'Member',
+  membershipStatus: '',
+  educationalLevel: '',
+  baptized: '',
+  departments: [],
+  skills: '',
+  emergencyName: '',
+  emergencyRelationship: '',
+  emergencyPhone: '',
+  username: '',
+  adminNotes: '',
+  role: 'Member',
 };
 
-const TITLES        = ['Mr.', 'Mrs.', 'Ms.', 'Dr.', 'Rev.', 'Elder', 'Bro.', 'Sis.', 'Ps.'];
-const MARITAL       = ['Single', 'Married', 'Divorced', 'Widowed'];
-const REGIONS       = [
-  'Greater Accra', 'Ashanti', 'Western', 'Eastern', 'Central',
-  'Volta', 'Northern', 'Upper East', 'Upper West', 'Brong-Ahafo',
-  'Oti', 'Savannah', 'Ahafo', 'Bono East', 'North East', 'Western North',
+const TITLES = ['Mr.', 'Mrs.', 'Ms.', 'Dr.', 'Rev.', 'Elder', 'Bro.', 'Sis.', 'Ps.'];
+const MARITAL = ['Single', 'Married', 'Divorced', 'Widowed'];
+const REGIONS = [
+  'Greater Accra',
+  'Ashanti',
+  'Western',
+  'Eastern',
+  'Central',
+  'Volta',
+  'Northern',
+  'Upper East',
+  'Upper West',
+  'Brong-Ahafo',
+  'Oti',
+  'Savannah',
+  'Ahafo',
+  'Bono East',
+  'North East',
+  'Western North',
 ];
-const EDU_LEVELS    = [
-  'Primary', 'JHS / O-Level', 'SHS / A-Level', 'Diploma',
-  "Bachelor's Degree", "Master's Degree", 'PhD', 'Professional Cert', 'Other',
+const EDU_LEVELS = [
+  'Primary',
+  'JHS / O-Level',
+  'SHS / A-Level',
+  'Diploma',
+  "Bachelor's Degree",
+  "Master's Degree",
+  'PhD',
+  'Professional Cert',
+  'Other',
 ];
 const RELATIONSHIPS = ['Parent', 'Spouse', 'Sibling', 'Child', 'Friend', 'Colleague', 'Other'];
 const ROLES: MemberRole[] = ['Member', 'Departmental Head', 'Core Admin', 'Admin'];
@@ -124,17 +166,30 @@ function Divider({ color }: { color: string }) {
 // ── Section Header ────────────────────────────────────────────────────────────
 
 function SectionHeader({
-  icon: Icon, label, accent, text,
+  icon: Icon,
+  label,
+  accent,
+  text,
 }: {
-  icon: React.ElementType; label: string; accent: string; text: string;
+  icon: React.ElementType;
+  label: string;
+  accent: string;
+  text: string;
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
-      <div style={{
-        width: '28px', height: '28px', borderRadius: '8px',
-        background: `${accent}20`, display: 'flex',
-        alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      }}>
+      <div
+        style={{
+          width: '28px',
+          height: '28px',
+          borderRadius: '8px',
+          background: `${accent}20`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
         <Icon size={15} style={{ color: accent }} />
       </div>
       <h3 style={{ fontWeight: 700, fontSize: '15px', color: text, margin: 0 }}>{label}</h3>
@@ -146,35 +201,48 @@ function SectionHeader({
 
 type ToastType = 'success' | 'info' | 'draft' | 'error';
 
-function Toast({
-  msg,
-  type,
-  onClose,
-}: {
-  msg: string;
-  type: ToastType;
-  onClose: () => void;
-}) {
+function Toast({ msg, type, onClose }: { msg: string; type: ToastType; onClose: () => void }) {
   const bg =
-    type === 'success' ? '#10B981'
-    : type === 'draft'  ? '#F59E0B'
-    : type === 'error'  ? '#EF4444'
-    : '#6366F1';
+    type === 'success'
+      ? '#10B981'
+      : type === 'draft'
+        ? '#F59E0B'
+        : type === 'error'
+          ? '#EF4444'
+          : '#6366F1';
 
   return (
-    <div style={{
-      position: 'fixed', bottom: '28px', right: '28px', zIndex: 9999,
-      background: bg, color: '#fff', borderRadius: '10px',
-      padding: '14px 22px', fontSize: '13px', fontWeight: 600,
-      boxShadow: `0 8px 32px ${bg}66`,
-      display: 'flex', alignItems: 'center', gap: '12px',
-      animation: 'slideUp 0.25s ease',
-      maxWidth: 'calc(100vw - 40px)',
-    }}>
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '28px',
+        right: '28px',
+        zIndex: 9999,
+        background: bg,
+        color: '#fff',
+        borderRadius: '10px',
+        padding: '14px 22px',
+        fontSize: '13px',
+        fontWeight: 600,
+        boxShadow: `0 8px 32px ${bg}66`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        animation: 'slideUp 0.25s ease',
+        maxWidth: 'calc(100vw - 40px)',
+      }}
+    >
       <span style={{ flex: 1 }}>{msg}</span>
       <button
         onClick={onClose}
-        style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: '#fff',
+          cursor: 'pointer',
+          padding: 0,
+          flexShrink: 0,
+        }}
       >
         <X size={14} />
       </button>
@@ -185,10 +253,10 @@ function Toast({
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface AddMemberPageProps {
-  onSubmit:     (data: Omit<DepartmentMember, 'id'>) => void;
-  onSaveDraft:  (data: Omit<DepartmentMember, 'id'>) => void;
-  onCancel:     () => void;   // closes the form / navigates back to list
-  editMember?:  DepartmentMember | null;
+  onSubmit: (data: Omit<DepartmentMember, 'id'>) => void;
+  onSaveDraft: (data: Omit<DepartmentMember, 'id'>) => void;
+  onCancel: () => void; // closes the form / navigates back to list
+  editMember?: DepartmentMember | null;
   addedByName?: string;
 }
 
@@ -207,74 +275,109 @@ export default function AddMemberPage({
   const isDark = mounted ? resolvedTheme === 'dark' : false;
 
   // ── Theme tokens ───────────────────────────────────────────────────────────
-  const primary = isReady ? (isDark ? profile.darkPrimaryColor || '#1A3F6B' : profile.primaryColor || '#0B2A4A') : '#0B2A4A';
-  const accent  = isReady ? (isDark ? profile.darkAccentColor  || '#2FC4B2' : profile.accentColor  || '#2FC4B2') : '#2FC4B2';
+  const primary = isReady
+    ? isDark
+      ? profile.darkPrimaryColor || '#1A3F6B'
+      : profile.primaryColor || '#0B2A4A'
+    : '#0B2A4A';
+  const accent = isReady
+    ? isDark
+      ? profile.darkAccentColor || '#2FC4B2'
+      : profile.accentColor || '#2FC4B2'
+    : '#2FC4B2';
 
   // ── Dark-mode-aware colour tokens (mirroring MemberRegistrationSuccess) ────
-  const pageBg      = isDark ? (isReady ? profile.darkBackgroundColor || '#0A1628' : '#0A1628') : '#F5F7FA';
-  const outerCardBg = isDark ? (isReady ? profile.darkSidebarColor    || '#0D1F36' : '#0D1F36') : '#FFFFFF';
+  const pageBg = isDark
+    ? isReady
+      ? profile.darkBackgroundColor || '#0A1628'
+      : '#0A1628'
+    : '#F5F7FA';
+  const outerCardBg = isDark
+    ? isReady
+      ? profile.darkSidebarColor || '#0D1F36'
+      : '#0D1F36'
+    : '#FFFFFF';
   const outerBorder = isDark ? 'rgba(255,255,255,0.08)' : 'transparent';
-  const outerShadow = isDark ? `0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px ${primary}40` : '0 2px 16px rgba(0,0,0,0.08)';
+  const outerShadow = isDark
+    ? `0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px ${primary}40`
+    : '0 2px 16px rgba(0,0,0,0.08)';
 
-  const leftCardBg  = isDark ? (isReady ? profile.darkSidebarColor    || '#0D1F36' : '#0D1F36') : '#F8F9FA';
-  const rightCardBg = isDark ? `${primary}18`                                                    : '#FFFFFF';
-  const rightBorder = isDark ? `1px solid ${primary}40`                                          : '1px solid #DDDDDD';
+  const leftCardBg = isDark
+    ? isReady
+      ? profile.darkSidebarColor || '#0D1F36'
+      : '#0D1F36'
+    : '#F8F9FA';
+  const rightCardBg = isDark ? `${primary}18` : '#FFFFFF';
+  const rightBorder = isDark ? `1px solid ${primary}40` : '1px solid #DDDDDD';
 
-  const text        = isDark ? '#F1F5F9'              : '#111827';
-  const muted       = isDark ? 'rgba(241,245,249,0.45)' : '#9CA3AF';
-  const dividerClr  = isDark ? 'rgba(255,255,255,0.08)' : '#DDDDDD';
-  const inputBg     = isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF';
+  const text = isDark ? '#F1F5F9' : '#111827';
+  const muted = isDark ? 'rgba(241,245,249,0.45)' : '#9CA3AF';
+  const dividerClr = isDark ? 'rgba(255,255,255,0.08)' : '#DDDDDD';
+  const inputBg = isDark ? 'rgba(255,255,255,0.05)' : '#FFFFFF';
   const inputBorder = isDark ? 'rgba(255,255,255,0.12)' : '#D1D5DB';
-  const inputText   = isDark ? '#F1F5F9'              : '#111827';
-  const labelColor  = isDark ? 'rgba(241,245,249,0.70)' : '#374151';
-  const readonlyBg  = isDark ? 'rgba(255,255,255,0.04)' : '#F3F4F6';
+  const inputText = isDark ? '#F1F5F9' : '#111827';
+  const labelColor = isDark ? 'rgba(241,245,249,0.70)' : '#374151';
+  const readonlyBg = isDark ? 'rgba(255,255,255,0.04)' : '#F3F4F6';
 
   // ── Success screen: when non-null, render MemberRegistrationSuccess ────────
-  const [successData, setSuccessData] = useState<{ memberId: string; memberName: string } | null>(null);
+  const [successData, setSuccessData] = useState<{ memberId: string; memberName: string } | null>(
+    null
+  );
 
   // ── Toast state ────────────────────────────────────────────────────────────
   const [toast, setToast] = useState<{ msg: string; type: ToastType } | null>(null);
 
   // ── Toast auto-dismiss ─────────────────────────────────────────────────────
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showToast = useCallback((msg: string, type: ToastType, afterMs?: number, afterFn?: () => void) => {
-    if (toastTimerRef.current) { clearTimeout(toastTimerRef.current); }
-    setToast({ msg, type });
-    toastTimerRef.current = setTimeout(() => {
-      setToast(null);
-      if (afterFn) { afterFn(); }
-    }, afterMs ?? 3200);
-  }, []);
+  const showToast = useCallback(
+    (msg: string, type: ToastType, afterMs?: number, afterFn?: () => void) => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+      setToast({ msg, type });
+      toastTimerRef.current = setTimeout(() => {
+        setToast(null);
+        if (afterFn) {
+          afterFn();
+        }
+      }, afterMs ?? 3200);
+    },
+    []
+  );
 
   const dismissToast = useCallback(() => {
-    if (toastTimerRef.current) { clearTimeout(toastTimerRef.current); }
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToast(null);
   }, []);
 
   // ── Derive initial form ────────────────────────────────────────────────────
   const initialForm = useMemo<FormState>(() => {
     if (editMember) {
-      const parts      = editMember.name.split(' ');
-      const firstName  = parts[0] || '';
-      const lastName   = parts[parts.length - 1] || '';
+      const parts = editMember.name.split(' ');
+      const firstName = parts[0] || '';
+      const lastName = parts[parts.length - 1] || '';
       const middleName = parts.length > 2 ? parts.slice(1, -1).join(' ') : '';
       return {
         ...EMPTY_FORM,
-        firstName, middleName, lastName,
-        phone:            editMember.phone,
-        email:            editMember.email,
-        memberSince:      editMember.memberSince,
-        departments:      editMember.departments,
-        role:             editMember.role,
+        firstName,
+        middleName,
+        lastName,
+        phone: editMember.phone,
+        email: editMember.email,
+        memberSince: editMember.memberSince,
+        departments: editMember.departments,
+        role: editMember.role,
         membershipStatus: editMember.status,
-        username:         generateUsername(firstName, lastName),
+        username: generateUsername(firstName, lastName),
       };
     }
     return { ...EMPTY_FORM, memberSince: new Date().toISOString().slice(0, 10) };
   }, [editMember]);
 
   // ── Form state ─────────────────────────────────────────────────────────────
-  const editKey         = editMember?.id ?? 'new';
+  const editKey = editMember?.id ?? 'new';
   const [form, setForm] = useState<FormState>(() => initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
@@ -288,11 +391,11 @@ export default function AddMemberPage({
 
   // ── Field setters ──────────────────────────────────────────────────────────
   const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm(prev => {
+    setForm((prev) => {
       const next = { ...prev, [key]: value };
       if (key === 'firstName' || key === 'lastName') {
         const first = key === 'firstName' ? (value as string) : prev.firstName;
-        const last  = key === 'lastName'  ? (value as string) : prev.lastName;
+        const last = key === 'lastName' ? (value as string) : prev.lastName;
         if (first || last) {
           next.username = generateUsername(first || 'user', last || 'member');
         }
@@ -300,14 +403,18 @@ export default function AddMemberPage({
       return next;
     });
     // Clear field-level error on change
-    setErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
+    setErrors((prev) => {
+      const n = { ...prev };
+      delete n[key];
+      return n;
+    });
   }, []);
 
   const toggleDept = (d: string) =>
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
       departments: prev.departments.includes(d)
-        ? prev.departments.filter(x => x !== d)
+        ? prev.departments.filter((x) => x !== d)
         : [...prev.departments, d],
     }));
 
@@ -315,8 +422,12 @@ export default function AddMemberPage({
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormState, string>> = {};
 
-    if (!form.firstName.trim())  { e.firstName = 'First name is required'; }
-    if (!form.lastName.trim())   { e.lastName  = 'Last name is required'; }
+    if (!form.firstName.trim()) {
+      e.firstName = 'First name is required';
+    }
+    if (!form.lastName.trim()) {
+      e.lastName = 'Last name is required';
+    }
 
     if (!form.phone.trim()) {
       e.phone = 'Phone number is required';
@@ -328,9 +439,15 @@ export default function AddMemberPage({
       e.email = 'Enter a valid email address (e.g. name@example.com)';
     }
 
-    if (!form.memberSince)          { e.memberSince = 'Member since date is required'; }
-    if (!form.membershipStatus)     { e.membershipStatus = 'Membership status is required'; }
-    if (form.departments.length === 0) { e.departments = 'Select at least one department'; }
+    if (!form.memberSince) {
+      e.memberSince = 'Member since date is required';
+    }
+    if (!form.membershipStatus) {
+      e.membershipStatus = 'Membership status is required';
+    }
+    if (form.departments.length === 0) {
+      e.departments = 'Select at least one department';
+    }
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -339,15 +456,16 @@ export default function AddMemberPage({
   // ── Build DepartmentMember data ────────────────────────────────────────────
   const buildData = (status: MemberStatus): Omit<DepartmentMember, 'id'> => {
     const fullName = [form.firstName.trim(), form.middleName.trim(), form.lastName.trim()]
-      .filter(Boolean).join(' ');
+      .filter(Boolean)
+      .join(' ');
     return {
-      name:        fullName,
-      memberId:    editMember?.memberId || generateMemberId(),
-      avatarUrl:   null,
-      phone:       form.phone,
-      email:       form.email,
+      name: fullName,
+      memberId: editMember?.memberId || generateMemberId(),
+      avatarUrl: null,
+      phone: form.phone,
+      email: form.email,
       departments: form.departments.length > 0 ? form.departments : ['General'],
-      role:        form.role,
+      role: form.role,
       status,
       memberSince: form.memberSince || new Date().toISOString().slice(0, 10),
     };
@@ -364,7 +482,8 @@ export default function AddMemberPage({
     onSubmit(data);
 
     const fullName = [form.firstName.trim(), form.middleName.trim(), form.lastName.trim()]
-      .filter(Boolean).join(' ');
+      .filter(Boolean)
+      .join(' ');
 
     setSuccessData({ memberId: data.memberId, memberName: fullName });
   };
@@ -377,7 +496,7 @@ export default function AddMemberPage({
       '✓ Draft saved! You can edit or delete it from the members list.',
       'draft',
       3000,
-      onCancel,
+      onCancel
     );
   };
 
@@ -403,10 +522,16 @@ export default function AddMemberPage({
   // ── Style factories ────────────────────────────────────────────────────────
 
   const inputStyle = (hasError = false): React.CSSProperties => ({
-    width: '100%', height: '38px', padding: '0 10px',
-    fontSize: '12px', color: inputText, backgroundColor: inputBg,
+    width: '100%',
+    height: '38px',
+    padding: '0 10px',
+    fontSize: '12px',
+    color: inputText,
+    backgroundColor: inputBg,
     border: `1px solid ${hasError ? '#EF4444' : inputBorder}`,
-    borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
+    borderRadius: '8px',
+    outline: 'none',
+    boxSizing: 'border-box',
     transition: 'border-color 0.15s',
   });
 
@@ -426,19 +551,34 @@ export default function AddMemberPage({
   });
 
   const labelStyle: React.CSSProperties = {
-    fontWeight: 500, fontSize: '11px', color: labelColor,
-    marginBottom: '5px', display: 'block',
+    fontWeight: 500,
+    fontSize: '11px',
+    color: labelColor,
+    marginBottom: '5px',
+    display: 'block',
   };
 
   const errStyle: React.CSSProperties = {
-    fontSize: '10px', color: '#EF4444', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '3px',
+    fontSize: '10px',
+    color: '#EF4444',
+    marginTop: '3px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '3px',
   };
 
   const btnBase: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    gap: '6px', padding: '9px 20px', borderRadius: '8px',
-    fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-    transition: 'opacity 0.15s', height: '38px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    padding: '9px 20px',
+    borderRadius: '8px',
+    fontSize: '12px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'opacity 0.15s',
+    height: '38px',
     whiteSpace: 'nowrap' as const,
     border: `1px solid ${inputBorder}`,
     backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
@@ -558,38 +698,55 @@ export default function AddMemberPage({
         }
       `}</style>
 
-      {toast && (
-        <Toast msg={toast.msg} type={toast.type} onClose={dismissToast} />
-      )}
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={dismissToast} />}
 
-      <div style={{
-        maxWidth: '1160px', margin: '0 auto',
-        backgroundColor: pageBg,
-        transition: 'background-color 0.3s ease',
-      }}>
-
+      <div
+        style={{
+          maxWidth: '1160px',
+          margin: '0 auto',
+          backgroundColor: pageBg,
+          transition: 'background-color 0.3s ease',
+        }}
+      >
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
         <div
           className="amp-header"
           style={{ backgroundColor: accent, borderRadius: '8px 8px 0 0', padding: '20px 28px' }}
         >
           <div>
-            <h2 style={{
-              fontFamily: "'OV Soge', 'Poppins', sans-serif",
-              fontWeight: 700, fontSize: '16px', color: '#FFFFFF', margin: 0,
-            }}>
+            <h2
+              style={{
+                fontFamily: "'OV Soge', 'Poppins', sans-serif",
+                fontWeight: 700,
+                fontSize: '16px',
+                color: '#FFFFFF',
+                margin: 0,
+              }}
+            >
               {editMember ? 'Edit Member' : 'Member Registration Form'}
             </h2>
           </div>
-          <div style={{
-            backgroundColor: 'rgba(255,255,255,0.20)', borderRadius: '20px',
-            padding: '5px 14px', display: 'flex', alignItems: 'center', gap: '7px', flexShrink: 0,
-          }}>
+          <div
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.20)',
+              borderRadius: '20px',
+              padding: '5px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px',
+              flexShrink: 0,
+            }}
+          >
             <Lock size={13} color="#FFFFFF" />
-            <span className="amp-lock-label" style={{
-              fontFamily: "'OV Soge', 'Poppins', sans-serif",
-              fontWeight: 400, fontSize: '12px', color: '#FFFFFF',
-            }}>
+            <span
+              className="amp-lock-label"
+              style={{
+                fontFamily: "'OV Soge', 'Poppins', sans-serif",
+                fontWeight: 400,
+                fontSize: '12px',
+                color: '#FFFFFF',
+              }}
+            >
               Administrative Access Required
             </span>
           </div>
@@ -600,28 +757,54 @@ export default function AddMemberPage({
         {/* ── OUTER CONTAINER ──────────────────────────────────────────────── */}
         <div className="amp-outer">
           <div className="amp-form-grid">
-
             {/* ── LEFT CARD ────────────────────────────────────────────────── */}
             <div className="amp-card" style={{ backgroundColor: leftCardBg }}>
-
               {/* Personal Information */}
               <SectionHeader icon={User} label="Personal Information" accent={accent} text={text} />
 
               <div className="amp-g2">
                 <div>
                   <label style={labelStyle}>Title</label>
-                  <select value={form.title} onChange={e => set('title', e.target.value)} style={selectStyle()}>
+                  <select
+                    value={form.title}
+                    onChange={(e) => set('title', e.target.value)}
+                    style={selectStyle()}
+                  >
                     <option value="">Select title</option>
-                    {TITLES.map(t => <option key={t} value={t}>{t}</option>)}
+                    {TITLES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label style={labelStyle}>Gender</label>
-                  <div style={{ display: 'flex', gap: '20px', alignItems: 'center', height: '38px', flexWrap: 'wrap' }}>
-                    {(['Male', 'Female'] as const).map(g => (
-                      <label key={g} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: text }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '20px',
+                      alignItems: 'center',
+                      height: '38px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    {(['Male', 'Female'] as const).map((g) => (
+                      <label
+                        key={g}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          color: text,
+                        }}
+                      >
                         <input
-                          type="radio" name="pg-gender" value={g}
+                          type="radio"
+                          name="pg-gender"
+                          value={g}
                           checked={form.gender === g}
                           onChange={() => set('gender', g)}
                           style={{ accentColor: accent, width: '14px', height: '14px' }}
@@ -634,20 +817,21 @@ export default function AddMemberPage({
               </div>
 
               <div className="amp-g3">
-                {([
-                  { key: 'firstName'  as const, label: 'First Name',  req: true  },
+                {[
+                  { key: 'firstName' as const, label: 'First Name', req: true },
                   { key: 'middleName' as const, label: 'Middle Name', req: false },
-                  { key: 'lastName'   as const, label: 'Last Name',   req: true  },
-                ]).map(f => (
+                  { key: 'lastName' as const, label: 'Last Name', req: true },
+                ].map((f) => (
                   <div key={f.key}>
                     <label style={labelStyle}>
-                      {f.label}{f.req && <span style={{ color: '#EF4444' }}> *</span>}
+                      {f.label}
+                      {f.req && <span style={{ color: '#EF4444' }}> *</span>}
                     </label>
                     <input
                       className="amp-input"
                       style={inputStyle(!!errors[f.key])}
                       value={form[f.key] as string}
-                      onChange={e => set(f.key, e.target.value)}
+                      onChange={(e) => set(f.key, e.target.value)}
                       placeholder={f.label}
                     />
                     {errors[f.key] && <p style={errStyle}>{errors[f.key]}</p>}
@@ -663,14 +847,22 @@ export default function AddMemberPage({
                     className="amp-input"
                     style={{ ...inputStyle(), colorScheme: isDark ? 'dark' : 'light' }}
                     value={form.dateOfBirth}
-                    onChange={e => set('dateOfBirth', e.target.value)}
+                    onChange={(e) => set('dateOfBirth', e.target.value)}
                   />
                 </div>
                 <div>
                   <label style={labelStyle}>Marital Status</label>
-                  <select value={form.maritalStatus} onChange={e => set('maritalStatus', e.target.value)} style={selectStyle()}>
+                  <select
+                    value={form.maritalStatus}
+                    onChange={(e) => set('maritalStatus', e.target.value)}
+                    style={selectStyle()}
+                  >
                     <option value="">Marital Status</option>
-                    {MARITAL.map(m => <option key={m} value={m}>{m}</option>)}
+                    {MARITAL.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -679,7 +871,7 @@ export default function AddMemberPage({
                     className="amp-input"
                     style={inputStyle()}
                     value={form.nationalId}
-                    onChange={e => set('nationalId', e.target.value)}
+                    onChange={(e) => set('nationalId', e.target.value)}
                     placeholder="Optional"
                   />
                 </div>
@@ -702,7 +894,7 @@ export default function AddMemberPage({
                     inputMode="tel"
                     style={inputStyle(!!errors.phone)}
                     value={form.phone}
-                    onChange={e => {
+                    onChange={(e) => {
                       const filtered = e.target.value.replace(/[^\d+\s\-().]/g, '');
                       set('phone', filtered);
                     }}
@@ -721,11 +913,14 @@ export default function AddMemberPage({
                     autoComplete="email"
                     style={inputStyle(!!errors.email)}
                     value={form.email}
-                    onChange={e => set('email', e.target.value)}
+                    onChange={(e) => set('email', e.target.value)}
                     placeholder="example@gmail.com"
-                    onBlur={e => {
+                    onBlur={(e) => {
                       if (e.target.value.trim() && !isValidEmail(e.target.value)) {
-                        setErrors(prev => ({ ...prev, email: 'Enter a valid email address (e.g. name@example.com)' }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          email: 'Enter a valid email address (e.g. name@example.com)',
+                        }));
                       }
                     }}
                   />
@@ -738,7 +933,7 @@ export default function AddMemberPage({
                     className="amp-input"
                     style={inputStyle()}
                     value={form.occupation}
-                    onChange={e => set('occupation', e.target.value)}
+                    onChange={(e) => set('occupation', e.target.value)}
                     placeholder="Senior Pastor"
                   />
                 </div>
@@ -751,7 +946,7 @@ export default function AddMemberPage({
                     className="amp-input"
                     style={inputStyle()}
                     value={form.address}
-                    onChange={e => set('address', e.target.value)}
+                    onChange={(e) => set('address', e.target.value)}
                     placeholder="Street Address"
                   />
                 </div>
@@ -761,15 +956,23 @@ export default function AddMemberPage({
                     className="amp-input"
                     style={inputStyle()}
                     value={form.city}
-                    onChange={e => set('city', e.target.value)}
+                    onChange={(e) => set('city', e.target.value)}
                     placeholder="City"
                   />
                 </div>
                 <div>
                   <label style={labelStyle}>Region</label>
-                  <select value={form.region} onChange={e => set('region', e.target.value)} style={selectStyle()}>
+                  <select
+                    value={form.region}
+                    onChange={(e) => set('region', e.target.value)}
+                    style={selectStyle()}
+                  >
                     <option value="">Select Region</option>
-                    {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                    {REGIONS.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -777,7 +980,12 @@ export default function AddMemberPage({
               <Divider color={dividerClr} />
 
               {/* Church Information */}
-              <SectionHeader icon={Building2} label="Church Information" accent={accent} text={text} />
+              <SectionHeader
+                icon={Building2}
+                label="Church Information"
+                accent={accent}
+                text={text}
+              />
 
               <div className="amp-g3" style={{ marginBottom: '14px' }}>
                 <div>
@@ -787,9 +995,12 @@ export default function AddMemberPage({
                   <input
                     type="date"
                     className="amp-input"
-                    style={{ ...inputStyle(!!errors.memberSince), colorScheme: isDark ? 'dark' : 'light' }}
+                    style={{
+                      ...inputStyle(!!errors.memberSince),
+                      colorScheme: isDark ? 'dark' : 'light',
+                    }}
                     value={form.memberSince}
-                    onChange={e => set('memberSince', e.target.value)}
+                    onChange={(e) => set('memberSince', e.target.value)}
                   />
                   {errors.memberSince && <p style={errStyle}>{errors.memberSince}</p>}
                 </div>
@@ -799,7 +1010,7 @@ export default function AddMemberPage({
                   </label>
                   <select
                     value={form.membershipStatus}
-                    onChange={e => set('membershipStatus', e.target.value as MemberStatus)}
+                    onChange={(e) => set('membershipStatus', e.target.value as MemberStatus)}
                     style={selectStyle(!!errors.membershipStatus)}
                   >
                     <option value="">Select Status</option>
@@ -811,9 +1022,17 @@ export default function AddMemberPage({
                 </div>
                 <div>
                   <label style={labelStyle}>Educational Level</label>
-                  <select value={form.educationalLevel} onChange={e => set('educationalLevel', e.target.value)} style={selectStyle()}>
+                  <select
+                    value={form.educationalLevel}
+                    onChange={(e) => set('educationalLevel', e.target.value)}
+                    style={selectStyle()}
+                  >
                     <option value="">Select Education</option>
-                    {EDU_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                    {EDU_LEVELS.map((l) => (
+                      <option key={l} value={l}>
+                        {l}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -821,7 +1040,11 @@ export default function AddMemberPage({
               <div className="amp-g2" style={{ marginBottom: '16px' }}>
                 <div>
                   <label style={labelStyle}>Are you Baptized?</label>
-                  <select value={form.baptized} onChange={e => set('baptized', e.target.value)} style={selectStyle()}>
+                  <select
+                    value={form.baptized}
+                    onChange={(e) => set('baptized', e.target.value)}
+                    style={selectStyle()}
+                  >
                     <option value="">Select</option>
                     <option value="Yes">Yes</option>
                     <option value="No">No</option>
@@ -829,8 +1052,16 @@ export default function AddMemberPage({
                 </div>
                 <div>
                   <label style={labelStyle}>Role</label>
-                  <select value={form.role} onChange={e => set('role', e.target.value as MemberRole)} style={selectStyle()}>
-                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                  <select
+                    value={form.role}
+                    onChange={(e) => set('role', e.target.value as MemberRole)}
+                    style={selectStyle()}
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -846,7 +1077,7 @@ export default function AddMemberPage({
                   )}
                 </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {ALL_DEPARTMENTS.map(d => {
+                  {ALL_DEPARTMENTS.map((d) => {
                     const sel = form.departments.includes(d);
                     return (
                       <button
@@ -854,13 +1085,22 @@ export default function AddMemberPage({
                         type="button"
                         onClick={() => toggleDept(d)}
                         style={{
-                          padding: '5px 12px', borderRadius: '10px',
+                          padding: '5px 12px',
+                          borderRadius: '10px',
                           border: `1px solid ${sel ? accent : inputBorder}`,
-                          backgroundColor: sel ? `${accent}18` : (isDark ? 'rgba(255,255,255,0.04)' : '#FFFFFF'),
+                          backgroundColor: sel
+                            ? `${accent}18`
+                            : isDark
+                              ? 'rgba(255,255,255,0.04)'
+                              : '#FFFFFF',
                           color: sel ? accent : muted,
-                          fontSize: '11px', fontWeight: sel ? 600 : 400,
-                          cursor: 'pointer', transition: 'all 0.12s',
-                          display: 'flex', alignItems: 'center', gap: '5px',
+                          fontSize: '11px',
+                          fontWeight: sel ? 600 : 400,
+                          cursor: 'pointer',
+                          transition: 'all 0.12s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px',
                         }}
                       >
                         {sel && <X size={10} />} {d}
@@ -875,12 +1115,14 @@ export default function AddMemberPage({
                 <label style={labelStyle}>Skills &amp; Talents</label>
                 <textarea
                   value={form.skills}
-                  onChange={e => set('skills', e.target.value)}
+                  onChange={(e) => set('skills', e.target.value)}
                   placeholder="List skills, talents or areas of service."
                   style={{
                     ...inputStyle(),
-                    height: '80px', padding: '8px 10px',
-                    resize: 'vertical', lineHeight: '1.5',
+                    height: '80px',
+                    padding: '8px 10px',
+                    resize: 'vertical',
+                    lineHeight: '1.5',
                   }}
                 />
               </div>
@@ -888,7 +1130,6 @@ export default function AddMemberPage({
 
             {/* ── RIGHT CARD ───────────────────────────────────────────────── */}
             <div className="amp-card" style={{ backgroundColor: rightCardBg, border: rightBorder }}>
-
               {/* Emergency Contact */}
               <SectionHeader icon={Phone} label="Emergency Contact" accent={accent} text={text} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -898,15 +1139,23 @@ export default function AddMemberPage({
                     className="amp-input"
                     style={inputStyle()}
                     value={form.emergencyName}
-                    onChange={e => set('emergencyName', e.target.value)}
+                    onChange={(e) => set('emergencyName', e.target.value)}
                     placeholder="Full Name"
                   />
                 </div>
                 <div>
                   <label style={labelStyle}>Relationship</label>
-                  <select value={form.emergencyRelationship} onChange={e => set('emergencyRelationship', e.target.value)} style={selectStyle()}>
+                  <select
+                    value={form.emergencyRelationship}
+                    onChange={(e) => set('emergencyRelationship', e.target.value)}
+                    style={selectStyle()}
+                  >
                     <option value="">Select Relationship</option>
-                    {RELATIONSHIPS.map(r => <option key={r} value={r}>{r}</option>)}
+                    {RELATIONSHIPS.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -917,7 +1166,7 @@ export default function AddMemberPage({
                     inputMode="tel"
                     style={inputStyle()}
                     value={form.emergencyPhone}
-                    onChange={e => {
+                    onChange={(e) => {
                       const filtered = e.target.value.replace(/[^\d+\s\-().]/g, '');
                       set('emergencyPhone', filtered);
                     }}
@@ -932,20 +1181,41 @@ export default function AddMemberPage({
               <SectionHeader icon={ShieldCheck} label="System Access" accent={accent} text={text} />
               <div className="amp-sys-access-panel">
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      marginBottom: '4px',
+                    }}
+                  >
                     <label style={labelStyle}>Username</label>
-                    <span style={{ fontSize: '10px', color: accent, fontWeight: 600 }}>Auto-generated</span>
+                    <span style={{ fontSize: '10px', color: accent, fontWeight: 600 }}>
+                      Auto-generated
+                    </span>
                   </div>
                   <input
-                    style={{ ...inputStyle(), backgroundColor: readonlyBg, color: text, fontWeight: 600 }}
+                    style={{
+                      ...inputStyle(),
+                      backgroundColor: readonlyBg,
+                      color: text,
+                      fontWeight: 600,
+                    }}
                     value={form.username || 'username'}
                     readOnly
                   />
                 </div>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      marginBottom: '4px',
+                    }}
+                  >
                     <label style={labelStyle}>Password</label>
-                    <span style={{ fontSize: '10px', color: accent, fontWeight: 600 }}>Auto-generated</span>
+                    <span style={{ fontSize: '10px', color: accent, fontWeight: 600 }}>
+                      Auto-generated
+                    </span>
                   </div>
                   <input
                     type="password"
@@ -965,37 +1235,45 @@ export default function AddMemberPage({
                   <label style={labelStyle}>Internal Notes</label>
                   <textarea
                     value={form.adminNotes}
-                    onChange={e => set('adminNotes', e.target.value)}
+                    onChange={(e) => set('adminNotes', e.target.value)}
                     placeholder="Notes visible to administrators only…"
                     style={{
                       ...inputStyle(),
-                      height: '90px', padding: '8px 10px',
-                      resize: 'vertical', lineHeight: '1.5', borderRadius: '10px',
+                      height: '90px',
+                      padding: '8px 10px',
+                      resize: 'vertical',
+                      lineHeight: '1.5',
+                      borderRadius: '10px',
                     }}
                   />
                 </div>
                 <div>
                   <label style={labelStyle}>Added By</label>
-                  <p style={{ fontSize: '12px', color: text, margin: 0, fontWeight: 600 }}>{addedByName}</p>
+                  <p style={{ fontSize: '12px', color: text, margin: 0, fontWeight: 600 }}>
+                    {addedByName}
+                  </p>
                 </div>
               </div>
             </div>
-
-          </div>{/* end .amp-form-grid */}
+          </div>
+          {/* end .amp-form-grid */}
 
           {/* ── FOOTER ────────────────────────────────────────────────────── */}
           <div style={{ marginTop: '28px' }}>
             <div style={{ height: '1px', backgroundColor: dividerClr }} />
             <div className="amp-footer">
-
               <div className="amp-footer-left">
                 {/* Cancel — confirm then close */}
                 <button
                   type="button"
                   onClick={handleCancel}
                   style={btnBase}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.75'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.opacity = '0.75';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+                  }}
                 >
                   <XCircle size={14} /> Cancel
                 </button>
@@ -1010,8 +1288,12 @@ export default function AddMemberPage({
                     color: isDark ? '#FCD34D' : '#B45309',
                     background: isDark ? 'rgba(245,158,11,0.12)' : '#FFFBEB',
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.78'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.opacity = '0.78';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+                  }}
                 >
                   <Save size={14} /> Save as Draft
                 </button>
@@ -1032,17 +1314,20 @@ export default function AddMemberPage({
                   height: '40px',
                   boxShadow: `0 4px 14px ${primary}55`,
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.opacity = '0.88';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+                }}
               >
                 <UserPlus size={15} />
                 {editMember ? 'Save Changes' : 'Add Member'}
               </button>
-
             </div>
           </div>
-
-        </div>{/* end .amp-outer */}
+        </div>
+        {/* end .amp-outer */}
       </div>
     </>
   );

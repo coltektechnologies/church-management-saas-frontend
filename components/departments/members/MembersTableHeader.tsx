@@ -17,19 +17,32 @@ interface MembersTableHeaderProps {
   onExport: (format: 'csv' | 'pdf' | 'excel') => void;
 }
 
-export default function MembersTableHeader({ viewMode, onViewModeChange, totalCount, onExport }: MembersTableHeaderProps) {
+export default function MembersTableHeader({
+  viewMode,
+  onViewModeChange,
+  totalCount,
+  onExport,
+}: MembersTableHeaderProps) {
   const { profile, isReady } = useDepartmentProfile();
   const { resolvedTheme, mounted } = useDeptTheme();
   const isDark = mounted ? resolvedTheme === 'dark' : false;
 
-  const primaryColor = isReady ? (isDark ? profile.darkPrimaryColor || '#1A3F6B' : profile.primaryColor || '#0B2A4A') : '#0B2A4A';
-  const accentColor  = isReady ? (isDark ? profile.darkAccentColor  || '#2FC4B2' : profile.accentColor  || '#2FC4B2') : '#2FC4B2';
-  const cardBg    = isDark ? '#0D1F36' : '#FFFFFF';
+  const primaryColor = isReady
+    ? isDark
+      ? profile.darkPrimaryColor || '#1A3F6B'
+      : profile.primaryColor || '#0B2A4A'
+    : '#0B2A4A';
+  const accentColor = isReady
+    ? isDark
+      ? profile.darkAccentColor || '#2FC4B2'
+      : profile.accentColor || '#2FC4B2'
+    : '#2FC4B2';
+  const cardBg = isDark ? '#0D1F36' : '#FFFFFF';
   const textColor = isDark ? '#FFFFFF' : '#111827';
-  const mutedClr  = isDark ? 'rgba(255,255,255,0.45)' : '#6B7280';
+  const mutedClr = isDark ? 'rgba(255,255,255,0.45)' : '#6B7280';
   const borderClr = isDark ? 'rgba(255,255,255,0.10)' : '#E5E7EB';
 
-  const activeViewBg   = isDark ? primaryColor : '#0B2A4A';
+  const activeViewBg = isDark ? primaryColor : '#0B2A4A';
   const activeViewText = '#FFFFFF';
   const inactiveViewBg = 'transparent';
 
@@ -56,11 +69,11 @@ export default function MembersTableHeader({ viewMode, onViewModeChange, totalCo
         cursor: 'pointer',
         lineHeight: '1',
       }}
-      onMouseEnter={e => {
+      onMouseEnter={(e) => {
         (e.currentTarget as HTMLButtonElement).style.borderColor = accentColor;
         (e.currentTarget as HTMLButtonElement).style.color = accentColor;
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e) => {
         (e.currentTarget as HTMLButtonElement).style.borderColor = borderClr;
         (e.currentTarget as HTMLButtonElement).style.color = mutedClr;
       }}
@@ -101,20 +114,26 @@ export default function MembersTableHeader({ viewMode, onViewModeChange, totalCo
     >
       {/* Left: title + count */}
       <div className="flex items-center gap-2.5">
-        <h2 style={{
-          fontFamily: "'OV Soge', sans-serif",
-          fontWeight: 700,
-          fontSize: '15px',
-          color: textColor,
-          margin: 0,
-        }}>
+        <h2
+          style={{
+            fontFamily: "'OV Soge', sans-serif",
+            fontWeight: 700,
+            fontSize: '15px',
+            color: textColor,
+            margin: 0,
+          }}
+        >
           All Members
         </h2>
         {/* Count badge: hidden on server, shown after mount to avoid hydration mismatch */}
         {displayCount !== null && (
           <span
             className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-            style={{ background: `${accentColor}20`, color: accentColor, fontFamily: "'Poppins', sans-serif" }}
+            style={{
+              background: `${accentColor}20`,
+              color: accentColor,
+              fontFamily: "'Poppins', sans-serif",
+            }}
           >
             {displayCount}
           </span>
@@ -125,14 +144,17 @@ export default function MembersTableHeader({ viewMode, onViewModeChange, totalCo
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-1">
           {viewBtn('table', LayoutGrid, 'Table view')}
-          {viewBtn('grid',  List,       'Grid view')}
+          {viewBtn('grid', List, 'Grid view')}
         </div>
 
-        <div className="hidden sm:block" style={{ width: '1px', height: '22px', background: borderClr }} />
+        <div
+          className="hidden sm:block"
+          style={{ width: '1px', height: '22px', background: borderClr }}
+        />
 
         <div className="flex items-center gap-1">
-          {exportBtn('CSV',   Table2,          'csv')}
-          {exportBtn('PDF',   FileText,        'pdf')}
+          {exportBtn('CSV', Table2, 'csv')}
+          {exportBtn('PDF', FileText, 'pdf')}
           {exportBtn('Excel', FileSpreadsheet, 'excel')}
         </div>
       </div>

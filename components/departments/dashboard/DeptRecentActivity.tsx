@@ -8,9 +8,9 @@ import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvide
 
 // ─── Soft-coded style constants ───────────────────────────────────────────────
 const STYLE = {
-  containerRadius: '10px',        // Outer card corner radius
-  containerBgLight: '#FFFFFF',    // Card background light mode
-  containerBgDark: '#1A2B45',     // Card background dark mode
+  containerRadius: '10px', // Outer card corner radius
+  containerBgLight: '#FFFFFF', // Card background light mode
+  containerBgDark: '#1A2B45', // Card background dark mode
   containerBorderLight: '#E5E7EB',
   containerBorderDark: '#2A3F5F',
   dividerColorLight: '#E5E7EB',
@@ -20,8 +20,8 @@ const STYLE = {
   subColorLight: '#6B7280',
   subColorDark: '#94A3B8',
   // View All / Details button — themed
-  btnBgLight: '#EEEEEF',          // Button bg light mode
-  btnBgDark: '#1E3A5F',           // Button bg dark mode
+  btnBgLight: '#EEEEEF', // Button bg light mode
+  btnBgDark: '#1E3A5F', // Button bg dark mode
   btnRadius: '8px',
   btnShadow: '0px 1px 3px rgba(15,23,42,0.08)',
   btnTextLight: '#111111',
@@ -72,10 +72,16 @@ const STATIC_FALLBACK = [
 function timeAgo(ts: number) {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
-  if (mins < 1)  { return 'just now'; }
-  if (mins < 60) { return `${mins}m ago`; }
+  if (mins < 1) {
+    return 'just now';
+  }
+  if (mins < 60) {
+    return `${mins}m ago`;
+  }
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  { return `${hrs}h ago`; }
+  if (hrs < 24) {
+    return `${hrs}h ago`;
+  }
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
@@ -90,20 +96,20 @@ export default function DeptRecentActivity() {
   const accentColor = profileReady
     ? isDark
       ? profile.darkAccentColor || '#2FC4B2'
-      : profile.accentColor    || '#2FC4B2'
+      : profile.accentColor || '#2FC4B2'
     : '#2FC4B2';
 
   const items =
     isReady && activities.length > 0 ? activities.slice(0, STYLE.maxItems) : STATIC_FALLBACK;
 
   // ── All colours derived after mount so SSR and client agree ───────────────
-  const containerBg     = isDark ? STYLE.containerBgDark     : STYLE.containerBgLight;
+  const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
   const containerBorder = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
-  const dividerColor    = isDark ? STYLE.dividerColorDark    : STYLE.dividerColorLight;
-  const textColor       = isDark ? STYLE.textColorDark       : STYLE.textColorLight;
-  const subColor        = isDark ? STYLE.subColorDark        : STYLE.subColorLight;
-  const btnBg           = isDark ? STYLE.btnBgDark           : STYLE.btnBgLight;
-  const btnText         = isDark ? STYLE.btnTextDark         : STYLE.btnTextLight;
+  const dividerColor = isDark ? STYLE.dividerColorDark : STYLE.dividerColorLight;
+  const textColor = isDark ? STYLE.textColorDark : STYLE.textColorLight;
+  const subColor = isDark ? STYLE.subColorDark : STYLE.subColorLight;
+  const btnBg = isDark ? STYLE.btnBgDark : STYLE.btnBgLight;
+  const btnText = isDark ? STYLE.btnTextDark : STYLE.btnTextLight;
 
   const btnStyle: React.CSSProperties = {
     backgroundColor: btnBg,
@@ -170,12 +176,18 @@ export default function DeptRecentActivity() {
               <span className="text-base flex-shrink-0">{item.icon}</span>
               <p
                 className="truncate"
-                style={{ color: textColor, fontFamily: 'Poppins', fontWeight: '100', fontSize: '15px' }}
+                style={{
+                  color: textColor,
+                  fontFamily: 'Poppins',
+                  fontWeight: '100',
+                  fontSize: '15px',
+                }}
               >
                 {item.label}
                 {item.detail && (
                   <span style={{ color: subColor, fontFamily: 'Poppins', fontWeight: '400' }}>
-                    {' '}– {item.detail}
+                    {' '}
+                    – {item.detail}
                   </span>
                 )}
               </p>
