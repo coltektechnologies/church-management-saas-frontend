@@ -33,6 +33,12 @@ export default function MembersTableHeader({ viewMode, onViewModeChange, totalCo
   const activeViewText = '#FFFFFF';
   const inactiveViewBg = 'transparent';
 
+  // ── Suppress totalCount until after hydration ─────────────────────────────
+  // The server renders with DUMMY_MEMBERS only; the client lazy-initialises
+  // from localStorage and may have more. Showing null until mounted prevents
+  // the server/client text mismatch that causes the hydration warning.
+  const displayCount = mounted ? totalCount : null;
+
   const exportBtn = (label: string, Icon: React.ElementType, fmt: 'csv' | 'pdf' | 'excel') => (
     <button
       key={fmt}
@@ -104,10 +110,15 @@ export default function MembersTableHeader({ viewMode, onViewModeChange, totalCo
         }}>
           All Members
         </h2>
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
-          style={{ background: `${accentColor}20`, color: accentColor, fontFamily: "'Poppins', sans-serif" }}>
-          {totalCount}
-        </span>
+        {/* Count badge: hidden on server, shown after mount to avoid hydration mismatch */}
+        {displayCount !== null && (
+          <span
+            className="px-2 py-0.5 rounded-full text-[10px] font-semibold"
+            style={{ background: `${accentColor}20`, color: accentColor, fontFamily: "'Poppins', sans-serif" }}
+          >
+            {displayCount}
+          </span>
+        )}
       </div>
 
       {/* Right: view toggles + exports */}
