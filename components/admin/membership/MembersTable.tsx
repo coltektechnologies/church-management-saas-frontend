@@ -39,7 +39,6 @@ import {
   type FilterableMemberRow,
 } from '@/lib/memberFilters';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
-import { cn } from '@/lib/utils';
 
 type MemberRow = FilterableMemberRow;
 

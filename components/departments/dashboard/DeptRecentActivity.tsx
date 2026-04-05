@@ -4,23 +4,24 @@ import { useRouter } from 'next/navigation';
 import { Activity } from 'lucide-react';
 import { useDeptActivity } from '@/components/departments/contexts/DeptActivityContext';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
+import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvider';
 
 // ─── Soft-coded style constants ───────────────────────────────────────────────
 const STYLE = {
   containerRadius: '10px', // Outer card corner radius
   containerBgLight: '#FFFFFF', // Card background light mode
   containerBgDark: '#1A2B45', // Card background dark mode
-  containerBorderLight: '#E5E7EB', // Card border light mode
-  containerBorderDark: '#2A3F5F', // Card border dark mode
-  dividerColorLight: '#E5E7EB', // Row divider light
-  dividerColorDark: '#2A3F5F', // Row divider dark
-  textColorLight: '#111111', // Row main text light
-  textColorDark: '#F0F4F8', // Row main text dark
-  subColorLight: '#6B7280', // Detail/sub text light
+  containerBorderLight: '#E5E7EB',
+  containerBorderDark: '#2A3F5F',
+  dividerColorLight: '#E5E7EB',
+  dividerColorDark: '#2A3F5F',
+  textColorLight: '#111111',
+  textColorDark: '#F0F4F8',
+  subColorLight: '#6B7280',
   subColorDark: '#94A3B8',
-  // View All button
-  btnBg: '#EEEEEF',
-  btnBorder: '#6B7280',
+  // View All / Details button — themed
+  btnBgLight: '#EEEEEF', // Button bg light mode
+  btnBgDark: '#1E3A5F', // Button bg dark mode
   btnRadius: '8px',
   btnShadow: '0px 1px 3px rgba(15,23,42,0.08)',
   btnTextLight: '#111111',
@@ -28,10 +29,8 @@ const STYLE = {
   maxItems: 8,
 };
 
-// Activities route — both View All and Details link here
 const ACTIVITIES_ROUTE = '/departments/activities';
 
-// Dummy data for testing — replace with live context data
 const STATIC_FALLBACK = [
   {
     id: '1',
@@ -70,7 +69,6 @@ const STATIC_FALLBACK = [
   },
 ];
 
-// Formats a timestamp into a relative human-readable string
 function timeAgo(ts: number) {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
@@ -90,32 +88,39 @@ function timeAgo(ts: number) {
 export default function DeptRecentActivity() {
   const router = useRouter();
   const { activities, isReady } = useDeptActivity();
-  const { profile } = useDepartmentProfile();
+  const { profile, isReady: profileReady } = useDepartmentProfile();
+  // ── Use mounted guard to prevent hydration mismatch ───────────────────────
+  const { resolvedTheme, mounted } = useDeptTheme();
+  const isDark = mounted ? resolvedTheme === 'dark' : false;
 
-  const isDark = profile.darkMode;
-  const accentColor = isDark
-    ? profile.darkAccentColor || '#2FC4B2'
-    : profile.accentColor || '#2FC4B2';
+  const accentColor = profileReady
+    ? isDark
+      ? profile.darkAccentColor || '#2FC4B2'
+      : profile.accentColor || '#2FC4B2'
+    : '#2FC4B2';
 
-  // Uses live context data if available, falls back to dummy data
   const items =
     isReady && activities.length > 0 ? activities.slice(0, STYLE.maxItems) : STATIC_FALLBACK;
 
+  // ── All colours derived after mount so SSR and client agree ───────────────
   const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
   const containerBorder = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
   const dividerColor = isDark ? STYLE.dividerColorDark : STYLE.dividerColorLight;
   const textColor = isDark ? STYLE.textColorDark : STYLE.textColorLight;
   const subColor = isDark ? STYLE.subColorDark : STYLE.subColorLight;
+  const btnBg = isDark ? STYLE.btnBgDark : STYLE.btnBgLight;
   const btnText = isDark ? STYLE.btnTextDark : STYLE.btnTextLight;
 
-  const btnStyle = {
-    backgroundColor: STYLE.btnBg,
+  const btnStyle: React.CSSProperties = {
+    backgroundColor: btnBg,
     borderRadius: STYLE.btnRadius,
     boxShadow: STYLE.btnShadow,
     color: btnText,
     fontFamily: 'Poppins',
     fontWeight: '400',
     fontSize: '13px',
+    border: `1px solid ${isDark ? STYLE.containerBorderDark : 'transparent'}`,
+    transition: 'background-color 0.2s ease, color 0.2s ease',
   };
 
   return (
@@ -125,9 +130,10 @@ export default function DeptRecentActivity() {
         borderRadius: STYLE.containerRadius,
         backgroundColor: containerBg,
         borderColor: containerBorder,
+        transition: 'background-color 0.3s ease, border-color 0.3s ease',
       }}
     >
-      {/* Header row — title + icon + View All button */}
+      {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Activity size={18} style={{ color: accentColor }} />
@@ -143,23 +149,22 @@ export default function DeptRecentActivity() {
             Recent Activity
           </h3>
         </div>
-        {/* View All — navigates to activities page */}
         <button
           onClick={() => router.push(ACTIVITIES_ROUTE)}
-          className="text-xs sm:text-sm font-semibold px-3 py-1.5 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="text-xs sm:text-sm font-semibold px-3 py-1.5 transition-all duration-200"
           style={btnStyle}
         >
           View All
         </button>
       </div>
 
-      {/* Divider  inset from edges to match screenshot */}
+      {/* Divider */}
       <div
         className="mb-4"
         style={{ height: '1px', backgroundColor: dividerColor, marginLeft: 0, marginRight: 0 }}
       />
 
-      {/* Activity rows each separated by a divider line */}
+      {/* Activity rows */}
       <div className="flex flex-col">
         {items.map((item) => (
           <div
@@ -167,7 +172,6 @@ export default function DeptRecentActivity() {
             className="flex items-center justify-between py-3"
             style={{ borderBottom: `1px solid ${dividerColor}` }}
           >
-            {/* Left: emoji icon + label + detail */}
             <div className="flex items-center gap-3 min-w-0">
               <span className="text-base flex-shrink-0">{item.icon}</span>
               <p
@@ -189,13 +193,12 @@ export default function DeptRecentActivity() {
               </p>
             </div>
 
-            {/* Right: time ago + Details button */}
             <div className="flex items-center gap-2 flex-shrink-0 ml-3">
               <span className="text-[11px]" style={{ color: subColor, fontFamily: 'Poppins' }}>
                 {timeAgo(item.timestamp)}
               </span>
               <button
-                className="text-[11px] sm:text-xs font-semibold px-2 py-1 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="text-[11px] sm:text-xs font-semibold px-2 py-1 transition-all duration-200"
                 style={btnStyle}
                 onClick={() => router.push(ACTIVITIES_ROUTE)}
               >
@@ -206,7 +209,7 @@ export default function DeptRecentActivity() {
         ))}
       </div>
 
-      {/* Divider line */}
+      {/* Bottom divider */}
       <div className="mt-0" style={{ height: '1px', backgroundColor: dividerColor }} />
     </div>
   );

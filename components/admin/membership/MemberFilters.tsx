@@ -12,13 +12,6 @@ import {
 } from '@/lib/memberFilters';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 
-const selectClassName =
-  'h-9 min-w-[130px] max-w-full px-3 rounded-md text-sm font-medium text-[#2B2B2C] bg-white border border-[#D9DADC] focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 outline-none appearance-none bg-[length:1rem] bg-[right_0.5rem_center] bg-no-repeat pr-9';
-
-const selectChevronStyle = {
-  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-} as const;
-
 export interface MemberFiltersProps {
   filters: MemberFilterState;
   onFiltersChange: (filters: MemberFilterState) => void;
@@ -98,7 +91,7 @@ export default function MemberFilters({
             ))}
           </select>
         </div>
-        <Link href={`${membersBasePath}/add`} className="w-full lg:w-auto lg:shrink-0">
+        <Link href={`${membersBasePath}/add`} className="w-full md:w-auto">
           <Button
             className="flex w-full lg:w-[156px] items-center justify-center shrink-0 hover:opacity-90"
             style={{

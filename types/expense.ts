@@ -9,6 +9,7 @@ export interface Expense {
   id: string;
   expenseRef: string; // e.g. EXP-2024-00142 — used by Treasury for reporting
   title: string;
+  category?: string;
   description: string;
   submitterName: string;
   items: ExpenseItem[];
