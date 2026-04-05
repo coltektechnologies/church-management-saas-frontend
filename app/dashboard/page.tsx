@@ -2,10 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  defaultHomePathForUser,
-  type PostLoginUser,
-} from '@/lib/postLoginRedirect';
+import { defaultHomePathForUser, type PostLoginUser } from '@/lib/postLoginRedirect';
 
 /**
  * Role-aware home: proxy and legacy links send everyone here first; then we route

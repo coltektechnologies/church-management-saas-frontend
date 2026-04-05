@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,16 @@ import {
   DATE_RANGE_OPTIONS,
 } from '@/lib/memberFilters';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
+
+const selectClassName =
+  'h-9 min-w-[7.5rem] max-w-[11rem] shrink-0 rounded-md border border-[#D9DADC] bg-white pl-2 pr-8 text-sm text-[#2B2B2C] focus:outline-none focus:ring-2 focus:ring-[#2FC4B2]/30 appearance-none bg-no-repeat';
+
+const selectChevronStyle: CSSProperties = {
+  backgroundImage:
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+  backgroundPosition: 'right 0.35rem center',
+  backgroundSize: '1rem',
+};
 
 export interface MemberFiltersProps {
   filters: MemberFilterState;

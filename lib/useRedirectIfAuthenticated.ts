@@ -3,10 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
-import {
-  resolvePostLoginPath,
-  type PostLoginUser,
-} from '@/lib/postLoginRedirect';
+import { resolvePostLoginPath, type PostLoginUser } from '@/lib/postLoginRedirect';
 import { isAccessTokenExpired } from '@/lib/jwtExpiry';
 
 /**

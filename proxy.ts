@@ -122,8 +122,8 @@ export function proxy(request: NextRequest) {
   //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
   //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
   // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
-    if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
-      return NextResponse.next();
+  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
+    return NextResponse.next();
   }
 
   if (!sessionOk) {

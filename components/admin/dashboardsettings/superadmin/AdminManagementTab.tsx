@@ -90,9 +90,7 @@ export default function AdminManagementTab() {
     setGroupsLoading(true);
     try {
       const g = await fetchChurchGroupsSelect();
-      setChurchGroupCatalog(
-        g.map((x) => ({ id: x.id, name: x.name, roleHint: x.role_name }))
-      );
+      setChurchGroupCatalog(g.map((x) => ({ id: x.id, name: x.name, roleHint: x.role_name })));
     } catch {
       setChurchGroupCatalog([]);
     } finally {
@@ -340,9 +338,7 @@ export default function AdminManagementTab() {
                     )}
                   >
                     <TableCell>
-                      <div className="font-bold text-sm text-[#0B2A4A]">
-                        {staffDisplayName(s)}
-                      </div>
+                      <div className="font-bold text-sm text-[#0B2A4A]">{staffDisplayName(s)}</div>
                       <div className="text-[10px] text-slate-400 font-medium truncate max-w-[220px]">
                         {s.email}
                       </div>

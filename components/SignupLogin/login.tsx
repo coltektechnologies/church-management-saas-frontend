@@ -13,10 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '@/assets/logo.svg';
 import { login as apiLogin } from '@/lib/api';
-import {
-  resolvePostLoginPath,
-  type PostLoginUser,
-} from '@/lib/postLoginRedirect';
+import { resolvePostLoginPath, type PostLoginUser } from '@/lib/postLoginRedirect';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
 import { toast } from 'sonner';

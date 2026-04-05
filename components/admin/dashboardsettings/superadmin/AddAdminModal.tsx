@@ -159,7 +159,9 @@ export default function AddAdminModal({
     >
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto rounded-[28px] border border-slate-100 shadow-2xl p-6 sm:p-8 gap-0">
         <DialogHeader className="text-left space-y-1 pb-2">
-          <DialogTitle className="text-2xl font-black text-[#0B2A4A]">Invite staff user</DialogTitle>
+          <DialogTitle className="text-2xl font-black text-[#0B2A4A]">
+            Invite staff user
+          </DialogTitle>
           <DialogDescription className="text-sm text-slate-500 font-medium">
             Creates a user via the API, assigns the selected role, and adds optional church groups.
           </DialogDescription>
@@ -195,9 +197,7 @@ export default function AddAdminModal({
                   onChange={(ev) => setField('last_name', ev.target.value)}
                   placeholder="Mensah"
                 />
-                {errors.last_name && (
-                  <p className="text-[10px] text-red-500">{errors.last_name}</p>
-                )}
+                {errors.last_name && <p className="text-[10px] text-red-500">{errors.last_name}</p>}
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
@@ -241,18 +241,13 @@ export default function AddAdminModal({
           </section>
 
           <section className="space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-              Access
-            </p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Access</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 sm:col-span-2">
                 <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
                   Role
                 </Label>
-                <Select
-                  value={form.role_name}
-                  onValueChange={(v) => setField('role_name', v)}
-                >
+                <Select value={form.role_name} onValueChange={(v) => setField('role_name', v)}>
                   <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100">
                     <SelectValue />
                   </SelectTrigger>
@@ -272,7 +267,10 @@ export default function AddAdminModal({
                 <Select
                   value={form.notification_preference}
                   onValueChange={(v) =>
-                    setField('notification_preference', v as InviteStaffPayload['notification_preference'])
+                    setField(
+                      'notification_preference',
+                      v as InviteStaffPayload['notification_preference']
+                    )
                   }
                 >
                   <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100">
@@ -413,7 +411,9 @@ export default function AddAdminModal({
           {showProfile && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-1 border-l-2 border-[#2FC4B2]/40 ml-1">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Date of birth</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-400">
+                  Date of birth
+                </Label>
                 <Input
                   type="date"
                   className="h-11 rounded-xl bg-slate-50 border-slate-100"

@@ -47,8 +47,7 @@ function normalizeList(data: unknown): unknown[] {
   return [];
 }
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export interface StaffUserListItem {
   id: string;
@@ -82,8 +81,7 @@ export async function fetchChurchGroupsSelect(): Promise<ChurchGroupSelectItem[]
   return (normalizeList(data) as Record<string, unknown>[]).map((r) => ({
     id: String(r.id),
     name: String(r.name ?? ''),
-    role_name:
-      r.role_name !== undefined && r.role_name !== null ? String(r.role_name) : undefined,
+    role_name: r.role_name !== undefined && r.role_name !== null ? String(r.role_name) : undefined,
   }));
 }
 
@@ -109,7 +107,10 @@ export function mapApiUserToStaffMember(
 /**
  * POST /auth/users/, then POST /auth/user-roles/, then optional PUT to deactivate.
  */
-export async function inviteStaffUser(payload: InviteStaffPayload, roleId: string): Promise<string> {
+export async function inviteStaffUser(
+  payload: InviteStaffPayload,
+  roleId: string
+): Promise<string> {
   const body: Record<string, unknown> = {
     email: payload.email,
     first_name: payload.first_name,
@@ -145,8 +146,7 @@ export async function inviteStaffUser(payload: InviteStaffPayload, roleId: strin
     method: 'POST',
     body: JSON.stringify(body),
   });
-  const userId =
-    created.id !== undefined && created.id !== null ? String(created.id) : '';
+  const userId = created.id !== undefined && created.id !== null ? String(created.id) : '';
   if (!userId) {
     throw new Error('Server did not return a user id.');
   }
