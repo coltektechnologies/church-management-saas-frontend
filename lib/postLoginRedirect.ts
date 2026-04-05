@@ -45,7 +45,7 @@ export function resolvePostLoginPath(
 ): string {
   const trimmed = next === undefined || next === null ? '' : String(next).trim();
   if (trimmed !== '') {
-    return getSafeReturnPath(next);
+    return getSafeReturnPath(next ?? null);
   }
   return defaultHomePathForUser(user);
 }
