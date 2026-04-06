@@ -1,9 +1,9 @@
 import listIcon from '@/assets/list-icon.svg';
 
 export default function ExpenseRequestFormHeader() {
-    return (
-        <>
-            <div className="relative pt-7 px-4">
+  return (
+    <>
+      <div className="relative pt-7 px-4">
         {/* Icon */}
         <div className="inline-flex items-center gap-2 mb-6">
           <div className="w-6 h-6">
@@ -24,6 +24,6 @@ export default function ExpenseRequestFormHeader() {
       <div className="flex items-center justify-center mt-8 mb-8">
         <div className="w-full h-[2px] bg-[#2FC4B2]" />
       </div>
-        </>
-    )
+    </>
+  );
 }

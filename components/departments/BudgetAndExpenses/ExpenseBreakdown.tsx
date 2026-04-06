@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useState } from 'react';
 import { Menu } from 'lucide-react';
 
@@ -38,11 +38,9 @@ export default function App() {
             >
               <Menu size={24} />
             </button>
-            <h1 className="text-2xl font-semibold text-teal-500">
-              Expense Breakdown
-            </h1>
+            <h1 className="text-2xl font-semibold text-teal-500">Expense Breakdown</h1>
           </div>
-          
+
           <button
             onClick={handleRequestFund}
             className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2.5 rounded-lg transition-colors font-medium"
@@ -88,8 +86,8 @@ export default function App() {
                           expense.status === 'approved'
                             ? 'bg-green-100 text-green-700'
                             : expense.status === 'rejected'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-yellow-100 text-yellow-700'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-yellow-100 text-yellow-700'
                         }`}
                       >
                         {expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}

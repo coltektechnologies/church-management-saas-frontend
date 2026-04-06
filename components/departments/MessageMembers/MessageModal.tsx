@@ -38,15 +38,16 @@ export function MessageModal({
     if (isOpen) {
       setMessageType(initialType);
       if (initialSelectAll) {
-        setSelectedMembers(new Set(members.map(m => m.id)));
+        setSelectedMembers(new Set(members.map((m) => m.id)));
       }
     }
   }, [isOpen, initialType, initialSelectAll, members]);
 
-  const filteredMembers = members.filter(member =>
-    member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member.phone.includes(searchQuery)
+  const filteredMembers = members.filter(
+    (member) =>
+      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.phone.includes(searchQuery)
   );
 
   const toggleMember = (memberId: string) => {
@@ -63,7 +64,7 @@ export function MessageModal({
     if (selectedMembers.size === filteredMembers.length) {
       setSelectedMembers(new Set());
     } else {
-      setSelectedMembers(new Set(filteredMembers.map(m => m.id)));
+      setSelectedMembers(new Set(filteredMembers.map((m) => m.id)));
     }
   };
 
@@ -91,7 +92,9 @@ export function MessageModal({
   const characterLimit = messageType === 'sms' ? 160 : 5000;
   const isOverLimit = content.length > characterLimit;
 
-  if (!isOpen) {return null;}
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -123,7 +126,9 @@ export function MessageModal({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${messageType === 'email' ? 'bg-teal-600' : 'bg-gray-700'}`}>
+                  <div
+                    className={`p-2 rounded-lg ${messageType === 'email' ? 'bg-teal-600' : 'bg-gray-700'}`}
+                  >
                     <Mail className="w-5 h-5 text-white" />
                   </div>
                   <div className="text-left">
@@ -141,7 +146,9 @@ export function MessageModal({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${messageType === 'sms' ? 'bg-teal-600' : 'bg-gray-700'}`}>
+                  <div
+                    className={`p-2 rounded-lg ${messageType === 'sms' ? 'bg-teal-600' : 'bg-gray-700'}`}
+                  >
                     <MessageSquare className="w-5 h-5 text-white" />
                   </div>
                   <div className="text-left">
@@ -155,7 +162,9 @@ export function MessageModal({
 
           {/* Message Title */}
           <div>
-            <Label htmlFor="title" className="mb-2 block">Subject / Title</Label>
+            <Label htmlFor="title" className="mb-2 block">
+              Subject / Title
+            </Label>
             <Input
               id="title"
               value={title}
@@ -177,7 +186,11 @@ export function MessageModal({
               id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder={messageType === 'email' ? 'Enter your email message...' : 'Enter your SMS message (max 160 characters)'}
+              placeholder={
+                messageType === 'email'
+                  ? 'Enter your email message...'
+                  : 'Enter your SMS message (max 160 characters)'
+              }
               className="w-full min-h-[120px]"
             />
             {isOverLimit && (
@@ -211,7 +224,9 @@ export function MessageModal({
             <div className="flex items-center gap-2 mb-3 p-3 bg-gray-50 rounded-lg">
               <Checkbox
                 id="select-all"
-                checked={selectedMembers.size === filteredMembers.length && filteredMembers.length > 0}
+                checked={
+                  selectedMembers.size === filteredMembers.length && filteredMembers.length > 0
+                }
                 onCheckedChange={toggleSelectAll}
               />
               <label htmlFor="select-all" className="flex items-center gap-2 cursor-pointer flex-1">
@@ -240,10 +255,7 @@ export function MessageModal({
                         checked={selectedMembers.has(member.id)}
                         onCheckedChange={() => toggleMember(member.id)}
                       />
-                      <label
-                        htmlFor={`member-${member.id}`}
-                        className="flex-1 cursor-pointer"
-                      >
+                      <label htmlFor={`member-${member.id}`} className="flex-1 cursor-pointer">
                         <div className="font-medium">{member.name}</div>
                         <div className="text-sm text-gray-500">
                           {messageType === 'email' ? member.email : member.phone}
@@ -259,16 +271,18 @@ export function MessageModal({
 
         {/* Footer */}
         <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isSending}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isSending}>
             Cancel
           </Button>
           <Button
             onClick={handleSend}
-            disabled={!title.trim() || !content.trim() || selectedMembers.size === 0 || isOverLimit || isSending}
+            disabled={
+              !title.trim() ||
+              !content.trim() ||
+              selectedMembers.size === 0 ||
+              isOverLimit ||
+              isSending
+            }
             className="bg-teal-500 hover:bg-teal-600"
           >
             {isSending ? (
@@ -278,7 +292,11 @@ export function MessageModal({
               </>
             ) : (
               <>
-                {messageType === 'email' ? <Mail className="w-4 h-4 mr-2" /> : <MessageSquare className="w-4 h-4 mr-2" />}
+                {messageType === 'email' ? (
+                  <Mail className="w-4 h-4 mr-2" />
+                ) : (
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                )}
                 Send to {selectedMembers.size} {selectedMembers.size === 1 ? 'Member' : 'Members'}
               </>
             )}

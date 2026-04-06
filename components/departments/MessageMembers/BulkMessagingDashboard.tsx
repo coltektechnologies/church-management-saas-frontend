@@ -54,7 +54,7 @@ export function BulkMessagingDashboard() {
   ) => {
     try {
       const payload = { title, content, type, recipientIds };
-      
+
       let result;
       if (type === 'email') {
         result = await api.sendBulkEmail(payload);
@@ -112,7 +112,7 @@ export function BulkMessagingDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster />
-      
+
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -121,9 +121,7 @@ export function BulkMessagingDashboard() {
               <div className="bg-teal-100 p-2 rounded-lg">
                 <Users className="w-6 h-6 text-teal-600" />
               </div>
-              <h1 className="text-2xl font-semibold text-teal-600">
-                Message Department Members
-              </h1>
+              <h1 className="text-2xl font-semibold text-teal-600">Message Department Members</h1>
             </div>
             <Button
               onClick={() => openModal('email', false)}
@@ -200,21 +198,23 @@ export function BulkMessagingDashboard() {
                   className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-start gap-4 flex-1">
-                    <div className={`p-2 rounded-lg ${
-                      message.type === 'email' ? 'bg-blue-100' : 'bg-green-100'
-                    }`}>
+                    <div
+                      className={`p-2 rounded-lg ${
+                        message.type === 'email' ? 'bg-blue-100' : 'bg-green-100'
+                      }`}
+                    >
                       {message.type === 'email' ? (
-                        <Mail className={`w-5 h-5 ${
-                          message.type === 'email' ? 'text-blue-600' : 'text-green-600'
-                        }`} />
+                        <Mail
+                          className={`w-5 h-5 ${
+                            message.type === 'email' ? 'text-blue-600' : 'text-green-600'
+                          }`}
+                        />
                       ) : (
                         <MessageSquare className="w-5 h-5 text-green-600" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1">
-                        {message.title}
-                      </h3>
+                      <h3 className="font-semibold text-gray-900 mb-1">{message.title}</h3>
                       <p className="text-sm text-gray-500">
                         Sent to {message.recipientCount} members • {formatDate(message.sentAt)}
                       </p>
@@ -225,8 +225,8 @@ export function BulkMessagingDashboard() {
                       message.status === 'delivered'
                         ? 'bg-teal-100 text-teal-700 hover:bg-teal-100'
                         : message.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
-                        : 'bg-red-100 text-red-700 hover:bg-red-100'
+                          ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
+                          : 'bg-red-100 text-red-700 hover:bg-red-100'
                     }`}
                   >
                     {message.status.charAt(0).toUpperCase() + message.status.slice(1)}
