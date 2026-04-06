@@ -32,6 +32,10 @@ function useActivitySummary(dash: SecretaryDashboardApiContextValue): string {
   const [mountedAt] = useState<number>(() => Date.now());
 
   return useMemo(() => {
+    if (status === 'loading' || status === 'idle') {
+      return 'Loading dashboard…';
+    }
+
     const pendingN = typeof kpiPendingApprovals === 'number' ? kpiPendingApprovals : pending.length;
 
     if (status === 'ready' && !activities.length && pendingN === 0 && activityFeed.length === 0) {

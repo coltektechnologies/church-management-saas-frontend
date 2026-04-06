@@ -44,7 +44,8 @@ export function ActivityFeed() {
   const serverLoading = api?.status === 'loading' || api?.status === 'idle';
 
   const useServer = serverRows.length > 0;
-  const showLocal = isReady && activities.length > 0 && !useServer;
+  /** While the audit API is loading, do not show local session entries (avoids a misleading flash). */
+  const showLocal = isReady && activities.length > 0 && !useServer && !serverLoading;
 
   return (
     <Card className="bg-card">
