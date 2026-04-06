@@ -23,7 +23,7 @@ import { RequireAuth } from '@/components/auth/RequireAuth';
  *
  * Otherwise: normal auth — login first, then /secretary.
  */
-const skipAuth = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
+// const skipAuth = process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true';
 
 function SecretaryShell({ children }: { children: ReactNode }) {
   const { profile, isReady } = useSecretaryProfile();
@@ -78,8 +78,10 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
     </AuthProvider>
   );
 
-  if (skipAuth) {
-    return tree;
-  }
+  // When preview is enabled: uncomment skipAuth above and these two lines:
+  // if (skipAuth) {
+  //   return tree;
+  // }
   return <RequireAuth>{tree}</RequireAuth>;
+  // return tree;
 }

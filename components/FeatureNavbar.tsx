@@ -11,6 +11,7 @@ export default function Navbar() {
 
   const navLinks = [
     { href: ROUTES.features, label: 'Features' },
+    { href: ROUTES.developers, label: 'Developers' },
     { href: ROUTES.pricing, label: 'Pricing' },
     { href: ROUTES.contact, label: 'Contact Us' },
     { href: ROUTES.testimonials, label: 'Testimonials' },
