@@ -24,15 +24,6 @@ export const api = {
   ): Promise<{ success: boolean; messageId: string }> => {
     await delay(1500);
 
-    console.log('📧 Sending bulk email:', {
-      title: payload.title,
-      content: payload.content,
-      recipients: payload.recipientIds.length,
-      recipientEmails: mockMembers
-        .filter((m) => payload.recipientIds.includes(m.id))
-        .map((m) => m.email),
-    });
-
     // Simulate successful send
     return {
       success: true,
@@ -45,15 +36,6 @@ export const api = {
     payload: SendMessagePayload
   ): Promise<{ success: boolean; messageId: string }> => {
     await delay(1500);
-
-    console.log('📱 Sending bulk SMS:', {
-      title: payload.title,
-      content: payload.content,
-      recipients: payload.recipientIds.length,
-      recipientPhones: mockMembers
-        .filter((m) => payload.recipientIds.includes(m.id))
-        .map((m) => m.phone),
-    });
 
     // Simulate successful send
     return {
