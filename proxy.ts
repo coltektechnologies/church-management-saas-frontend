@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import { getSafeInternalPath } from '@/lib/safeReturnPath';
+
 /**
  * Next.js 16+: edge guard before App Router. Cookie must match login (see `churchSessionBrowser.ts`).
  *
@@ -84,9 +86,12 @@ export function proxy(request: NextRequest) {
 
   // Logged-in users cannot open login/signup (back button or direct URL) without logging out.
   if (sessionOk && isAuthOnlyPath(pathname)) {
+    const nextParam = request.nextUrl.searchParams.get('next');
+    const safeNext = getSafeInternalPath(nextParam);
     const dest = request.nextUrl.clone();
-    dest.pathname = LOGGED_IN_AUTH_REDIRECT;
     dest.search = '';
+    // Prefer ?next= when safe; otherwise /dashboard (client picks /secretary vs /admin from localStorage).
+    dest.pathname = safeNext ?? LOGGED_IN_AUTH_REDIRECT;
     return NextResponse.redirect(dest);
   }
 
@@ -98,12 +103,26 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(dest);
   }
 
+  // // Uncomment for local department preview (with .env NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true): and
+  // // comment out the skipSecretaryCookie block below, then restart dev. Never enable that in production.
+  // // 1. Define the skip logic based on your environment variable
+  // const skipDepartmentsAuth =
+  //   process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true' &&
+  //   (pathname === '/departments' || pathname.startsWith('/departments/'));
+
+  // // 2. Add it to your existing public path conditional, Uncomment for local department preview (with .env NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true): and
+  // // comment out the skipSecretaryCookie block below, then restart dev. Never enable that in production.
+  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipDepartmentsAuth) {
+  //   return NextResponse.next();
+  // }
+  // //create env.local with NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true to skip auth for /departments in dev, then restart dev server. Never enable that in production.
+
   // Uncomment for local secretary preview (with .env NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true):
-  const skipSecretaryCookie =
-    process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
-    (pathname === '/secretary' || pathname.startsWith('/secretary/'));
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
-    // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
+  // const skipSecretaryCookie =
+  //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+  //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+  // if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipSecretaryCookie) {
+  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
     return NextResponse.next();
   }
 
