@@ -139,6 +139,7 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
   };
 
   const removeFile = (index: number) => setDocuments((prev) => prev.filter((_, i) => i !== index));
+  const selectedCategory = expenseCategories.find((c) => c.id === categoryId);
 
   const handleSaveDraft = () => {
     localStorage.setItem(draftKey, JSON.stringify({ submitterName, title, justification, items }));
@@ -177,6 +178,7 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
       id: crypto.randomUUID(),
       expenseRef: '',
       title,
+      category: selectedCategory?.name ?? '',
       description: justification,
       submitterName,
       items,
