@@ -24,6 +24,10 @@ import {
 import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
 import { useAppData } from '@/components/secretary/contexts/AppDataContext';
+import {
+  useOptionalSecretaryDashboardApi,
+  type MemberRegistrationMonthBucket,
+} from '@/components/secretary/contexts/SecretaryDashboardApiContext';
 
 const MONTH_NAMES = [
   'Jan',
@@ -48,22 +52,6 @@ interface ActivityWithType {
   action?: string;
   type?: string;
 }
-
-// ── MOCK DATA ─────────────────────────────────────────────────────────────────
-const MOCK_DATA = [
-  { name: 'Jan', members: 45 },
-  { name: 'Feb', members: 62 },
-  { name: 'Mar', members: 58 },
-  { name: 'Apr', members: 81 },
-  { name: 'May', members: 94 },
-  { name: 'Jun', members: 110 },
-  { name: 'Jul', members: 103 },
-  { name: 'Aug', members: 128 },
-  { name: 'Sep', members: 142 },
-  { name: 'Oct', members: 135 },
-  { name: 'Nov', members: 160 },
-  { name: 'Dec', members: 178 },
-];
 
 function isMemberActivity(a: ActivityWithType): boolean {
   return (
@@ -129,16 +117,49 @@ function deriveTickCount(maxValue: number): number {
   return 8;
 }
 
-// ── Live growth data derived from activity log ────────────────────────────────
+/** `YYYY-MM` → short label for chart axis (e.g. Jan 25) */
+function formatYmLabel(ym: string): string {
+  const [ys, ms] = ym.split('-').map(Number);
+  if (!ys || !ms) {
+    return ym;
+  }
+  return new Date(ys, ms - 1, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+}
+
+function monthOverlapMs(
+  period: string,
+  fromMs: number,
+  toMs: number
+): { overlaps: boolean; start: number } | null {
+  const parts = period.split('-').map(Number);
+  const y = parts[0];
+  const m = parts[1];
+  if (!y || !m) {
+    return null;
+  }
+  const start = new Date(y, m - 1, 1).getTime();
+  const end = new Date(y, m, 0, 23, 59, 59, 999).getTime();
+  const overlaps = start <= toMs && end >= fromMs;
+  return { overlaps, start };
+}
+
+// ── Growth series: API member `created_at` buckets (preferred), else local activity log (no demo data) ──
 function useGrowthData(
   rangeMode: 'preset' | 'custom',
   presetRange: string,
   customFrom: string,
-  customTo: string
+  customTo: string,
+  apiBuckets: MemberRegistrationMonthBucket[],
+  dashboardApiActive: boolean,
+  apiLoading: boolean
 ) {
   const { activities } = useAppData();
 
   return useMemo(() => {
+    if (dashboardApiActive && apiLoading) {
+      return [];
+    }
+
     const now = new Date();
     const year = now.getFullYear();
 
@@ -167,6 +188,21 @@ function useGrowthData(
       }
     }
 
+    if (apiBuckets.length > 0) {
+      const filtered = apiBuckets
+        .map((b) => ({ b, ov: monthOverlapMs(b.period, fromMs, toMs) }))
+        .filter((x) => x.ov?.overlaps)
+        .sort((a, b) => (a.ov?.start ?? 0) - (b.ov?.start ?? 0));
+      if (filtered.length > 0) {
+        return filtered.map(({ b }) => ({
+          name: formatYmLabel(b.period),
+          members: b.count,
+        }));
+      }
+      /* API has history but selected range has no registrations — do not fall back to demo data. */
+      return [];
+    }
+
     const buckets: Record<string, number> = {};
 
     for (const a of activities as ActivityWithType[]) {
@@ -186,16 +222,27 @@ function useGrowthData(
     const hasRealData = Object.keys(buckets).length > 0;
 
     if (!hasRealData) {
-      return MOCK_DATA;
+      return [];
     }
 
     return Object.keys(buckets)
       .sort()
       .map((key) => {
-        const monthIdx = parseInt(key.split('-')[1]);
-        return { name: MONTH_NAMES[monthIdx], members: buckets[key] };
+        const mPart = parseInt(key.split('-')[1] ?? '1', 10);
+        const idx = Number.isFinite(mPart) ? mPart - 1 : 0;
+        const safeIdx = idx >= 0 && idx < 12 ? idx : 0;
+        return { name: MONTH_NAMES[safeIdx], members: buckets[key] };
       });
-  }, [activities, rangeMode, presetRange, customFrom, customTo]);
+  }, [
+    activities,
+    apiBuckets,
+    rangeMode,
+    presetRange,
+    customFrom,
+    customTo,
+    dashboardApiActive,
+    apiLoading,
+  ]);
 }
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────
@@ -606,6 +653,13 @@ function ChartTypePicker({ value, onChange }: ChartTypePickerProps) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export function MembershipGrowthChart() {
+  const apiCtx = useOptionalSecretaryDashboardApi();
+  const apiBuckets = apiCtx?.memberRegistrationBuckets ?? [];
+  const dashboardApiActive = apiCtx !== null;
+  const apiLoading =
+    dashboardApiActive && (apiCtx.status === 'loading' || apiCtx.status === 'idle');
+  const apiReady = dashboardApiActive && apiCtx.status === 'ready';
+
   const { profile, isReady } = useSecretaryProfile();
 
   const isDark = isReady ? profile.darkMode : false;
@@ -637,7 +691,15 @@ export function MembershipGrowthChart() {
   const [selectedBar, setSelectedBar] = useState<number | null>(null);
   const [showBorder, setShowBorder] = useState(false);
 
-  const filteredData = useGrowthData(rangeMode, presetRange, customFrom, customTo);
+  const filteredData = useGrowthData(
+    rangeMode,
+    presetRange,
+    customFrom,
+    customTo,
+    apiBuckets,
+    dashboardApiActive,
+    apiLoading
+  );
 
   const maxValue = useMemo(
     () => Math.max(0, ...filteredData.map((d) => d.members)),
@@ -685,8 +747,27 @@ export function MembershipGrowthChart() {
     allowDataOverflow: false,
   };
 
-  const { activities } = useAppData();
-  const usingMockData = !(activities as ActivityWithType[]).some(isMemberActivity);
+  const hasApiGrowth = apiBuckets.length > 0;
+  const hasLocalMemberSeries = !hasApiGrowth && filteredData.length > 0 && !apiLoading;
+
+  const growthCaption = (() => {
+    if (apiLoading) {
+      return 'Loading membership registrations…';
+    }
+    if (hasApiGrowth) {
+      if (filteredData.length === 0) {
+        return 'No member registrations in this range yet.';
+      }
+      return `Live · new members by registration month · ${filteredData.reduce((s, d) => s + d.members, 0).toLocaleString()} in selected range (refresh dashboard to update)`;
+    }
+    if (apiReady && filteredData.length === 0) {
+      return 'No member registrations in this range yet.';
+    }
+    if (hasLocalMemberSeries) {
+      return `Local activity · ${filteredData.reduce((s, d) => s + d.members, 0).toLocaleString()} events in view`;
+    }
+    return 'No data for this view — add members or adjust the date range.';
+  })();
 
   // Derive the family from the chosen sub-id
   const activeFamily = familyOfSub(chartType)?.id ?? 'bar';
@@ -1109,16 +1190,20 @@ export function MembershipGrowthChart() {
             padding: '6px 2px 4px 0',
           }}
         >
-          <ResponsiveContainer width="100%" height="100%">
-            {renderChart()}
-          </ResponsiveContainer>
+          {apiLoading ? (
+            <div className="h-full w-full rounded-md bg-muted/30 animate-pulse" aria-hidden />
+          ) : filteredData.length === 0 ? (
+            <div className="h-full min-h-[200px] flex items-center justify-center text-sm text-muted-foreground px-4 text-center">
+              No membership growth data for this range.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              {renderChart()}
+            </ResponsiveContainer>
+          )}
         </div>
 
-        <p className="text-[9px] text-muted-foreground mt-1 pl-1">
-          {usingMockData
-            ? 'Showing demo data — wire Members page with useLogMember() to see real growth'
-            : `Live data · ${filteredData.reduce((s, d) => s + d.members, 0).toLocaleString()} total events in view · updates automatically`}
-        </p>
+        <p className="text-[9px] text-muted-foreground mt-1 pl-1">{growthCaption}</p>
 
         {selectedBar !== null && (
           <p className="text-[10px] text-muted-foreground mt-1 text-center">

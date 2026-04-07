@@ -8,6 +8,7 @@
 export interface MemberFilterState {
   search: string;
   status: string;
+  role: string;
   department: string;
   dateRange: string;
 }
@@ -15,9 +16,18 @@ export interface MemberFilterState {
 export const DEFAULT_MEMBER_FILTERS: MemberFilterState = {
   search: '',
   status: 'all',
+  role: 'all',
   department: 'all',
   dateRange: 'all',
 };
+
+export const MEMBER_ROLE_OPTIONS = [
+  { value: 'all', label: 'All Roles' },
+  { value: 'Admin', label: 'Admin' },
+  { value: 'Core Admin', label: 'Core Admin' },
+  { value: 'Member', label: 'Member' },
+  { value: 'Department Head', label: 'Department Head' },
+];
 
 export const MEMBERSHIP_STATUS_OPTIONS = [
   { value: 'all', label: 'All Status' },
@@ -52,7 +62,7 @@ export interface FilterableMemberRow {
  * Client-side filter: returns true if the member passes all active filters.
  */
 export function passesMemberFilters(row: FilterableMemberRow, filters: MemberFilterState): boolean {
-  const { search, status, department, dateRange } = filters;
+  const { search, status, role, department, dateRange } = filters;
 
   if (search.trim()) {
     const q = search.trim().toLowerCase();
@@ -66,6 +76,10 @@ export function passesMemberFilters(row: FilterableMemberRow, filters: MemberFil
   }
 
   if (status && status !== 'all' && row.status !== status) {
+    return false;
+  }
+
+  if (role && role !== 'all' && row.role !== role) {
     return false;
   }
 
@@ -119,6 +133,7 @@ export function applyMemberFilters<T extends FilterableMemberRow>(
   if (
     !filters.search.trim() &&
     (filters.status === 'all' || !filters.status) &&
+    (filters.role === 'all' || !filters.role) &&
     (filters.department === 'all' || !filters.department) &&
     (filters.dateRange === 'all' || !filters.dateRange)
   ) {

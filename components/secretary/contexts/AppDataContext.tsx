@@ -39,7 +39,7 @@ const AppDataContext = createContext<AppDataContextValue>({
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  // Pending approvals — still local state (wire to real source when ready)
+  /** Local-only placeholder; secretary home pending counts come from `SecretaryDashboardApiContext`. */
   const [pending] = useState<PendingItem[]>([]);
 
   // Pull live activities straight from ActivityContext.
