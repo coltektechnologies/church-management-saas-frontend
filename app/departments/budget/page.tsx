@@ -3,11 +3,39 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDepartments } from '@/context/DepartmentsContext';
-import { FaClipboardList, FaClock, FaFileAlt, FaCoins } from 'react-icons/fa';
+import { Department } from '@/types/Department';
+import {
+  FaClipboardList,
+  FaClock,
+  FaFileAlt,
+  FaCoins,
+} from 'react-icons/fa';
 import { CheckCircle, XCircle, Clock, FileEdit, Plus } from 'lucide-react';
 import { Expense } from '@/types/expense';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Mock fallback — used when API returns no departments (local dev / no auth) ──
+const MOCK_DEPARTMENT: Department = {
+  id: '1',
+  name: 'Adventist Youth',
+  code: 'AY-001',
+  description: 'Youth ministry department',
+  members: 25,
+  activities: 5,
+  budgetUsed: 3750,
+  annualBudget: 8000,
+  status: 'active',
+  themeColor: 'navy',
+  icon: '📖',
+  dateEstablished: '2022-01-10',
+  settings: {
+    autoApprovalThreshold: 500,
+    requiresElderApproval: true,
+    weeklySummary: true,
+    canSubmitAnnouncements: true,
+  },
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(dateString: string): string {
   try {
@@ -22,36 +50,28 @@ function formatDate(dateString: string): string {
 }
 
 function hasDraft(departmentId: string): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
+  if (typeof window === 'undefined') {return false;}
   return !!localStorage.getItem(`expense_draft_${departmentId}`);
 }
 
-// ── Status badge ─────────────────────────────────────────────────────────────
+// ── Status badge ──────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: Expense['status'] | 'draft' }) {
-  if (status === 'approved') {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-medium">
-        <CheckCircle size={11} /> Approved
-      </span>
-    );
-  }
-  if (status === 'rejected') {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium">
-        <XCircle size={11} /> Rejected
-      </span>
-    );
-  }
-  if (status === 'draft') {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
-        <FileEdit size={11} /> Draft
-      </span>
-    );
-  }
+  if (status === 'approved') {return (
+    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+      <CheckCircle size={11} /> Approved
+    </span>
+  );}
+  if (status === 'rejected') {return (
+    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium">
+      <XCircle size={11} /> Rejected
+    </span>
+  );}
+  if (status === 'draft') {return (
+    <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
+      <FileEdit size={11} /> Draft
+    </span>
+  );}
   return (
     <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
       <Clock size={11} /> Pending
@@ -74,9 +94,7 @@ function StatCard({
 }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 flex items-center gap-4 shadow-sm">
-      <div
-        className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}
-      >
+      <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
         {icon}
       </div>
       <div>
@@ -99,16 +117,17 @@ export default function BudgetExpensesPage() {
     loading,
   } = useDepartments();
 
-  // For now use the first active department — API integration will filter by logged-in user
-  const department = departments.find((d) => d.status === 'active') ?? departments[0];
-  const departmentId = department?.id ?? '';
+  // Use first active department from API, fall back to mock for local dev
+  const department: Department =
+    departments.find((d) => d.status === 'active') ??
+    departments[0] ??
+    MOCK_DEPARTMENT;
 
-  const expenses = departmentExpensesMap[departmentId] ?? [];
+  const departmentId = department.id;
+  const expenses: Expense[] = departmentExpensesMap[departmentId] ?? [];
 
   useEffect(() => {
-    if (!departmentId) {
-      return;
-    }
+    if (!departmentId) {return;}
     void loadDepartmentExpenseRequests(departmentId);
     void syncDepartmentBudgetFromApi(departmentId);
   }, [departmentId, loadDepartmentExpenseRequests, syncDepartmentBudgetFromApi]);
@@ -119,12 +138,12 @@ export default function BudgetExpensesPage() {
   const draftCount = draftExists ? 1 : 0;
   const totalRequested = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  const hasNoBudget = !department || department.annualBudget === 0;
+  const hasNoBudget = department.annualBudget === 0;
   const budgetPercentage = hasNoBudget
     ? 0
     : Math.min((department.budgetUsed / department.annualBudget) * 100, 100);
 
-  if (loading && !department) {
+  if (loading && departments.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-full p-8">
         <p className="text-gray-400 text-sm animate-pulse">Loading…</p>
@@ -132,16 +151,9 @@ export default function BudgetExpensesPage() {
     );
   }
 
-  if (!department) {
-    return (
-      <div className="flex items-center justify-center min-h-full p-8">
-        <p className="text-gray-500 text-sm">No department assigned to your account.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
+
       {/* Page heading */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Budget & Expenses</h1>
@@ -189,8 +201,7 @@ export default function BudgetExpensesPage() {
               Hi, you have zero or no budget so far!!
             </h3>
             <p className="text-sm text-gray-500 max-w-sm">
-              Submit a budget request for the year to get started. It will be reviewed and approved
-              by the appropriate authorities.
+              Submit a budget request for the year to get started. It will be reviewed and approved by the appropriate authorities.
             </p>
           </div>
           <button
@@ -214,8 +225,8 @@ export default function BudgetExpensesPage() {
                 budgetPercentage >= 90
                   ? 'bg-red-500'
                   : budgetPercentage >= 60
-                    ? 'bg-amber-500'
-                    : 'bg-teal-500'
+                  ? 'bg-amber-500'
+                  : 'bg-teal-500'
               }`}
               style={{ width: `${budgetPercentage}%` }}
             />
@@ -237,10 +248,9 @@ export default function BudgetExpensesPage() {
         </div>
       )}
 
-      {/* Expense breakdown — only shown when budget exists */}
+      {/* Expense breakdown */}
       {!hasNoBudget && (
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-          {/* Table header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
             <h3 className="text-base font-semibold text-gray-900">Expense Breakdown</h3>
             <button
@@ -295,7 +305,9 @@ export default function BudgetExpensesPage() {
                           </p>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{expense.category || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {expense.category || '—'}
+                      </td>
                       <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right whitespace-nowrap">
                         GHS{expense.amount.toLocaleString()}
                       </td>
@@ -311,7 +323,7 @@ export default function BudgetExpensesPage() {
         </div>
       )}
 
-      {/* Draft indicator */}
+      {/* Draft banner */}
       {draftExists && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
