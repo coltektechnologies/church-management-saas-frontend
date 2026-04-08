@@ -32,14 +32,14 @@ export default function ExpenseRequestsPage() {
   const { departments } = useDepartments();
 
   const department: Department =
-    departments.find((d) => d.status === 'active') ??
-    departments[0] ??
-    MOCK_DEPARTMENT;
+    departments.find((d) => d.status === 'active') ?? departments[0] ?? MOCK_DEPARTMENT;
 
   const departmentId = department.id;
 
   useEffect(() => {
-    if (!departmentId) {return;}
+    if (!departmentId) {
+      return;
+    }
     router.replace(`/departments/${departmentId}/expenses/new`);
   }, [departmentId, router]);
 
