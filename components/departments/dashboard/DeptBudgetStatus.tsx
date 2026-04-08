@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Wallet } from 'lucide-react';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
+import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvider';
 
 // ─── Soft-coded style constants ───────────────────────────────────────────────
 const STYLE = {
@@ -23,15 +24,15 @@ const STYLE = {
   remainingLabelDark: '#F0F4F8',
   titleFontSize: '24px',
   titleFontWeight: '700',
-  // Button style — updated to 8px radius
-  btnBg: '#EEEEEF',
+  // Button — themed per mode
+  btnBgLight: '#EEEEEF',
+  btnBgDark: '#1E3A5F',
   btnRadius: '8px',
   btnShadow: '0px 1px 3px rgba(15,23,42,0.08)',
   btnTextLight: '#111111',
   btnTextDark: '#F0F4F8',
   btnFontSize: '13px',
   btnMinWidth: '80px',
-  headerBtnMarginLeft: 'auto',
   // Bar thresholds
   barAmber: '#F59E0B',
   barRed: '#EF4444',
@@ -52,8 +53,10 @@ export default function DeptBudgetStatus({
 }: BudgetStatusProps) {
   const router = useRouter();
   const { profile, isReady } = useDepartmentProfile();
+  // ── Use mounted guard to prevent hydration mismatch ───────────────────────
+  const { resolvedTheme, mounted } = useDeptTheme();
+  const isDark = mounted ? resolvedTheme === 'dark' : false;
 
-  const isDark = isReady ? profile.darkMode : false;
   const accentColor = isReady
     ? isDark
       ? profile.darkAccentColor || '#2FC4B2'
@@ -68,17 +71,19 @@ export default function DeptBudgetStatus({
   const pctUsed = allocated > 0 ? Math.round((spent / allocated) * 100) : 0;
   const barColor = pctUsed < 60 ? accentColor : pctUsed < 85 ? STYLE.barAmber : STYLE.barRed;
 
+  // ── All colours derived after mount so SSR and client agree ───────────────
   const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
   const containerBorder = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
   const labelColor = isDark ? STYLE.labelColorDark : STYLE.labelColorLight;
   const valueColor = isDark ? STYLE.valueColorDark : STYLE.valueColorLight;
   const barTrack = isDark ? STYLE.barTrackDark : STYLE.barTrackLight;
   const remainingColor = isDark ? STYLE.remainingLabelDark : STYLE.remainingLabelLight;
+  const btnBg = isDark ? STYLE.btnBgDark : STYLE.btnBgLight;
   const btnText = isDark ? STYLE.btnTextDark : STYLE.btnTextLight;
   const dividerColor = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
 
   const detailsBtnStyle: React.CSSProperties = {
-    backgroundColor: STYLE.btnBg,
+    backgroundColor: btnBg,
     borderRadius: STYLE.btnRadius,
     boxShadow: STYLE.btnShadow,
     color: btnText,
@@ -88,8 +93,21 @@ export default function DeptBudgetStatus({
     flexShrink: 0,
     minWidth: STYLE.btnMinWidth,
     marginLeft: '12px',
-    border: 'none',
+    border: `1px solid ${isDark ? STYLE.containerBorderDark : 'transparent'}`,
     padding: '6px 18px',
+    transition: 'background-color 0.2s ease, color 0.2s ease',
+  };
+
+  const fullWidthBtnStyle: React.CSSProperties = {
+    backgroundColor: btnBg,
+    borderRadius: STYLE.btnRadius,
+    boxShadow: STYLE.btnShadow,
+    color: btnText,
+    fontSize: STYLE.btnFontSize,
+    fontWeight: '400',
+    fontFamily: 'Poppins',
+    border: `1px solid ${isDark ? STYLE.containerBorderDark : 'transparent'}`,
+    transition: 'background-color 0.2s ease, color 0.2s ease',
   };
 
   return (
@@ -99,6 +117,7 @@ export default function DeptBudgetStatus({
         borderRadius: STYLE.containerRadius,
         backgroundColor: containerBg,
         borderColor: containerBorder,
+        transition: 'background-color 0.3s ease, border-color 0.3s ease',
       }}
     >
       {/* Header */}
@@ -204,17 +223,8 @@ export default function DeptBudgetStatus({
       {/* Bottom full-width Details button */}
       <button
         onClick={() => router.push(BUDGET_ROUTE)}
-        className="w-full py-2.5 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-        style={{
-          backgroundColor: STYLE.btnBg,
-          borderRadius: STYLE.btnRadius, // Now 8px
-          boxShadow: STYLE.btnShadow,
-          color: btnText,
-          fontSize: STYLE.btnFontSize,
-          fontWeight: '400',
-          fontFamily: 'Poppins',
-          border: 'none',
-        }}
+        className="w-full py-2.5 transition-all duration-200"
+        style={fullWidthBtnStyle}
       >
         Details
       </button>

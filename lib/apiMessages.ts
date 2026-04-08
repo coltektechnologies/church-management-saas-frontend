@@ -47,6 +47,21 @@ export function messageFromApiErrorJson(data: unknown, fallback: string): string
     }
   }
 
+  // DRF validation errors: show field names (e.g. username: This field is required.)
+  const labeled: string[] = [];
+  for (const [key, val] of Object.entries(o)) {
+    if (key === 'detail') {
+      continue;
+    }
+    const f = firstStringish(val);
+    if (f) {
+      labeled.push(`${key}: ${f}`);
+    }
+  }
+  if (labeled.length > 0) {
+    return labeled.join(' ');
+  }
+
   const direct =
     firstStringish(o.email) ||
     firstStringish(o.password) ||

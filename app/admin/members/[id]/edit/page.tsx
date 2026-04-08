@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getMember, updateMember, type MemberDetail } from '@/lib/api';
 import { toast } from 'sonner';
+import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 
 const TITLES = [
   { value: '', label: 'Select title' },
@@ -254,6 +255,7 @@ const inputClass =
 
 export default function MemberEditPage() {
   const router = useRouter();
+  const { membersBasePath } = useMembersPortal();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(true);
@@ -313,7 +315,7 @@ export default function MemberEditPage() {
       const payload = buildUpdatePayload(form);
       await updateMember(id, payload as unknown as Partial<MemberDetail>);
       toast.success('Member updated', { description: 'Your changes were saved.' });
-      router.push(`/admin/members/${id}`);
+      router.push(`${membersBasePath}/${id}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to update';
       setError(msg);
@@ -335,7 +337,7 @@ export default function MemberEditPage() {
     return (
       <div className="space-y-4">
         <Link
-          href="/admin/members"
+          href={membersBasePath}
           className="inline-flex items-center gap-2 text-sm text-[var(--admin-text-muted)] hover:underline"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Members
@@ -355,7 +357,7 @@ export default function MemberEditPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link
-            href={`/admin/members/${id}`}
+            href={`${membersBasePath}/${id}`}
             className="mb-2 inline-flex items-center gap-2 text-sm text-[var(--admin-text-muted)] hover:underline"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Member
@@ -375,7 +377,7 @@ export default function MemberEditPage() {
             type="button"
             variant="outline"
             className="border-[var(--admin-border)]"
-            onClick={() => router.push(`/admin/members/${id}`)}
+            onClick={() => router.push(`${membersBasePath}/${id}`)}
           >
             Cancel
           </Button>
@@ -731,7 +733,7 @@ export default function MemberEditPage() {
             type="button"
             variant="outline"
             className="border-[var(--admin-border)]"
-            onClick={() => router.push(`/admin/members/${id}`)}
+            onClick={() => router.push(`${membersBasePath}/${id}`)}
           >
             Cancel
           </Button>

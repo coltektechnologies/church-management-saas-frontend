@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
-import { getSafeReturnPath } from '@/lib/safeReturnPath';
+import { resolvePostLoginPath, type PostLoginUser } from '@/lib/postLoginRedirect';
 import { isAccessTokenExpired } from '@/lib/jwtExpiry';
 
 /**
@@ -21,6 +21,15 @@ export function useRedirectIfAuthenticated(): void {
     }
     setChurchSessionCookie();
     const next = searchParams.get('next');
-    router.replace(getSafeReturnPath(next));
+    let storedUser: PostLoginUser | null = null;
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        storedUser = JSON.parse(raw) as PostLoginUser;
+      }
+    } catch {
+      /* ignore */
+    }
+    router.replace(resolvePostLoginPath(next, storedUser));
   }, [router, searchParams]);
 }

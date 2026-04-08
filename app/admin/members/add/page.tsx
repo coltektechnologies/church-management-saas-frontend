@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { createMember, CreateMemberPayload, getMemberStats } from '@/lib/api';
 import { fetchDepartmentsList, type DepartmentListRow } from '@/lib/departmentsApi';
 import { toast } from 'sonner';
+import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 
 const TITLES = [
   { value: 'Mr', label: 'Mr' },
@@ -183,6 +184,7 @@ function isFieldInvalid(
 
 export default function AddMemberPage() {
   const router = useRouter();
+  const { membersBasePath, departmentsHref } = useMembersPortal();
   const [form, setForm] = useState(emptyForm);
   const [touched, setTouched] = useState<Partial<Record<TouchedKeys, boolean>>>({});
   const [error, setError] = useState('');
@@ -362,7 +364,7 @@ export default function AddMemberPage() {
       toast.success(result.message || 'Member created successfully', {
         description: extras.length ? extras.join(' · ') : undefined,
       });
-      router.push('/admin/members');
+      router.push(membersBasePath);
       return;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to create member';
@@ -373,7 +375,7 @@ export default function AddMemberPage() {
     }
   };
 
-  const handleCancel = () => router.push('/admin/members');
+  const handleCancel = () => router.push(membersBasePath);
 
   return (
     <div className="space-y-8 pb-12">
@@ -407,7 +409,7 @@ export default function AddMemberPage() {
           </p>
         </div>
         <Link
-          href="/admin/members"
+          href={membersBasePath}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 shrink-0 sm:ml-auto"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -942,7 +944,7 @@ export default function AddMemberPage() {
                       <p className="text-xs text-gray-600">
                         No active departments yet.{' '}
                         <Link
-                          href="/admin/departments"
+                          href={departmentsHref}
                           className="text-[#0B2A4A] underline underline-offset-2"
                         >
                           Create departments

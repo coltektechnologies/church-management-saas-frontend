@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import {
   ArrowDownCircle,
   Building2,
@@ -179,6 +179,22 @@ const REPORT_CATEGORIES: ReportCategory[] = [
     ],
   },
 ];
+
+/** Secretary / non-treasury roles: hide finance (treasury) report tiles only. */
+const SECRETARY_EXCLUDED_CATEGORY_IDS = new Set<string>(['finance']);
+
+export type AdminReportsHubVariant = 'admin' | 'secretary';
+
+function reportCategoriesForVariant(variant: AdminReportsHubVariant): ReportCategory[] {
+  if (variant === 'admin') {
+    return REPORT_CATEGORIES;
+  }
+  return REPORT_CATEGORIES.filter((c) => !SECRETARY_EXCLUDED_CATEGORY_IDS.has(c.id));
+}
+
+export type AdminReportsHubProps = {
+  variant?: AdminReportsHubVariant;
+};
 
 function defaultDateRange(): { from: string; to: string } {
   const to = new Date();
@@ -375,7 +391,8 @@ function DataPreview({ value }: { value: unknown }) {
   );
 }
 
-export default function AdminReportsHub() {
+const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin' }) => {
+  const categories = useMemo(() => reportCategoriesForVariant(variant), [variant]);
   const initialRange = useMemo(() => defaultDateRange(), []);
   const [dateFrom, setDateFrom] = useState(initialRange.from);
   const [dateTo, setDateTo] = useState(initialRange.to);
@@ -524,9 +541,19 @@ export default function AdminReportsHub() {
           className="text-sm max-w-3xl leading-relaxed"
           style={{ color: 'var(--admin-text-muted)' }}
         >
-          Generate church-wide reports from live data. Choose a date range where applicable, preview
-          results in the browser, or download PDF, Excel, or CSV. Exports use the same filters as
-          the preview.
+          {variant === 'secretary' ? (
+            <>
+              Generate operational reports from live data—members, departments, and announcements.
+              Choose a date range where applicable, preview in the browser, or download PDF, Excel,
+              or CSV. Treasury and finance exports are available from the admin dashboard.
+            </>
+          ) : (
+            <>
+              Generate church-wide reports from live data. Choose a date range where applicable,
+              preview results in the browser, or download PDF, Excel, or CSV. Exports use the same
+              filters as the preview.
+            </>
+          )}
         </p>
       </div>
 
@@ -601,7 +628,8 @@ export default function AdminReportsHub() {
         </div>
         <p className="text-xs mt-3" style={{ color: 'var(--admin-text-muted)' }}>
           Reports without dates (e.g. departments snapshot) ignore this range. Others default on the
-          server if you clear dates—we recommend keeping a range for finance and membership.
+          server if you clear dates—we recommend keeping a range for
+          {variant === 'secretary' ? ' membership and communications.' : ' finance and membership.'}
         </p>
       </section>
 
@@ -619,7 +647,7 @@ export default function AdminReportsHub() {
       )}
 
       {/* Categories */}
-      {REPORT_CATEGORIES.map((cat) => (
+      {categories.map((cat) => (
         <section key={cat.id} className="space-y-4">
           <div>
             <h2 className="text-lg font-semibold" style={{ color: 'var(--admin-text)' }}>
@@ -1014,4 +1042,6 @@ export default function AdminReportsHub() {
       </section>
     </div>
   );
-}
+};
+
+export default AdminReportsHub;
