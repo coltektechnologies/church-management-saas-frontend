@@ -21,6 +21,9 @@ function getRoleFromPath(pathname: string): AppRole {
   if (pathname.startsWith('/elder')) {
     return 'elder';
   }
+  if (pathname.startsWith('/departments')) {
+    return 'department_head';
+  }
   if (pathname.startsWith('/department-head')) {
     return 'department_head';
   }

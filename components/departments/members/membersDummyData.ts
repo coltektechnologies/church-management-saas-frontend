@@ -15,6 +15,8 @@ export interface DepartmentMember {
   role: MemberRole;
   status: MemberStatus;
   memberSince: string; // ISO date string
+  /** Set when row comes from API — used to remove assignment from this department. */
+  assignmentId?: string;
 }
 
 export const DUMMY_MEMBERS: DepartmentMember[] = [

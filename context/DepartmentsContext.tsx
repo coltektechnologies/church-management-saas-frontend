@@ -138,11 +138,24 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
   const applyDepartmentDetail = useCallback((id: string, detail: DepartmentDetailResponse) => {
     setDepartments((prev) => {
       const current = prev.find((d) => d.id === id);
-      if (!current) {
-        return prev;
+      const base =
+        current ??
+        mapListRowToDepartment({
+          id: detail.id,
+          name: detail.name,
+          code: detail.code,
+          icon: detail.icon,
+          color: detail.color,
+          is_active: detail.is_active,
+          member_count: detail.member_count,
+          head_name: detail.heads?.[0]?.name ?? detail.head_name,
+          elder_in_charge_name: detail.elder_in_charge_name,
+        });
+      const merged = mergeDepartmentDetail(base, detail);
+      if (current) {
+        return prev.map((d) => (d.id === id ? merged : d));
       }
-      const merged = mergeDepartmentDetail(current, detail);
-      return prev.map((d) => (d.id === id ? merged : d));
+      return [...prev, merged];
     });
   }, []);
 

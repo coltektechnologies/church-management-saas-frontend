@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { ChurchProfileProvider } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { SecretaryProfileProvider } from '@/components/secretary/contexts/SecretaryProfileContext';

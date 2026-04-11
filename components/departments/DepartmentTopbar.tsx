@@ -258,7 +258,7 @@ function HelpPopover({
 
 export default function DepartmentTopbar() {
   const { resolvedTheme, setTheme, mounted } = useDeptTheme();
-  const { profile, isReady } = useDepartmentProfile();
+  const { profile, isReady, portalIdentityLoaded } = useDepartmentProfile();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const pathname = usePathname();
@@ -290,12 +290,18 @@ export default function DepartmentTopbar() {
       : profile.accentColor || '#2FC4B2'
     : '#2FC4B2';
 
-  const deptName = isReady ? profile.departmentName || 'Adventist Youth' : 'Adventist Youth';
+  const deptName = !isReady
+    ? '—'
+    : !portalIdentityLoaded && process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH !== 'true'
+      ? 'Loading…'
+      : [profile.departmentName.trim(), profile.departmentCode.trim()]
+          .filter(Boolean)
+          .join(' · ') || '—';
   const avatarUrl = isReady ? (profile.avatarUrl ?? null) : null;
-  const headName = isReady ? profile.headName || 'Department Head' : 'Department Head';
+  const headName = isReady ? profile.headName || '—' : '—';
   const triggerName = isReady
-    ? profile.preferredName?.trim() || headName.split(' ').filter(Boolean).slice(-1)[0] || 'User'
-    : 'User';
+    ? profile.preferredName?.trim() || headName.split(' ').filter(Boolean).slice(-1)[0] || '—'
+    : '—';
   const initials = headName
     .split(' ')
     .map((w: string) => w[0])
