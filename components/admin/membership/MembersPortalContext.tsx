@@ -10,6 +10,12 @@ export type MembersPortalConfig = {
   appHomeLabel: string;
   /** Link for “create departments” etc. */
   departmentsHref: string;
+  /** Department coordinators: hide account active + notification fields on edit. */
+  hideMemberLifecycleControls?: boolean;
+  /** Calmer layout/copy for department member profile + edit. */
+  memberProfilePresentation?: 'default' | 'department';
+  /** Hide “delete member” from church directory (department portal). */
+  hideRemoveFromChurchDirectory?: boolean;
 };
 
 const defaultConfig: MembersPortalConfig = {
@@ -17,6 +23,9 @@ const defaultConfig: MembersPortalConfig = {
   appHomeHref: '/admin',
   appHomeLabel: 'Membership',
   departmentsHref: '/admin/departments',
+  hideMemberLifecycleControls: false,
+  memberProfilePresentation: 'default',
+  hideRemoveFromChurchDirectory: false,
 };
 
 const MembersPortalContext = createContext<MembersPortalConfig>(defaultConfig);

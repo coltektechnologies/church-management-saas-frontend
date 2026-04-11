@@ -10,13 +10,23 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { useDepartments } from '@/context/DepartmentsContext';
+import { fetchDepartmentMyPortal } from '@/lib/departmentsApi';
+import { mapMyPortalToProfilePatch } from '@/lib/mapDepartmentMyPortalProfile';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface DepartmentProfile {
   // Identity
+  /** Department UUID from `GET /departments/my-portal/` (authoritative for portal pages). */
+  portalDepartmentId: string;
   departmentName: string;
-  departmentType: string; // e.g. "Youth", "Choir", "Finance"
+  /** Short code from API (e.g. AY-001). */
+  departmentCode: string;
+  /** Ministry/category label (settings); optional. */
+  departmentType: string;
+  /** Portal access role from API: "Department Head" | "Elder in charge". */
+  portalRoleLabel: string;
   headName: string;
   preferredName: string;
   headEmail: string;
@@ -57,14 +67,19 @@ interface DepartmentProfileContextType {
   updateProfile: (partial: Partial<DepartmentProfile>) => void;
   toggleDarkMode: () => void;
   isReady: boolean;
+  /** False until my-portal fetch finishes (or skip-auth mode). */
+  portalIdentityLoaded: boolean;
 }
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 const DEFAULT: DepartmentProfile = {
-  departmentName: 'Adventist Youth',
-  departmentType: 'Youth',
-  headName: 'Bro. Owusu Williams',
+  portalDepartmentId: '',
+  departmentName: '',
+  departmentCode: '',
+  departmentType: '',
+  portalRoleLabel: '',
+  headName: '',
   preferredName: '',
   headEmail: '',
   headPhone: '',
@@ -163,8 +178,13 @@ const applyGlobalStyles = (p: DepartmentProfile) => {
 
 const DepartmentProfileContext = createContext<DepartmentProfileContextType | undefined>(undefined);
 
+const skipDepartmentPortalFetch =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true';
+
 export function DepartmentProfileProvider({ children }: { children: ReactNode }) {
+  const { applyDepartmentDetail } = useDepartments();
   const [profile, setProfile] = useState<DepartmentProfile>(readStoredProfile);
+  const [portalIdentityLoaded, setPortalIdentityLoaded] = useState(false);
 
   /**
    * isReady is false during SSR and true on the client, preventing hydration
@@ -208,6 +228,33 @@ export function DepartmentProfileProvider({ children }: { children: ReactNode })
     });
   }, []);
 
+  useEffect(() => {
+    if (skipDepartmentPortalFetch) {
+      setPortalIdentityLoaded(true);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchDepartmentMyPortal();
+        if (cancelled) {
+          return;
+        }
+        updateProfile(mapMyPortalToProfilePatch(data));
+        applyDepartmentDetail(data.department.id, data.department);
+      } catch (e) {
+        console.warn('[department portal] my-portal:', e);
+      } finally {
+        if (!cancelled) {
+          setPortalIdentityLoaded(true);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [applyDepartmentDetail, updateProfile]);
+
   const toggleDarkMode = useCallback(() => {
     setProfile((prev) => {
       const darkMode = !prev.darkMode;
@@ -222,7 +269,9 @@ export function DepartmentProfileProvider({ children }: { children: ReactNode })
   }, []);
 
   return (
-    <DepartmentProfileContext.Provider value={{ profile, updateProfile, toggleDarkMode, isReady }}>
+    <DepartmentProfileContext.Provider
+      value={{ profile, updateProfile, toggleDarkMode, isReady, portalIdentityLoaded }}
+    >
       {children}
     </DepartmentProfileContext.Provider>
   );
