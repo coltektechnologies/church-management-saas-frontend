@@ -689,3 +689,60 @@ export async function reviewProgramApproval(
     }),
   });
 }
+
+/** GET /api/departments/{id}/member-messages/ — in-app batch history for department portal. */
+export interface DepartmentMemberMessageHistoryItem {
+  id: string;
+  title: string;
+  content: string;
+  type: 'in_app';
+  recipientCount: number;
+  recipientIds: string[];
+  status: string;
+  sentAt: string | null;
+}
+
+export async function fetchDepartmentMemberMessages(
+  departmentId: string
+): Promise<DepartmentMemberMessageHistoryItem[]> {
+  const base = getApiBaseUrl();
+  const data = await fetchAuth<unknown>(
+    `${base}/departments/${departmentId}/member-messages/`,
+    { method: 'GET' }
+  );
+  return Array.isArray(data) ? (data as DepartmentMemberMessageHistoryItem[]) : [];
+}
+
+export interface SendDepartmentMemberMessageResponse {
+  success: boolean;
+  message_id: string;
+  sent: number;
+  skipped_member_ids?: string[];
+  errors?: string[];
+  detail?: string;
+}
+
+/** POST bulk email, SMS, or in-app message to department members (head / elder in charge only). */
+export async function sendDepartmentMemberMessage(
+  departmentId: string,
+  payload: {
+    channel: 'email' | 'sms' | 'in_app';
+    subject: string;
+    body: string;
+    member_ids: string[];
+  }
+): Promise<SendDepartmentMemberMessageResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<SendDepartmentMemberMessageResponse>(
+    `${base}/departments/${departmentId}/member-messages/`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        channel: payload.channel,
+        subject: payload.subject,
+        body: payload.body,
+        member_ids: payload.member_ids,
+      }),
+    }
+  );
+}
