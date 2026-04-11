@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   User,
   Settings,
@@ -17,6 +18,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
+import { performLogout } from '@/lib/churchSessionBrowser';
 
 const AVATAR_COLORS = ['#0B2A4A', '#065F46', '#7C3AED', '#B45309', '#9D174D', '#1E40AF'];
 
@@ -50,18 +52,26 @@ export default function DeptUserDropdown({
   hoverBg = 'rgba(0,0,0,0.06)',
   textColor = '#0B2A4A',
 }: Props) {
-  const { profile, updateProfile, isReady } = useDepartmentProfile();
+  const router = useRouter();
+  const { profile, updateProfile, isReady, portalIdentityLoaded } = useDepartmentProfile();
   const [open, setOpen] = useState(false);
   const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const displayName = isReady ? profile.headName || 'Department Head' : 'Department Head';
-  const displayRole = 'Department Head';
+  const displayName = isReady ? profile.headName || '—' : '—';
+  const displayRole = isReady
+    ? profile.portalRoleLabel.trim() || profile.departmentType.trim() || '—'
+    : '—';
   const adminEmail = isReady ? profile.headEmail || '' : '';
   const currentUrl = isReady ? (profile.avatarUrl ?? null) : null;
   const primaryColor = isReady ? profile.primaryColor || '#0B2A4A' : '#0B2A4A';
   const accentColor = isReady ? profile.accentColor || '#2FC4B2' : '#2FC4B2';
-  const deptName = isReady ? profile.departmentName || 'Adventist Youth' : 'Adventist Youth';
+  const deptName = !isReady
+    ? '—'
+    : !portalIdentityLoaded && process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH !== 'true'
+      ? 'Loading…'
+      : [profile.departmentName.trim(), profile.departmentCode.trim()].filter(Boolean).join(' · ') ||
+        '—';
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -262,7 +272,7 @@ export default function DeptUserDropdown({
                     border: `1px solid ${accentColor}30`,
                   }}
                 >
-                  {isReady ? profile.departmentType || 'Youth' : 'Youth'}
+                  {displayRole}
                 </span>
               </div>
             </div>
@@ -271,7 +281,11 @@ export default function DeptUserDropdown({
             <div className="py-1 border-t border-border rounded-b-xl overflow-hidden">
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={async () => {
+                  setOpen(false);
+                  await performLogout();
+                  router.push('/login');
+                }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-destructive hover:bg-destructive/10 transition-colors"
               >
                 <LogOut size={15} className="flex-shrink-0" />

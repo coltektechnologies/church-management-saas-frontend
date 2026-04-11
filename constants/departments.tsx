@@ -35,3 +35,13 @@ export const DEPARTMENT_ICONS: { name: string; icon: ReactNode }[] = [
 export const COLOR_MAP = Object.fromEntries(DEPARTMENT_COLORS.map((c) => [c.name, c.class]));
 export const ICON_MAP = Object.fromEntries(DEPARTMENT_ICONS.map((i) => [i.name, i.icon]));
 export type ThemeColor = (typeof DEPARTMENT_COLORS)[number]['name'];
+
+/** Solid hex for each theme name (matches `DEPARTMENT_COLORS` swatches). */
+export const THEME_COLOR_HEX: Record<ThemeColor, string> = {
+  navy: '#0F1C2E',
+  pink: '#C0268E',
+  yellow: '#B5A600',
+  green: '#2F6B2F',
+  blue: '#1E5FAF',
+  purple: '#7C3AED',
+};

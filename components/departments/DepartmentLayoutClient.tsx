@@ -2,6 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { RequireAuth } from '@/components/auth/RequireAuth';
+import { RequireDepartmentPortal } from '@/components/auth/RequireDepartmentPortal';
 
 const skipAuth = process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true';
 
@@ -9,5 +10,9 @@ export default function DepartmentLayoutClient({ children }: { children: ReactNo
   if (skipAuth) {
     return <>{children}</>;
   }
-  return <RequireAuth>{children}</RequireAuth>;
+  return (
+    <RequireAuth>
+      <RequireDepartmentPortal>{children}</RequireDepartmentPortal>
+    </RequireAuth>
+  );
 }
