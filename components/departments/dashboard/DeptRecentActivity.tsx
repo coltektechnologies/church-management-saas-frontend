@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { Activity } from 'lucide-react';
 import { useDeptActivity } from '@/components/departments/contexts/DeptActivityContext';
@@ -31,7 +32,15 @@ const STYLE = {
 
 const ACTIVITIES_ROUTE = '/departments/activities';
 
-const STATIC_FALLBACK = [
+export interface DeptRecentActivityItem {
+  id: string;
+  icon: string;
+  label: string;
+  detail: string;
+  timestamp: number;
+}
+
+const STATIC_FALLBACK: DeptRecentActivityItem[] = [
   {
     id: '1',
     icon: '✅',
@@ -85,7 +94,12 @@ function timeAgo(ts: number) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export default function DeptRecentActivity() {
+interface DeptRecentActivityProps {
+  /** API-driven feed: `null` = loading, array = show (may be empty). Omit to use local activity log + static demo. */
+  feedItems?: DeptRecentActivityItem[] | null;
+}
+
+export default function DeptRecentActivity({ feedItems }: DeptRecentActivityProps = {}) {
   const router = useRouter();
   const { activities, isReady } = useDeptActivity();
   const { profile, isReady: profileReady } = useDepartmentProfile();
@@ -99,19 +113,91 @@ export default function DeptRecentActivity() {
       : profile.accentColor || '#2FC4B2'
     : '#2FC4B2';
 
-  const items =
-    isReady && activities.length > 0 ? activities.slice(0, STYLE.maxItems) : STATIC_FALLBACK;
+  const subColor = isDark ? STYLE.subColorDark : STYLE.subColorLight;
+
+  const mergedApiAndLocal = useMemo(() => {
+    if (feedItems === undefined || feedItems === null) {
+      return null;
+    }
+    const fromLocal =
+      activities.length > 0
+        ? activities.map((a) => ({
+            id: `local:${a.id}`,
+            icon: a.icon,
+            label: a.label,
+            detail: a.detail,
+            timestamp: a.timestamp,
+          }))
+        : [];
+    const combined = [...feedItems, ...fromLocal];
+    combined.sort((a, b) => b.timestamp - a.timestamp);
+    const seen = new Set<string>();
+    const out: DeptRecentActivityItem[] = [];
+    for (const it of combined) {
+      if (seen.has(it.id)) {
+        continue;
+      }
+      seen.add(it.id);
+      out.push(it);
+    }
+    return out.slice(0, STYLE.maxItems);
+  }, [feedItems, activities]);
+
+  if (feedItems === null) {
+    const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
+    const containerBorder = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
+    return (
+      <div
+        className="p-5 sm:p-6 flex flex-col gap-0 border"
+        style={{
+          borderRadius: STYLE.containerRadius,
+          backgroundColor: containerBg,
+          borderColor: containerBorder,
+        }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Activity size={18} style={{ color: accentColor }} />
+          <h3
+            className="text-base sm:text-lg"
+            style={{
+              color: accentColor,
+              fontFamily: 'Poppins',
+              fontWeight: '700',
+              fontSize: '24px',
+            }}
+          >
+            Recent Activity
+          </h3>
+        </div>
+        <p className="text-sm py-8 text-center" style={{ color: subColor, fontFamily: 'Poppins' }}>
+          Loading recent activity…
+        </p>
+      </div>
+    );
+  }
+
+  const items: DeptRecentActivityItem[] =
+    feedItems !== undefined
+      ? mergedApiAndLocal ?? []
+      : isReady && activities.length > 0
+        ? activities.slice(0, STYLE.maxItems).map((a) => ({
+            id: a.id,
+            icon: a.icon,
+            label: a.label,
+            detail: a.detail,
+            timestamp: a.timestamp,
+          }))
+        : STATIC_FALLBACK;
 
   // ── All colours derived after mount so SSR and client agree ───────────────
   const containerBg = isDark ? STYLE.containerBgDark : STYLE.containerBgLight;
   const containerBorder = isDark ? STYLE.containerBorderDark : STYLE.containerBorderLight;
   const dividerColor = isDark ? STYLE.dividerColorDark : STYLE.dividerColorLight;
   const textColor = isDark ? STYLE.textColorDark : STYLE.textColorLight;
-  const subColor = isDark ? STYLE.subColorDark : STYLE.subColorLight;
   const btnBg = isDark ? STYLE.btnBgDark : STYLE.btnBgLight;
   const btnText = isDark ? STYLE.btnTextDark : STYLE.btnTextLight;
 
-  const btnStyle: React.CSSProperties = {
+  const btnStyle: CSSProperties = {
     backgroundColor: btnBg,
     borderRadius: STYLE.btnRadius,
     boxShadow: STYLE.btnShadow,
@@ -166,6 +252,11 @@ export default function DeptRecentActivity() {
 
       {/* Activity rows */}
       <div className="flex flex-col">
+        {items.length === 0 && feedItems !== undefined ? (
+          <p className="text-sm py-8 text-center" style={{ color: subColor, fontFamily: 'Poppins' }}>
+            No recent activity yet.
+          </p>
+        ) : null}
         {items.map((item) => (
           <div
             key={item.id}

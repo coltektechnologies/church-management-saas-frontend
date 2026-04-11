@@ -3,32 +3,11 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDepartments } from '@/context/DepartmentsContext';
-import { Department } from '@/types/Department';
+import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
+import { usePortalDepartment } from '@/hooks/usePortalDepartment';
 import { FaClipboardList, FaClock, FaFileAlt, FaCoins } from 'react-icons/fa';
 import { CheckCircle, XCircle, Clock, FileEdit, Plus } from 'lucide-react';
 import { Expense } from '@/types/expense';
-
-// ── Mock fallback — used when API returns no departments (local dev / no auth) ──
-const MOCK_DEPARTMENT: Department = {
-  id: '1',
-  name: 'Adventist Youth',
-  code: 'AY-001',
-  description: 'Youth ministry department',
-  members: 25,
-  activities: 5,
-  budgetUsed: 3750,
-  annualBudget: 8000,
-  status: 'active',
-  themeColor: 'navy',
-  icon: '📖',
-  dateEstablished: '2022-01-10',
-  settings: {
-    autoApprovalThreshold: 500,
-    requiresElderApproval: true,
-    weeklySummary: true,
-    canSubmitAnnouncements: true,
-  },
-};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -115,18 +94,14 @@ function StatCard({
 export default function BudgetExpensesPage() {
   const router = useRouter();
   const {
-    departments,
     departmentExpensesMap,
     loadDepartmentExpenseRequests,
     syncDepartmentBudgetFromApi,
     loading,
   } = useDepartments();
-
-  // Use first active department from API, fall back to mock for local dev
-  const department: Department =
-    departments.find((d) => d.status === 'active') ?? departments[0] ?? MOCK_DEPARTMENT;
-
-  const departmentId = department.id;
+  const { portalIdentityLoaded } = useDepartmentProfile();
+  const department = usePortalDepartment();
+  const departmentId = department?.id ?? '';
   const expenses: Expense[] = departmentExpensesMap[departmentId] ?? [];
 
   useEffect(() => {
@@ -143,15 +118,25 @@ export default function BudgetExpensesPage() {
   const draftCount = draftExists ? 1 : 0;
   const totalRequested = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  const hasNoBudget = department.annualBudget === 0;
+  const hasNoBudget = (department?.annualBudget ?? 0) === 0;
   const budgetPercentage = hasNoBudget
     ? 0
-    : Math.min((department.budgetUsed / department.annualBudget) * 100, 100);
+    : Math.min(((department?.budgetUsed ?? 0) / (department?.annualBudget ?? 1)) * 100, 100);
 
-  if (loading && departments.length === 0) {
+  if (!portalIdentityLoaded || (loading && !department)) {
     return (
       <div className="flex items-center justify-center min-h-full p-8">
         <p className="text-gray-400 text-sm animate-pulse">Loading…</p>
+      </div>
+    );
+  }
+
+  if (!department) {
+    return (
+      <div className="flex items-center justify-center min-h-full p-8">
+        <p className="text-gray-500 text-sm text-center max-w-md">
+          No department is linked to your account.
+        </p>
       </div>
     );
   }

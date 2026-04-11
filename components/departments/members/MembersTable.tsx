@@ -4,7 +4,8 @@
  * MembersTable.tsx
  */
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback, type CSSProperties } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Eye,
   SquarePen,
@@ -13,9 +14,19 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Pencil,
+  MessageCircle,
+  Mail,
+  Download,
+  RefreshCw,
+  X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvider';
+import { SendSmsDialog } from '@/components/admin/membership/SendSmsDialog';
+import { SendEmailDialog } from '@/components/admin/membership/SendEmailDialog';
+import { departmentMembersPortal } from '@/lib/departmentMembersPortal';
 import type { DepartmentMember, MemberRole, MemberStatus } from './membersDummyData';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -155,6 +166,8 @@ interface MembersTableProps {
   onEdit: (m: DepartmentMember) => void;
   onMessage: (m: DepartmentMember) => void;
   onRemoveMember: (m: DepartmentMember) => void;
+  /** Remove all selected from this department (API + local drafts); optional — hides bulk remove if omitted. */
+  onBulkRemoveMembers?: (members: DepartmentMember[]) => void | Promise<void>;
   exportTrigger?: 'csv' | 'pdf' | 'excel' | null;
   onExportDone?: () => void;
 }
@@ -166,15 +179,59 @@ function getRoleBadgeColors(role: string, isDark: boolean): { bg: string; text: 
   );
 }
 
+function bulkActionBtnStyle(
+  isDark: boolean,
+  variant: 'default' | 'danger' | 'primary'
+): CSSProperties {
+  const base: CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 10px',
+    borderRadius: '6px',
+    fontSize: '11px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    border: '1px solid',
+    flex: '1 1 auto',
+    justifyContent: 'center',
+    minHeight: '32px',
+  };
+  if (variant === 'danger') {
+    return {
+      ...base,
+      borderColor: isDark ? 'rgba(248,113,113,0.45)' : '#FECACA',
+      color: isDark ? '#FCA5A5' : '#B91C1C',
+      background: isDark ? 'rgba(127,29,29,0.25)' : '#FEF2F2',
+    };
+  }
+  if (variant === 'primary') {
+    return {
+      ...base,
+      borderColor: 'transparent',
+      color: '#fff',
+      background: '#16A34A',
+    };
+  }
+  return {
+    ...base,
+    borderColor: isDark ? 'rgba(255,255,255,0.14)' : '#E5E7EB',
+    color: isDark ? 'rgba(255,255,255,0.92)' : '#374151',
+    background: isDark ? 'rgba(255,255,255,0.04)' : '#FFFFFF',
+  };
+}
+
 export default function MembersTable({
   members,
   onView,
   onEdit,
   onMessage,
   onRemoveMember,
+  onBulkRemoveMembers,
   exportTrigger,
   onExportDone,
 }: MembersTableProps) {
+  const router = useRouter();
   const { profile, isReady } = useDepartmentProfile();
   const { resolvedTheme, mounted } = useDeptTheme();
   const isDark = mounted ? resolvedTheme === 'dark' : false;
@@ -198,11 +255,22 @@ export default function MembersTable({
   const inputBg = isDark ? 'rgba(255,255,255,0.06)' : '#F9FAFB';
 
   const [sel, setSel] = useState<Set<string>>(new Set());
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [smsRecipientIds, setSmsRecipientIds] = useState<string[]>([]);
+  const [emailRecipientIds, setEmailRecipientIds] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPS] = useState<number>(DEFAULT_PAGE_SIZE);
   const [psOpen, setPsOpen] = useState(false);
   const [psInputVal, setPsInput] = useState<string>(String(DEFAULT_PAGE_SIZE));
   const psRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedMembers = useMemo(
+    () => members.filter((m) => sel.has(m.id)),
+    [members, sel]
+  );
+  const selectedCount = sel.size;
+  const singleSelectedId = selectedCount === 1 ? selectedMembers[0]?.id ?? null : null;
 
   // ── Only reset page when list SHRINKS (remove) — not when it grows (add) ──
   const prevLengthRef = useRef(members.length);
@@ -215,7 +283,7 @@ export default function MembersTable({
         setPage(1);
       }
       setSel((prev2) => {
-        const valid = new Set(members.map((m) => m.memberId));
+        const valid = new Set(members.map((m) => m.id));
         const cleaned = new Set([...prev2].filter((id) => valid.has(id)));
         return cleaned.size !== prev2.size ? cleaned : prev2;
       });
@@ -277,7 +345,7 @@ export default function MembersTable({
     members.length > 0 && !(PAGE_SIZE_PRESETS as readonly number[]).includes(members.length);
 
   const toggleAll = () =>
-    setSel(sel.size === paginated.length ? new Set() : new Set(paginated.map((m) => m.memberId)));
+    setSel(sel.size === paginated.length ? new Set() : new Set(paginated.map((m) => m.id)));
   const toggleOne = (id: string) =>
     setSel((prev) => {
       const n = new Set(prev);
@@ -288,6 +356,60 @@ export default function MembersTable({
       }
       return n;
     });
+  const clearSelection = () => setSel(new Set());
+
+  const exportSelected = useCallback(
+    (fmt: 'csv' | 'pdf' | 'excel') => {
+      const rows = selectedMembers;
+      if (rows.length === 0) {
+        return;
+      }
+      if (fmt === 'csv') {
+        runCSV(rows);
+      } else if (fmt === 'pdf') {
+        runPDF(rows);
+      } else {
+        void runExcel(rows);
+      }
+    },
+    [selectedMembers]
+  );
+
+  const handleBulkView = () => {
+    if (singleSelectedId) {
+      router.push(`${departmentMembersPortal.membersBasePath}/${singleSelectedId}`);
+    }
+  };
+  const handleBulkEdit = () => {
+    if (singleSelectedId) {
+      router.push(`${departmentMembersPortal.membersBasePath}/${singleSelectedId}/edit`);
+    }
+  };
+  const handleBulkSendMessage = () => {
+    setSmsRecipientIds(Array.from(sel));
+    setSmsOpen(true);
+  };
+  const handleBulkSendEmail = () => {
+    setEmailRecipientIds(Array.from(sel));
+    setEmailOpen(true);
+  };
+  const handleBulkRemove = async () => {
+    if (!onBulkRemoveMembers || selectedMembers.length === 0) {
+      return;
+    }
+    await onBulkRemoveMembers(selectedMembers);
+    clearSelection();
+  };
+
+  const smsRecipients = smsRecipientIds
+    .map((rid) => members.find((m) => m.id === rid))
+    .filter((m): m is DepartmentMember => Boolean(m))
+    .map((m) => ({ id: m.id, name: m.name, phone: m.phone }));
+
+  const emailRecipients = emailRecipientIds
+    .map((rid) => members.find((m) => m.id === rid))
+    .filter((m): m is DepartmentMember => Boolean(m))
+    .map((m) => ({ id: m.id, name: m.name, email: m.email }));
 
   const roleBadge = (role: string) => {
     const c = getRoleBadgeColors(role, isDark);
@@ -449,7 +571,7 @@ export default function MembersTable({
   };
 
   const MobileCard = ({ m }: { m: DepartmentMember }) => {
-    const isSel = sel.has(m.memberId);
+    const isSel = sel.has(m.id);
     return (
       <div
         style={{
@@ -464,7 +586,7 @@ export default function MembersTable({
         <div
           style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}
         >
-          <CB checked={isSel} onChange={() => toggleOne(m.memberId)} />
+          <CB checked={isSel} onChange={() => toggleOne(m.id)} />
           <Avatar m={m} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p
@@ -578,6 +700,127 @@ export default function MembersTable({
 
   return (
     <div style={{ background: cardBg }}>
+      {selectedCount > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            padding: '12px 14px',
+            borderBottom: `1px solid ${thBorder}`,
+            background: isDark ? 'rgba(255,255,255,0.03)' : '#F9FAFB',
+          }}
+        >
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: text }}>
+              {selectedCount} member{selectedCount !== 1 ? 's' : ''} selected
+            </span>
+            <button
+              type="button"
+              onClick={clearSelection}
+              style={{
+                marginLeft: 'auto',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: muted,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
+              Clear
+            </button>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              alignItems: 'stretch',
+            }}
+          >
+            {singleSelectedId && (
+              <button
+                type="button"
+                style={bulkActionBtnStyle(isDark, 'default')}
+                onClick={handleBulkView}
+              >
+                <Eye size={14} />
+                View
+              </button>
+            )}
+            {singleSelectedId && (
+              <button
+                type="button"
+                style={bulkActionBtnStyle(isDark, 'default')}
+                onClick={handleBulkEdit}
+              >
+                <Pencil size={14} />
+                Edit
+              </button>
+            )}
+            <button
+              type="button"
+              style={bulkActionBtnStyle(isDark, 'default')}
+              onClick={handleBulkSendMessage}
+            >
+              <MessageCircle size={14} />
+              Message
+            </button>
+            <button
+              type="button"
+              style={bulkActionBtnStyle(isDark, 'default')}
+              onClick={handleBulkSendEmail}
+            >
+              <Mail size={14} />
+              Email
+            </button>
+            <button
+              type="button"
+              style={bulkActionBtnStyle(isDark, 'primary')}
+              onClick={() => exportSelected('csv')}
+            >
+              <Download size={14} />
+              Export
+            </button>
+            <button
+              type="button"
+              style={bulkActionBtnStyle(isDark, 'default')}
+              onClick={() =>
+                toast.info('Update membership status in Admin → Members for now.')
+              }
+            >
+              <RefreshCw size={14} />
+              Update status
+            </button>
+            {onBulkRemoveMembers && (
+              <button
+                type="button"
+                style={bulkActionBtnStyle(isDark, 'danger')}
+                onClick={() => void handleBulkRemove()}
+              >
+                <UserX size={14} />
+                Remove from dept
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      <SendSmsDialog
+        open={smsOpen}
+        onOpenChange={setSmsOpen}
+        recipients={smsRecipients}
+        onSent={clearSelection}
+      />
+      <SendEmailDialog
+        open={emailOpen}
+        onOpenChange={setEmailOpen}
+        recipients={emailRecipients}
+        onSent={clearSelection}
+      />
+
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'auto' }}>
@@ -615,11 +858,11 @@ export default function MembersTable({
               </tr>
             )}
             {paginated.map((m, i) => {
-              const isSel = sel.has(m.memberId);
+              const isSel = sel.has(m.id);
               const isLast = i === paginated.length - 1;
               return (
                 <tr
-                  key={m.memberId}
+                  key={m.id}
                   style={{
                     background: isSel ? (isDark ? `${primary}28` : `${primary}07`) : 'transparent',
                     borderBottom: isLast ? 'none' : `1px solid ${rowBorder}`,
@@ -637,7 +880,7 @@ export default function MembersTable({
                   }}
                 >
                   <td style={tdStyle}>
-                    <CB checked={isSel} onChange={() => toggleOne(m.memberId)} />
+                    <CB checked={isSel} onChange={() => toggleOne(m.id)} />
                   </td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -760,7 +1003,7 @@ export default function MembersTable({
           </div>
         )}
         {paginated.map((m) => (
-          <MobileCard key={m.memberId} m={m} />
+          <MobileCard key={m.id} m={m} />
         ))}
       </div>
 

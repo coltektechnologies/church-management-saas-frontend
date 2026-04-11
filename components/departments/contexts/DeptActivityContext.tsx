@@ -5,6 +5,8 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
+  useLayoutEffect,
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
@@ -68,7 +70,23 @@ function save(entries: DeptActivityEntry[]) {
 const DeptActivityContext = createContext<DeptActivityContextValue | undefined>(undefined);
 
 export function DeptActivityProvider({ children }: { children: ReactNode }) {
-  const [activities, setActivities] = useState<DeptActivityEntry[]>(load);
+  // Do not use useState(load): the initializer runs on the server and returns [].
+  // Hydration reuses that snapshot, so localStorage is never read on the client.
+  const [activities, setActivities] = useState<DeptActivityEntry[]>([]);
+
+  useLayoutEffect(() => {
+    setActivities(load());
+  }, []);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY || e.key === null) {
+        setActivities(load());
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const isReady = useSyncExternalStore(
     () => () => {},
