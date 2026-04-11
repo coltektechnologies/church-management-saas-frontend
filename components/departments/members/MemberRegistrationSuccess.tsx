@@ -79,7 +79,6 @@ export default function MemberRegistrationSuccess({
 
   // Check circle
   const circleBg = isDark ? '#2FC4B2' : successGreen;
-  const circleText = autoText(circleBg);
 
   // Buttons
   const addBtnBg = isDark ? 'rgba(255,255,255,0.06)' : mintBg;

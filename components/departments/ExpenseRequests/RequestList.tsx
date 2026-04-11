@@ -59,7 +59,9 @@ export default function RequestList() {
   ];
 
   const filteredRequests = requests.filter((request) => {
-    if (activeFilter === 'all') {return true;}
+    if (activeFilter === 'all') {
+      return true;
+    }
     return request.status === activeFilter;
   });
 

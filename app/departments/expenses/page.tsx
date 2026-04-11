@@ -27,22 +27,31 @@ const MOCK_DEPARTMENT: Department = {
     canSubmitAnnouncements: true,
   },
 };
+import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
+import { usePortalDepartment } from '@/hooks/usePortalDepartment';
 
 export default function ExpenseRequestsPage() {
   const router = useRouter();
-  const { departments } = useDepartments();
+  const { portalIdentityLoaded } = useDepartmentProfile();
+  const department = usePortalDepartment();
+  const departmentId = department?.id ?? '';
 
-  const department: Department =
-    departments.find((d) => d.status === 'active') ?? departments[0] ?? MOCK_DEPARTMENT;
+  useEffect(() => {
+    if (!portalIdentityLoaded || !departmentId) {
+      return;
+    }
+    router.replace(`/departments/${departmentId}/expenses/new`);
+  }, [departmentId, portalIdentityLoaded, router]);
 
-  const departmentId = department.id;
-
-  // useEffect(() => {
-  //   if (!departmentId) {
-  //     return;
-  //   }
-  //   router.replace(`/departments/${departmentId}/expenses/new`);
-  // }, [departmentId, router]);
+  if (portalIdentityLoaded && !departmentId) {
+    return (
+      <div className="flex items-center justify-center min-h-full p-8">
+        <p className="text-gray-500 text-sm text-center max-w-md">
+          No department is linked to your account.
+        </p>
+      </div>
+    );
+  }
 
   return <ExpenseRequest />;
 }
