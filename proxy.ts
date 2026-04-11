@@ -103,14 +103,36 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(dest);
   }
 
-  // // Uncomment for local department preview (with .env NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH=true): and
-  // // comment out the skipSecretaryCookie block below, then restart dev. Never enable that in production.
-  // // 1. Define the skip logic based on your environment variable
+  // auth bypasses for local preview without cookie: set NEXT_PUBLIC_SKIP_*_AUTH=true in .env.local and restart dev
   const skipDepartmentsAuth =
     process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true' &&
     (pathname === '/departments' || pathname.startsWith('/departments/'));
 
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipDepartmentsAuth) {
+  const skipSecretaryAuth =
+    process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+    (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+
+  const skipAdminAuth =
+    process.env.NEXT_PUBLIC_SKIP_ADMIN_AUTH === 'true' &&
+    (pathname === '/admin' || pathname.startsWith('/admin/'));
+
+  const skipDashboardAuth =
+    process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true' &&
+    (pathname === '/dashboard' || pathname.startsWith('/dashboard/'));
+
+  const skipTreasuryAuth =
+    process.env.NEXT_PUBLIC_SKIP_TREASURY_AUTH === 'true' &&
+    (pathname === '/treasury' || pathname.startsWith('/treasury/'));
+
+  const skipAuth =
+    skipDepartmentsAuth ||
+    skipSecretaryAuth ||
+    skipAdminAuth ||
+    skipDashboardAuth ||
+    skipTreasuryAuth;
+
+  // ✅ Single unified check — no duplicate block after this
+  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipAuth) {
     return NextResponse.next();
   }
 
