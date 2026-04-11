@@ -294,8 +294,9 @@ export default function DepartmentTopbar() {
     ? '—'
     : !portalIdentityLoaded && process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH !== 'true'
       ? 'Loading…'
-      : [profile.departmentName.trim(), profile.departmentCode.trim()].filter(Boolean).join(' · ') ||
-        '—';
+      : [profile.departmentName.trim(), profile.departmentCode.trim()]
+          .filter(Boolean)
+          .join(' · ') || '—';
   const avatarUrl = isReady ? (profile.avatarUrl ?? null) : null;
   const headName = isReady ? profile.headName || '—' : '—';
   const triggerName = isReady

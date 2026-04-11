@@ -19,7 +19,6 @@ import {
   Mail,
   Download,
   RefreshCw,
-  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
@@ -265,12 +264,9 @@ export default function MembersTable({
   const [psInputVal, setPsInput] = useState<string>(String(DEFAULT_PAGE_SIZE));
   const psRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedMembers = useMemo(
-    () => members.filter((m) => sel.has(m.id)),
-    [members, sel]
-  );
+  const selectedMembers = useMemo(() => members.filter((m) => sel.has(m.id)), [members, sel]);
   const selectedCount = sel.size;
-  const singleSelectedId = selectedCount === 1 ? selectedMembers[0]?.id ?? null : null;
+  const singleSelectedId = selectedCount === 1 ? (selectedMembers[0]?.id ?? null) : null;
 
   // ── Only reset page when list SHRINKS (remove) — not when it grows (add) ──
   const prevLengthRef = useRef(members.length);
@@ -787,9 +783,7 @@ export default function MembersTable({
             <button
               type="button"
               style={bulkActionBtnStyle(isDark, 'default')}
-              onClick={() =>
-                toast.info('Update membership status in Admin → Members for now.')
-              }
+              onClick={() => toast.info('Update membership status in Admin → Members for now.')}
             >
               <RefreshCw size={14} />
               Update status

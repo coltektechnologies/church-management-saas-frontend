@@ -80,9 +80,7 @@ export default function RemoveFromDepartmentDialog({
       <DialogContent
         showCloseButton={!loading}
         className={
-          isDark
-            ? 'border-white/10 bg-[#0D1F36] text-slate-100 sm:max-w-md'
-            : 'sm:max-w-md'
+          isDark ? 'border-white/10 bg-[#0D1F36] text-slate-100 sm:max-w-md' : 'sm:max-w-md'
         }
         onPointerDownOutside={(e) => {
           if (loading) {
@@ -133,7 +131,8 @@ export default function RemoveFromDepartmentDialog({
 
         {isBulk && count > 12 && (
           <p className={`text-sm ${muted}`}>
-            Including {members
+            Including{' '}
+            {members
               .slice(0, 3)
               .map((m) => m.name)
               .join(', ')}
@@ -161,7 +160,9 @@ export default function RemoveFromDepartmentDialog({
             variant="outline"
             disabled={loading}
             onClick={() => handleOpenChange(false)}
-            className={isDark ? 'border-white/15 bg-transparent text-slate-200 hover:bg-white/5' : ''}
+            className={
+              isDark ? 'border-white/15 bg-transparent text-slate-200 hover:bg-white/5' : ''
+            }
           >
             Cancel
           </Button>

@@ -178,7 +178,7 @@ export default function DeptRecentActivity({ feedItems }: DeptRecentActivityProp
 
   const items: DeptRecentActivityItem[] =
     feedItems !== undefined
-      ? mergedApiAndLocal ?? []
+      ? (mergedApiAndLocal ?? [])
       : isReady && activities.length > 0
         ? activities.slice(0, STYLE.maxItems).map((a) => ({
             id: a.id,
@@ -253,7 +253,10 @@ export default function DeptRecentActivity({ feedItems }: DeptRecentActivityProp
       {/* Activity rows */}
       <div className="flex flex-col">
         {items.length === 0 && feedItems !== undefined ? (
-          <p className="text-sm py-8 text-center" style={{ color: subColor, fontFamily: 'Poppins' }}>
+          <p
+            className="text-sm py-8 text-center"
+            style={{ color: subColor, fontFamily: 'Poppins' }}
+          >
             No recent activity yet.
           </p>
         ) : null}

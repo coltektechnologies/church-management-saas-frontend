@@ -83,8 +83,7 @@ function activityStartsInRange(row: DepartmentActivityRow, from: Date, to: Date)
 }
 
 export function mapActivityRowToDeptActivity(row: DepartmentActivityRow): DeptActivity {
-  const time =
-    row.start_time && row.start_time.length >= 5 ? row.start_time.slice(0, 5) : '—';
+  const time = row.start_time && row.start_time.length >= 5 ? row.start_time.slice(0, 5) : '—';
   return {
     id: String(row.id),
     name: row.title,
@@ -113,7 +112,9 @@ function activityYmdToTimestamp(dateYmd: string): number {
 }
 
 /** When the activity API feed is empty, reuse upcoming rows already shown on the dashboard. */
-export function upcomingActivitiesToRecentItems(upcoming: DeptActivity[]): DeptRecentActivityItem[] {
+export function upcomingActivitiesToRecentItems(
+  upcoming: DeptActivity[]
+): DeptRecentActivityItem[] {
   return upcoming.map((a) => ({
     id: `up-${a.id}`,
     icon: '📅',

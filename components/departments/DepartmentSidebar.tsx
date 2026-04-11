@@ -89,25 +89,22 @@ export default function DepartmentSidebar() {
 
   const headName = isReady ? profile.headName || '—' : '—';
   const headRole = isReady
-    ? profile.portalRoleLabel.trim() ||
-      profile.departmentType.trim() ||
-      '—'
+    ? profile.portalRoleLabel.trim() || profile.departmentType.trim() || '—'
     : '—';
   const avatarUrl = isReady ? (profile.avatarUrl ?? null) : null;
   const deptName =
     !portalIdentityLoaded && process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH !== 'true'
       ? 'Loading…'
-      : [profile.departmentName.trim(), profile.departmentCode.trim()].filter(Boolean).join(' · ') ||
-        '—';
+      : [profile.departmentName.trim(), profile.departmentCode.trim()]
+          .filter(Boolean)
+          .join(' · ') || '—';
 
   /*
    * FIX 3a — display name on the user card.
    * Priority: preferredName → full headName (never a hardcoded fallback string).
    * The sub-label shows portal role (or legacy departmentType from settings).
    */
-  const displayName = isReady
-    ? profile.preferredName?.trim() || profile.headName || '—'
-    : '—';
+  const displayName = isReady ? profile.preferredName?.trim() || profile.headName || '—' : '—';
 
   const churchName = churchReady
     ? churchProfile.churchName || 'SDA Church - Adenta'

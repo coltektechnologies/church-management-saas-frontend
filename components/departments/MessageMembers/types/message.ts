@@ -11,7 +11,7 @@ export interface Message {
   id: string;
   title: string;
   content: string;
-  type: 'email' | 'sms';
+  type: 'email' | 'sms' | 'in_app';
   recipientCount: number;
   recipientIds: string[];
   status: 'delivered' | 'pending' | 'failed';
@@ -21,6 +21,6 @@ export interface Message {
 export interface SendMessagePayload {
   title: string;
   content: string;
-  type: 'email' | 'sms';
+  type: 'email' | 'sms' | 'in_app';
   recipientIds: string[];
 }

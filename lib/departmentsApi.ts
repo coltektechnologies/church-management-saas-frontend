@@ -371,12 +371,10 @@ export async function deleteDepartment(id: string): Promise<void> {
 const DEFAULT_MEMBER_DEPARTMENT_PAGE_SIZE = 50;
 
 /** Single page of member–department rows (`?page=` when page > 1). */
-export async function fetchMemberDepartmentsPage(
-  page?: number
-): Promise<MemberDepartmentRow[]> {
+export async function fetchMemberDepartmentsPage(page?: number): Promise<MemberDepartmentRow[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
-  if (page != null && page > 1) {
+  if (page !== undefined && page !== null && page > 1) {
     sp.set('page', String(page));
   }
   const qs = sp.toString();
@@ -440,10 +438,9 @@ export async function fetchDepartmentMembers(
   departmentId: string
 ): Promise<DepartmentMemberApiRow[]> {
   const base = getApiBaseUrl();
-  const data = await fetchAuth<unknown>(
-    `${base}/departments/${departmentId}/members/`,
-    { method: 'GET' }
-  );
+  const data = await fetchAuth<unknown>(`${base}/departments/${departmentId}/members/`, {
+    method: 'GET',
+  });
   return normalizeListResponse<DepartmentMemberApiRow>(data);
 }
 
@@ -517,7 +514,7 @@ export async function fetchDepartmentActivitiesPage(
 ): Promise<DepartmentActivityRow[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
-  if (opts?.page != null && opts.page > 1) {
+  if (opts?.page !== undefined && opts?.page !== null && opts.page > 1) {
     sp.set('page', String(opts.page));
   }
   if (opts?.time_filter) {
@@ -688,4 +685,60 @@ export async function reviewProgramApproval(
       notes: opts.notes ?? '',
     }),
   });
+}
+
+/** GET /api/departments/{id}/member-messages/ — in-app batch history for department portal. */
+export interface DepartmentMemberMessageHistoryItem {
+  id: string;
+  title: string;
+  content: string;
+  type: 'in_app';
+  recipientCount: number;
+  recipientIds: string[];
+  status: string;
+  sentAt: string | null;
+}
+
+export async function fetchDepartmentMemberMessages(
+  departmentId: string
+): Promise<DepartmentMemberMessageHistoryItem[]> {
+  const base = getApiBaseUrl();
+  const data = await fetchAuth<unknown>(`${base}/departments/${departmentId}/member-messages/`, {
+    method: 'GET',
+  });
+  return Array.isArray(data) ? (data as DepartmentMemberMessageHistoryItem[]) : [];
+}
+
+export interface SendDepartmentMemberMessageResponse {
+  success: boolean;
+  message_id: string;
+  sent: number;
+  skipped_member_ids?: string[];
+  errors?: string[];
+  detail?: string;
+}
+
+/** POST bulk email, SMS, or in-app message to department members (head / elder in charge only). */
+export async function sendDepartmentMemberMessage(
+  departmentId: string,
+  payload: {
+    channel: 'email' | 'sms' | 'in_app';
+    subject: string;
+    body: string;
+    member_ids: string[];
+  }
+): Promise<SendDepartmentMemberMessageResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<SendDepartmentMemberMessageResponse>(
+    `${base}/departments/${departmentId}/member-messages/`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        channel: payload.channel,
+        subject: payload.subject,
+        body: payload.body,
+        member_ids: payload.member_ids,
+      }),
+    }
+  );
 }

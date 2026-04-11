@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Expense } from '@/types/expense';
 import { useDepartments } from '@/context/DepartmentsContext';
 import DeptKpiCards, { type KpiData } from '@/components/departments/dashboard/DeptKpiCards';
 import DeptUpcomingActivities, {
@@ -17,12 +18,11 @@ import {
   mapActivityRowToDeptActivity,
   upcomingActivitiesToRecentItems,
 } from '@/lib/departmentDashboardData';
-import {
-  fetchDepartmentActivities,
-  fetchDepartmentActivitiesAllPages,
-} from '@/lib/departmentsApi';
+import { fetchDepartmentActivities, fetchDepartmentActivitiesAllPages } from '@/lib/departmentsApi';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 import { usePortalDepartment } from '@/hooks/usePortalDepartment';
+
+const EMPTY_EXPENSES: Expense[] = [];
 
 export default function DepartmentDashboard() {
   const {
@@ -34,7 +34,10 @@ export default function DepartmentDashboard() {
   const { portalIdentityLoaded } = useDepartmentProfile();
   const department = usePortalDepartment();
   const departmentId = department?.id ?? '';
-  const expenses = departmentExpensesMap[departmentId] ?? [];
+  const expenses = useMemo(
+    () => departmentExpensesMap[departmentId] ?? EMPTY_EXPENSES,
+    [departmentExpensesMap, departmentId]
+  );
 
   const [period, setPeriod] = useState<Period | null>('this_month');
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | null>(null);
@@ -156,7 +159,14 @@ export default function DepartmentDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [period, customRange, departmentId, expenses, department?.annualBudget, department?.budgetUsed]);
+  }, [
+    period,
+    customRange,
+    departmentId,
+    expenses,
+    department?.annualBudget,
+    department?.budgetUsed,
+  ]);
 
   /** Must run before any conditional return — Rules of Hooks. */
   const displayRecentFeed = useMemo(() => {
@@ -190,8 +200,8 @@ export default function DepartmentDashboard() {
     return (
       <div className="flex items-center justify-center min-h-[40vh] p-8">
         <p className="text-gray-500 text-sm text-center max-w-md">
-          No department is linked to your account. You need a member profile linked to this login and an
-          assignment as department head or elder in charge.
+          No department is linked to your account. You need a member profile linked to this login
+          and an assignment as department head or elder in charge.
         </p>
       </div>
     );
@@ -200,11 +210,7 @@ export default function DepartmentDashboard() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="px-5 py-3">
-        <DeptPeriodFilter
-          appliedPeriod={period}
-          onPeriodChange={setPeriod}
-          onApply={handleApply}
-        />
+        <DeptPeriodFilter appliedPeriod={period} onPeriodChange={setPeriod} onApply={handleApply} />
       </div>
 
       {kpiError && (
