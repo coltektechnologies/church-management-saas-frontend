@@ -374,7 +374,7 @@ const DEFAULT_MEMBER_DEPARTMENT_PAGE_SIZE = 50;
 export async function fetchMemberDepartmentsPage(page?: number): Promise<MemberDepartmentRow[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
-  if (page != null && page > 1) {
+  if (page !== undefined && page !== null && page > 1) {
     sp.set('page', String(page));
   }
   const qs = sp.toString();
@@ -514,7 +514,7 @@ export async function fetchDepartmentActivitiesPage(
 ): Promise<DepartmentActivityRow[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
-  if (opts?.page != null && opts.page > 1) {
+  if (opts?.page !== undefined && opts?.page !== null && opts.page > 1) {
     sp.set('page', String(opts.page));
   }
   if (opts?.time_filter) {

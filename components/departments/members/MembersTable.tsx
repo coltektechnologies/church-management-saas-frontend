@@ -19,7 +19,6 @@ import {
   Mail,
   Download,
   RefreshCw,
-  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';

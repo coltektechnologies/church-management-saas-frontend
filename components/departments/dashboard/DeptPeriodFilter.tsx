@@ -40,12 +40,13 @@ const STYLE = {
 
 export default function DeptPeriodFilter({ appliedPeriod, onPeriodChange, onApply }: Props) {
   const [selected, setSelected] = useState<Period | null>(appliedPeriod ?? null);
-
-  useEffect(() => {
-    if (appliedPeriod != null) {
+  const [prevAppliedPeriod, setPrevAppliedPeriod] = useState(appliedPeriod);
+  if (appliedPeriod !== prevAppliedPeriod) {
+    setPrevAppliedPeriod(appliedPeriod);
+    if (appliedPeriod !== undefined && appliedPeriod !== null) {
       setSelected(appliedPeriod);
     }
-  }, [appliedPeriod]);
+  }
 
   // Custom date range state — shown only when 'custom' is selected
   const [customFrom, setCustomFrom] = useState<string>('');

@@ -18,8 +18,12 @@ function isSecretaryRoleName(raw: string | undefined | null): boolean {
   const n = String(raw ?? '')
     .trim()
     .toLowerCase();
-  if (!n) return false;
-  if (n === 'secretary') return true;
+  if (!n) {
+    return false;
+  }
+  if (n === 'secretary') {
+    return true;
+  }
   return /\bsecretary\b/.test(n);
 }
 
@@ -28,8 +32,12 @@ function isTreasurerRoleName(raw: string | undefined | null): boolean {
   const n = String(raw ?? '')
     .trim()
     .toLowerCase();
-  if (!n) return false;
-  if (n === 'treasurer') return true;
+  if (!n) {
+    return false;
+  }
+  if (n === 'treasurer') {
+    return true;
+  }
   return /\btreasurer\b/.test(n);
 }
 
@@ -42,9 +50,15 @@ export function isDepartmentPortalRoleName(raw: string | undefined | null): bool
   const n = String(raw ?? '')
     .trim()
     .toLowerCase();
-  if (!n) return false;
-  if (/\bdepartment\s+head\b/.test(n) || n === 'department head') return true;
-  if (/\belder\s+in\s+charge\b/.test(n) || n === 'elder in charge') return true;
+  if (!n) {
+    return false;
+  }
+  if (/\bdepartment\s+head\b/.test(n) || n === 'department head') {
+    return true;
+  }
+  if (/\belder\s+in\s+charge\b/.test(n) || n === 'elder in charge') {
+    return true;
+  }
   return false;
 }
 

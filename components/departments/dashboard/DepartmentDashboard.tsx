@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Expense } from '@/types/expense';
 import { useDepartments } from '@/context/DepartmentsContext';
 import DeptKpiCards, { type KpiData } from '@/components/departments/dashboard/DeptKpiCards';
 import DeptUpcomingActivities, {
@@ -21,6 +22,8 @@ import { fetchDepartmentActivities, fetchDepartmentActivitiesAllPages } from '@/
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 import { usePortalDepartment } from '@/hooks/usePortalDepartment';
 
+const EMPTY_EXPENSES: Expense[] = [];
+
 export default function DepartmentDashboard() {
   const {
     loading: departmentsLoading,
@@ -31,7 +34,10 @@ export default function DepartmentDashboard() {
   const { portalIdentityLoaded } = useDepartmentProfile();
   const department = usePortalDepartment();
   const departmentId = department?.id ?? '';
-  const expenses = departmentExpensesMap[departmentId] ?? [];
+  const expenses = useMemo(
+    () => departmentExpensesMap[departmentId] ?? EMPTY_EXPENSES,
+    [departmentExpensesMap, departmentId]
+  );
 
   const [period, setPeriod] = useState<Period | null>('this_month');
   const [customRange, setCustomRange] = useState<{ from: string; to: string } | null>(null);
