@@ -4,10 +4,7 @@
 
 import type { DepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 import { THEME_COLOR_HEX, type ThemeColor } from '@/constants/departments';
-import {
-  type DepartmentMyPortalResponse,
-  parseThemeColor,
-} from '@/lib/departmentsApi';
+import { type DepartmentMyPortalResponse, parseThemeColor } from '@/lib/departmentsApi';
 
 function memberFullName(v: Record<string, unknown>): string {
   const parts = [v.first_name, v.middle_name, v.last_name]
@@ -33,9 +30,7 @@ export function mapMyPortalToProfilePatch(
   const photo = v.profile_photo;
   const avatarUrl =
     typeof photo === 'string' &&
-    (photo.startsWith('http://') ||
-      photo.startsWith('https://') ||
-      photo.startsWith('data:'))
+    (photo.startsWith('http://') || photo.startsWith('https://') || photo.startsWith('data:'))
       ? photo
       : null;
 
@@ -67,8 +62,6 @@ export function mapMyPortalToProfilePatch(
     headEmail: email,
     headPhone: phone,
     avatarUrl,
-    ...(primaryHex
-      ? { primaryColor: primaryHex, darkPrimaryColor: primaryHex }
-      : {}),
+    ...(primaryHex ? { primaryColor: primaryHex, darkPrimaryColor: primaryHex } : {}),
   };
 }

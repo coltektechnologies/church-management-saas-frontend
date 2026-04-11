@@ -117,8 +117,7 @@ export function MessageModal({
     }
   };
 
-  const characterLimit =
-    messageType === 'sms' ? 160 : messageType === 'in_app' ? 4000 : 5000;
+  const characterLimit = messageType === 'sms' ? 160 : messageType === 'in_app' ? 4000 : 5000;
   const isOverLimit = content.length > characterLimit;
 
   if (!isOpen) {
@@ -382,8 +381,7 @@ export function MessageModal({
                 ) : (
                   <MessageSquare className="w-4 h-4 mr-2" />
                 )}
-                Send to {selectedMembers.size}{' '}
-                {selectedMembers.size === 1 ? 'member' : 'members'}
+                Send to {selectedMembers.size} {selectedMembers.size === 1 ? 'member' : 'members'}
               </>
             )}
           </Button>

@@ -371,9 +371,7 @@ export async function deleteDepartment(id: string): Promise<void> {
 const DEFAULT_MEMBER_DEPARTMENT_PAGE_SIZE = 50;
 
 /** Single page of member–department rows (`?page=` when page > 1). */
-export async function fetchMemberDepartmentsPage(
-  page?: number
-): Promise<MemberDepartmentRow[]> {
+export async function fetchMemberDepartmentsPage(page?: number): Promise<MemberDepartmentRow[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
   if (page != null && page > 1) {
@@ -440,10 +438,9 @@ export async function fetchDepartmentMembers(
   departmentId: string
 ): Promise<DepartmentMemberApiRow[]> {
   const base = getApiBaseUrl();
-  const data = await fetchAuth<unknown>(
-    `${base}/departments/${departmentId}/members/`,
-    { method: 'GET' }
-  );
+  const data = await fetchAuth<unknown>(`${base}/departments/${departmentId}/members/`, {
+    method: 'GET',
+  });
   return normalizeListResponse<DepartmentMemberApiRow>(data);
 }
 
@@ -706,10 +703,9 @@ export async function fetchDepartmentMemberMessages(
   departmentId: string
 ): Promise<DepartmentMemberMessageHistoryItem[]> {
   const base = getApiBaseUrl();
-  const data = await fetchAuth<unknown>(
-    `${base}/departments/${departmentId}/member-messages/`,
-    { method: 'GET' }
-  );
+  const data = await fetchAuth<unknown>(`${base}/departments/${departmentId}/member-messages/`, {
+    method: 'GET',
+  });
   return Array.isArray(data) ? (data as DepartmentMemberMessageHistoryItem[]) : [];
 }
 

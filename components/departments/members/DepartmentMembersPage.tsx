@@ -221,12 +221,15 @@ export default function DepartmentMembersPage() {
     setRemoveDialogMembers([m]);
   }, []);
 
-  const onRemoveDialogOpenChange = useCallback((open: boolean) => {
-    if (!open) {
-      setRemoveDialogMembers(null);
-      flushBulkRemoveWaiters();
-    }
-  }, [flushBulkRemoveWaiters]);
+  const onRemoveDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setRemoveDialogMembers(null);
+        flushBulkRemoveWaiters();
+      }
+    },
+    [flushBulkRemoveWaiters]
+  );
 
   const handleConfirmRemove = useCallback(
     async (members: DepartmentMember[]) => {

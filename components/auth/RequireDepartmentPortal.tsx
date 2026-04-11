@@ -10,9 +10,7 @@ import {
   type PostLoginUser,
 } from '@/lib/postLoginRedirect';
 
-function storedUserToPostLogin(
-  raw: ReturnType<typeof getStoredUser>
-): PostLoginUser | null {
+function storedUserToPostLogin(raw: ReturnType<typeof getStoredUser>): PostLoginUser | null {
   if (!raw) {
     return null;
   }

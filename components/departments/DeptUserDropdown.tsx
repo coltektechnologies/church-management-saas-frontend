@@ -70,8 +70,9 @@ export default function DeptUserDropdown({
     ? '—'
     : !portalIdentityLoaded && process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH !== 'true'
       ? 'Loading…'
-      : [profile.departmentName.trim(), profile.departmentCode.trim()].filter(Boolean).join(' · ') ||
-        '—';
+      : [profile.departmentName.trim(), profile.departmentCode.trim()]
+          .filter(Boolean)
+          .join(' · ') || '—';
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

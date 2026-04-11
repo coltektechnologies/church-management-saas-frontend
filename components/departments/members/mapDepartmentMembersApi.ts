@@ -1,8 +1,5 @@
 import type { DepartmentMember, MemberRole, MemberStatus } from './membersDummyData';
-import type {
-  DepartmentMemberApiRow,
-  MemberDepartmentRow,
-} from '@/lib/departmentsApi';
+import type { DepartmentMemberApiRow, MemberDepartmentRow } from '@/lib/departmentsApi';
 
 function mapMembershipStatus(api: string | undefined): MemberStatus {
   const u = (api || 'ACTIVE').toUpperCase();
@@ -52,8 +49,7 @@ export function mapDepartmentMemberApiRow(
   const phone = (loc?.phone_primary ?? '').trim();
   const since = row.member_since ? String(row.member_since).slice(0, 10) : '';
   const photo = row.profile_photo?.trim();
-  const avatarUrl =
-    photo && (photo.startsWith('http') || photo.startsWith('data:')) ? photo : null;
+  const avatarUrl = photo && (photo.startsWith('http') || photo.startsWith('data:')) ? photo : null;
 
   return {
     id: String(row.id),

@@ -108,7 +108,10 @@ export default function DepartmentAssignMembersPage({
   }, [available, query]);
 
   const selectedIds = useMemo(
-    () => Object.entries(selected).filter(([, v]) => v).map(([id]) => id),
+    () =>
+      Object.entries(selected)
+        .filter(([, v]) => v)
+        .map(([id]) => id),
     [selected]
   );
 
@@ -140,8 +143,7 @@ export default function DepartmentAssignMembersPage({
     let ok = 0;
     let failed = 0;
     for (const memberId of selectedIds) {
-      const role =
-        roleByMember[memberId]?.trim() || ROLE_IN_DEPARTMENT_OPTIONS[0];
+      const role = roleByMember[memberId]?.trim() || ROLE_IN_DEPARTMENT_OPTIONS[0];
       try {
         await assignMemberToDepartment({
           member: memberId,
@@ -156,9 +158,7 @@ export default function DepartmentAssignMembersPage({
         const msg = e instanceof Error ? e.message : 'Request failed';
         if (msg.toLowerCase().includes('already assigned')) {
           const row = churchMembers.find((x) => x.id === memberId);
-          toast.message(
-            `${row ? displayName(row) : 'Member'} is already in this department.`
-          );
+          toast.message(`${row ? displayName(row) : 'Member'} is already in this department.`);
         }
       }
     }
@@ -282,7 +282,10 @@ export default function DepartmentAssignMembersPage({
                   <th className="text-left py-2.5 px-2 font-medium" style={{ color: muted }}>
                     Email
                   </th>
-                  <th className="text-left py-2.5 px-2 font-medium min-w-[140px]" style={{ color: muted }}>
+                  <th
+                    className="text-left py-2.5 px-2 font-medium min-w-[140px]"
+                    style={{ color: muted }}
+                  >
                     Role in department
                   </th>
                 </tr>
@@ -337,7 +340,10 @@ export default function DepartmentAssignMembersPage({
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-end gap-3 mt-6 pt-4" style={{ borderTop: `1px solid ${borderClr}` }}>
+        <div
+          className="flex flex-wrap items-center justify-end gap-3 mt-6 pt-4"
+          style={{ borderTop: `1px solid ${borderClr}` }}
+        >
           <span className="text-xs sm:text-sm mr-auto" style={{ color: muted }}>
             {selectedIds.length} selected
           </span>

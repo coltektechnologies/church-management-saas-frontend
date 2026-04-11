@@ -209,7 +209,9 @@ export function BulkMessagingDashboard() {
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-1">SMS</h3>
-                <p className="text-gray-500">Text members (uses phone on file, max 160 characters)</p>
+                <p className="text-gray-500">
+                  Text members (uses phone on file, max 160 characters)
+                </p>
               </div>
               <Send className="w-5 h-5 text-gray-400 group-hover:text-teal-600 transition-colors" />
             </div>
