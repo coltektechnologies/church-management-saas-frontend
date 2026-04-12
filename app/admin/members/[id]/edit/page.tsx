@@ -11,6 +11,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { getMember, updateMember, type MemberDetail } from '@/lib/api';
 import { toast } from 'sonner';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
+import {
+  parseEmergencyContactFromNotes,
+  stripEmergencyContactBlockFromNotes,
+} from '@/lib/memberNotesDisplay';
 
 const TITLES = [
   { value: '', label: 'Select title' },
@@ -233,6 +237,18 @@ function CardSection({
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
 }) {
+  const { memberProfilePresentation = 'default' } = useMembersPortal();
+  if (memberProfilePresentation === 'department') {
+    return (
+      <div className="rounded-2xl border border-stone-200/90 overflow-hidden bg-white shadow-sm">
+        <div className="flex items-center gap-2 px-5 py-3 border-b border-stone-100 bg-gradient-to-r from-emerald-50/50 via-white to-stone-50/70">
+          <Icon className="h-4 w-4 text-emerald-900/50 shrink-0" />
+          <span className="text-sm font-semibold text-stone-800 tracking-tight">{title}</span>
+        </div>
+        <div className="p-5 space-y-4">{children}</div>
+      </div>
+    );
+  }
   return (
     <div
       className="rounded-xl border overflow-hidden bg-[var(--admin-surface)]"
@@ -255,7 +271,12 @@ const inputClass =
 
 export default function MemberEditPage() {
   const router = useRouter();
-  const { membersBasePath } = useMembersPortal();
+  const {
+    membersBasePath,
+    memberProfilePresentation = 'default',
+    hideMemberLifecycleControls,
+  } = useMembersPortal();
+  const isDept = memberProfilePresentation === 'department';
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(true);
@@ -275,7 +296,21 @@ export default function MemberEditPage() {
           setError('Member not found');
           return;
         }
-        setForm(memberToForm(m));
+        const base = memberToForm(m);
+        const parsed = parseEmergencyContactFromNotes(m.notes || '');
+        if (parsed) {
+          if (!base.emergency_contact_name.trim()) {
+            base.emergency_contact_name = parsed.name;
+          }
+          if (!base.emergency_contact_relationship.trim()) {
+            base.emergency_contact_relationship = parsed.relationship;
+          }
+          if (!base.emergency_contact_phone.trim()) {
+            base.emergency_contact_phone = parsed.phone;
+          }
+        }
+        base.notes = stripEmergencyContactBlockFromNotes(base.notes);
+        setForm(base);
       })
       .catch(() => setError('Failed to load member'))
       .finally(() => setLoading(false));
@@ -327,7 +362,9 @@ export default function MemberEditPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center text-[var(--admin-text-muted)]">
+      <div
+        className={`flex min-h-[320px] items-center justify-center ${isDept ? 'text-stone-500' : 'text-[var(--admin-text-muted)]'}`}
+      >
         Loading member...
       </div>
     );
@@ -353,23 +390,27 @@ export default function MemberEditPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className={`space-y-6 pb-12 ${isDept ? 'max-w-5xl' : ''}`}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link
             href={`${membersBasePath}/${id}`}
-            className="mb-2 inline-flex items-center gap-2 text-sm text-[var(--admin-text-muted)] hover:underline"
+            className={`mb-2 inline-flex items-center gap-2 text-sm hover:underline ${isDept ? 'text-stone-500' : 'text-[var(--admin-text-muted)]'}`}
           >
             <ArrowLeft className="h-4 w-4" /> Back to Member
           </Link>
           <h1
-            className="text-2xl font-bold text-[var(--admin-text)]"
+            className={`text-2xl font-bold ${isDept ? 'text-stone-900 font-semibold tracking-tight' : 'text-[var(--admin-text)]'}`}
             style={{ fontFamily: 'OV Soge, sans-serif' }}
           >
-            Edit Member
+            {isDept ? 'Update member details' : 'Edit Member'}
           </h1>
-          <p className="mt-1 text-sm text-[var(--admin-text-muted)]">
-            Update profile, contact, and membership details.
+          <p
+            className={`mt-1 text-sm leading-relaxed max-w-xl ${isDept ? 'text-stone-500' : 'text-[var(--admin-text-muted)]'}`}
+          >
+            {isDept
+              ? 'Keep contact and fellowship information accurate. Account access and official notices are managed by the church office.'
+              : 'Update profile, contact, and membership details.'}
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -658,7 +699,7 @@ export default function MemberEditPage() {
             </div>
           </CardSection>
 
-          <CardSection title="Emergency contact" icon={Shield}>
+          <CardSection title={isDept ? 'In case of emergency' : 'Emergency contact'} icon={Shield}>
             <div className="space-y-2">
               <Label>Full name</Label>
               <Input
@@ -688,45 +729,66 @@ export default function MemberEditPage() {
           </CardSection>
         </div>
 
-        <CardSection title="Preferences & notes" icon={FileText}>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {hideMemberLifecycleControls ? (
+          <CardSection title="Notes" icon={FileText}>
+            <p
+              className={`text-xs leading-relaxed -mt-1 mb-1 ${isDept ? 'text-stone-500' : 'text-[var(--admin-text-muted)]'}`}
+            >
+              Optional. Duplicate emergency-contact lines in notes are discouraged; use the section
+              above. Official messaging preferences and login access are set by church
+              administration.
+            </p>
             <div className="space-y-2">
-              <Label>Notification preference</Label>
-              <select
-                className={`h-10 w-full px-3 text-sm ${inputClass}`}
-                value={form.notification_preference}
-                onChange={(e) => update('notification_preference', e.target.value)}
-              >
-                {NOTIFY_PREF.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2 pt-8">
-              <input
-                id="is_active"
-                type="checkbox"
-                className="h-4 w-4 rounded border-[var(--admin-border)]"
-                checked={form.is_active}
-                onChange={(e) => update('is_active', e.target.checked)}
+              <Label>Notes</Label>
+              <Textarea
+                className={`min-h-[100px] ${inputClass}`}
+                value={form.notes}
+                onChange={(e) => update('notes', e.target.value)}
+                placeholder="Pastoral or department context…"
               />
-              <Label htmlFor="is_active" className="cursor-pointer font-normal">
-                Member account active
-              </Label>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Notes</Label>
-            <Textarea
-              className={`min-h-[100px] ${inputClass}`}
-              value={form.notes}
-              onChange={(e) => update('notes', e.target.value)}
-              placeholder="Internal notes..."
-            />
-          </div>
-        </CardSection>
+          </CardSection>
+        ) : (
+          <CardSection title="Preferences & notes" icon={FileText}>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Notification preference</Label>
+                <select
+                  className={`h-10 w-full px-3 text-sm ${inputClass}`}
+                  value={form.notification_preference}
+                  onChange={(e) => update('notification_preference', e.target.value)}
+                >
+                  {NOTIFY_PREF.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 pt-8">
+                <input
+                  id="is_active"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-[var(--admin-border)]"
+                  checked={form.is_active}
+                  onChange={(e) => update('is_active', e.target.checked)}
+                />
+                <Label htmlFor="is_active" className="cursor-pointer font-normal">
+                  Member account active
+                </Label>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea
+                className={`min-h-[100px] ${inputClass}`}
+                value={form.notes}
+                onChange={(e) => update('notes', e.target.value)}
+                placeholder="Internal notes..."
+              />
+            </div>
+          </CardSection>
+        )}
 
         <div className="flex justify-end gap-2">
           <Button

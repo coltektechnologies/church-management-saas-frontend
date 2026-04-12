@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { ChurchProfileProvider } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { SecretaryProfileProvider } from '@/components/secretary/contexts/SecretaryProfileContext';
@@ -78,7 +78,7 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
     </AuthProvider>
   );
 
-  // When preview is enabled: uncomment skipAuth above and these two lines:
+  // // When preview is enabled: uncomment skipAuth above and these two lines:
   // if (skipAuth) {
   //   return tree;
   // }

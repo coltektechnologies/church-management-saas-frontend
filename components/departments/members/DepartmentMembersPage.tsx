@@ -1,40 +1,37 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { departmentMembersPortal } from '@/lib/departmentMembersPortal';
+import { useDepartments } from '@/context/DepartmentsContext';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
+import { useLogDeptMember } from '@/components/departments/contexts/DeptActivityContext';
+import { usePortalDepartment } from '@/hooks/usePortalDepartment';
 import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvider';
+import {
+  fetchDepartmentMembers,
+  fetchMemberDepartments,
+  removeMemberFromDepartment,
+} from '@/lib/departmentsApi';
+import {
+  mapDepartmentMemberApiRow,
+  indexAssignmentsByMember,
+} from '@/components/departments/members/mapDepartmentMembersApi';
 
 import MembersFilterBar, { type MembersFilterValues } from './MembersFilterBar';
 import MembersTableHeader, { type ViewMode } from './MembersTableHeader';
 import MembersTable from './MembersTable';
 import MembersGridView from './MembersGridView';
-import AddMemberPage from './AddMemberPage';
+import DepartmentAssignMembersPage from './DepartmentAssignMembersPage';
+import RemoveFromDepartmentDialog from './RemoveFromDepartmentDialog';
+import { toast } from 'sonner';
 
-import { DUMMY_MEMBERS, type DepartmentMember } from './membersDummyData';
+import type { DepartmentMember } from './membersDummyData';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// localStorage helpers
+// Draft localStorage (form only — not synced to API)
 // ─────────────────────────────────────────────────────────────────────────────
-const STORAGE_KEY_ADDED = 'dept_members_added_v1';
 const STORAGE_KEY_DRAFTS = 'dept_drafts_v1';
-
-/** Read user-added members from localStorage and merge with baseline. */
-function readPersistedMembers(): DepartmentMember[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_ADDED);
-    if (!raw) {
-      return DUMMY_MEMBERS;
-    }
-    const added: DepartmentMember[] = JSON.parse(raw);
-    // Exclude any stored item whose id collides with a dummy member (safety guard)
-    const dummyIds = new Set(DUMMY_MEMBERS.map((m) => m.id));
-    const safeAdded = added.filter((m) => !dummyIds.has(m.id));
-    // Added members appear first (top of list), dummy members always follow
-    return [...safeAdded, ...DUMMY_MEMBERS];
-  } catch {
-    return DUMMY_MEMBERS;
-  }
-}
 
 function readPersistedDrafts(): DepartmentMember[] {
   try {
@@ -42,17 +39,6 @@ function readPersistedDrafts(): DepartmentMember[] {
     return raw ? (JSON.parse(raw) as DepartmentMember[]) : [];
   } catch {
     return [];
-  }
-}
-
-/** Save only user-added members (not dummy baseline) to keep storage lean. */
-function persistMembers(members: DepartmentMember[]) {
-  try {
-    const dummyIds = new Set(DUMMY_MEMBERS.map((m) => m.id));
-    const added = members.filter((m) => !dummyIds.has(m.id));
-    localStorage.setItem(STORAGE_KEY_ADDED, JSON.stringify(added));
-  } catch {
-    /* quota exceeded or private browsing — ignore */
   }
 }
 
@@ -69,18 +55,22 @@ function persistDrafts(drafts: DepartmentMember[]) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function DepartmentMembersPage() {
-  const { profile, isReady } = useDepartmentProfile();
+  const router = useRouter();
+  const { loading: departmentsLoading } = useDepartments();
+  const department = usePortalDepartment();
+  const departmentId = department?.id ?? '';
+
+  const { profile, isReady, portalIdentityLoaded } = useDepartmentProfile();
+  const memberActivityLog = useLogDeptMember();
   const { resolvedTheme, mounted } = useDeptTheme();
   const isDark = mounted ? resolvedTheme === 'dark' : false;
 
-  // ── Lazy initialisers: read localStorage once on first render ─────────────
-  // This is the canonical pattern — no useEffect + setState needed.
-  const [members, setMembers] = useState<DepartmentMember[]>(() => {
-    if (typeof window === 'undefined') {
-      return DUMMY_MEMBERS;
-    }
-    return readPersistedMembers();
-  });
+  const [remoteMembers, setRemoteMembers] = useState<DepartmentMember[]>([]);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+
+  /** Session-only rows from Add Member form (not persisted; not on server). */
+  const [optimisticMembers, setOptimisticMembers] = useState<DepartmentMember[]>([]);
 
   const [drafts, setDrafts] = useState<DepartmentMember[]>(() => {
     if (typeof window === 'undefined') {
@@ -89,17 +79,41 @@ export default function DepartmentMembersPage() {
     return readPersistedDrafts();
   });
 
-  // ── Persist whenever state changes ────────────────────────────────────────
-  // These effects only write to external storage — no setState inside, so no
-  // cascading renders and no lint violation.
-  useEffect(() => {
-    persistMembers(members);
-  }, [members]);
   useEffect(() => {
     persistDrafts(drafts);
   }, [drafts]);
 
-  // ── UI state ──────────────────────────────────────────────────────────────
+  const loadRemoteMembers = useCallback(async () => {
+    if (!departmentId) {
+      setRemoteMembers([]);
+      setListError(null);
+      setListLoading(false);
+      return;
+    }
+    setListError(null);
+    setListLoading(true);
+    try {
+      const [apiMembers, assignments] = await Promise.all([
+        fetchDepartmentMembers(departmentId),
+        fetchMemberDepartments(),
+      ]);
+      const byMember = indexAssignmentsByMember(assignments, departmentId);
+      const mapped = apiMembers.map((r) =>
+        mapDepartmentMemberApiRow(r, byMember.get(String(r.id)))
+      );
+      setRemoteMembers(mapped);
+    } catch (e) {
+      setListError(e instanceof Error ? e.message : 'Failed to load members');
+      setRemoteMembers([]);
+    } finally {
+      setListLoading(false);
+    }
+  }, [departmentId]);
+
+  useEffect(() => {
+    void loadRemoteMembers();
+  }, [loadRemoteMembers]);
+
   const [filters, setFilters] = useState<MembersFilterValues>({
     search: '',
     status: 'All',
@@ -108,16 +122,37 @@ export default function DepartmentMembersPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   const [showAddMember, setShowAddMember] = useState(false);
-  const [editingMember, setEditingMember] = useState<DepartmentMember | null>(null);
   const [exportTrigger, setExportTrigger] = useState<'csv' | 'pdf' | 'excel' | null>(null);
 
-  // ── Combined list: drafts first (Pending badge), then active members ──────
+  const [removeDialogMembers, setRemoveDialogMembers] = useState<DepartmentMember[] | null>(null);
+  const bulkRemoveResolversRef = useRef<(() => void)[]>([]);
+
+  const flushBulkRemoveWaiters = useCallback(() => {
+    const waiters = bulkRemoveResolversRef.current.splice(0);
+    waiters.forEach((r) => r());
+  }, []);
+
+  const accentColor = isReady
+    ? isDark
+      ? profile.darkAccentColor || '#2FC4B2'
+      : profile.accentColor || '#2FC4B2'
+    : '#2FC4B2';
+
+  /** Already in this department, plus primary department head (not assignable as a regular add). */
+  const assignExcludedMemberIds = useMemo(() => {
+    const s = new Set(remoteMembers.map((m) => String(m.id)));
+    const headId = department?.headMemberId;
+    if (headId) {
+      s.add(String(headId));
+    }
+    return s;
+  }, [remoteMembers, department?.headMemberId]);
+
   const allTableMembers = useMemo<DepartmentMember[]>(
-    () => [...drafts, ...members],
-    [drafts, members]
+    () => [...drafts, ...optimisticMembers, ...remoteMembers],
+    [drafts, optimisticMembers, remoteMembers]
   );
 
-  // ── Filtered list ─────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
     return allTableMembers.filter((m) => {
@@ -135,66 +170,47 @@ export default function DepartmentMembersPage() {
     });
   }, [allTableMembers, filters]);
 
-  // ── onSubmit ───────────────────────────────────────────────────────────────
-  // Called by AddMemberPage BEFORE showing the success screen.
-  // We update + persist state but do NOT close the form — AddMemberPage owns that.
-  const handleAddMember = useCallback(
-    (data: Omit<DepartmentMember, 'id'>) => {
-      if (editingMember) {
-        const wasDraft = drafts.some((d) => d.id === editingMember.id);
-        if (wasDraft) {
-          // Promote draft → active member
-          setDrafts((prev) => prev.filter((d) => d.id !== editingMember.id));
-          setMembers((prev) => [{ ...data, id: `added-${Date.now()}` }, ...prev]);
-        } else {
-          // Update existing active member in-place
-          setMembers((prev) =>
-            prev.map((m) => (m.id === editingMember.id ? { ...m, ...data } : m))
-          );
-        }
-        setEditingMember(null);
-      } else {
-        // New member → prepend with a unique id
-        setMembers((prev) => [{ ...data, id: `added-${Date.now()}` }, ...prev]);
-      }
-      // ⚠️ Do NOT call setShowAddMember(false) — AddMemberPage shows success screen
-    },
-    [editingMember, drafts]
-  );
-
-  // ── onSaveDraft ────────────────────────────────────────────────────────────
-  // Persists draft. Does NOT close form — AddMemberPage shows toast then calls onCancel.
-  const handleSaveDraft = useCallback(
-    (data: Omit<DepartmentMember, 'id'>) => {
-      if (editingMember) {
-        const wasDraft = drafts.some((d) => d.id === editingMember.id);
-        if (wasDraft) {
-          setDrafts((prev) =>
-            prev.map((d) => (d.id === editingMember.id ? { ...d, ...data, status: 'Pending' } : d))
-          );
-        }
-      } else {
-        setDrafts((prev) => [{ ...data, id: `draft-${Date.now()}`, status: 'Pending' }, ...prev]);
-      }
-      // ⚠️ Do NOT close — AddMemberPage handles toast + navigation
-    },
-    [editingMember, drafts]
-  );
-
-  // ── closeForm — called by AddMemberPage when it wants to navigate back ────
-  const closeForm = useCallback(() => {
+  const closeAssignFlow = useCallback(() => {
     setShowAddMember(false);
-    setEditingMember(null);
-  }, []);
+    void loadRemoteMembers();
+  }, [loadRemoteMembers]);
 
-  // ── Table handlers ────────────────────────────────────────────────────────
-  const handleView = useCallback((m: DepartmentMember) => {
-    alert(`Viewing: ${m.name}\n${m.email}\n${m.phone}`);
-  }, []);
+  const handleView = useCallback(
+    (m: DepartmentMember) => {
+      router.push(`${departmentMembersPortal.membersBasePath}/${m.id}`);
+    },
+    [router]
+  );
 
-  const handleEdit = useCallback((m: DepartmentMember) => {
-    setEditingMember(m);
-    setShowAddMember(true);
+  const handleEdit = useCallback(
+    (m: DepartmentMember) => {
+      router.push(`${departmentMembersPortal.membersBasePath}/${m.id}/edit`);
+    },
+    [router]
+  );
+
+  const runRemoval = useCallback(
+    async (members: DepartmentMember[]) => {
+      for (const m of members) {
+        if (m.assignmentId) {
+          await removeMemberFromDepartment(m.assignmentId);
+        }
+        setOptimisticMembers((prev) => prev.filter((x) => x.id !== m.id));
+        setDrafts((prev) => prev.filter((d) => d.id !== m.id));
+      }
+      await loadRemoteMembers();
+    },
+    [loadRemoteMembers]
+  );
+
+  const handleBulkRemoveMembers = useCallback(async (selected: DepartmentMember[]) => {
+    if (selected.length === 0) {
+      return;
+    }
+    return new Promise<void>((resolve) => {
+      bulkRemoveResolversRef.current.push(resolve);
+      setRemoveDialogMembers(selected);
+    });
   }, []);
 
   const handleMessage = useCallback((m: DepartmentMember) => {
@@ -202,47 +218,99 @@ export default function DepartmentMembersPage() {
   }, []);
 
   const handleRemove = useCallback((m: DepartmentMember) => {
-    if (window.confirm(`Remove ${m.name}?`)) {
-      setDrafts((prev) => prev.filter((d) => d.id !== m.id));
-      setMembers((prev) => prev.filter((x) => x.id !== m.id));
-    }
+    setRemoveDialogMembers([m]);
   }, []);
+
+  const onRemoveDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setRemoveDialogMembers(null);
+        flushBulkRemoveWaiters();
+      }
+    },
+    [flushBulkRemoveWaiters]
+  );
+
+  const handleConfirmRemove = useCallback(
+    async (members: DepartmentMember[]) => {
+      await runRemoval(members);
+      for (const m of members) {
+        memberActivityLog.logRemoved(m.name);
+      }
+      toast.success(
+        members.length > 1
+          ? `${members.length} people removed from this department.`
+          : `${members[0]?.name ?? 'Member'} removed from this department.`
+      );
+    },
+    [runRemoval, memberActivityLog]
+  );
 
   const handleAssignRole = useCallback((m: DepartmentMember) => {
     alert(`Assign Role to: ${m.name}\nCurrent: ${m.role}`);
   }, []);
 
-  // ── Theme ─────────────────────────────────────────────────────────────────
   const cardBg = isDark ? '#0D1F36' : '#FFFFFF';
   const borderClr = isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB';
-  const headName = isReady
-    ? profile.preferredName?.trim() || profile.headName || 'Department Head'
-    : 'Department Head';
-
-  // ── Render: form ──────────────────────────────────────────────────────────
-  if (showAddMember) {
+  if (showAddMember && department) {
     return (
-      <AddMemberPage
-        onSubmit={handleAddMember}
-        onSaveDraft={handleSaveDraft}
-        onCancel={closeForm}
-        editMember={editingMember}
-        addedByName={headName}
+      <DepartmentAssignMembersPage
+        departmentId={departmentId}
+        departmentName={department.name}
+        excludedMemberIds={assignExcludedMemberIds}
+        onClose={closeAssignFlow}
       />
     );
   }
 
-  // ── Render: members table ─────────────────────────────────────────────────
+  if (!portalIdentityLoaded || (departmentsLoading && !department)) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh] p-8">
+        <p className="text-gray-400 text-sm animate-pulse">Loading members…</p>
+      </div>
+    );
+  }
+
+  if (!department) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh] p-8">
+        <p className="text-gray-500 text-sm text-center max-w-md">
+          No department is linked to your account.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
+      <RemoveFromDepartmentDialog
+        open={removeDialogMembers !== null && removeDialogMembers.length > 0}
+        members={removeDialogMembers ?? []}
+        departmentName={department.name}
+        isDark={isDark}
+        accentColor={accentColor}
+        onOpenChange={onRemoveDialogOpenChange}
+        onRemove={handleConfirmRemove}
+      />
+
       <MembersFilterBar
         values={filters}
         onChange={setFilters}
-        onAddMember={() => {
-          setEditingMember(null);
-          setShowAddMember(true);
-        }}
+        onAddMember={() => setShowAddMember(true)}
       />
+
+      {listError && (
+        <div
+          className="mt-3 px-4 py-2 rounded-lg text-sm border"
+          style={{
+            background: isDark ? 'rgba(220,38,38,0.12)' : '#FEF2F2',
+            borderColor: isDark ? 'rgba(248,113,113,0.35)' : '#FECACA',
+            color: isDark ? '#FCA5A5' : '#B91C1C',
+          }}
+        >
+          {listError}
+        </div>
+      )}
 
       <div
         className="mt-4 overflow-hidden"
@@ -255,13 +323,18 @@ export default function DepartmentMembersPage() {
           onExport={(fmt) => setExportTrigger(fmt)}
         />
 
-        {viewMode === 'table' ? (
+        {listLoading && remoteMembers.length === 0 && !listError ? (
+          <div className="px-6 py-12 text-center text-sm text-gray-500 animate-pulse">
+            Loading members…
+          </div>
+        ) : viewMode === 'table' ? (
           <MembersTable
             members={filtered}
             onView={handleView}
             onEdit={handleEdit}
             onMessage={handleMessage}
             onRemoveMember={handleRemove}
+            onBulkRemoveMembers={handleBulkRemoveMembers}
             exportTrigger={exportTrigger}
             onExportDone={() => setExportTrigger(null)}
           />

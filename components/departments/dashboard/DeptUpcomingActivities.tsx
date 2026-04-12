@@ -65,9 +65,13 @@ const DEFAULT_ACTIVITIES: DeptActivity[] = [
 
 interface Props {
   activities?: DeptActivity[];
+  loading?: boolean;
 }
 
-export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES }: Props) {
+export default function DeptUpcomingActivities({
+  activities = DEFAULT_ACTIVITIES,
+  loading = false,
+}: Props) {
   const router = useRouter();
   const { profile, isReady } = useDepartmentProfile();
   // ── Use mounted guard to prevent hydration mismatch ───────────────────────
@@ -146,7 +150,16 @@ export default function DeptUpcomingActivities({ activities = DEFAULT_ACTIVITIES
 
       {/* Activity list */}
       <div className="flex flex-col gap-3">
-        {activities.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <p
+              className="text-sm font-medium animate-pulse"
+              style={{ color: itemSubColor, fontFamily: 'Poppins' }}
+            >
+              Loading upcoming activities…
+            </p>
+          </div>
+        ) : activities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <CalendarDays size={32} style={{ color: accentColor, opacity: 0.3 }} className="mb-2" />
             <p
