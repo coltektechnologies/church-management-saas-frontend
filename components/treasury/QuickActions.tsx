@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -63,15 +62,13 @@ export function QuickActions(props: QuickActionsProps) {
   const router = useRouter();
 
   const handleAction = (handlerName: keyof QuickActionsProps) => {
-    if (handlerName === 'onRecordIncome') {
+    const fn = props[handlerName];
+    if (fn) {
+      fn();
+    } else if (handlerName === 'onRecordIncome') {
       router.push('/admin/treasury/record?type=income');
     } else if (handlerName === 'onRecordExpenditure') {
       router.push('/admin/treasury/record?type=expense');
-    } else {
-      const fn = props[handlerName];
-      if (fn) {
-        fn();
-      }
     }
   };
 
