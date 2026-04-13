@@ -27,7 +27,17 @@ const PUBLIC_EXACT = new Set([
 ]);
 
 /** Prefixes: path === prefix or path starts with prefix + '/' */
-const PUBLIC_PREFIXES = ['/login', '/signup', '/features', '/developers', '/contact', '/pricing'];
+const PUBLIC_PREFIXES = [
+  '/login',
+  '/signup',
+  '/features',
+  '/developers',
+  '/contact',
+  '/pricing',
+  '/secretary',
+  '/treasury',
+  '/admin',"/department"
+];
 
 /** Where to send users who already have a session cookie but hit login/signup. */
 const LOGGED_IN_AUTH_REDIRECT = '/dashboard';

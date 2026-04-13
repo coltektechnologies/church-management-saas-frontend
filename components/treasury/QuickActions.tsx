@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { BookOpen, FileText, PlusCircle, CreditCard, ClipboardList } from 'lucide-react';
+import Image from 'next/image';
 
 interface QuickActionsProps {
   onRecordIncome?: () => void;
@@ -17,39 +17,44 @@ interface QuickActionsProps {
 const actions = [
   {
     label: 'Record income',
-    icon: BookOpen,
-    color: 'bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white border-transparent',
+    icon: '/treasury/record-income.svg',
+    color:
+      'bg-[#0B2A4A] hover:bg-[#1e3a8a]/90 hover:-translate-y-1 transition-all duration-150 ease-in  text-white border-transparent',
     handler: 'onRecordIncome' as const,
   },
   {
     label: 'Record expense',
-    icon: FileText,
-    color: 'bg-[#2dd4bf] hover:bg-[#2dd4bf]/90 text-white border-transparent',
+    icon: '/treasury/record-expense.svg',
+    color:
+      'bg-[#2dd4bf] hover:bg-[#2dd4bf]/90 hover:-translate-y-1 transition-all duration-150 ease-in text-white border-transparent',
     handler: 'onRecordExpenditure' as const,
   },
   {
     label: 'Expense Request',
-    icon: CreditCard,
-    color: 'bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white border-transparent',
+    icon: '/treasury/expense-request.svg',
+    color:
+      'bg-[#3b82f6] hover:bg-[#3b82f6]/90 hover:-translate-y-1 transition-all duration-150 ease-in text-white border-transparent',
     handler: 'onExpenseRequest' as const,
   },
   {
     label: 'Member Contribution',
-    icon: PlusCircle,
-    color: 'bg-white hover:bg-muted text-foreground border border-border',
+    icon: '/treasury/member-contribution.svg',
+    color:
+      'bg-white hover:bg-muted hover:-translate-y-1 transition-all duration-150 ease-in text-foreground border border-border',
     handler: 'onMemberContribution' as const,
   },
   {
     label: 'Asset Register',
-    icon: ClipboardList,
-    color: 'bg-white hover:bg-muted text-foreground border border-border [&>svg]:text-emerald-500',
+    icon: '/treasury/asset-register.svg',
+    color:
+      'bg-white hover:bg-muted hover:-translate-y-1 transition-all duration-150 ease-in text-foreground border border-border [&>svg]:text-emerald-500',
     handler: 'onAssetRegister' as const,
   },
   {
     label: 'Financial Statement',
-    icon: FileText,
+    icon: '/treasury/financial-statement.svg',
     color:
-      'bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 border border-emerald-200 mt-2 sm:mt-0 lg:ml-auto w-full sm:w-auto',
+      'bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 border hover:-translate-y-1 transition-all duration-150 ease-in border-emerald-200 mt-2 sm:mt-0 lg:ml-auto w-full sm:w-auto',
     handler: 'onFinancialStatement' as const,
   },
 ];
@@ -79,7 +84,7 @@ export function QuickActions(props: QuickActionsProps) {
           onClick={() => handleAction(action.handler)}
           className={`${action.color} rounded-md px-4 h-9 gap-2 shadow-sm cursor-pointer font-medium transition-colors`}
         >
-          <action.icon className="size-4" />
+          <Image alt={`${action.label}`} src={action.icon} width={24} height={24} />
           <span className="text-[13px]">{action.label}</span>
         </Button>
       ))}
