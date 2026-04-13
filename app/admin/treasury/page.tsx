@@ -122,6 +122,7 @@ export default function TreasuryPage() {
           className={`flex items-center gap-2 ${period !== 'custom' ? 'opacity-0 w-0 overflow-hidden scale-95' : 'opacity-100 scale-100'} ease-in-out duration-500`}
         >
           <input
+            title="custom from"
             type="date"
             value={customFrom}
             onChange={(e) => setCustomFrom(e.target.value)}
@@ -129,6 +130,7 @@ export default function TreasuryPage() {
           />
           <span className="text-muted-foreground">–</span>
           <input
+            title="custom to"
             type="date"
             value={customTo}
             onChange={(e) => setCustomTo(e.target.value)}

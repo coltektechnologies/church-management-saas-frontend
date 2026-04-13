@@ -7,12 +7,23 @@ import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
 /**
  * Client-side guard for localStorage JWT + keeps session cookie in sync for middleware.
  */
-export function RequireAuth({ children }: { children: React.ReactNode }) {
+export function RequireAuth({
+  children,
+  skip = false,
+}: {
+  children: React.ReactNode;
+  skip?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
-  const [allowed, setAllowed] = useState(false);
+  const [allowed, setAllowed] = useState(skip);
 
   useEffect(() => {
+    if (skip) {
+      // setAllowed(true);
+      return;
+    }
+
     const token = localStorage.getItem('access_token');
     if (!token) {
       const search = typeof window !== 'undefined' ? window.location.search : '';
@@ -24,7 +35,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     // Defer allow: avoids react-hooks/set-state-in-effect (sync setState in effect body).
     const id = requestAnimationFrame(() => setAllowed(true));
     return () => cancelAnimationFrame(id);
-  }, [router, pathname]);
+  }, [router, pathname, skip]);
 
   if (!allowed) {
     return (
