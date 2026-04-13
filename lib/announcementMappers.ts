@@ -122,12 +122,16 @@ export function mapListItemToAnnouncement(
     typeof row.category === 'string'
       ? row.category
       : (row.category as { name?: string })?.name || '';
+  const body =
+    typeof row.content === 'string' && row.content.trim() !== ''
+      ? row.content.trim()
+      : contentFallback;
   return {
     id: row.id,
     category: mapBackendCategoryName(catName),
     priority: mapBackendPriority(row.priority),
     title: row.title || '',
-    content: contentFallback,
+    content: body,
     status: mapBackendStatus(row.status),
     author: typeof row.created_by === 'string' ? row.created_by : '—',
     authorRole: '—',

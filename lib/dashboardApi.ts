@@ -92,6 +92,24 @@ export interface DashboardAdminResponse {
   generated_at?: string;
 }
 
+/**
+ * GET /api/analytics/dashboard/secretariat/
+ * @see church-management-saas-backend `DashboardService.dashboard_secretariat`
+ */
+export interface DashboardSecretariatResponse {
+  announcements: {
+    total: number;
+    /** Raw counts keyed by announcement status (e.g. DRAFT, PUBLISHED, PENDING_REVIEW) */
+    by_status: Record<string, number>;
+    draft: number;
+    published: number;
+    pending_review: number;
+  };
+  programs_pending_secretariat: number;
+  programs_total: number;
+  generated_at?: string;
+}
+
 export interface MemberStatsResponse {
   total_members: number;
   total_change_percent: number;
@@ -163,6 +181,8 @@ export interface BackendMember {
   last_name?: string;
   membership_status: string;
   member_since?: string;
+  /** ISO datetime from Member model — used for secretary dashboard growth chart */
+  created_at?: string;
   gender?: string;
   email?: string;
   phone_number?: string;
@@ -245,6 +265,20 @@ export async function getDashboardAdmin(): Promise<DashboardAdminResponse | null
   const base = getApiBaseUrl();
   return fetchAuthSafe<DashboardAdminResponse>(
     `${base}/analytics/dashboard/admin/`,
+    undefined,
+    null
+  );
+}
+
+/**
+ * GET /api/analytics/dashboard/secretariat/
+ * Secretariat snapshot: announcement totals/status counts + programs awaiting secretariat approval.
+ * Pairs with list endpoints (`fetchAnnouncementsList`, `fetchProgramsByStatus`) for dashboard widgets.
+ */
+export async function getDashboardSecretariat(): Promise<DashboardSecretariatResponse | null> {
+  const base = getApiBaseUrl();
+  return fetchAuthSafe<DashboardSecretariatResponse>(
+    `${base}/analytics/dashboard/secretariat/`,
     undefined,
     null
   );

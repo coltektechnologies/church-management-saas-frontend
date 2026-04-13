@@ -30,6 +30,8 @@ import type { PresentationPreset } from '@/services/presentationPresets';
 import { Search, Presentation, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useAnnouncementsPortal } from '@/components/announcements/AnnouncementsPortalContext';
 
 import {
   Select,
@@ -58,6 +60,7 @@ const categories = [
 type ActiveTab = 'announcements' | 'presets';
 
 export default function AnnouncementsPage() {
+  const { announcementsBasePath } = useAnnouncementsPortal();
   const { filters, setFilters, toggleStatus, resetFilters } = useAnnouncementStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
@@ -188,14 +191,25 @@ export default function AnnouncementsPage() {
     setFilters({ dateRange: { ...current, [type]: value } });
   };
 
-  // View handler — opens detail modal
+  // View handler — list rows omit body; fetch detail like handleEdit so modal shows real content
   const handleView = useCallback(
-    (id: string) => {
-      const ann = announcements.find((a) => a.id === id);
-      if (ann) {
-        setDetailAnnouncement(ann);
-        setIsDetailOpen(true);
+    async (id: string) => {
+      let ann = announcements.find((a) => a.id === id);
+      if (!ann) {
+        return;
       }
+      const needsDetail =
+        !ann.content?.trim() || (ann.content.includes('Tap') && ann.content.includes('View'));
+      if (needsDetail) {
+        try {
+          ann = await announcementService.getAnnouncementById(id);
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : 'Could not load announcement');
+          return;
+        }
+      }
+      setDetailAnnouncement(ann);
+      setIsDetailOpen(true);
     },
     [announcements]
   );
@@ -242,23 +256,26 @@ export default function AnnouncementsPage() {
         autoplay: String(config.autoPlayInterval),
         ids,
       });
-      window.open(`/admin/announcements/present?${params.toString()}`, '_blank');
+      window.open(`${announcementsBasePath}/present?${params.toString()}`, '_blank');
       setIsSetupModalOpen(false);
     },
-    [selectedIds]
+    [selectedIds, announcementsBasePath]
   );
 
   // Load preset
-  const handleLoadPreset = useCallback((preset: PresentationPreset) => {
-    const params = new URLSearchParams({
-      template: preset.templateId,
-      transition: preset.transition,
-      grouping: preset.grouping,
-      autoplay: String(preset.autoPlayInterval),
-      ids: preset.announcementIds.join(','),
-    });
-    window.open(`/admin/announcements/present?${params.toString()}`, '_blank');
-  }, []);
+  const handleLoadPreset = useCallback(
+    (preset: PresentationPreset) => {
+      const params = new URLSearchParams({
+        template: preset.templateId,
+        transition: preset.transition,
+        grouping: preset.grouping,
+        autoplay: String(preset.autoPlayInterval),
+        ids: preset.announcementIds.join(','),
+      });
+      window.open(`${announcementsBasePath}/present?${params.toString()}`, '_blank');
+    },
+    [announcementsBasePath]
+  );
 
   // Get selected announcements for the setup modal
   const selectedAnnouncements = announcements.filter((a) => selectedIds.has(a.id));

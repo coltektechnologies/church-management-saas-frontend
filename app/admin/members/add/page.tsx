@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -23,6 +23,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { createMember, CreateMemberPayload, getMemberStats } from '@/lib/api';
+import { fetchDepartmentsList, type DepartmentListRow } from '@/lib/departmentsApi';
+import { toast } from 'sonner';
+import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 
 const TITLES = [
   { value: 'Mr', label: 'Mr' },
@@ -84,15 +87,6 @@ const EDUCATION_LEVELS = [
 const BAPTISM_STATUSES = [
   { value: 'BAPTISED', label: 'Baptised' },
   { value: 'NOT_BAPTISED', label: 'Not Baptised' },
-];
-
-const DEPARTMENTS = [
-  'Secretariat',
-  'Treasury',
-  'Deaconry',
-  'Personal Ministry',
-  'Sabbath School',
-  'Adventist Youth',
 ];
 
 const emptyForm = {
@@ -169,7 +163,8 @@ const _REQUIRED_KEYS: TouchedKeys[] = [
 function isFieldInvalid(
   key: TouchedKeys,
   form: typeof emptyForm,
-  touched: Partial<Record<TouchedKeys, boolean>>
+  touched: Partial<Record<TouchedKeys, boolean>>,
+  requireDepartmentInterest: boolean
 ): boolean {
   if (!touched[key]) {
     return false;
@@ -178,7 +173,7 @@ function isFieldInvalid(
     return form.region === 'Other' && !form.custom_region.trim();
   }
   if (key === 'interested_departments') {
-    return form.interested_departments.length === 0;
+    return requireDepartmentInterest && form.interested_departments.length === 0;
   }
   const val = form[key];
   if (typeof val === 'string') {
@@ -189,6 +184,7 @@ function isFieldInvalid(
 
 export default function AddMemberPage() {
   const router = useRouter();
+  const { membersBasePath, departmentsHref } = useMembersPortal();
   const [form, setForm] = useState(emptyForm);
   const [touched, setTouched] = useState<Partial<Record<TouchedKeys, boolean>>>({});
   const [error, setError] = useState('');
@@ -199,10 +195,36 @@ export default function AddMemberPage() {
     pending_approvals: 0,
     active_members: 0,
   });
+  const [departments, setDepartments] = useState<DepartmentListRow[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
+  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+
+  const requireDepartmentInterest = departments.length > 0;
+
+  const loadDepartments = useCallback(() => {
+    setDepartmentsLoading(true);
+    setDepartmentsError(null);
+    fetchDepartmentsList()
+      .then((rows) => {
+        const active = rows.filter((d) => d.is_active).sort((a, b) => a.name.localeCompare(b.name));
+        setDepartments(active);
+      })
+      .catch((e) => {
+        setDepartmentsError(e instanceof Error ? e.message : 'Failed to load departments');
+        setDepartments([]);
+      })
+      .finally(() => {
+        setDepartmentsLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     getMemberStats().then(setStats);
   }, []);
+
+  useEffect(() => {
+    loadDepartments();
+  }, [loadDepartments]);
 
   const markTouched = (key: TouchedKeys) => {
     setTouched((prev) => ({ ...prev, [key]: true }));
@@ -213,7 +235,8 @@ export default function AddMemberPage() {
     setError('');
   };
 
-  const invalid = (key: TouchedKeys) => isFieldInvalid(key, form, touched);
+  const invalid = (key: TouchedKeys) =>
+    isFieldInvalid(key, form, touched, requireDepartmentInterest);
   const fieldClass = (key: TouchedKeys) =>
     invalid(key) ? 'border-red-500 focus:ring-red-500' : 'border-[#DDDDDD] focus:ring-blue-500';
 
@@ -252,15 +275,34 @@ export default function AddMemberPage() {
       form.education_level,
     ];
     if (required.some((v) => !v)) {
-      setError('Please fill all required fields.');
+      const msg = 'Please fill all required fields.';
+      setError(msg);
+      toast.error('Form incomplete', { description: msg });
       return;
     }
     if (form.region === 'Other' && !form.custom_region.trim()) {
-      setError('Please specify the region name when selecting "Other".');
+      const msg = 'Please specify the region name when selecting "Other".';
+      setError(msg);
+      toast.error('Form incomplete', { description: msg });
       return;
     }
-    if (form.interested_departments.length === 0) {
-      setError('Please select at least one department.');
+    if (departmentsLoading) {
+      const msg = 'Departments are still loading. Please wait a moment.';
+      setError(msg);
+      toast.error('Please wait', { description: msg });
+      return;
+    }
+    if (requireDepartmentInterest && form.interested_departments.length === 0) {
+      const msg = 'Please select at least one department.';
+      setError(msg);
+      toast.error('Form incomplete', { description: msg });
+      return;
+    }
+    if ((form.send_credentials_via_email || form.send_credentials_via_sms) && !form.email.trim()) {
+      const msg =
+        'Add an email address to create portal login and send credentials (required by the server).';
+      setError(msg);
+      toast.error('Email required for credentials', { description: msg });
       return;
     }
 
@@ -297,22 +339,48 @@ export default function AddMemberPage() {
 
     setSubmitting(true);
     try {
-      await createMember(payload);
-      router.push('/admin/members');
+      const result = await createMember(payload);
+      const extras: string[] = [];
+      if (result.member_id) {
+        extras.push(`Member ID: ${result.member_id}`);
+      }
+      if (result.system_access_created) {
+        extras.push('Member portal access was created');
+      }
+      if (result.email_sent) {
+        extras.push('Credentials emailed');
+      }
+      if (result.sms_sent) {
+        extras.push('Credentials sent by SMS');
+      }
+      if (result.credentials_delivery_queued) {
+        extras.push(
+          result.credentials_delivery_note || 'Credential email/SMS is sending in the background.'
+        );
+      }
+      if (result.credentials_delivery_skipped_reason) {
+        extras.push(`Not sent: ${result.credentials_delivery_skipped_reason}`);
+      }
+      toast.success(result.message || 'Member created successfully', {
+        description: extras.length ? extras.join(' · ') : undefined,
+      });
+      router.push(membersBasePath);
       return;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create member');
+      const msg = err instanceof Error ? err.message : 'Failed to create member';
+      setError(msg);
+      toast.error('Could not create member', { description: msg });
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleCancel = () => router.push('/admin/members');
+  const handleCancel = () => router.push(membersBasePath);
 
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex flex-row items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1
             style={{
@@ -341,8 +409,8 @@ export default function AddMemberPage() {
           </p>
         </div>
         <Link
-          href="/admin/members"
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 shrink-0 ml-auto"
+          href={membersBasePath}
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 shrink-0 sm:ml-auto"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Dashboard
@@ -350,7 +418,7 @@ export default function AddMemberPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Members', value: stats.total_members.toLocaleString() },
           { label: 'New Members This Month', value: stats.new_members_this_month.toLocaleString() },
@@ -384,14 +452,13 @@ export default function AddMemberPage() {
       {/* Form */}
       <div className="w-full max-w-full space-y-0">
         <div
-          className="flex items-center justify-between text-white w-full"
+          className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-white w-full"
           style={{
-            height: 67,
             borderTopLeftRadius: 8,
             borderTopRightRadius: 8,
-            padding: '20px 30px',
+            padding: '16px 18px',
             background: '#0B2A4A',
-            marginBottom: 38,
+            marginBottom: 24,
           }}
         >
           <h2 className="text-lg font-semibold" style={{ fontFamily: 'OV Soge, sans-serif' }}>
@@ -406,17 +473,7 @@ export default function AddMemberPage() {
         {error && <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-700 text-sm">{error}</div>}
 
         <form onSubmit={handleSubmit} className="block w-full">
-          <div
-            className="w-full grid overflow-hidden"
-            style={{
-              gridTemplateColumns: '638px minmax(394px, 1fr)',
-              gridTemplateRows: 'auto auto 1fr',
-              gap: '0 24px',
-              minHeight: 1005,
-              marginLeft: 25,
-              marginRight: 25,
-            }}
-          >
+          <div className="w-full grid grid-cols-1 xl:grid-cols-[minmax(0,638px)_minmax(0,1fr)] gap-x-6 gap-y-0 overflow-hidden min-h-0 px-0 sm:px-2 lg:px-4">
             {/* Row 1 left: Personal Information */}
             <div
               className="flex flex-col p-6 overflow-y-auto border border-[#E9ECEF] border-b-0 bg-[#F8F9FA] rounded-tl-[10px]"
@@ -428,7 +485,7 @@ export default function AddMemberPage() {
                   Personal Information
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Title *</Label>
                       <select
@@ -474,7 +531,7 @@ export default function AddMemberPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>First Name *</Label>
                       <Input
@@ -507,7 +564,7 @@ export default function AddMemberPage() {
                       {invalid('last_name') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Date of Birth *</Label>
                       <Input
@@ -625,7 +682,7 @@ export default function AddMemberPage() {
                   Contact Information
                 </h3>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Primary Phone *</Label>
                       <div className="relative">
@@ -668,7 +725,7 @@ export default function AddMemberPage() {
                       {invalid('occupation') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Residential Address *</Label>
                       <div className="relative">
@@ -796,7 +853,7 @@ export default function AddMemberPage() {
                   Church Information
                 </h3>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Member Since *</Label>
                       <div className="relative">
@@ -862,15 +919,47 @@ export default function AddMemberPage() {
                     </select>
                   </div>
                   <div className="space-y-2" onBlur={() => markTouched('interested_departments')}>
-                    <Label>Department Interest *</Label>
+                    <Label>
+                      Department Interest
+                      {requireDepartmentInterest ? ' *' : ''}
+                    </Label>
+                    {departmentsLoading && (
+                      <p className="text-xs text-gray-500">Loading departments…</p>
+                    )}
+                    {departmentsError && !departmentsLoading && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-red-600">{departmentsError}</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 rounded-none text-xs"
+                          onClick={() => loadDepartments()}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    )}
+                    {!departmentsLoading && !departmentsError && departments.length === 0 && (
+                      <p className="text-xs text-gray-600">
+                        No active departments yet.{' '}
+                        <Link
+                          href={departmentsHref}
+                          className="text-[#0B2A4A] underline underline-offset-2"
+                        >
+                          Create departments
+                        </Link>{' '}
+                        first, or continue without department interest.
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-2">
-                      {DEPARTMENTS.map((dept) => {
-                        const selected = form.interested_departments.includes(dept);
+                      {departments.map((dept) => {
+                        const selected = form.interested_departments.includes(dept.name);
                         return (
                           <button
-                            key={dept}
+                            key={dept.id}
                             type="button"
-                            onClick={() => toggleDepartment(dept)}
+                            onClick={() => toggleDepartment(dept.name)}
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none border text-sm transition-colors ${
                               selected
                                 ? 'border-[#0B2A4A] bg-[#0B2A4A] text-white'
@@ -878,7 +967,7 @@ export default function AddMemberPage() {
                             }`}
                           >
                             <FileText className="h-3.5 w-3.5" />
-                            {dept}
+                            {dept.name}
                           </button>
                         );
                       })}

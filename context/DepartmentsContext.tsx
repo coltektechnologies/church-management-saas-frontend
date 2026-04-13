@@ -11,6 +11,7 @@ import {
   createDepartmentActivity,
   deleteDepartmentActivity,
   fetchDepartmentActivities,
+  fetchDepartmentDetail,
   fetchDepartmentsList,
   fetchMemberDepartments,
   mapActivityRowToActivity,
@@ -19,6 +20,7 @@ import {
   mergeDepartmentDetail,
   normalizeIconForApi,
   removeMemberFromDepartment,
+  setDepartmentHead,
   updateDepartment as updateDepartmentApi,
   type CreateActivityBody,
   type DepartmentDetailResponse,
@@ -44,6 +46,8 @@ type DepartmentsContextType = {
     status: 'active' | 'inactive';
     themeColor: string;
     icon: string;
+    headMemberId?: string;
+    elderInChargeMemberId?: string;
   }) => Promise<Department>;
   updateDepartmentRemote: (
     id: string,
@@ -54,6 +58,8 @@ type DepartmentsContextType = {
       status: 'active' | 'inactive';
       themeColor: string;
       icon: string;
+      headMemberId?: string;
+      elderInChargeMemberId?: string;
     }
   ) => Promise<Department>;
 
@@ -134,11 +140,24 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
   const applyDepartmentDetail = useCallback((id: string, detail: DepartmentDetailResponse) => {
     setDepartments((prev) => {
       const current = prev.find((d) => d.id === id);
-      if (!current) {
-        return prev;
+      const base =
+        current ??
+        mapListRowToDepartment({
+          id: detail.id,
+          name: detail.name,
+          code: detail.code,
+          icon: detail.icon,
+          color: detail.color,
+          is_active: detail.is_active,
+          member_count: detail.member_count,
+          head_name: detail.heads?.[0]?.name ?? detail.head_name,
+          elder_in_charge_name: detail.elder_in_charge_name,
+        });
+      const merged = mergeDepartmentDetail(base, detail);
+      if (current) {
+        return prev.map((d) => (d.id === id ? merged : d));
       }
-      const merged = mergeDepartmentDetail(current, detail);
-      return prev.map((d) => (d.id === id ? merged : d));
+      return [...prev, merged];
     });
   }, []);
 
@@ -150,15 +169,24 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
       status: 'active' | 'inactive';
       themeColor: string;
       icon: string;
+      headMemberId?: string;
+      elderInChargeMemberId?: string;
     }) => {
-      const detail = await createDepartment({
+      let detail = await createDepartment({
         name: input.name.trim(),
         code: input.code.trim().toUpperCase(),
         description: input.description.trim(),
         icon: normalizeIconForApi(input.icon),
         color: input.themeColor,
         is_active: input.status === 'active',
+        ...(input.headMemberId ? { head_member_id: input.headMemberId } : {}),
       });
+      if (input.elderInChargeMemberId) {
+        detail = await updateDepartmentApi(detail.id, {
+          elder_in_charge: input.elderInChargeMemberId,
+        });
+      }
+      detail = await fetchDepartmentDetail(detail.id);
       const mapped = mergeDepartmentDetail(
         mapListRowToDepartment({
           id: detail.id,
@@ -168,6 +196,8 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
           color: detail.color,
           is_active: detail.is_active,
           member_count: detail.member_count,
+          head_name: detail.heads?.[0]?.name ?? detail.head_name,
+          elder_in_charge_name: detail.elder_in_charge_name,
         }),
         detail,
         0
@@ -188,9 +218,11 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
         status: 'active' | 'inactive';
         themeColor: string;
         icon: string;
+        headMemberId?: string;
+        elderInChargeMemberId?: string;
       }
     ) => {
-      const detail = await updateDepartmentApi(id, {
+      await updateDepartmentApi(id, {
         name: input.name.trim(),
         code: input.code.trim().toUpperCase(),
         description: input.description.trim(),
@@ -198,6 +230,15 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
         color: input.themeColor,
         is_active: input.status === 'active',
       });
+      if (input.headMemberId) {
+        await setDepartmentHead(id, input.headMemberId);
+      }
+      if (input.elderInChargeMemberId !== undefined) {
+        await updateDepartmentApi(id, {
+          elder_in_charge: input.elderInChargeMemberId || null,
+        });
+      }
+      const detail = await fetchDepartmentDetail(id);
       setDepartments((prev) => {
         const existing = prev.find((d) => d.id === id);
         const base =
@@ -210,6 +251,8 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
             color: detail.color,
             is_active: detail.is_active,
             member_count: detail.member_count,
+            head_name: detail.heads?.[0]?.name ?? detail.head_name,
+            elder_in_charge_name: detail.elder_in_charge_name,
           });
         const mapped = mergeDepartmentDetail(base, detail);
         return prev.map((d) => (d.id === id ? mapped : d));
@@ -223,6 +266,8 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
           color: detail.color,
           is_active: detail.is_active,
           member_count: detail.member_count,
+          head_name: detail.heads?.[0]?.name ?? detail.head_name,
+          elder_in_charge_name: detail.elder_in_charge_name,
         }),
         detail
       );

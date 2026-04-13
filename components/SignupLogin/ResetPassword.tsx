@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, KeyRound, CheckCircle2, ArrowLeft, Info } from 'lucide-react';
 import logo from '@/assets/logo.svg';
+import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
 
 const ResetPassword = () => {
+  useRedirectIfAuthenticated();
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

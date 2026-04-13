@@ -567,12 +567,13 @@ export async function approveExpenseRequestTreasurer(id: string): Promise<unknow
 /** POST /api/treasury/expense-requests/{id}/reject/ */
 export async function rejectExpenseRequest(
   id: string,
-  body?: { reason?: string }
+  body?: { reason?: string; rejection_reason?: string }
 ): Promise<unknown> {
   const base = getApiBaseUrl();
+  const rejectionReason = body?.rejection_reason ?? body?.reason;
   return fetchAuth(`${base}/treasury/expense-requests/${id}/reject/`, {
     method: 'POST',
-    body: JSON.stringify(body ?? {}),
+    body: JSON.stringify(rejectionReason ? { rejection_reason: rejectionReason } : {}),
   });
 }
 

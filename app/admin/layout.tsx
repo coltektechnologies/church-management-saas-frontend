@@ -4,10 +4,19 @@ import { useSyncExternalStore, type ReactNode } from 'react';
 import { ChurchProfileProvider, useChurchProfile } from '@/components/admin/dashboard/contexts';
 import { AppDataProvider } from '@/components/admin/dashboard/contexts/AppDataContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 import { useSettingsApiSync } from '@/hooks/useSettingsApiSync';
 import AdminSidebar from '@/components/admin/adminSidebar';
 import TopNavbar from '@/components/admin/TopNavbar';
-import { RequireAuth } from '@/components/auth/RequireAuth';
+
+/*
+ * Optional local preview without login (do not ship):
+ * 1) .env.local: NEXT_PUBLIC_SKIP_ADMIN_AUTH=true so proxy.ts allows /admin without church_session cookie
+ * 2) In AdminLayout below: uncomment `skipAuth` + the `if (skipAuth) { return tree; }` block
+ *    (also set NEXT_PUBLIC_SKIP_DASHBOARD_AUTH=true in .env so skipAuth is true, or hardcode `true` locally)
+ *
+ * Otherwise: normal auth — login first, then /admin.
+ */
 
 function useIsMounted(): boolean {
   return useSyncExternalStore(
@@ -56,7 +65,9 @@ function AdminShell({ children }: { children: ReactNode }) {
           className="flex-1 overflow-y-auto transition-colors duration-300"
           style={{ backgroundColor: tokens.bg }}
         >
-          <div className="px-6 py-6 max-w-screen-2xl mx-auto w-full">{children}</div>
+          <div className="px-4 py-6 sm:px-6 max-w-screen-2xl mx-auto w-full min-w-0">
+            {children}
+          </div>
         </main>
       </div>
     </div>
@@ -64,15 +75,22 @@ function AdminShell({ children }: { children: ReactNode }) {
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  return (
-    <RequireAuth>
-      <AuthProvider defaultRole="admin">
-        <ChurchProfileProvider>
-          <AppDataProvider>
-            <AdminShell>{children}</AdminShell>
-          </AppDataProvider>
-        </ChurchProfileProvider>
-      </AuthProvider>
-    </RequireAuth>
+  const tree = (
+    <AuthProvider defaultRole="admin">
+      <ChurchProfileProvider>
+        <AppDataProvider>
+          <AdminShell>{children}</AdminShell>
+        </AppDataProvider>
+      </ChurchProfileProvider>
+    </AuthProvider>
   );
+
+  // Local preview without RequireAuth — uncomment the block below (and set NEXT_PUBLIC_SKIP_ADMIN_AUTH=true
+  // in .env.local so proxy.ts allows /admin without the session cookie). Restart dev after .env changes.
+  // const skipAuth = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
+  // if (skipAuth) {
+  //   return tree;
+  // }
+
+  return <RequireAuth>{tree}</RequireAuth>;
 }

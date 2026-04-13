@@ -1,11 +1,14 @@
 'use client';
 
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { ChurchProfileProvider } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { SecretaryProfileProvider } from '@/components/secretary/contexts/SecretaryProfileContext';
 import { AppDataProvider } from '@/components/secretary/contexts/AppDataContext';
+import { EventsProvider } from '@/components/secretary/contexts/EventsContext';
+import { ActivityProvider } from '@/components/secretary/contexts/ActivityContext';
 import { ThemeProvider } from '@/components/secretary/ThemeProvider';
+import { ReminderEngine } from '@/components/secretary/dashboard/ReminderEngine';
 import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
@@ -39,6 +42,7 @@ function SecretaryShell({ children }: { children: ReactNode }) {
       className="min-h-screen transition-colors duration-300"
       style={{ backgroundColor: mainBg }}
     >
+      <ReminderEngine />
       <SecretaryTopbar />
       <div className="flex">
         <div className="sticky top-0 h-screen" style={{ zIndex: 20 }}>
@@ -60,15 +64,24 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
     <AuthProvider defaultRole="secretary">
       <ChurchProfileProvider>
         <SecretaryProfileProvider>
-          <AppDataProvider>
-            <ThemeProvider>
-              <SecretaryShell>{children}</SecretaryShell>
-            </ThemeProvider>
-          </AppDataProvider>
+          <ActivityProvider>
+            <AppDataProvider>
+              <EventsProvider>
+                <ThemeProvider>
+                  <SecretaryShell>{children}</SecretaryShell>
+                </ThemeProvider>
+              </EventsProvider>
+            </AppDataProvider>
+          </ActivityProvider>
         </SecretaryProfileProvider>
       </ChurchProfileProvider>
     </AuthProvider>
   );
 
-  return <RequireAuth skip={skipAuth}>{tree}</RequireAuth>;
+  // // When preview is enabled: uncomment skipAuth above and these two lines:
+  // if (skipAuth) {
+  //   return tree;
+  // }
+  return <RequireAuth>{tree}</RequireAuth>;
+  // return tree;
 }

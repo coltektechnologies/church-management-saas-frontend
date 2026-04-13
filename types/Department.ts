@@ -22,4 +22,12 @@ export interface Department {
   dateEstablished: string;
 
   settings: DepartmentSettings;
+
+  /** From API after detail load / merge */
+  headMemberId?: string | null;
+  headDisplayName?: string | null;
+  assistantHeadMemberId?: string | null;
+  assistantHeadDisplayName?: string | null;
+  elderInChargeMemberId?: string | null;
+  elderInChargeDisplayName?: string | null;
 }

@@ -30,7 +30,7 @@ const mobileNavItems = [
   { title: 'Announcements', path: '/secretary/announcements', icon: Megaphone },
   { title: 'Reports', path: '/secretary/reports', icon: FileBarChart },
   { title: 'Communications', path: '/secretary/communications', icon: MessageSquare },
-  { title: 'Record Approval', path: '/secretary/record-approvals', icon: ClipboardCheck },
+  { title: 'Approval', path: '/secretary/record-approvals', icon: ClipboardCheck },
   { title: 'Settings', path: '/secretary/settings', icon: Settings },
 ];
 

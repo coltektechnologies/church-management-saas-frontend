@@ -17,6 +17,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getMember, deleteMember, type MemberDetail } from '@/lib/api';
+import { toast } from 'sonner';
+import { DeleteMemberDialog } from '@/components/admin/membership/DeleteMemberDialog';
+import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
+import {
+  resolveEmergencyContact,
+  stripEmergencyContactBlockFromNotes,
+} from '@/lib/memberNotesDisplay';
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: 'border-green-500 text-green-600 bg-white',
@@ -36,9 +43,22 @@ function DetailRow({
   value: string | undefined | null;
   icon?: React.ComponentType<{ className?: string }>;
 }) {
+  const { memberProfilePresentation = 'default' } = useMembersPortal();
+  const dept = memberProfilePresentation === 'department';
   const v = value?.toString().trim();
   if (!v) {
     return null;
+  }
+  if (dept) {
+    return (
+      <div className="flex items-start gap-3 py-2.5 border-b border-stone-100 last:border-0">
+        {Icon && <Icon className="h-4 w-4 text-emerald-900/45 shrink-0 mt-0.5" />}
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium text-stone-500 uppercase tracking-wide">{label}</p>
+          <p className="text-sm text-stone-800 mt-0.5 leading-relaxed">{v}</p>
+        </div>
+      </div>
+    );
   }
   return (
     <div className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0">
@@ -60,6 +80,18 @@ function Section({
   icon?: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
 }) {
+  const { memberProfilePresentation = 'default' } = useMembersPortal();
+  if (memberProfilePresentation === 'department') {
+    return (
+      <div className="rounded-2xl border border-stone-200/90 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-stone-100 bg-gradient-to-r from-emerald-50/50 via-white to-stone-50/70 flex items-center gap-2.5">
+          {Icon && <Icon className="h-4 w-4 text-emerald-900/50 shrink-0" />}
+          <h3 className="font-semibold text-stone-800 text-sm tracking-tight">{title}</h3>
+        </div>
+        <div className="px-5 py-4">{children}</div>
+      </div>
+    );
+  }
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
@@ -73,12 +105,19 @@ function Section({
 
 export default function MemberDetailPage() {
   const router = useRouter();
+  const {
+    membersBasePath,
+    memberProfilePresentation = 'default',
+    hideRemoveFromChurchDirectory,
+  } = useMembersPortal();
+  const isDept = memberProfilePresentation === 'department';
   const params = useParams();
   const id = params.id as string;
   const [member, setMember] = useState<MemberDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -90,19 +129,20 @@ export default function MemberDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleDelete = async () => {
-    if (
-      !id ||
-      !confirm('Are you sure you want to delete this member? This action cannot be undone.')
-    ) {
+  const handleDeleteConfirm = async () => {
+    if (!id) {
       return;
     }
     setDeleting(true);
     try {
       await deleteMember(id);
-      router.push('/admin/members');
-    } catch {
-      setError('Failed to delete member');
+      toast.success('Member removed', { description: 'Returning to the members list.' });
+      setDeleteDialogOpen(false);
+      router.push(membersBasePath);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to delete member';
+      setError(msg);
+      toast.error('Could not delete member', { description: msg });
     } finally {
       setDeleting(false);
     }
@@ -120,14 +160,14 @@ export default function MemberDetailPage() {
     return (
       <div className="space-y-4">
         <Link
-          href="/admin/members"
+          href={membersBasePath}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Members
         </Link>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-700">{error || 'Member not found'}</p>
-          <Button variant="outline" className="mt-4" onClick={() => router.push('/admin/members')}>
+          <Button variant="outline" className="mt-4" onClick={() => router.push(membersBasePath)}>
             Return to Members
           </Button>
         </div>
@@ -148,52 +188,83 @@ export default function MemberDetailPage() {
     | { phone_primary?: string; email?: string; address?: string; city?: string; region?: string }
     | undefined;
 
+  const ec = resolveEmergencyContact(member);
+  const displayNotesRaw = stripEmergencyContactBlockFromNotes(member.notes || '');
+  const displayNotes = displayNotesRaw.trim();
+  const showNotes = displayNotes.length > 0;
+
+  const backClass = isDept
+    ? 'inline-flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-2'
+    : 'inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2';
+  const titleClass = isDept
+    ? 'text-2xl font-semibold text-stone-900 tracking-tight'
+    : 'text-2xl font-bold text-gray-900';
+
   return (
-    <div className="space-y-6 pb-12">
+    <div className={`space-y-6 pb-12 ${isDept ? 'max-w-5xl' : ''}`}>
       {/* Header */}
       <div className="flex flex-row items-start justify-between gap-4">
         <div>
-          <Link
-            href="/admin/members"
-            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-2"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Members
+          <Link href={membersBasePath} className={backClass}>
+            <ArrowLeft className="h-4 w-4" />
+            {isDept ? 'Back to department members' : 'Back to Members'}
           </Link>
-          <h1
-            className="text-2xl font-bold text-gray-900"
-            style={{ fontFamily: 'OV Soge, sans-serif' }}
-          >
-            Member Details
+          <h1 className={titleClass} style={{ fontFamily: 'OV Soge, sans-serif' }}>
+            {isDept ? 'Member profile' : 'Member Details'}
           </h1>
+          {isDept ? (
+            <p className="text-sm text-stone-500 mt-1.5 max-w-xl leading-relaxed">
+              Fellowship and contact details for pastoral care within your department. Sensitive
+              directory actions remain with church administration.
+            </p>
+          ) : null}
         </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/admin/members/${id}/edit`}>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link href={`${membersBasePath}/${id}/edit`}>
             <Button variant="outline" size="sm" className="gap-2">
-              Edit Member
+              {isDept ? 'Edit details' : 'Edit Member'}
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
-            {deleting ? 'Deleting...' : 'Delete Member'}
-          </Button>
+          {!hideRemoveFromChurchDirectory ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={deleting}
+            >
+              Delete Member
+            </Button>
+          ) : null}
         </div>
       </div>
 
       {/* Profile Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col sm:flex-row items-start gap-6">
-        <Avatar className="h-24 w-24 bg-green-100 shrink-0">
-          <AvatarFallback className="bg-green-100 text-green-700 text-2xl">
+      <div
+        className={
+          isDept
+            ? 'rounded-2xl border border-stone-200/90 bg-gradient-to-br from-white via-white to-emerald-50/30 p-6 sm:p-7 flex flex-col sm:flex-row items-start gap-6 shadow-sm'
+            : 'bg-white rounded-xl border border-gray-200 p-6 flex flex-col sm:flex-row items-start gap-6'
+        }
+      >
+        <Avatar
+          className={`h-24 w-24 shrink-0 ${isDept ? 'ring-2 ring-emerald-900/10 ring-offset-2' : 'bg-green-100'}`}
+        >
+          <AvatarFallback
+            className={
+              isDept
+                ? 'bg-emerald-100 text-emerald-900 text-2xl font-medium'
+                : 'bg-green-100 text-green-700 text-2xl'
+            }
+          >
             {initials}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-xl font-semibold text-gray-900">{fullName}</h2>
+            <h2 className={`text-xl font-semibold ${isDept ? 'text-stone-900' : 'text-gray-900'}`}>
+              {fullName}
+            </h2>
             <span
               className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${
                 STATUS_STYLE[member.membership_status || ''] || 'border-gray-300 text-gray-600'
@@ -202,8 +273,12 @@ export default function MemberDetailPage() {
               {member.membership_status?.replace(/_/g, ' ') || 'Unknown'}
             </span>
           </div>
-          {member.occupation && <p className="text-gray-600 mt-1">{member.occupation}</p>}
-          <p className="text-sm text-gray-500 mt-2">
+          {member.occupation && (
+            <p className={`mt-1 ${isDept ? 'text-stone-600' : 'text-gray-600'}`}>
+              {member.occupation}
+            </p>
+          )}
+          <p className={`text-sm mt-2 ${isDept ? 'text-stone-500' : 'text-gray-500'}`}>
             Member since{' '}
             {member.member_since ? new Date(member.member_since).toLocaleDateString() : '—'}
           </p>
@@ -211,8 +286,8 @@ export default function MemberDetailPage() {
       </div>
 
       {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Section title="Personal Information" icon={User}>
+      <div className={`grid grid-cols-1 lg:grid-cols-2 ${isDept ? 'gap-5 lg:gap-6' : 'gap-6'}`}>
+        <Section title={isDept ? 'Personal' : 'Personal Information'} icon={User}>
           <DetailRow label="Title" value={member.title} icon={User} />
           <DetailRow label="Gender" value={member.gender} />
           <DetailRow
@@ -226,7 +301,7 @@ export default function MemberDetailPage() {
           <DetailRow label="National ID" value={member.national_id} />
         </Section>
 
-        <Section title="Contact Information" icon={Phone}>
+        <Section title={isDept ? 'Contact & residence' : 'Contact Information'} icon={Phone}>
           <DetailRow
             label="Phone"
             value={location?.phone_primary || (member as { phone_primary?: string }).phone_primary}
@@ -244,7 +319,7 @@ export default function MemberDetailPage() {
           />
         </Section>
 
-        <Section title="Church Information" icon={Church}>
+        <Section title={isDept ? 'Church & membership' : 'Church Information'} icon={Church}>
           <DetailRow
             label="Member Since"
             value={member.member_since ? new Date(member.member_since).toLocaleDateString() : null}
@@ -258,24 +333,51 @@ export default function MemberDetailPage() {
           <DetailRow label="Education Level" value={member.education_level?.replace(/_/g, ' ')} />
         </Section>
 
-        <Section title="Professional & Emergency" icon={Briefcase}>
-          <DetailRow label="Occupation" value={member.occupation} icon={Briefcase} />
-          <DetailRow label="Employer" value={member.employer} />
-          <DetailRow
-            label="Emergency Contact"
-            value={member.emergency_contact_name}
-            icon={Shield}
-          />
-          <DetailRow label="Relationship" value={member.emergency_contact_relationship} />
-          <DetailRow label="Emergency Phone" value={member.emergency_contact_phone} icon={Phone} />
-        </Section>
+        {isDept ? (
+          <Section title="Work & occupation" icon={Briefcase}>
+            <DetailRow label="Occupation" value={member.occupation} icon={Briefcase} />
+            <DetailRow label="Employer" value={member.employer} />
+          </Section>
+        ) : (
+          <Section title="Professional & Emergency" icon={Briefcase}>
+            <DetailRow label="Occupation" value={member.occupation} icon={Briefcase} />
+            <DetailRow label="Employer" value={member.employer} />
+            <DetailRow label="Emergency Contact" value={ec.name} icon={Shield} />
+            <DetailRow label="Relationship" value={ec.relationship} />
+            <DetailRow label="Emergency Phone" value={ec.phone} icon={Phone} />
+          </Section>
+        )}
       </div>
 
-      {member.notes && (
-        <Section title="Notes" icon={User}>
-          <p className="text-sm text-gray-700 whitespace-pre-wrap">{member.notes}</p>
+      {isDept ? (
+        <Section title="In case of emergency" icon={Shield}>
+          <DetailRow label="Contact name" value={ec.name} icon={Shield} />
+          <DetailRow label="Relationship" value={ec.relationship} />
+          <DetailRow label="Phone" value={ec.phone} icon={Phone} />
         </Section>
-      )}
+      ) : null}
+
+      {showNotes ? (
+        <Section title="Notes" icon={User}>
+          <p
+            className={
+              isDept
+                ? 'text-sm text-stone-700 whitespace-pre-wrap leading-relaxed'
+                : 'text-sm text-gray-700 whitespace-pre-wrap'
+            }
+          >
+            {displayNotes}
+          </p>
+        </Section>
+      ) : null}
+
+      <DeleteMemberDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        names={[fullName]}
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

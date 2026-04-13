@@ -8,6 +8,7 @@ import MonthlyTrendChart from '@/components/admin/membership/MonthlyTrendChart';
 import TithingOfferingsChart from '@/components/admin/membership/TithingOfferingsChart';
 import MemberFilters from '@/components/admin/membership/MemberFilters';
 import MembersTable from '@/components/admin/membership/MembersTable';
+import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 import { getMemberStats, getTitheOfferingStats } from '@/lib/api';
 import { DEFAULT_MEMBER_FILTERS, type MemberFilterState } from '@/lib/memberFilters';
 
@@ -22,6 +23,7 @@ function formatChange(pct: number): string {
 }
 
 export default function MembershipDashboardPage() {
+  const { appHomeHref, appHomeLabel } = useMembersPortal();
   const [stats, setStats] = useState({
     total_members: 0,
     total_change_percent: 0,
@@ -51,7 +53,7 @@ export default function MembershipDashboardPage() {
   }, []);
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8">
+    <div className="w-full min-w-0 space-y-8">
       {/* Header & Breadcrumb */}
       <div>
         <h1
@@ -77,9 +79,9 @@ export default function MembershipDashboardPage() {
             color: '#666666',
           }}
         >
-          <Link href="/admin" className="flex items-center gap-1 hover:opacity-80">
+          <Link href={appHomeHref} className="flex items-center gap-1 hover:opacity-80">
             <Home className="h-4 w-4" />
-            Membership
+            {appHomeLabel}
           </Link>
           <span>&gt;</span>
           <span>Dashboard</span>

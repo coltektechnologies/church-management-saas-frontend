@@ -121,7 +121,7 @@ export default function MyProfileTab() {
           <Input
             className="h-12 bg-muted/20 border-none font-bold rounded-xl"
             value={form.adminName}
-            placeholder="e.g. Ampaabeng Kyeremeh Nancy"
+            placeholder="e.g. John Doe"
             onChange={(e) => setForm({ ...form, adminName: e.target.value })}
           />
           <p className="text-[10px] text-muted-foreground ml-1">Shown in full on the sidebar.</p>
@@ -138,7 +138,7 @@ export default function MyProfileTab() {
           <Input
             className="h-12 bg-muted/20 border-none font-bold rounded-xl"
             value={form.preferredName}
-            placeholder="e.g. Nancy"
+            placeholder="e.g. John"
             onChange={(e) => setForm({ ...form, preferredName: e.target.value })}
           />
           {/* Live preview of what the topbar will show */}

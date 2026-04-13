@@ -95,7 +95,15 @@ export interface DepartmentDetailResponse {
   color?: string | null;
   is_active: boolean;
   member_count?: number;
-  heads?: { id: string; name: string; assigned_at?: string }[];
+  /** Present on some API shapes; list/detail may omit when `heads` is populated */
+  head_name?: string | null;
+  heads?: {
+    id: string;
+    name: string;
+    assigned_at?: string;
+    /** API: HEAD | ASSISTANT; omit for legacy rows */
+    head_role?: string;
+  }[];
   elder_in_charge?: string | null;
   elder_in_charge_name?: string | null;
   current_budget?: {
@@ -131,6 +139,7 @@ export interface DepartmentActivityRow {
   start_time?: string | null;
   end_time?: string | null;
   location?: string | null;
+  /** ISO timestamps when present (activity feed / sorting). */
   created_at?: string;
   updated_at?: string;
 }
@@ -191,6 +200,9 @@ export function mergeDepartmentDetail(
     ? new Date(detail.created_at).toLocaleDateString()
     : base.dateEstablished;
 
+  const heads = detail.heads ?? [];
+  const primaryHead = heads.find((h) => (h.head_role ?? 'HEAD') === 'HEAD') ?? heads[0];
+  const assistantHead = heads.find((h) => h.head_role === 'ASSISTANT');
   return {
     ...base,
     name: detail.name,
@@ -204,6 +216,12 @@ export function mergeDepartmentDetail(
     themeColor,
     icon,
     dateEstablished: est,
+    headMemberId: primaryHead?.id ?? null,
+    headDisplayName: primaryHead?.name ?? null,
+    assistantHeadMemberId: assistantHead?.id ?? null,
+    assistantHeadDisplayName: assistantHead?.name ?? null,
+    elderInChargeMemberId: detail.elder_in_charge ?? null,
+    elderInChargeDisplayName: detail.elder_in_charge_name ?? null,
   };
 }
 
@@ -263,6 +281,22 @@ export async function fetchDepartmentDetail(id: string): Promise<DepartmentDetai
   return fetchAuth<DepartmentDetailResponse>(`${base}/departments/${id}/`, { method: 'GET' });
 }
 
+export type DepartmentPortalRole = 'department_head' | 'elder_in_charge';
+
+/** Signed-in user’s department portal (primary head or elder in charge). */
+export interface DepartmentMyPortalResponse {
+  portal_role: DepartmentPortalRole;
+  department: DepartmentDetailResponse;
+  viewer_member: Record<string, unknown>;
+}
+
+export async function fetchDepartmentMyPortal(): Promise<DepartmentMyPortalResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<DepartmentMyPortalResponse>(`${base}/departments/my-portal/`, {
+    method: 'GET',
+  });
+}
+
 export interface CreateDepartmentBody {
   name: string;
   code: string;
@@ -283,14 +317,40 @@ export async function createDepartment(
   });
 }
 
+/** PATCH body; `elder_in_charge` is member UUID or null to clear (update only). */
+export type UpdateDepartmentBody = Partial<CreateDepartmentBody> & {
+  elder_in_charge?: string | null;
+};
+
 export async function updateDepartment(
   id: string,
-  body: Partial<CreateDepartmentBody>
+  body: UpdateDepartmentBody
 ): Promise<DepartmentDetailResponse> {
   const base = getApiBaseUrl();
   return fetchAuth<DepartmentDetailResponse>(`${base}/departments/${id}/`, {
     method: 'PATCH',
     body: JSON.stringify(body),
+  });
+}
+
+/** Assign department head (`member_id` = church member UUID). */
+export async function setDepartmentHead(departmentId: string, memberId: string): Promise<void> {
+  const base = getApiBaseUrl();
+  await fetchAuth<unknown>(`${base}/departments/${departmentId}/head/`, {
+    method: 'PUT',
+    body: JSON.stringify({ member_id: memberId }),
+  });
+}
+
+/** Assign assistant head, or pass `null` to remove. */
+export async function setDepartmentAssistantHead(
+  departmentId: string,
+  memberId: string | null
+): Promise<void> {
+  const base = getApiBaseUrl();
+  await fetchAuth<unknown>(`${base}/departments/${departmentId}/assistant-head/`, {
+    method: 'PUT',
+    body: JSON.stringify({ member_id: memberId }),
   });
 }
 
@@ -308,11 +368,80 @@ export async function deleteDepartment(id: string): Promise<void> {
   }
 }
 
-/** All member–department rows for current church (filter client-side by department). */
-export async function fetchMemberDepartments(): Promise<MemberDepartmentRow[]> {
+const DEFAULT_MEMBER_DEPARTMENT_PAGE_SIZE = 50;
+
+/** Single page of member–department rows (`?page=` when page > 1). */
+export async function fetchMemberDepartmentsPage(page?: number): Promise<MemberDepartmentRow[]> {
   const base = getApiBaseUrl();
-  const data = await fetchAuth<unknown>(`${base}/member-departments/`, { method: 'GET' });
+  const sp = new URLSearchParams();
+  if (page !== undefined && page !== null && page > 1) {
+    sp.set('page', String(page));
+  }
+  const qs = sp.toString();
+  const url = `${base}/member-departments/${qs ? `?${qs}` : ''}`;
+  const data = await fetchAuth<unknown>(url, { method: 'GET' });
   return normalizeListResponse<MemberDepartmentRow>(data);
+}
+
+/**
+ * Walk all pages until a partial page (DRF default PAGE_SIZE = 50).
+ * `maxPages` is a safety cap; if the last page is still full, a console warning is logged.
+ */
+export async function fetchMemberDepartmentsAllPages(options?: {
+  maxPages?: number;
+}): Promise<MemberDepartmentRow[]> {
+  const maxPages = options?.maxPages ?? 200;
+  const all: MemberDepartmentRow[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const chunk = await fetchMemberDepartmentsPage(page > 1 ? page : undefined);
+    all.push(...chunk);
+    if (chunk.length < DEFAULT_MEMBER_DEPARTMENT_PAGE_SIZE) {
+      break;
+    }
+    if (page === maxPages) {
+      console.warn(
+        '[departmentsApi] fetchMemberDepartmentsAllPages reached maxPages; increase maxPages if assignments are missing.'
+      );
+      break;
+    }
+  }
+  return all;
+}
+
+/** All member–department rows for current church (fully paginated; filter client-side by department). */
+export async function fetchMemberDepartments(options?: {
+  maxPages?: number;
+}): Promise<MemberDepartmentRow[]> {
+  return fetchMemberDepartmentsAllPages(options);
+}
+
+/**
+ * GET /api/departments/{id}/members/ — church members in this department (MemberSerializer).
+ * Join with `fetchMemberDepartments()` for assignment id + role in this department.
+ */
+export interface DepartmentMemberApiRow {
+  id: string;
+  first_name?: string;
+  middle_name?: string | null;
+  last_name?: string | null;
+  membership_status?: string;
+  member_since?: string | null;
+  profile_photo?: string | null;
+  location?: {
+    phone_primary?: string | null;
+    email?: string | null;
+  } | null;
+  department_names?: string[];
+}
+
+export async function fetchDepartmentMembers(
+  departmentId: string
+): Promise<DepartmentMemberApiRow[]> {
+  const base = getApiBaseUrl();
+  const data = await fetchAuth<unknown>(`${base}/departments/${departmentId}/members/`, {
+    method: 'GET',
+  });
+  return normalizeListResponse<DepartmentMemberApiRow>(data);
 }
 
 export async function assignMemberToDepartment(payload: {
@@ -352,6 +481,72 @@ export async function fetchDepartmentActivities(
     { method: 'GET' }
   );
   return normalizeListResponse<DepartmentActivityRow>(data);
+}
+
+/** Per-department stats from GET /api/departments/{id}/statistics/ */
+export interface DepartmentStatisticsResponse {
+  total_members?: number;
+  current_program?: {
+    title?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    total_income?: number;
+    total_expenses?: number;
+    net_budget?: number;
+  } | null;
+  /** Count of programs starting in the next 30 days (backend definition). */
+  upcoming_programs?: number;
+}
+
+export async function fetchDepartmentStatistics(
+  departmentId: string
+): Promise<DepartmentStatisticsResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<DepartmentStatisticsResponse>(
+    `${base}/departments/${departmentId}/statistics/`,
+    { method: 'GET' }
+  );
+}
+
+export async function fetchDepartmentActivitiesPage(
+  departmentId: string,
+  opts?: { time_filter?: 'upcoming' | 'past'; page?: number }
+): Promise<DepartmentActivityRow[]> {
+  const base = getApiBaseUrl();
+  const sp = new URLSearchParams();
+  if (opts?.page !== undefined && opts?.page !== null && opts.page > 1) {
+    sp.set('page', String(opts.page));
+  }
+  if (opts?.time_filter) {
+    sp.set('time_filter', opts.time_filter);
+  }
+  const qs = sp.toString();
+  const url = `${base}/departments/${departmentId}/activities/${qs ? `?${qs}` : ''}`;
+  const data = await fetchAuth<unknown>(url, { method: 'GET' });
+  return normalizeListResponse<DepartmentActivityRow>(data);
+}
+
+const DEFAULT_ACTIVITY_PAGE_SIZE = 50;
+
+/** Walk pages until a short page or maxPages (backend default page size = 50). */
+export async function fetchDepartmentActivitiesAllPages(
+  departmentId: string,
+  options?: { time_filter?: 'upcoming' | 'past'; maxPages?: number }
+): Promise<DepartmentActivityRow[]> {
+  const maxPages = options?.maxPages ?? 8;
+  const tf = options?.time_filter;
+  const all: DepartmentActivityRow[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const chunk = await fetchDepartmentActivitiesPage(departmentId, {
+      time_filter: tf,
+      page: page > 1 ? page : undefined,
+    });
+    all.push(...chunk);
+    if (chunk.length < DEFAULT_ACTIVITY_PAGE_SIZE) {
+      break;
+    }
+  }
+  return all;
 }
 
 export interface CreateActivityBody {
@@ -414,4 +609,136 @@ export async function deleteDepartmentActivity(
       (typeof data?.detail === 'string' ? data.detail : null) || `Request failed: ${res.status}`
     );
   }
+}
+
+export type ProgramApprovalStatus =
+  | 'SUBMITTED'
+  | 'ELDER_APPROVED'
+  | 'SECRETARIAT_APPROVED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'DRAFT';
+
+export type ProgramApprovalDepartment = 'ELDER' | 'SECRETARIAT' | 'TREASURY';
+export type ProgramApprovalAction = 'APPROVE' | 'REJECT';
+
+export interface ProgramListItem {
+  id: string;
+  title: string;
+  department: string;
+  department_name?: string;
+  status: ProgramApprovalStatus;
+  status_display?: string;
+  start_date?: string;
+  end_date?: string;
+  location?: string;
+  submission_type?: string;
+  submitted_at?: string | null;
+  approved_at?: string | null;
+  requires_approval?: string[];
+}
+
+function inferProgramApprovalDepartment(
+  status: ProgramApprovalStatus
+): ProgramApprovalDepartment | null {
+  if (status === 'SUBMITTED') {
+    return 'ELDER';
+  }
+  if (status === 'ELDER_APPROVED') {
+    return 'SECRETARIAT';
+  }
+  if (status === 'SECRETARIAT_APPROVED') {
+    return 'TREASURY';
+  }
+  return null;
+}
+
+/** GET /api/programs/?status= */
+export async function fetchProgramsByStatus(
+  status: ProgramApprovalStatus
+): Promise<ProgramListItem[]> {
+  const base = getApiBaseUrl();
+  const sp = new URLSearchParams();
+  sp.set('status', status);
+  sp.set('page_size', '200');
+  const data = await fetchAuth<unknown>(`${base}/programs/?${sp.toString()}`, { method: 'GET' });
+  return normalizeListResponse<ProgramListItem>(data);
+}
+
+/** POST /api/programs/{id}/review/ */
+export async function reviewProgramApproval(
+  programId: string,
+  opts: { action: ProgramApprovalAction; department?: ProgramApprovalDepartment; notes?: string },
+  currentStatus?: ProgramApprovalStatus
+): Promise<unknown> {
+  const base = getApiBaseUrl();
+  const department =
+    opts.department ?? (currentStatus ? inferProgramApprovalDepartment(currentStatus) : null);
+  if (!department) {
+    throw new Error('Program is not in a reviewable approval stage.');
+  }
+  return fetchAuth(`${base}/programs/${programId}/review/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      department,
+      action: opts.action,
+      notes: opts.notes ?? '',
+    }),
+  });
+}
+
+/** GET /api/departments/{id}/member-messages/ — in-app batch history for department portal. */
+export interface DepartmentMemberMessageHistoryItem {
+  id: string;
+  title: string;
+  content: string;
+  type: 'in_app';
+  recipientCount: number;
+  recipientIds: string[];
+  status: string;
+  sentAt: string | null;
+}
+
+export async function fetchDepartmentMemberMessages(
+  departmentId: string
+): Promise<DepartmentMemberMessageHistoryItem[]> {
+  const base = getApiBaseUrl();
+  const data = await fetchAuth<unknown>(`${base}/departments/${departmentId}/member-messages/`, {
+    method: 'GET',
+  });
+  return Array.isArray(data) ? (data as DepartmentMemberMessageHistoryItem[]) : [];
+}
+
+export interface SendDepartmentMemberMessageResponse {
+  success: boolean;
+  message_id: string;
+  sent: number;
+  skipped_member_ids?: string[];
+  errors?: string[];
+  detail?: string;
+}
+
+/** POST bulk email, SMS, or in-app message to department members (head / elder in charge only). */
+export async function sendDepartmentMemberMessage(
+  departmentId: string,
+  payload: {
+    channel: 'email' | 'sms' | 'in_app';
+    subject: string;
+    body: string;
+    member_ids: string[];
+  }
+): Promise<SendDepartmentMemberMessageResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<SendDepartmentMemberMessageResponse>(
+    `${base}/departments/${departmentId}/member-messages/`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        channel: payload.channel,
+        subject: payload.subject,
+        body: payload.body,
+        member_ids: payload.member_ids,
+      }),
+    }
+  );
 }
