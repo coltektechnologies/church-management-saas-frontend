@@ -36,7 +36,8 @@ const PUBLIC_PREFIXES = [
   '/pricing',
   '/secretary',
   '/treasury',
-  '/admin',"/department"
+  '/admin',
+  '/department',
 ];
 
 /** Where to send users who already have a session cookie but hit login/signup. */

@@ -180,10 +180,7 @@ export default function TreasuryPage() {
         />
       </div>
 
-      <RecordIncomeModal 
-        open={isRecordIncomeModalOpen} 
-        onOpenChange={setIsRecordIncomeModalOpen} 
-      />
+      <RecordIncomeModal open={isRecordIncomeModalOpen} onOpenChange={setIsRecordIncomeModalOpen} />
     </div>
   );
 }

@@ -75,7 +75,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function RecordExpensePage({backLink=""}:{backLink:string}) {
+export default function RecordExpensePage({ backLink = '' }: { backLink: string }) {
   const [activeTab, setActiveTab] = useState('All');
   const [, setPaymentMethod] = useState('Cash');
 
