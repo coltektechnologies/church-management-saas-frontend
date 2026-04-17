@@ -17,11 +17,11 @@ interface DateInputProps {
 }
 
 interface DateRangeDropdownProps {
-  mode:         string;
+  mode:         'preset' | 'range';           // ← fixed: was `string`
   preset:       string;
   customFrom:   string;
   customTo:     string;
-  onMode:       (mode: string) => void;
+  onMode:       (mode: 'preset' | 'range') => void;  // ← fixed: was `(mode: string) => void`
   onPreset:     (preset: string) => void;
   onFromChange: (value: string) => void;
   onToChange:   (value: string) => void;
@@ -79,6 +79,7 @@ export function resolveTreasuryPreset(preset: string, now = new Date()): Treasur
 
 const isoToDisplay = (iso: string): string =>
   iso ? iso.split('-').reverse().join('/') : '';
+
 const autoSlash = (next: string): string => {
   let v = next.replace(/[^\d]/g, '').slice(0, 8);
   if (v.length >= 5) {
