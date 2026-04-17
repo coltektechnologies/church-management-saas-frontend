@@ -10,6 +10,7 @@ import {
   BarChart,
   Bar,
   Cell,
+  YAxis,
 } from 'recharts';
 
 function autoText(hex: string): string {
@@ -35,13 +36,21 @@ interface SparkProps {
   color: string;
 }
 
-
 function SparkBar({ data, peakIndex, color }: SparkProps) {
   return (
-    <div style={{ width: '100%', height: 80 }}>
+    <div style={{ width: '100%', flex: 1, minHeight: 120, marginTop: 12 }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-          <Bar dataKey="v" radius={[2, 2, 0, 0]} barSize={14}>
+        {/* FIX: barCategoryGap moved here to the BarChart component */}
+        <BarChart 
+            data={data} 
+            margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
+            barCategoryGap="15%" 
+        >
+          <YAxis hide type="number" domain={[0, 'auto']} />
+          <Bar 
+            dataKey="v" 
+            radius={[4, 4, 0, 0]} 
+          >
             {data.map((_, i) => (
               <Cell
                 key={i}
@@ -87,16 +96,16 @@ export default function ThisMonthCard() {
         This Month
       </h3>
 
-      {/* Two columns that each push the chart to the bottom */}
       <div style={{
         display: 'flex',
-        flexWrap: 'wrap',
-        gap: 32,
-        flex: 1,        
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 24,
+        flex: 1,     
       }}>
         {/* ── Tithing Column ── */}
         <div style={{
-          flex: '1 1 140px',
+          flex: 1,
           minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -113,7 +122,7 @@ export default function ThisMonthCard() {
           <p style={{
             fontFamily: "'Poppins', sans-serif",
             fontWeight: 700,
-            fontSize: 'clamp(15px, 2vw, 20px)',
+            fontSize: 'clamp(14px, 1.8vw, 18px)',
             color: textColor,
             margin: 0,
             whiteSpace: 'nowrap',
@@ -121,15 +130,12 @@ export default function ThisMonthCard() {
             GHS250,025,222
           </p>
 
-          {/* Spacer pushes chart down */}
-          <div style={{ flex: 1 }} />
-
           <SparkBar data={TITHE_DATA} peakIndex={TITHE_PEAK} color={accentColor} />
         </div>
 
         {/* ── Offerings Column ── */}
         <div style={{
-          flex: '1 1 140px',
+          flex: 1,
           minWidth: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -146,16 +152,13 @@ export default function ThisMonthCard() {
           <p style={{
             fontFamily: "'Poppins', sans-serif",
             fontWeight: 700,
-            fontSize: 'clamp(15px, 2vw, 20px)',
+            fontSize: 'clamp(14px, 1.8vw, 18px)',
             color: textColor,
             margin: 0,
             whiteSpace: 'nowrap',
           }}>
             GHS250,025
           </p>
-
-          {/* Spacer pushes chart down */}
-          <div style={{ flex: 1 }} />
 
           <SparkBar data={OFFERING_DATA} peakIndex={OFFERING_PEAK} color={primaryColor} />
         </div>

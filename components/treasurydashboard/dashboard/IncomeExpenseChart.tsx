@@ -29,7 +29,7 @@ import DateRangePanel, {
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface IncomeRecord {
   id: string;
-  date: string;          
+  date: string;
   amount: number;
   currency: string;
   incomeType: string;
@@ -131,15 +131,22 @@ interface IECPrefs {
   customFrom: string;
   customTo: string;
   showGrid: boolean;
+  incomeColor: string;
+  expenseColor: string;
 }
 
+const DEFAULT_INCOME_COLOR  = '#2FC4B2';
+const DEFAULT_EXPENSE_COLOR = '#F76D6F';
+
 const DEFAULT_PREFS: IECPrefs = {
-  chartType: 'line',
-  rangeMode: 'preset',
-  preset: 'all',
-  customFrom: '',
-  customTo: '',
-  showGrid: true,
+  chartType:    'line',
+  rangeMode:    'preset',
+  preset:       'all',
+  customFrom:   '',
+  customTo:     '',
+  showGrid:     true,
+  incomeColor:  DEFAULT_INCOME_COLOR,
+  expenseColor: DEFAULT_EXPENSE_COLOR,
 };
 
 function loadPrefs(): IECPrefs {
@@ -196,6 +203,112 @@ function ChartTooltip({
   );
 }
 
+// ── Color Picker Row ──────────────────────────────────────────────────────────
+function ColorPickerRow({
+  label,
+  color,
+  defaultColor,
+  onChange,
+  onReset,
+  textColor,
+  borderColor,
+}: {
+  label: string;
+  color: string;
+  defaultColor: string;
+  onChange: (c: string) => void;
+  onReset: () => void;
+  textColor: string;
+  borderColor: string;
+}) {
+  const isDefault = color.toLowerCase() === defaultColor.toLowerCase();
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      padding: '8px 12px',
+      borderRadius: 10,
+      border: `1px solid ${color}30`,
+      backgroundColor: `${color}08`,
+      transition: 'all 0.15s',
+    }}>
+      {/* Clickable color swatch */}
+      <label style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+        <div style={{
+          width: 30,
+          height: 30,
+          borderRadius: 8,
+          backgroundColor: color,
+          border: `2px solid ${color}60`,
+          boxShadow: `0 2px 8px ${color}50`,
+          transition: 'all 0.15s',
+        }} />
+        <input
+          type="color"
+          value={color}
+          onChange={(e) => onChange(e.target.value)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            opacity: 0,
+            cursor: 'pointer',
+            width: '100%',
+            height: '100%',
+          }}
+        />
+      </label>
+
+      {/* Label + hex */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: textColor,
+          fontFamily: "'Poppins', sans-serif",
+          textTransform: 'capitalize',
+        }}>
+          {label}
+        </div>
+        <div style={{
+          fontSize: 9,
+          color: `${textColor}50`,
+          fontFamily: 'monospace',
+          letterSpacing: '0.05em',
+          marginTop: 1,
+        }}>
+          {color.toUpperCase()}
+        </div>
+      </div>
+
+      {/* Reset — only visible when color differs from default */}
+      {!isDefault && (
+        <button
+          type="button"
+          onClick={onReset}
+          title="Reset to default"
+          style={{
+            flexShrink: 0,
+            padding: '3px 9px',
+            borderRadius: 6,
+            border: `1px solid ${borderColor}`,
+            backgroundColor: 'transparent',
+            color: `${textColor}55`,
+            fontSize: 9,
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontFamily: "'Poppins', sans-serif",
+            letterSpacing: '0.04em',
+            transition: 'all 0.1s',
+          }}
+        >
+          RESET
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function IncomeExpenseChart() {
   const { profile, isReady } = useTreasuryProfile();
@@ -208,15 +321,13 @@ export default function IncomeExpenseChart() {
     ? profile.darkAccentColor  || '#2FC4B2'
     : profile.accentColor      || '#2FC4B2';
 
-  const incomeColor  = accentColor;
-  const expenseColor = '#F76D6F';
-
-  // ── Lazy initializer loads prefs from localStorage on first render,
+  // ── Prefs (includes persisted colors) ────────────────────────────────────
   const [prefs, setPrefsRaw] = useState<IECPrefs>(() =>
     typeof window !== 'undefined' ? loadPrefs() : DEFAULT_PREFS,
   );
 
-  const [showDatePanel, setShowDatePanel] = useState(false);
+  const [showDatePanel,  setShowDatePanel]  = useState(false);
+  const [showColorPanel, setShowColorPanel] = useState(false);
 
   const setPrefs = useCallback((updater: (prev: IECPrefs) => IECPrefs) => {
     setPrefsRaw(prev => {
@@ -226,9 +337,9 @@ export default function IncomeExpenseChart() {
     });
   }, []);
 
-  const { chartType, rangeMode, preset, customFrom, customTo, showGrid } = prefs;
+  const { chartType, rangeMode, preset, customFrom, customTo, showGrid, incomeColor, expenseColor } = prefs;
 
-  // ── Income records — lazy initializer + interval for polling ─────────────
+  // ── Income records ────────────────────────────────────────────────────────
   const [records, setRecords] = useState<IncomeRecord[]>(() => loadIncomeRecords());
 
   useEffect(() => {
@@ -315,6 +426,7 @@ export default function IncomeExpenseChart() {
         </BarChart>
       );
     }
+    // Default: line
     return (
       <LineChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
         {gridProps && <CartesianGrid {...gridProps} />}
@@ -353,7 +465,7 @@ export default function IncomeExpenseChart() {
       boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
       display: 'flex',
       flexDirection: 'column',
-      height: '100%',         
+      height: '100%',
       minHeight: 380,
     }}>
       {/* ── Header ── */}
@@ -386,6 +498,7 @@ export default function IncomeExpenseChart() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {/* Chart type pills */}
           {(['line', 'area', 'bar'] as const).map((ct) => (
             <button
               key={ct}
@@ -395,11 +508,36 @@ export default function IncomeExpenseChart() {
               {ct.charAt(0).toUpperCase() + ct.slice(1)}
             </button>
           ))}
+
+          {/* Date range pill */}
           <button
-            onClick={() => setShowDatePanel(p => !p)}
+            onClick={() => { setShowDatePanel(p => !p); setShowColorPanel(false); }}
             style={showDatePanel ? pillActive : pillBase}
           >
             {rangeLabel}
+          </button>
+
+          {/* Colors pill — shows live color preview dots */}
+          <button
+            onClick={() => { setShowColorPanel(p => !p); setShowDatePanel(false); }}
+            style={{
+              ...(showColorPanel ? pillActive : pillBase),
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%',
+                backgroundColor: incomeColor, display: 'inline-block',
+              }} />
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%',
+                backgroundColor: expenseColor, display: 'inline-block',
+              }} />
+            </span>
+            Colors
           </button>
         </div>
       </div>
@@ -429,7 +567,50 @@ export default function IncomeExpenseChart() {
         </div>
       )}
 
-      {/* ── Chart Area — flex-grow so it fills remaining space ── */}
+      {/* ── Color Panel ── */}
+      {showColorPanel && (
+        <div style={{
+          padding: '14px 16px',
+          marginBottom: 14,
+          backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FAFBFC',
+          borderRadius: 10,
+          border: `1px solid ${borderColor}`,
+        }}>
+          <p style={{
+            fontSize: 9,
+            fontWeight: 800,
+            color: `${textColor}60`,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            margin: '0 0 10px',
+            fontFamily: "'Poppins', sans-serif",
+          }}>
+            Series Colors
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <ColorPickerRow
+              label="Income"
+              color={incomeColor}
+              defaultColor={accentColor}
+              onChange={(c) => setPrefs(p => ({ ...p, incomeColor: c }))}
+              onReset={() => setPrefs(p => ({ ...p, incomeColor: accentColor }))}
+              textColor={textColor}
+              borderColor={borderColor}
+            />
+            <ColorPickerRow
+              label="Expense"
+              color={expenseColor}
+              defaultColor={DEFAULT_EXPENSE_COLOR}
+              onChange={(c) => setPrefs(p => ({ ...p, expenseColor: c }))}
+              onReset={() => setPrefs(p => ({ ...p, expenseColor: DEFAULT_EXPENSE_COLOR }))}
+              textColor={textColor}
+              borderColor={borderColor}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Chart Area ── */}
       <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
         {chartData.length === 0 ? (
           <div style={{
@@ -456,7 +637,7 @@ export default function IncomeExpenseChart() {
         )}
       </div>
 
-      {/* ── Footer — Net only ── */}
+      {/* ── Footer ── */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
