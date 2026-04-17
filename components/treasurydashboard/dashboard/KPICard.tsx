@@ -18,7 +18,6 @@ interface KPICardProps {
   index?: number;
 }
 
-// Colors for cards
 const COLORS = [
   { solid: '#09A30C', light: '#D1FADF' }, // Green (Total Income)
   { solid: '#1775D6', light: '#D1E9FF' }, // Blue (Net Balance)
@@ -46,16 +45,15 @@ export default function KPICard({
         padding: '32px 24px',
         minHeight: '140px',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'center', // Centers icon vertically with the text block
         gap: '18px',
         boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
         flex: 1,
         minWidth: '240px',
-        height: '100%',
         transition: 'transform 0.2s ease',
       }}
     >
-      {/* Solid Icon Box - Icons are white on these backgrounds */}
+      {/* Icon Box */}
       <div
         style={{
           width: '52px',
@@ -72,53 +70,46 @@ export default function KPICard({
         {icon}
       </div>
 
-      {/* Content Area */}
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div
+      {/* Content Area: Wraps Value, Badge, and Title for shared alignment */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+        <span
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '6px',
+            fontFamily: "'Poppins', sans-serif",
+            fontWeight: 700,
+            fontSize: '20px',
+            color: textColor,
+            letterSpacing: '-0.5px',
+            lineHeight: 1,
           }}
         >
-          {/* Main Financial Value */}
-          <span
-            style={{
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 700,
-              fontSize: '20px',
-              color: textColor,
-              letterSpacing: '-0.5px',
-            }}
-          >
-            {value}
-          </span>
+          {value}
+        </span>
 
-          {/* Trend Badge */}
-          <span
-            style={{
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 600,
-              fontSize: '11px',
-              color: colorSet.solid,
-              backgroundColor: colorSet.light,
-              padding: '4px 10px',
-              borderRadius: '8px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {badge}
-          </span>
-        </div>
+        <span
+          style={{
+            fontFamily: "'Poppins', sans-serif",
+            fontWeight: 600,
+            fontSize: '11px',
+            color: colorSet.solid,
+            backgroundColor: colorSet.light,
+            padding: '4px 10px',
+            borderRadius: '8px',
+            whiteSpace: 'nowrap',
+            width: 'fit-content',
+          }}
+        >
+          {badge}
+        </span>
 
-        {/* Metric Title */}
+        {/* Metric Title aligned to the same start point */}
         <div
           style={{
             fontFamily: "'Poppins', sans-serif",
             fontWeight: 500,
             fontSize: '13px',
             color: `${textColor}90`,
+            textAlign: 'left',
+            marginTop: '4px',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
