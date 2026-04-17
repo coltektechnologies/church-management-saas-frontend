@@ -1,29 +1,236 @@
-import { PlusCircle } from 'lucide-react';
+'use client';
 
+/**
+ * /app/treasury/record-income/page.tsx
+ *
+ * Shows ONLY the income entry form.
+ *
+ * Recorded income is saved to `treasury_income_records_v1` — the exact same
+ * key that IncomeEntryLog inside RecordIncomePage reads from. Because
+ * RecordIncomePage passes `records={entryLog}` as a prop (bypassing the
+ * self-managed poll), we also dispatch a custom "treasury:record-saved" event
+ * on window so RecordIncomePage can listen and reload from localStorage
+ * immediately without waiting for the 2 s poll.
+ *
+ * Dropdown changes made in DropdownManager (on RecordIncomePage) land in
+ * `treasury_dropdowns_v1`. This page polls that key every 1.5 s via a
+ * fingerprint check and remounts RecordIncomeForm (via `formKey`) whenever
+ * options change so the form always reflects the latest list.
+ *
+ * Activity is appended to `treasury_activity_history_v1` via appendActivity()
+ * which ActivityHistoryPanel already polls every 2 s.
+ */
+
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+
+import RecordIncomeForm from '@/components/treasurydashboard/recordIncome/RecordIncomeForm';
+import type { IncomeRecord } from '@/components/treasurydashboard/recordIncome/IncomeReceipt';
+
+import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
+import { appendActivity }     from '@/components/treasurydashboard/recordIncome/activityHistory';
+import { getOptions }         from '@/components/treasurydashboard/recordIncome/dropdownOptions';
+import { getCurrencySymbol }  from '@/components/treasurydashboard/recordIncome/recordIncomeData';
+
+// ── Shared storage key (must match IncomeEntryLog / RecordIncomePage) ─────────
+const INCOME_RECORDS_KEY = 'treasury_income_records_v1';
+
+// Custom event name broadcast after every save so RecordIncomePage can
+// reload its entryLog state immediately (no 2 s wait).
+export const TREASURY_RECORD_SAVED_EVENT = 'treasury:record-saved';
+
+function loadRecordsFromStorage(): IncomeRecord[] {
+  if (typeof window === 'undefined') { return []; }
+  try {
+    const raw = localStorage.getItem(INCOME_RECORDS_KEY);
+    return raw ? (JSON.parse(raw) as IncomeRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecordToStorage(record: IncomeRecord): void {
+  try {
+    const existing = loadRecordsFromStorage();
+    // newest first so IncomeEntryLog shows them in the right order
+    localStorage.setItem(
+      INCOME_RECORDS_KEY,
+      JSON.stringify([record, ...existing]),
+    );
+    // Notify any open RecordIncomePage tab/component immediately
+    window.dispatchEvent(new CustomEvent(TREASURY_RECORD_SAVED_EVENT));
+  } catch {
+    // quota exceeded — ignore
+  }
+}
+
+// ── Dropdown-change fingerprint ───────────────────────────────────────────────
+function optionsFingerprint(): string {
+  const types      = getOptions('income_types').map((o) => `${o.value}:${o.label}`).join(',');
+  const currencies = getOptions('currencies').map((o) => `${o.value}:${o.label}`).join(',');
+  return `${types}|${currencies}`;
+}
+
+// ── autoText helper ───────────────────────────────────────────────────────────
+function autoText(hex: string): string {
+  const h = (hex || '#ffffff').replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16) || 0;
+  const g = parseInt(h.substring(2, 4), 16) || 0;
+  const b = parseInt(h.substring(4, 6), 16) || 0;
+  const lin = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179
+    ? '#0B2A4A'
+    : '#FFFFFF';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export default function RecordIncomePage() {
+  const router = useRouter();
+  const { profile, isReady } = useTreasuryProfile();
+
+  // ── Theme ─────────────────────────────────────────────────────────────────
+  const isDark       = isReady ? (profile.darkMode ?? false)                        : false;
+  const bgColor      = isDark  ? (profile.darkBackgroundColor || '#0A1628')          : '#F5F7FA';
+  const cardBg       = isDark  ? (profile.darkSidebarColor    || '#0D1F36')          : '#FFFFFF';
+  const borderColor  = isDark  ? 'rgba(255,255,255,0.08)'                            : '#E0E5ED';
+  const textColor    = autoText(bgColor);
+  const accentColor  = isDark  ? (profile.darkAccentColor  || '#2FC4B2')             : (profile.accentColor  || '#2FC4B2');
+  const primaryColor = isDark  ? (profile.darkPrimaryColor || '#1A3F6B')             : (profile.primaryColor || '#0B2A4A');
+  const actor        = isReady ? (profile.preferredName || profile.adminName || 'Treasurer') : 'Treasurer';
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  const [toast, setToast] = useState<string | null>(null);
+
+  // ── Dropdown-change detection → remount form ──────────────────────────────
+  // Polls every 1.5 s. When DropdownManager on RecordIncomePage saves a change
+  // to treasury_dropdowns_v1, the fingerprint changes here and we bump formKey,
+  // which remounts RecordIncomeForm so it re-reads the latest options.
+  const [formKey,       setFormKey]      = useState<number>(0);
+  const fingerprintRef                   = useRef<string>('');
+
+  useEffect(() => {
+    fingerprintRef.current = optionsFingerprint();
+
+    const id = window.setInterval(() => {
+      const next = optionsFingerprint();
+      if (next !== fingerprintRef.current) {
+        fingerprintRef.current = next;
+        setFormKey((k) => k + 1);
+      }
+    }, 1500);
+
+    return () => window.clearInterval(id);
+  }, []);
+
+  // ── Record handler ────────────────────────────────────────────────────────
+  const handleRecorded = useCallback(
+    (record: IncomeRecord) => {
+      // 1. Persist to shared localStorage key AND fire the custom event so
+      //    RecordIncomePage refreshes its entryLog state immediately.
+      saveRecordToStorage(record);
+
+      // 2. Log to activity history so ActivityHistoryPanel sees it.
+      const incomeTypeName =
+        getOptions('income_types').find((o) => o.value === record.incomeType)?.label
+        ?? record.incomeType;
+
+      appendActivity({
+        action:    'income_recorded',
+        category:  'income',
+        actor,
+        summary:   `Recorded ${incomeTypeName}${record.incomeTypeDetail ? ` (${record.incomeTypeDetail})` : ''} of ${getCurrencySymbol(record.currency)}${record.amount.toLocaleString('en-GH', { minimumFractionDigits: 2 })} for ${record.memberName}`,
+        detail:    `Receipt: ${record.receiptNumber} · Date: ${record.date} · Payment: ${record.paymentMethod}`,
+        relatedId: record.id,
+        meta: {
+          receiptNumber: record.receiptNumber,
+          amount:        record.amount,
+          currency:      record.currency,
+          memberName:    record.memberName,
+          date:          record.date,
+        },
+      });
+
+      // 3. Toast confirmation
+      setToast(`Receipt ${record.receiptNumber} saved successfully!`);
+      setTimeout(() => setToast(null), 4000);
+    },
+    [actor],
+  );
+
+  const handleCancel = useCallback(() => {
+    router.push('/treasury');
+  }, [router]);
+
+  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8 max-w-5xl mx-auto">
-      {/* Page header */}
-      <div className="flex items-center gap-4">
-        <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0"
-          style={{ background: '#0B2A4A' }}
-        >
-          <PlusCircle size={22} color="#2FC4B2" />
+    <div style={{
+      minHeight: '100%',
+      padding:   'clamp(12px, 3vw, 32px)',
+      position:  'relative',
+    }}>
+
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position:        'fixed',
+          top:             20,
+          left:            '50%',
+          transform:       'translateX(-50%)',
+          zIndex:          9999,
+          padding:         '12px 24px',
+          borderRadius:    12,
+          backgroundColor: accentColor,
+          color:           autoText(accentColor),
+          fontFamily:      "'OV Soge', sans-serif",
+          fontWeight:      700,
+          fontSize:        13,
+          boxShadow:       '0 8px 32px rgba(0,0,0,0.18)',
+          whiteSpace:      'nowrap',
+          pointerEvents:   'none',
+        }}>
+          ✓ {toast}
         </div>
-        <div>
-          <h1 className="text-2xl font-black text-foreground">Record Income</h1>
-          <p className="text-sm text-muted-foreground font-medium">Submit a new income entry.</p>
-        </div>
+      )}
+
+      {/* Page heading */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{
+          fontFamily: "'Poppins', sans-serif",
+          fontWeight: 700,
+          fontSize:   'clamp(16px, 2.2vw, 22px)',
+          color:      textColor,
+          margin:     0,
+        }}>
+          Record Income
+        </h1>
+        <p style={{
+          fontFamily: "'OV Soge', sans-serif",
+          fontSize:   13,
+          color:      `${textColor}60`,
+          margin:     '4px 0 0',
+        }}>
+          Create and save individual or department income records
+        </p>
       </div>
 
-      {/* Placeholder content card */}
-      <div className="bg-card border border-border rounded-[20px] p-10 flex flex-col items-center justify-center gap-4 text-center min-h-[320px] shadow-sm">
-        <PlusCircle size={48} className="text-muted-foreground/40" />
-        <p className="text-base font-semibold text-muted-foreground">Record Income — coming soon</p>
-        <p className="text-xs text-muted-foreground/60 max-w-xs">
-          This section is under construction. Your content will appear here.
-        </p>
+      {/* Form — key bumps whenever dropdown options change, forcing a remount
+          so the form reads the freshest options from localStorage */}
+      <div style={{ maxWidth: 680, width: '100%' }}>
+        <RecordIncomeForm
+          key={formKey}
+          onRecorded={handleRecorded}
+          onCancel={handleCancel}
+          textColor={textColor}
+          accentColor={accentColor}
+          cardBg={cardBg}
+          borderColor={borderColor}
+          primaryColor={primaryColor}
+          isDark={isDark}
+          actor={actor}
+        />
       </div>
     </div>
   );
