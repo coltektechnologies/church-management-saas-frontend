@@ -1,423 +1,341 @@
 'use client';
 
-/**
- * Treasury DateRangePanel
- */
+import React, { useState, useRef } from 'react';
 
-import React, { useState } from 'react';
+// ── Types & Helpers ──────────────────────────────────────────────────────────
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface TreasuryDateRange {
-  from: string; // ISO "YYYY-MM-DD" or ""
-  to:   string; // ISO "YYYY-MM-DD" or ""
-}
-
-export interface TreasuryPreset {
-  value: string;
-  label: string;
-}
-
-export const TREASURY_PRESETS: TreasuryPreset[] = [
-  { value: 'this_month', label: 'This Month' },
-  { value: 'last_month', label: 'Last Month' },
-  { value: 'q1',         label: 'Q1 Jan–Mar' },
-  { value: 'q2',         label: 'Q2 Apr–Jun' },
-  { value: 'q3',         label: 'Q3 Jul–Sep' },
-  { value: 'q4',         label: 'Q4 Oct–Dec' },
-  { value: 'h1',         label: 'H1 Jan–Jun' },
-  { value: 'h2',         label: 'H2 Jul–Dec' },
-  { value: 'ytd',        label: 'Year to Date' },
-  { value: 'all',        label: 'All Time' },
-];
-
-/** Returns ISO date bounds for each preset relative to `now`. */
-export function resolveTreasuryPreset(preset: string, now = new Date()): TreasuryDateRange {
-  const y = now.getFullYear();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const iso = (y: number, m: number, d: number) =>
-    `${y}-${pad(m)}-${pad(d)}`;
-
-  switch (preset) {
-    case 'this_month': {
-      const first = iso(y, now.getMonth() + 1, 1);
-      const last  = iso(y, now.getMonth() + 1, new Date(y, now.getMonth() + 1, 0).getDate());
-      return { from: first, to: last };
-    }
-    case 'last_month': {
-      const lm   = now.getMonth() === 0 ? 12 : now.getMonth();
-      const ly   = now.getMonth() === 0 ? y - 1 : y;
-      const last = new Date(ly, lm, 0).getDate();
-      return { from: iso(ly, lm, 1), to: iso(ly, lm, last) };
-    }
-    case 'q1':  return { from: iso(y, 1,  1),  to: iso(y, 3,  31) };
-    case 'q2':  return { from: iso(y, 4,  1),  to: iso(y, 6,  30) };
-    case 'q3':  return { from: iso(y, 7,  1),  to: iso(y, 9,  30) };
-    case 'q4':  return { from: iso(y, 10, 1),  to: iso(y, 12, 31) };
-    case 'h1':  return { from: iso(y, 1,  1),  to: iso(y, 6,  30) };
-    case 'h2':  return { from: iso(y, 7,  1),  to: iso(y, 12, 31) };
-    case 'ytd': return { from: iso(y, 1,  1),  to: iso(y, now.getMonth() + 1, now.getDate()) };
-    default:    return { from: '', to: '' }; // "all"
-  }
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Format ISO "YYYY-MM-DD" → display "MM/DD/YYYY" */
-function isoToDisplay(iso: string): string {
-  if (!iso) {return '';}
-  const [y, m, d] = iso.split('-');
-  return `${m}/${d}/${y}`;
-}
-
-/** Parse display "MM/DD/YYYY" → ISO "YYYY-MM-DD" or "" */
-function displayToIso(display: string): string {
-  const clean = display.replace(/[^\d/]/g, '');
-  const parts = clean.split('/');
-  if (parts.length !== 3) {return '';}
-  const [m, d, y] = parts;
-  if (m.length !== 2 || d.length !== 2 || y.length !== 4) {return '';}
-  const dt = new Date(`${y}-${m}-${d}`);
-  if (isNaN(dt.getTime())) {return '';}
-  return `${y}-${m}-${d}`;
-}
-
-/** Auto-insert slashes while typing MM/DD/YYYY */
-function autoSlash(prev: string, next: string): string {
-  // Only format on forward typing (length increased)
-  let v = next.replace(/[^\d]/g, '');
-  if (v.length > 8) {v = v.slice(0, 8);}
-  if (v.length >= 5) {v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);}
-  else if (v.length >= 3) {v = v.slice(0, 2) + '/' + v.slice(2);}
-  return v;
-}
-
-// ── Sub-component: DateInput ─────────────────────────────────────────────────
+export interface TreasuryDateRange { from: string; to: string; }
+export interface TreasuryPreset    { value: string; label: string; }
 
 interface DateInputProps {
   label:       string;
   isoValue:    string;
-  onChange:    (iso: string) => void;
+  onChange:    (value: string) => void;
   accentColor: string;
   textColor:   string;
   borderColor: string;
-  min?:        string;
-  max?:        string;
 }
 
-function DateInput({
-  label, isoValue, onChange, accentColor, textColor, borderColor, min, max,
-}: DateInputProps) {
-  const [display, setDisplay] = useState(isoToDisplay(isoValue));
-  const [focused,  setFocused]  = useState(false);
-  const [hasError, setHasError] = useState(false);
+interface DateRangeDropdownProps {
+  mode:         string;
+  preset:       string;
+  customFrom:   string;
+  customTo:     string;
+  onMode:       (mode: string) => void;
+  onPreset:     (preset: string) => void;
+  onFromChange: (value: string) => void;
+  onToChange:   (value: string) => void;
+  textColor:    string;
+  accentColor:  string;
+  borderColor:  string;
+}
 
-  // Keep display in sync when isoValue changes externally (preset clicks)
-  React.useEffect(() => {
-    setDisplay(isoToDisplay(isoValue));
-    setHasError(false);
-  }, [isoValue]);
+export const TREASURY_PRESETS: TreasuryPreset[] = [
+  { value: 'today',        label: 'Today' },
+  { value: 'last_7_days',  label: 'Last 7 Days' },
+  { value: 'this_month',   label: 'This Month' },
+  { value: 'last_month',   label: 'Last Month' },
+  { value: 'last_90_days', label: 'Last 90 Days' },
+  { value: 'ytd',          label: 'Year to Date' },
+  { value: 'last_12_m',    label: 'Last 12 Months' },
+  { value: 'all',          label: 'All Time' },
+];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw  = e.target.value;
-    const next = autoSlash(display, raw);
-    setDisplay(next);
+export function resolveTreasuryPreset(preset: string, now = new Date()): TreasuryDateRange {
+  const y   = now.getFullYear();
+  const m   = now.getMonth();
+  const d   = now.getDate();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const iso = (yr: number, mo: number, dy: number) => `${yr}-${pad(mo)}-${pad(dy)}`;
 
-    if (next.length === 10) {
-      const iso = displayToIso(next);
-      if (iso) {
-        setHasError(false);
-        onChange(iso);
-      } else {
-        setHasError(true);
-      }
-    } else if (next === '') {
-      setHasError(false);
-      onChange('');
+  switch (preset) {
+    case 'today': {
+      return { from: iso(y, m + 1, d), to: iso(y, m + 1, d) };
     }
-  };
+    case 'last_7_days': {
+      const past = new Date(now);
+      past.setDate(d - 7);
+      return {
+        from: iso(past.getFullYear(), past.getMonth() + 1, past.getDate()),
+        to:   iso(y, m + 1, d),
+      };
+    }
+    case 'this_month': {
+      return { from: iso(y, m + 1, 1), to: iso(y, m + 1, new Date(y, m + 1, 0).getDate()) };
+    }
+    case 'last_month': {
+      const lm = m === 0 ? 12 : m;
+      const ly = m === 0 ? y - 1 : y;
+      return { from: iso(ly, lm, 1), to: iso(ly, lm, new Date(ly, lm, 0).getDate()) };
+    }
+    case 'ytd': {
+      return { from: iso(y, 1, 1), to: iso(y, m + 1, d) };
+    }
+    default: {
+      return { from: '', to: '' };
+    }
+  }
+}
 
-  // Native calendar picker (hidden <input type="date">) syncs with text field
-  const handleNative = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const iso = e.target.value; // already "YYYY-MM-DD"
-    setDisplay(isoToDisplay(iso));
-    setHasError(false);
-    onChange(iso);
-  };
+const isoToDisplay = (iso: string): string =>
+  iso ? iso.split('-').reverse().join('/') : '';
+const autoSlash = (next: string): string => {
+  let v = next.replace(/[^\d]/g, '').slice(0, 8);
+  if (v.length >= 5) {
+    v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+  } else if (v.length >= 3) {
+    v = v.slice(0, 2) + '/' + v.slice(2);
+  }
+  return v;
+};
 
-  const borderCol = hasError
-    ? '#F87171'
-    : focused
-    ? accentColor
-    : borderColor;
+// ── Auto text colour from hex background ────────────────────────────────────
+
+function autoText(hex: string): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.substring(0, 2), 16) || 0;
+  const g = parseInt(h.substring(2, 4), 16) || 0;
+  const b = parseInt(h.substring(4, 6), 16) || 0;
+  const lin = (c: number): number => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return lum > 0.179 ? '#0B2A4A' : '#FFFFFF';
+}
+
+// ── Sub-component: DateInput ─────────────────────────────────────────────────
+function DateInput({ label, isoValue, onChange, accentColor, textColor, borderColor }: DateInputProps) {
+  const [display,      setDisplay]      = useState<string>(isoToDisplay(isoValue));
+  const [prevIsoValue, setPrevIsoValue] = useState<string>(isoValue);
+  if (isoValue !== prevIsoValue) {
+    setPrevIsoValue(isoValue);
+    setDisplay(isoToDisplay(isoValue));
+  }
 
   return (
-    <div style={{ flex: 1 }}>
-      <div style={{
-        fontSize: 9, fontWeight: 700,
-        color: `${textColor}55`,
-        fontFamily: "'OV Soge', sans-serif",
-        textTransform: 'uppercase',
-        letterSpacing: '0.07em',
-        marginBottom: 5,
+    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+      <label style={{
+        fontSize: 9, fontWeight: 800, color: `${textColor}80`,
+        textTransform: 'uppercase', marginBottom: 5, display: 'block', letterSpacing: '0.04em',
       }}>
         {label}
-      </div>
-
-      {/* Wrapper so the calendar icon sits inside the border */}
+      </label>
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        border: `1.5px solid ${borderCol}`,
-        borderRadius: 8,
-        overflow: 'hidden',
-        transition: 'border-color 0.15s',
-        backgroundColor: focused ? `${accentColor}08` : 'transparent',
+        position: 'relative', display: 'flex', alignItems: 'center',
+        border: `1.5px solid ${borderColor}`, borderRadius: 10,
+        padding: '6px 8px', boxSizing: 'border-box', overflow: 'hidden',
       }}>
-        {/* Text field — MM/DD/YYYY */}
         <input
           type="text"
-          inputMode="numeric"
-          placeholder="MM/DD/YYYY"
           value={display}
-          onChange={handleChange}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          maxLength={10}
+          placeholder="DD/MM/YY"
+          onChange={(e) => setDisplay(autoSlash(e.target.value))}
           style={{
-            flex: 1,
-            padding: '7px 10px',
-            fontSize: 11,
-            fontFamily: "'OV Soge', sans-serif",
-            color: textColor,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            minWidth: 0,
+            flex: 1, minWidth: 0, background: 'transparent',
+            border: 'none', color: textColor, fontSize: 11, outline: 'none', width: '100%',
           }}
         />
-
-        {/* Calendar icon — opens native date picker */}
-        <label style={{
-          display: 'flex',
-          alignItems: 'center',
-          paddingRight: 8,
-          cursor: 'pointer',
-          color: focused ? accentColor : `${textColor}40`,
-          transition: 'color 0.15s',
-          flexShrink: 0,
-          position: 'relative',
-        }}>
-          {/* Calendar SVG */}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8"  y1="2" x2="8"  y2="6"/>
-            <line x1="3"  y1="10" x2="21" y2="10"/>
-          </svg>
-          {/* Invisible native date input overlaid on the icon */}
-          <input
-            type="date"
-            value={isoValue}
-            min={min}
-            max={max}
-            onChange={handleNative}
-            style={{
-              position: 'absolute',
-              opacity: 0,
-              width: 1,
-              height: 1,
-              overflow: 'hidden',
-              pointerEvents: 'auto',
-              cursor: 'pointer',
-            }}
-          />
-        </label>
+        <svg
+          width="12" height="12" viewBox="0 0 24 24"
+          fill="none" stroke={accentColor} strokeWidth="2.5"
+          style={{ flexShrink: 0, marginLeft: 4 }}
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+        <input
+          type="date"
+          value={isoValue}
+          onChange={(e) => onChange(e.target.value)}
+          style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+        />
       </div>
-
-      {hasError && (
-        <div style={{ fontSize: 9, color: '#F87171', marginTop: 3, fontFamily: "'OV Soge', sans-serif" }}>
-          Invalid date
-        </div>
-      )}
     </div>
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main Dropdown Component ──────────────────────────────────────────────────
 
-export interface DateRangePanelProps {
-  /** 'range' = explicit from/to inputs, 'preset' = pill shortcuts */
-  mode:        'range' | 'preset';
-  preset:      string;
-  customFrom:  string; // ISO or ""
-  customTo:    string; // ISO or ""
-  onMode:      (m: 'range' | 'preset') => void;
-  onPreset:    (p: string) => void;
-  onFromChange:(iso: string) => void;
-  onToChange:  (iso: string) => void;
-  textColor:   string;
-  accentColor: string;
-  borderColor: string;
-}
-
-export default function DateRangePanel({
+export default function DateRangeDropdown({
   mode, preset, customFrom, customTo,
   onMode, onPreset, onFromChange, onToChange,
   textColor, accentColor, borderColor,
-}: DateRangePanelProps) {
+}: DateRangeDropdownProps) {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const sectionLabel: React.CSSProperties = {
-    fontSize: 9, fontWeight: 800,
-    color: `${textColor}50`,
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em',
-    fontFamily: "'OV Soge', sans-serif",
-  };
+  React.useEffect(() => {
+    const clickOut = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', clickOut);
+    return () => document.removeEventListener('mousedown', clickOut);
+  }, []);
 
-  const modeBtn = (active: boolean): React.CSSProperties => ({
-    padding: '3px 11px',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 9,
-    fontFamily: "'OV Soge', sans-serif",
-    fontWeight: active ? 700 : 500,
-    textTransform: 'uppercase',
-    border:           `1px solid ${active ? accentColor : borderColor}`,
-    backgroundColor:  active ? `${accentColor}18` : 'transparent',
-    color:            active ? accentColor : `${textColor}55`,
-    transition: 'all 0.12s',
-  });
+  const panelBg     = '#1A3F6B';
+  const panelText   = autoText(panelBg);
+  const secondaryBg = 'rgba(255,255,255,0.08)';
+  const panelBorder = 'rgba(255,255,255,0.14)';
+  const inputBorder = 'rgba(255,255,255,0.22)';
 
-  const presetBtn = (active: boolean): React.CSSProperties => ({
-    padding: '5px 10px',
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 10,
-    fontFamily: "'OV Soge', sans-serif",
-    fontWeight: active ? 700 : 500,
-    border:           `1px solid ${active ? accentColor : borderColor}`,
-    backgroundColor:  active ? `${accentColor}18` : 'transparent',
-    color:            active ? accentColor : `${textColor}60`,
-    transition: 'all 0.12s',
-  });
+  const triggerLabel =
+    mode === 'preset'
+      ? (TREASURY_PRESETS.find(p => p.value === preset)?.label ?? 'Select Date')
+      : (customFrom && customTo
+          ? `${isoToDisplay(customFrom)} – ${isoToDisplay(customTo)}`
+          : 'Custom Range');
 
   return (
-    <div>
-      {/* ── Mode toggle ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-        <span style={sectionLabel}>Filter by Date</span>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button type="button" onClick={() => onMode('preset')} style={modeBtn(mode === 'preset')}>
-            Preset
-          </button>
-          <button type="button" onClick={() => onMode('range')} style={modeBtn(mode === 'range')}>
-            Date Range
-          </button>
-        </div>
-      </div>
+    <div
+      ref={dropdownRef}
+      style={{ position: 'relative', display: 'inline-block', fontFamily: "'Poppins', sans-serif" }}
+    >
 
-      {mode === 'preset' ? (
-        /* ── Preset pills ── */
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-          {TREASURY_PRESETS.map((p) => (
-            <button
-              key={p.value}
-              type="button"
-              onClick={() => onPreset(p.value)}
-              style={presetBtn(preset === p.value)}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      ) : (
-        /* ── Date range inputs ── */
-        <div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <DateInput
-              label="From"
-              isoValue={customFrom}
-              onChange={onFromChange}
-              max={customTo || undefined}
-              accentColor={accentColor}
-              textColor={textColor}
-              borderColor={borderColor}
-            />
+      {/* ── Trigger ── */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderRadius: 12,
+          border: `1.5px solid ${isOpen ? accentColor : borderColor}`,
+          backgroundColor: isOpen ? `${accentColor}10` : 'transparent',
+          color: textColor, cursor: 'pointer', transition: '0.2s', outline: 'none',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>{triggerLabel}</span>
+        <svg
+          width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke={`${textColor}40`} strokeWidth="3"
+          style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }}
+        >
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
 
-            {/* separator */}
-            <div style={{
-              alignSelf: 'center',
-              marginTop: 18,
-              fontSize: 12,
-              color: `${textColor}30`,
-              fontWeight: 700,
-              flexShrink: 0,
-            }}>
-              →
-            </div>
+      {/* ── Panel ── */}
+      {isOpen && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 12px)', left: 0,
+          width: '320px', boxSizing: 'border-box', backgroundColor: panelBg,
+          borderRadius: 20, padding: '18px', zIndex: 1000,
+          border: `1px solid ${panelBorder}`,
+          boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+          animation: 'pop 0.2s ease-out', overflow: 'hidden',
+        }}>
 
-            <DateInput
-              label="To"
-              isoValue={customTo}
-              onChange={onToChange}
-              min={customFrom || undefined}
-              accentColor={accentColor}
-              textColor={textColor}
-              borderColor={borderColor}
-            />
+          {/* Tabs */}
+          <div style={{ display: 'flex', background: secondaryBg, padding: '4px', borderRadius: 12, marginBottom: 18 }}>
+            {(['preset', 'range'] as const).map(m => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => onMode(m)}
+                style={{
+                  flex: 1, padding: '8px', border: 'none', borderRadius: 10,
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  backgroundColor: mode === m ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  color: mode === m ? '#FFFFFF' : `${panelText}55`,
+                  transition: '0.2s', textTransform: 'uppercase',
+                }}
+              >
+                {m === 'preset' ? 'Presets' : 'Custom'}
+              </button>
+            ))}
           </div>
 
-          {/* Active range summary */}
-          {customFrom && customTo && (
-            <div style={{
-              marginTop: 10,
-              padding: '6px 12px',
-              borderRadius: 8,
-              backgroundColor: `${accentColor}10`,
-              border: `1px solid ${accentColor}25`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-              <span style={{
-                fontSize: 10,
-                fontFamily: "'OV Soge', sans-serif",
-                fontWeight: 600,
-                color: accentColor,
+          {mode === 'preset' ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {TREASURY_PRESETS.map(p => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => { onPreset(p.value); setIsOpen(false); }}
+                  style={{
+                    padding: '10px', borderRadius: 10, textAlign: 'left',
+                    fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                    border: `1px solid ${preset === p.value ? accentColor : inputBorder}`,
+                    backgroundColor: preset === p.value ? `${accentColor}20` : 'transparent',
+                    color: preset === p.value ? accentColor : panelText,
+                    transition: '0.1s',
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div style={{ boxSizing: 'border-box', width: '100%' }}>
+              <div style={{
+                display: 'flex', gap: 8, alignItems: 'flex-start',
+                width: '100%', boxSizing: 'border-box', overflow: 'hidden',
               }}>
-                {isoToDisplay(customFrom)} → {isoToDisplay(customTo)}
-              </span>
+                <DateInput
+                  label="Start"
+                  isoValue={customFrom}
+                  onChange={onFromChange}
+                  accentColor={accentColor}
+                  textColor={panelText}
+                  borderColor={inputBorder}
+                />
+                <div style={{ marginTop: 32, color: `${panelText}30`, flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <path d="M5 12h14"/>
+                  </svg>
+                </div>
+                <DateInput
+                  label="End"
+                  isoValue={customTo}
+                  onChange={onToChange}
+                  accentColor={accentColor}
+                  textColor={panelText}
+                  borderColor={inputBorder}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                disabled={!customFrom || !customTo}
+                style={{
+                  width: '100%', marginTop: 16, padding: '13px', borderRadius: 14, border: 'none',
+                  backgroundColor: (!customFrom || !customTo) ? 'rgba(255,255,255,0.12)' : accentColor,
+                  color: '#FFFFFF', fontWeight: 800, fontSize: 12,
+                  cursor: (!customFrom || !customTo) ? 'not-allowed' : 'pointer',
+                  transition: '0.2s', letterSpacing: '0.06em', boxSizing: 'border-box',
+                }}
+              >
+                APPLY RANGE
+              </button>
+
               <button
                 type="button"
                 onClick={() => { onFromChange(''); onToChange(''); }}
                 style={{
-                  fontSize: 9,
-                  color: `${textColor}40`,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: "'OV Soge', sans-serif",
-                  padding: '0 2px',
+                  width: '100%', marginTop: 10, background: 'none', border: 'none',
+                  color: '#F87171', fontSize: 11, fontWeight: 700,
+                  cursor: 'pointer', letterSpacing: '0.05em',
                 }}
               >
-                ✕ Clear
+                RESET DATES
               </button>
             </div>
           )}
-
-          {/* Helper hint */}
-          <p style={{
-            fontSize: 9,
-            color: `${textColor}35`,
-            marginTop: 8,
-            fontFamily: "'OV Soge', sans-serif",
-          }}>
-            Type MM/DD/YYYY or click the 📅 icon to open calendar
-          </p>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes pop {
+          from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
