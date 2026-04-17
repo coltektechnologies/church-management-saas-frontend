@@ -2,23 +2,6 @@
 
 /**
  * /app/treasury/record-income/page.tsx
- *
- * Shows ONLY the income entry form.
- *
- * Recorded income is saved to `treasury_income_records_v1` — the exact same
- * key that IncomeEntryLog inside RecordIncomePage reads from. Because
- * RecordIncomePage passes `records={entryLog}` as a prop (bypassing the
- * self-managed poll), we also dispatch a custom "treasury:record-saved" event
- * on window so RecordIncomePage can listen and reload from localStorage
- * immediately without waiting for the 2 s poll.
- *
- * Dropdown changes made in DropdownManager (on RecordIncomePage) land in
- * `treasury_dropdowns_v1`. This page polls that key every 1.5 s via a
- * fingerprint check and remounts RecordIncomeForm (via `formKey`) whenever
- * options change so the form always reflects the latest list.
- *
- * Activity is appended to `treasury_activity_history_v1` via appendActivity()
- * which ActivityHistoryPanel already polls every 2 s.
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
@@ -34,9 +17,6 @@ import { getCurrencySymbol }  from '@/components/treasurydashboard/recordIncome/
 
 // ── Shared storage key (must match IncomeEntryLog / RecordIncomePage) ─────────
 const INCOME_RECORDS_KEY = 'treasury_income_records_v1';
-
-// Custom event name broadcast after every save so RecordIncomePage can
-// reload its entryLog state immediately (no 2 s wait).
 export const TREASURY_RECORD_SAVED_EVENT = 'treasury:record-saved';
 
 function loadRecordsFromStorage(): IncomeRecord[] {
@@ -105,9 +85,6 @@ export default function RecordIncomePage() {
   const [toast, setToast] = useState<string | null>(null);
 
   // ── Dropdown-change detection → remount form ──────────────────────────────
-  // Polls every 1.5 s. When DropdownManager on RecordIncomePage saves a change
-  // to treasury_dropdowns_v1, the fingerprint changes here and we bump formKey,
-  // which remounts RecordIncomeForm so it re-reads the latest options.
   const [formKey,       setFormKey]      = useState<number>(0);
   const fingerprintRef                   = useRef<string>('');
 
@@ -128,8 +105,6 @@ export default function RecordIncomePage() {
   // ── Record handler ────────────────────────────────────────────────────────
   const handleRecorded = useCallback(
     (record: IncomeRecord) => {
-      // 1. Persist to shared localStorage key AND fire the custom event so
-      //    RecordIncomePage refreshes its entryLog state immediately.
       saveRecordToStorage(record);
 
       // 2. Log to activity history so ActivityHistoryPanel sees it.
@@ -216,8 +191,7 @@ export default function RecordIncomePage() {
         </p>
       </div>
 
-      {/* Form — key bumps whenever dropdown options change, forcing a remount
-          so the form reads the freshest options from localStorage */}
+      {/* Form */}
       <div style={{ maxWidth: 680, width: '100%' }}>
         <RecordIncomeForm
           key={formKey}
@@ -227,7 +201,7 @@ export default function RecordIncomePage() {
           accentColor={accentColor}
           cardBg={cardBg}
           borderColor={borderColor}
-          primaryColor={primaryColor}
+          _primaryColor={primaryColor}
           isDark={isDark}
           actor={actor}
         />
