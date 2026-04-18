@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -81,7 +80,7 @@ const actions: ActionDef[] = [
   },
   {
     label: 'Financial Statement',
-    icon: FileText,
+    icon: '/treasury/financial-statement.svg',
     color:
       'bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 border border-emerald-200 mt-2 sm:mt-0 lg:ml-auto w-full sm:w-auto',
     handler: 'onFinancialStatement',
@@ -92,15 +91,13 @@ export function QuickActions(props: QuickActionsProps) {
   const router = useRouter();
 
   const handleAction = (handlerName: keyof QuickActionsProps) => {
-    if (handlerName === 'onRecordIncome') {
+    const fn = props[handlerName];
+    if (fn) {
+      fn();
+    } else if (handlerName === 'onRecordIncome') {
       router.push('/admin/treasury/record?type=income');
     } else if (handlerName === 'onRecordExpenditure') {
       router.push('/admin/treasury/record?type=expense');
-    } else {
-      const fn = props[handlerName];
-      if (fn) {
-        fn();
-      }
     }
   };
 
@@ -115,7 +112,7 @@ export function QuickActions(props: QuickActionsProps) {
           }
           className={`${action.color} rounded-md px-4 h-9 gap-2 shadow-sm cursor-pointer font-medium transition-colors`}
         >
-          <action.icon className="size-4" />
+          <Image alt={`${action.label}`} src={action.icon} width={24} height={24} />
           <span className="text-[13px]">{action.label}</span>
         </Button>
       ))}

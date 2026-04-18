@@ -78,8 +78,10 @@ type DepartmentsContextType = {
 
   departmentExpensesMap: Record<string, Expense[]>;
   loadDepartmentExpenseRequests: (departmentId: string) => Promise<void>;
+
   /** Refresh annualBudget / budgetUsed for one department from treasury API */
   syncDepartmentBudgetFromApi: (departmentId: string) => Promise<void>;
+
   submitExpense: (
     departmentId: string,
     expense: Expense,
