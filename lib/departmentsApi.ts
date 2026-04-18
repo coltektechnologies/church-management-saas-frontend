@@ -276,6 +276,24 @@ export async function fetchDepartmentsList(): Promise<DepartmentListRow[]> {
   return normalizeListResponse<DepartmentListRow>(data);
 }
 
+/** GET /api/departments/for-program/ — departments with primary head contact for budget step 1 */
+export interface DepartmentForProgramRow {
+  id: string;
+  name: string;
+  code?: string;
+  head_name: string | null;
+  head_email: string | null;
+  head_phone: string | null;
+  elder_in_charge_name?: string | null;
+  is_current_user_head?: boolean;
+}
+
+export async function fetchDepartmentsForProgram(): Promise<DepartmentForProgramRow[]> {
+  const base = getApiBaseUrl();
+  const data = await fetchAuth<unknown>(`${base}/departments/for-program/`, { method: 'GET' });
+  return Array.isArray(data) ? data : normalizeListResponse<DepartmentForProgramRow>(data);
+}
+
 export async function fetchDepartmentDetail(id: string): Promise<DepartmentDetailResponse> {
   const base = getApiBaseUrl();
   return fetchAuth<DepartmentDetailResponse>(`${base}/departments/${id}/`, { method: 'GET' });

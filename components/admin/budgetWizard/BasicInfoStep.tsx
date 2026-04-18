@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { BudgetFormData } from '@/types/budget';
 import { useDepartments } from '@/context/DepartmentsContext';
 import { Building2, Calendar, FileText, User, Phone, Mail, AlignLeft } from 'lucide-react';
@@ -7,12 +8,26 @@ import { Building2, Calendar, FileText, User, Phone, Mail, AlignLeft } from 'luc
 interface Props {
   formData: BudgetFormData;
   setFormData: React.Dispatch<React.SetStateAction<BudgetFormData>>;
+  /** When creating from `/departments/[id]/budget/new`, department is fixed (no dropdown). */
+  fixedDepartment?: { id: string; name: string };
 }
 
-export default function BasicInfoStep({ formData, setFormData }: Props) {
+export default function BasicInfoStep({ formData, setFormData, fixedDepartment }: Props) {
   const { departments } = useDepartments();
 
   const activeDepartments = departments.filter((d) => d.status === 'active');
+
+  const departmentLocked = Boolean(fixedDepartment?.id);
+
+  const fiscalYearOptions = useMemo(() => {
+    const start = new Date().getFullYear();
+    const years = Array.from({ length: 12 }, (_, i) => String(start + i));
+    const selected = formData.fiscalYear?.trim();
+    if (selected && !years.includes(selected)) {
+      return [...years, selected].sort((a, b) => Number(a) - Number(b));
+    }
+    return years;
+  }, [formData.fiscalYear]);
 
   return (
     <div className="space-y-6">
@@ -37,23 +52,32 @@ export default function BasicInfoStep({ formData, setFormData }: Props) {
             <Building2 size={14} className="text-gray-400" />
             Department <span className="text-red-500">*</span>
           </label>
-          <div className="relative">
-            <select
-              value={formData.departmentId ?? ''}
-              onChange={(e) => setFormData((prev) => ({ ...prev, departmentId: e.target.value }))}
-              className="w-full appearance-none border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
+          {departmentLocked ? (
+            <div
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-slate-50"
+              title="Department is determined by the page you started from"
             >
-              <option value="">Select Department</option>
-              {activeDepartments.map((dept) => (
-                <option key={dept.id} value={dept.id}>
-                  {dept.name}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-              ▾
+              {fixedDepartment?.name ?? '—'}
             </div>
-          </div>
+          ) : (
+            <div className="relative">
+              <select
+                value={formData.departmentId ?? ''}
+                onChange={(e) => setFormData((prev) => ({ ...prev, departmentId: e.target.value }))}
+                className="w-full appearance-none border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
+              >
+                <option value="">Select Department</option>
+                {activeDepartments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                ▾
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Fiscal Year */}
@@ -66,10 +90,10 @@ export default function BasicInfoStep({ formData, setFormData }: Props) {
             <select
               value={formData.fiscalYear}
               onChange={(e) => setFormData((prev) => ({ ...prev, fiscalYear: e.target.value }))}
+              autoComplete="off"
               className="w-full appearance-none border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
             >
-              <option value="">Select Year</option>
-              {['2023', '2024', '2025', '2026'].map((year) => (
+              {fiscalYearOptions.map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>
@@ -104,11 +128,16 @@ export default function BasicInfoStep({ formData, setFormData }: Props) {
           </label>
           <input
             type="text"
-            placeholder="Pastor William Owusu"
+            name="budget-department-head"
+            placeholder="Primary department head"
             value={formData.departmentHead ?? ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, departmentHead: e.target.value }))}
+            autoComplete="off"
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
           />
+          <p className="text-xs text-gray-400">
+            Prefilled from the directory when available; you can change it anytime.
+          </p>
         </div>
       </div>
 
@@ -122,9 +151,11 @@ export default function BasicInfoStep({ formData, setFormData }: Props) {
           </label>
           <input
             type="tel"
+            name="budget-head-phone"
             placeholder="+233 55 443 5344"
             value={formData.phoneNumber ?? ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, phoneNumber: e.target.value }))}
+            autoComplete="off"
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
           />
         </div>
@@ -137,9 +168,11 @@ export default function BasicInfoStep({ formData, setFormData }: Props) {
           </label>
           <input
             type="email"
-            placeholder="eg. Annual ministry budget 2024"
+            name="budget-head-email"
+            placeholder="head@example.com"
             value={formData.emailAddress ?? ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, emailAddress: e.target.value }))}
+            autoComplete="off"
             className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm placeholder:text-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition"
           />
         </div>

@@ -1,9 +1,10 @@
 /**
  * 5-step program/budget submission (backend Program model).
- * POST /api/programs/step1/ → PATCH steps 2–3 → POST step4 (per file) → POST step5/submit/
+ * POST /api/programs/step1/ → PATCH step2 → PATCH step3 → POST step4 (per file) → POST step5/submit/
  */
 
 import { getApiBaseUrl, getAccessToken } from './api';
+import { messageFromApiErrorJson } from '@/lib/apiMessages';
 import type { BudgetFormData } from '@/types/budget';
 
 function getAuthHeaders(): Record<string, string> {
@@ -22,13 +23,13 @@ async function fetchAuth<T>(url: string, init?: RequestInit): Promise<T> {
   });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
-    const msg =
-      (typeof data?.detail === 'string' ? data.detail : null) ||
-      (data?.error as string) ||
-      `Request failed: ${res.status}`;
-    throw new Error(msg);
+    throw new Error(messageFromApiErrorJson(data, `Request failed: ${res.status}`));
   }
   return data as T;
+}
+
+export function budgetDocumentKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
 }
 
 type BudgetCategoryApi = 'PERSONNEL_STAFF' | 'PROGRAM_ACTIVITY' | 'EQUIPMENT_SUPPLIES' | 'CUSTOM';
@@ -97,8 +98,8 @@ function buildBudgetItems(formData: BudgetFormData): {
   return rows;
 }
 
-/** Submit full wizard to API in one sequence (draft → items → justification → docs → submit). */
-export async function submitProgramBudgetWizard(
+/** Step 1 — create draft program */
+export async function postProgramStep1(
   departmentId: string,
   formData: BudgetFormData
 ): Promise<{ programId: string }> {
@@ -122,18 +123,32 @@ export async function submitProgramBudgetWizard(
   if (!programId) {
     throw new Error('Program step1 did not return program_id');
   }
+  return { programId: String(programId) };
+}
 
+/** Step 2 — budget line items */
+export async function patchProgramStep2(
+  programId: string,
+  formData: BudgetFormData
+): Promise<void> {
+  const base = getApiBaseUrl();
   const budgetItems = buildBudgetItems(formData);
   if (budgetItems.length === 0) {
     throw new Error('No budget line items with amount greater than zero');
   }
-
   await fetchAuth(`${base}/programs/${programId}/step2/`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify({ budget_items: budgetItems }),
   });
+}
 
+/** Step 3 — justification */
+export async function patchProgramStep3(
+  programId: string,
+  formData: BudgetFormData
+): Promise<void> {
+  const base = getApiBaseUrl();
   const nb = parseInt(String(formData.numberOfBeneficiaries ?? '').replace(/\D/g, ''), 10);
 
   await fetchAuth(`${base}/programs/${programId}/step3/`, {
@@ -148,28 +163,79 @@ export async function submitProgramBudgetWizard(
       implementation_timeline: formData.implementationTimeline?.trim() ?? '',
     }),
   });
+}
 
-  for (const file of formData.documents) {
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch(`${base}/programs/${programId}/step4/documents/`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: fd,
-    });
-    if (!res.ok) {
-      const err = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-      throw new Error(
-        (typeof err?.detail === 'string' ? err.detail : null) || `Upload failed: ${res.status}`
-      );
-    }
+/** Step 4 — one supporting document */
+export async function postProgramStep4Document(programId: string, file: File): Promise<void> {
+  const base = getApiBaseUrl();
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch(`${base}/programs/${programId}/step4/documents/`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: fd,
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    throw new Error(messageFromApiErrorJson(err, `Upload failed: ${res.status}`));
   }
+}
 
+/** Upload only files whose keys are not already in uploadedKeys; adds keys after each success */
+export async function uploadProgramStep4Documents(
+  programId: string,
+  files: File[],
+  uploadedKeys: Set<string>
+): Promise<void> {
+  for (const file of files) {
+    const key = budgetDocumentKey(file);
+    if (uploadedKeys.has(key)) {
+      continue;
+    }
+    await postProgramStep4Document(programId, file);
+    uploadedKeys.add(key);
+  }
+}
+
+/** Step 5 — submit for approval */
+export async function postProgramStep5Submit(programId: string): Promise<void> {
+  const base = getApiBaseUrl();
   await fetchAuth(`${base}/programs/${programId}/step5/submit/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify({}),
   });
+}
 
-  return { programId: String(programId) };
+/**
+ * Full pipeline: step1 (if needed) → step2 → step3 → step4 (new files only) → step5 submit.
+ * Use after progressive saves or as a single-shot submit.
+ */
+export async function completeBudgetWizardSubmission(
+  departmentId: string,
+  formData: BudgetFormData,
+  existingProgramId: string | undefined,
+  uploadedDocKeys: Set<string>
+): Promise<{ programId: string }> {
+  let programId = existingProgramId?.trim() || '';
+
+  if (!programId) {
+    const created = await postProgramStep1(departmentId, formData);
+    programId = created.programId;
+  }
+
+  await patchProgramStep2(programId, formData);
+  await patchProgramStep3(programId, formData);
+  await uploadProgramStep4Documents(programId, formData.documents, uploadedDocKeys);
+  await postProgramStep5Submit(programId);
+
+  return { programId };
+}
+
+/** @deprecated Prefer completeBudgetWizardSubmission + granular step calls */
+export async function submitProgramBudgetWizard(
+  departmentId: string,
+  formData: BudgetFormData
+): Promise<{ programId: string }> {
+  return completeBudgetWizardSubmission(departmentId, formData, undefined, new Set());
 }

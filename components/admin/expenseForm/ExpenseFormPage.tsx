@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   ChevronLeft,
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Expense, ExpenseItem } from '@/types/expense';
 import { Department } from '@/types/Department';
-import { getExpenseCategories, type ExpenseCategoryItem } from '@/lib/treasuryApi';
+import { fetchExpenseCategoriesActive, type ExpenseCategoryItem } from '@/lib/treasuryApi';
 import ExpenseDashboardHeader from './ExpenseDashboardHeader';
 
 interface Props {
@@ -84,14 +85,36 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
   const [documents, setDocuments] = useState<File[]>([]);
   const [error, setError] = useState('');
   const [expenseCategories, setExpenseCategories] = useState<ExpenseCategoryItem[]>([]);
+  const [categoriesError, setCategoriesError] = useState('');
+  const [showExpenseCategoryHelp, setShowExpenseCategoryHelp] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [fastTracked, setFastTracked] = useState(false);
 
   useEffect(() => {
-    void getExpenseCategories().then((cats) => {
-      setExpenseCategories(cats.filter((c) => c.is_active));
-    });
+    let cancelled = false;
+    setCategoriesError('');
+    setShowExpenseCategoryHelp(false);
+    void (async () => {
+      try {
+        const cats = await fetchExpenseCategoriesActive();
+        if (cancelled) {
+          return;
+        }
+        setExpenseCategories(cats);
+        setShowExpenseCategoryHelp(cats.length === 0);
+      } catch (e) {
+        if (!cancelled) {
+          setExpenseCategories([]);
+          setCategoriesError(
+            e instanceof Error ? e.message : 'Could not load expense categories from the server.'
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -331,6 +354,41 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
                         </option>
                       ))}
                     </select>
+                    {categoriesError && (
+                      <p className="text-xs text-red-600 mt-1.5" role="alert">
+                        {categoriesError}
+                      </p>
+                    )}
+                    {!categoriesError && showExpenseCategoryHelp && (
+                      <div className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mt-1.5 space-y-1.5 leading-relaxed">
+                        <p>There are no expense categories for your church yet.</p>
+                        <p>
+                          Sign in with a <strong>treasury</strong> account and open{' '}
+                          <Link
+                            href="/treasury/expense-categories"
+                            className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950"
+                          >
+                            Treasury → Expense categories
+                          </Link>{' '}
+                          (
+                          <span className="font-mono text-[11px]">
+                            /treasury/expense-categories
+                          </span>
+                          ), or as <strong>church admin</strong> open{' '}
+                          <Link
+                            href="/admin/treasury/expense-categories"
+                            className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950"
+                          >
+                            Admin → Treasury → Expense categories
+                          </Link>{' '}
+                          (
+                          <span className="font-mono text-[11px]">
+                            /admin/treasury/expense-categories
+                          </span>
+                          ). Use name + short code (e.g. Utilities / UTIL).
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
