@@ -65,8 +65,9 @@ export default function BudgetWizardPage() {
     const { documents: _ignored, ...draftRest } = raw;
     const defaultFiscalYear = String(new Date().getFullYear());
     const fy = raw.fiscalYear?.trim() ? raw.fiscalYear : defaultFiscalYear;
-    return {
-      draftProgramId: draftRest.draftProgramId ?? '',
+    /** Spreads only — avoids TS1117 when the same keys exist in `draftRest`. */
+    const defaults: BudgetFormData = {
+      draftProgramId: '',
       title: '',
       fiscalYear: fy,
       departmentId: departmentId ?? '',
@@ -86,8 +87,13 @@ export default function BudgetWizardPage() {
       implementationTimeline: '',
       justification: '',
       documents: [],
+    };
+    return {
+      ...defaults,
       ...draftRest,
       fiscalYear: fy,
+      departmentId: departmentId ?? '',
+      documents: [],
     };
   });
 

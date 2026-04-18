@@ -66,11 +66,11 @@ async function fetchAuthSafe<T>(
 
 function normalizeListResponse<T>(data: unknown): T[] {
   if (Array.isArray(data)) {
-    return data;
+    return data as T[];
   }
   if (data && typeof data === 'object' && 'results' in data) {
     const r = (data as { results?: unknown }).results;
-    return Array.isArray(r) ? r : [];
+    return (Array.isArray(r) ? r : []) as T[];
   }
   return [];
 }
@@ -547,7 +547,7 @@ export async function fetchExpenseCategoriesAll(): Promise<ExpenseCategoryItem[]
     `${base}/treasury/expense-categories/`,
     { method: 'GET' }
   );
-  return normalizeListResponse(raw);
+  return normalizeListResponse<ExpenseCategoryItem>(raw);
 }
 
 /** POST /api/treasury/expense-categories/ — treasury / church-scoped category. */
@@ -575,7 +575,7 @@ export async function fetchExpenseCategoriesActive(): Promise<ExpenseCategoryIte
     `${base}/treasury/expense-categories/?is_active=true`,
     { method: 'GET' }
   );
-  let list = normalizeListResponse(activeFirst);
+  let list = normalizeListResponse<ExpenseCategoryItem>(activeFirst);
   if (list.length > 0) {
     return list.filter((c) => c.is_active !== false);
   }
@@ -583,7 +583,7 @@ export async function fetchExpenseCategoriesActive(): Promise<ExpenseCategoryIte
     `${base}/treasury/expense-categories/`,
     { method: 'GET' }
   );
-  list = normalizeListResponse(all);
+  list = normalizeListResponse<ExpenseCategoryItem>(all);
   return list.filter((c) => c.is_active !== false);
 }
 
