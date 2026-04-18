@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { X, Printer, Save, Eye, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { BudgetFormData } from '@/types/budget';
@@ -11,7 +11,14 @@ import DocumentsStep from '@/components/admin/budgetWizard/DocumentsStep';
 import ReviewStep from '@/components/admin/budgetWizard/ReviewStep';
 import BudgetDashboardHeader from '@/components/admin/budgetWizard/BudgetDashboardHeader';
 import { useDepartments } from '@/context/DepartmentsContext';
-import { submitProgramBudgetWizard } from '@/lib/programBudgetApi';
+import {
+  completeBudgetWizardSubmission,
+  patchProgramStep2,
+  patchProgramStep3,
+  postProgramStep1,
+  uploadProgramStep4Documents,
+} from '@/lib/programBudgetApi';
+import { fetchDepartmentsForProgram } from '@/lib/departmentsApi';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/usePermissions';
 
@@ -46,13 +53,23 @@ export default function BudgetWizardPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [savingStep, setSavingStep] = useState(false);
+  /** Tracks files already POSTed to step4 for this draft program (skip duplicates). */
+  const uploadedDocKeysRef = useRef<Set<string>>(new Set());
+  /** Ensures directory prefill runs once per department — avoids overwriting user edits when the API resolves late. */
+  const contactPrefillAppliedForDeptRef = useRef<string | null>(null);
 
   // Lazy initializer — reads draft from localStorage once on mount, no useEffect needed
   const [formData, setFormData] = useState<BudgetFormData>(() => {
-    const { documents: _ignored, ...draft } = loadDraft(departmentId);
-    return {
+    const raw = loadDraft(departmentId);
+    const { documents: _ignored, ...draftRest } = raw;
+    const defaultFiscalYear = String(new Date().getFullYear());
+    const fy = raw.fiscalYear?.trim() ? raw.fiscalYear : defaultFiscalYear;
+    /** Spreads only — avoids TS1117 when the same keys exist in `draftRest`. */
+    const defaults: BudgetFormData = {
+      draftProgramId: '',
       title: '',
-      fiscalYear: '',
+      fiscalYear: fy,
       departmentId: departmentId ?? '',
       departmentHead: '',
       phoneNumber: '',
@@ -70,17 +87,62 @@ export default function BudgetWizardPage() {
       implementationTimeline: '',
       justification: '',
       documents: [],
-      ...draft,
+    };
+    return {
+      ...defaults,
+      ...draftRest,
+      fiscalYear: fy,
+      departmentId: departmentId ?? '',
+      documents: [],
     };
   });
 
+  useEffect(() => {
+    setFormData((prev) =>
+      prev.departmentId === departmentId ? prev : { ...prev, departmentId: departmentId ?? '' }
+    );
+  }, [departmentId]);
+
+  /** Prefill department head contact from GET /api/departments/for-program/ (once per department). */
+  useEffect(() => {
+    if (!departmentId || contactPrefillAppliedForDeptRef.current === departmentId) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await fetchDepartmentsForProgram();
+        const row = rows.find((r) => r.id === departmentId);
+        if (cancelled) {
+          return;
+        }
+        contactPrefillAppliedForDeptRef.current = departmentId;
+        if (!row) {
+          return;
+        }
+        setFormData((prev) => ({
+          ...prev,
+          departmentHead: prev.departmentHead?.trim() || row.head_name || prev.departmentHead || '',
+          phoneNumber: prev.phoneNumber?.trim() || row.head_phone || prev.phoneNumber || '',
+          emailAddress: prev.emailAddress?.trim() || row.head_email || prev.emailAddress || '',
+        }));
+      } catch {
+        contactPrefillAppliedForDeptRef.current = departmentId;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [departmentId]);
+
+  const currentDepartment = departments.find((d) => d.id === departmentId);
+
   // ── Route guard — AFTER all hooks ──
-  if (!can('canAssignBudget')) {
+  // Admins use canAssignBudget; department heads submit their own department's budget request.
+  if (!can('canAssignBudget') && !can('canSubmitDepartmentBudget')) {
     router.replace(`/${role}/departments`);
     return null;
   }
-
-  const currentDepartment = departments.find((d) => d.id === departmentId);
 
   const categoryTotal = (items: BudgetFormData['personnel']) =>
     items.reduce((sum, item) => sum + item.quantity * item.unitCost, 0);
@@ -134,7 +196,7 @@ export default function BudgetWizardPage() {
     return '';
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const error = validateStep(step);
     if (error) {
       setStepError(error);
@@ -142,7 +204,32 @@ export default function BudgetWizardPage() {
     }
     setStepError('');
     setSubmitError('');
-    setStep((prev) => Math.min(prev + 1, 5));
+    setSavingStep(true);
+    try {
+      if (step === 1) {
+        if (!formData.draftProgramId?.trim()) {
+          const { programId } = await postProgramStep1(departmentId, formData);
+          setFormData((prev) => ({ ...prev, draftProgramId: programId }));
+        }
+      } else {
+        const pid = formData.draftProgramId?.trim();
+        if (!pid) {
+          throw new Error('No saved draft program. Go back to Step 1 or refresh the page.');
+        }
+        if (step === 2) {
+          await patchProgramStep2(pid, formData);
+        } else if (step === 3) {
+          await patchProgramStep3(pid, formData);
+        } else if (step === 4) {
+          await uploadProgramStep4Documents(pid, formData.documents, uploadedDocKeysRef.current);
+        }
+      }
+      setStep((prev) => Math.min(prev + 1, 5));
+    } catch (e) {
+      setStepError(e instanceof Error ? e.message : 'Could not save this step');
+    } finally {
+      setSavingStep(false);
+    }
   };
 
   const handleSaveDraft = () => {
@@ -167,7 +254,12 @@ export default function BudgetWizardPage() {
     setSubmitError('');
     setSubmitting(true);
     try {
-      await submitProgramBudgetWizard(departmentId, formData);
+      await completeBudgetWizardSubmission(
+        departmentId,
+        formData,
+        formData.draftProgramId?.trim() || undefined,
+        uploadedDocKeysRef.current
+      );
       await syncDepartmentBudgetFromApi(departmentId);
       localStorage.removeItem(`budget_draft_${departmentId}`);
       setSubmitted(true);
@@ -284,7 +376,16 @@ export default function BudgetWizardPage() {
 
         {/* Form Area */}
         <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-sm">
-          {step === 1 && <BasicInfoStep formData={formData} setFormData={setFormData} />}
+          {step === 1 && (
+            <BasicInfoStep
+              formData={formData}
+              setFormData={setFormData}
+              fixedDepartment={{
+                id: departmentId,
+                name: currentDepartment?.name ?? 'Department',
+              }}
+            />
+          )}
           {step === 2 && <BudgetItemsStep formData={formData} setFormData={setFormData} />}
           {step === 3 && <JustificationStep formData={formData} setFormData={setFormData} />}
           {step === 4 && <DocumentsStep formData={formData} setFormData={setFormData} />}
@@ -325,10 +426,12 @@ export default function BudgetWizardPage() {
             </button>
             {step < 5 ? (
               <button
-                onClick={handleNext}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition"
+                type="button"
+                disabled={savingStep}
+                onClick={() => void handleNext()}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next <ChevronRight size={16} />
+                {savingStep ? 'Saving…' : 'Next'} <ChevronRight size={16} />
               </button>
             ) : (
               <button

@@ -66,11 +66,11 @@ async function fetchAuthSafe<T>(
 
 function normalizeListResponse<T>(data: unknown): T[] {
   if (Array.isArray(data)) {
-    return data;
+    return data as T[];
   }
   if (data && typeof data === 'object' && 'results' in data) {
     const r = (data as { results?: unknown }).results;
-    return Array.isArray(r) ? r : [];
+    return (Array.isArray(r) ? r : []) as T[];
   }
   return [];
 }
@@ -532,6 +532,59 @@ export async function getExpenseCategories(): Promise<ExpenseCategoryItem[]> {
     []
   );
   return Array.isArray(raw) ? raw : [];
+}
+
+/**
+ * Active expense categories for forms — uses authenticated fetch so API/auth errors surface
+ * (getExpenseCategories uses fetchAuthSafe and can return [] without indicating failure).
+ * If `?is_active=true` returns nothing (common when nothing is seeded as “active”), falls back
+ * to the full list and keeps categories that are active or unset.
+ */
+/** GET all expense categories (treasury manage screen). */
+export async function fetchExpenseCategoriesAll(): Promise<ExpenseCategoryItem[]> {
+  const base = getApiBaseUrl();
+  const raw = await fetchAuth<ExpenseCategoryItem[] | { results?: ExpenseCategoryItem[] }>(
+    `${base}/treasury/expense-categories/`,
+    { method: 'GET' }
+  );
+  return normalizeListResponse<ExpenseCategoryItem>(raw);
+}
+
+/** POST /api/treasury/expense-categories/ — treasury / church-scoped category. */
+export async function createExpenseCategory(body: {
+  name: string;
+  code: string;
+  description?: string;
+  is_active?: boolean;
+}): Promise<ExpenseCategoryItem> {
+  const base = getApiBaseUrl();
+  return fetchAuth<ExpenseCategoryItem>(`${base}/treasury/expense-categories/`, {
+    method: 'POST',
+    body: JSON.stringify({
+      name: body.name.trim(),
+      code: body.code.trim().toUpperCase(),
+      description: (body.description ?? '').trim(),
+      is_active: body.is_active !== false,
+    }),
+  });
+}
+
+export async function fetchExpenseCategoriesActive(): Promise<ExpenseCategoryItem[]> {
+  const base = getApiBaseUrl();
+  const activeFirst = await fetchAuth<ExpenseCategoryItem[] | { results?: ExpenseCategoryItem[] }>(
+    `${base}/treasury/expense-categories/?is_active=true`,
+    { method: 'GET' }
+  );
+  let list = normalizeListResponse<ExpenseCategoryItem>(activeFirst);
+  if (list.length > 0) {
+    return list.filter((c) => c.is_active !== false);
+  }
+  const all = await fetchAuth<ExpenseCategoryItem[] | { results?: ExpenseCategoryItem[] }>(
+    `${base}/treasury/expense-categories/`,
+    { method: 'GET' }
+  );
+  list = normalizeListResponse<ExpenseCategoryItem>(all);
+  return list.filter((c) => c.is_active !== false);
 }
 
 /** POST /api/treasury/expense-requests/{id}/approve-dept-head/ */

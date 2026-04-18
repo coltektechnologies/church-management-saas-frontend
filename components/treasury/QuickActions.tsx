@@ -2,7 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
+import {
+  BookOpen,
+  FileText,
+  PlusCircle,
+  CreditCard,
+  ClipboardList,
+  Tags,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface QuickActionsProps {
   onRecordIncome?: () => void;
@@ -13,48 +21,69 @@ interface QuickActionsProps {
   onFinancialStatement?: () => void;
 }
 
-const actions = [
+type ActionDef =
+  | {
+      label: string;
+      icon: LucideIcon;
+      color: string;
+      handler:
+        | 'onRecordIncome'
+        | 'onRecordExpenditure'
+        | 'onExpenseRequest'
+        | 'onMemberContribution'
+        | 'onAssetRegister'
+        | 'onFinancialStatement';
+    }
+  | {
+      label: string;
+      icon: LucideIcon;
+      color: string;
+      href: string;
+    };
+
+const actions: ActionDef[] = [
   {
     label: 'Record income',
-    icon: '/treasury/record-income.svg',
-    color:
-      'bg-[#0B2A4A] hover:bg-[#1e3a8a]/90 hover:-translate-y-1 transition-all duration-150 ease-in  text-white border-transparent',
-    handler: 'onRecordIncome' as const,
+    icon: BookOpen,
+    color: 'bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white border-transparent',
+    handler: 'onRecordIncome',
   },
   {
     label: 'Record expense',
-    icon: '/treasury/record-expense.svg',
-    color:
-      'bg-[#2dd4bf] hover:bg-[#2dd4bf]/90 hover:-translate-y-1 transition-all duration-150 ease-in text-white border-transparent',
-    handler: 'onRecordExpenditure' as const,
+    icon: FileText,
+    color: 'bg-[#2dd4bf] hover:bg-[#2dd4bf]/90 text-white border-transparent',
+    handler: 'onRecordExpenditure',
+  },
+  {
+    label: 'Expense categories',
+    icon: Tags,
+    color: 'bg-violet-600 hover:bg-violet-600/90 text-white border-transparent',
+    href: '/admin/treasury/expense-categories',
   },
   {
     label: 'Expense Request',
-    icon: '/treasury/expense-request.svg',
-    color:
-      'bg-[#3b82f6] hover:bg-[#3b82f6]/90 hover:-translate-y-1 transition-all duration-150 ease-in text-white border-transparent',
-    handler: 'onExpenseRequest' as const,
+    icon: CreditCard,
+    color: 'bg-[#3b82f6] hover:bg-[#3b82f6]/90 text-white border-transparent',
+    handler: 'onExpenseRequest',
   },
   {
     label: 'Member Contribution',
-    icon: '/treasury/member-contribution.svg',
-    color:
-      'bg-white hover:bg-muted hover:-translate-y-1 transition-all duration-150 ease-in text-foreground border border-border',
-    handler: 'onMemberContribution' as const,
+    icon: PlusCircle,
+    color: 'bg-white hover:bg-muted text-foreground border border-border',
+    handler: 'onMemberContribution',
   },
   {
     label: 'Asset Register',
-    icon: '/treasury/asset-register.svg',
-    color:
-      'bg-white hover:bg-muted hover:-translate-y-1 transition-all duration-150 ease-in text-foreground border border-border [&>svg]:text-emerald-500',
-    handler: 'onAssetRegister' as const,
+    icon: ClipboardList,
+    color: 'bg-white hover:bg-muted text-foreground border border-border [&>svg]:text-emerald-500',
+    handler: 'onAssetRegister',
   },
   {
     label: 'Financial Statement',
     icon: '/treasury/financial-statement.svg',
     color:
-      'bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 border hover:-translate-y-1 transition-all duration-150 ease-in border-emerald-200 mt-2 sm:mt-0 lg:ml-auto w-full sm:w-auto',
-    handler: 'onFinancialStatement' as const,
+      'bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 border border-emerald-200 mt-2 sm:mt-0 lg:ml-auto w-full sm:w-auto',
+    handler: 'onFinancialStatement',
   },
 ];
 
@@ -78,7 +107,9 @@ export function QuickActions(props: QuickActionsProps) {
         <Button
           key={action.label}
           size="sm"
-          onClick={() => handleAction(action.handler)}
+          onClick={() =>
+            'href' in action ? router.push(action.href) : handleAction(action.handler)
+          }
           className={`${action.color} rounded-md px-4 h-9 gap-2 shadow-sm cursor-pointer font-medium transition-colors`}
         >
           <Image alt={`${action.label}`} src={action.icon} width={24} height={24} />
