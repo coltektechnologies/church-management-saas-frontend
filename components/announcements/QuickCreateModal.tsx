@@ -43,6 +43,7 @@ import {
   type ExpiryMode,
   type SchedulePublish,
 } from '@/lib/announcementSchedule';
+import { canInstantPublishAnnouncementsFromUi } from '@/lib/announcementPublishPolicy';
 
 interface QuickCreateModalProps {
   open: boolean;
@@ -118,6 +119,7 @@ const defaultForm = (): QuickCreateFormData => ({
 export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreateModalProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<QuickCreateFormData>(defaultForm);
+  const instantPublish = canInstantPublishAnnouncementsFromUi();
 
   // Sync incoming initialData if present when modal opens
   React.useEffect(() => {
@@ -638,9 +640,13 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
                 <div className="size-16 rounded-full bg-success/20 flex items-center justify-center text-success mb-2">
                   <span className="text-2xl">✓</span>
                 </div>
-                <h3 className="text-xl font-bold">Ready to Publish</h3>
+                <h3 className="text-xl font-bold">
+                  {instantPublish ? 'Ready to Publish' : 'Submit for approval'}
+                </h3>
                 <p className="text-muted-foreground max-w-[280px]">
-                  Your announcement is ready! You can save it as a draft or publish it right away.
+                  {instantPublish
+                    ? 'Your announcement is ready. Save a draft or publish when you are satisfied.'
+                    : 'Save a draft, or send this announcement to the secretariat for review and publishing.'}
                 </p>
               </div>
             )}
@@ -682,7 +688,11 @@ export function QuickCreateModal({ open, onOpenChange, initialData }: QuickCreat
                     disabled={createMutation.isPending || updateMutation.isPending}
                     className="bg-[var(--color-success)] hover:bg-[var(--color-success)]/90 text-primary"
                   >
-                    {formData.id ? 'Save Changes' : 'Publish'}
+                    {formData.id
+                      ? 'Save Changes'
+                      : instantPublish
+                        ? 'Publish'
+                        : 'Submit for approval'}
                   </Button>
                 </>
               )}

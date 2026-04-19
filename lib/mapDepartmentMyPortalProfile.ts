@@ -4,7 +4,11 @@
 
 import type { DepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 import { THEME_COLOR_HEX, type ThemeColor } from '@/constants/departments';
-import { type DepartmentMyPortalResponse, parseThemeColor } from '@/lib/departmentsApi';
+import {
+  type DepartmentDetailResponse,
+  type DepartmentMyPortalResponse,
+  parseThemeColor,
+} from '@/lib/departmentsApi';
 
 function memberFullName(v: Record<string, unknown>): string {
   const parts = [v.first_name, v.middle_name, v.last_name]
@@ -15,6 +19,22 @@ function memberFullName(v: Record<string, unknown>): string {
 
 function portalRoleLabel(role: DepartmentMyPortalResponse['portal_role']): string {
   return role === 'elder_in_charge' ? 'Elder in charge' : 'Department Head';
+}
+
+/** Apply when switching portal context from a department UUID (e.g. notification deep link). */
+export function mapDepartmentDetailToProfilePatch(
+  detail: DepartmentDetailResponse
+): Partial<DepartmentProfile> {
+  const themeKey = parseThemeColor(detail.color) as ThemeColor;
+  const primaryHex = THEME_COLOR_HEX[themeKey];
+  const name = typeof detail.name === 'string' ? detail.name.trim() : '';
+  const code = typeof detail.code === 'string' ? detail.code.trim() : '';
+  return {
+    portalDepartmentId: typeof detail.id === 'string' ? detail.id : '',
+    departmentName: name,
+    departmentCode: code,
+    ...(primaryHex ? { primaryColor: primaryHex, darkPrimaryColor: primaryHex } : {}),
+  };
 }
 
 export function mapMyPortalToProfilePatch(

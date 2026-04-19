@@ -612,6 +612,21 @@ export async function createDepartmentActivity(
   });
 }
 
+export async function updateDepartmentActivity(
+  departmentId: string,
+  activityId: string,
+  body: Partial<CreateActivityBody>
+): Promise<DepartmentActivityRow> {
+  const base = getApiBaseUrl();
+  return fetchAuth<DepartmentActivityRow>(
+    `${base}/departments/${departmentId}/activities/${activityId}/`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }
+  );
+}
+
 export async function deleteDepartmentActivity(
   departmentId: string,
   activityId: string
@@ -669,6 +684,12 @@ function inferProgramApprovalDepartment(
     return 'TREASURY';
   }
   return null;
+}
+
+/** GET /api/programs/{id}/ — for deep links (notification → department context). */
+export async function fetchProgramDetail(programId: string): Promise<ProgramListItem> {
+  const base = getApiBaseUrl();
+  return fetchAuth<ProgramListItem>(`${base}/programs/${programId}/`, { method: 'GET' });
 }
 
 /** GET /api/programs/?status= */

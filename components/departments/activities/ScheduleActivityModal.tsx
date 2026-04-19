@@ -16,9 +16,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Clock, MapPin, Activity } from 'lucide-react';
+import { CalendarDays, Clock, MapPin, Activity, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
+import { toast } from 'sonner';
+import {
+  createDepartmentActivity,
+  updateDepartmentActivity,
+  type CreateActivityBody,
+} from '@/lib/departmentsApi';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Activity Name is required'),
@@ -30,11 +36,43 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+export type ScheduleActivityInitial = FormValues;
+
+function normalizeTimeForApi(time: string | undefined): string | null {
+  const t = time?.trim();
+  if (!t) {
+    return null;
+  }
+  if (t.length === 5 && t.includes(':')) {
+    return `${t}:00`;
+  }
+  return t;
+}
+
+function formValuesToBodies(data: FormValues): CreateActivityBody {
+  const startDate = data.date.trim();
+  return {
+    title: data.name.trim(),
+    description: data.description?.trim() || '',
+    status: 'UPCOMING',
+    start_date: startDate,
+    end_date: startDate,
+    start_time: normalizeTimeForApi(data.time),
+    end_time: null,
+    location: data.location?.trim() ? data.location.trim() : null,
+  };
+}
+
 export interface ScheduleActivityModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: FormValues;
+  initialData?: ScheduleActivityInitial;
   isEditing?: boolean;
+  /** Portal department UUID — required to call the API */
+  departmentId: string | null;
+  /** When set, PATCH this activity */
+  editingActivityId?: string | null;
+  onSaved?: () => void;
 }
 
 export function ScheduleActivityModal({
@@ -42,7 +80,12 @@ export function ScheduleActivityModal({
   onOpenChange,
   initialData,
   isEditing = false,
+  departmentId,
+  editingActivityId = null,
+  onSaved,
 }: ScheduleActivityModalProps) {
+  const [submitting, setSubmitting] = React.useState(false);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData || {
@@ -54,7 +97,6 @@ export function ScheduleActivityModal({
     },
   });
 
-  // Effect to update form when initialData changes (e.g., when editing different items)
   React.useEffect(() => {
     if (initialData) {
       form.reset(initialData);
@@ -69,10 +111,37 @@ export function ScheduleActivityModal({
     }
   }, [initialData, form, open]);
 
-  const onSubmit = (data: FormValues) => {
-    console.log('Submitted activity data ready for backend:', data);
-    // TODO: Connect to backend sequence
-    onOpenChange(false);
+  const onSubmit = async (data: FormValues) => {
+    if (!departmentId) {
+      toast.error('No department selected. Try reloading the portal.');
+      return;
+    }
+
+    const body = formValuesToBodies(data);
+    setSubmitting(true);
+    try {
+      if (isEditing && editingActivityId) {
+        await updateDepartmentActivity(departmentId, editingActivityId, body);
+        toast.success('Activity updated');
+      } else {
+        await createDepartmentActivity(departmentId, body);
+        toast.success('Activity scheduled');
+      }
+      onSaved?.();
+      onOpenChange(false);
+      form.reset({
+        name: '',
+        date: '',
+        time: '',
+        location: '',
+        description: '',
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -236,14 +305,25 @@ export function ScheduleActivityModal({
                     variant="ghost"
                     className="bg-[#DDE4EE] text-[#1c2c44] hover:bg-[#c9d4e5] hover:text-[#1c2c44] font-semibold text-[15px] h-11 px-8 rounded-[8px]"
                     onClick={() => onOpenChange(false)}
+                    disabled={submitting}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
+                    disabled={submitting}
                     className="bg-[#1c3c5a] text-white hover:bg-[#142d45] font-semibold text-[15px] h-11 px-8 rounded-[8px] shadow-md border border-[#142d45]/20"
                   >
-                    {isEditing ? 'Save Changes' : 'Schedule Activity'}
+                    {submitting ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                        Saving…
+                      </span>
+                    ) : isEditing ? (
+                      'Save Changes'
+                    ) : (
+                      'Schedule Activity'
+                    )}
                   </Button>
                 </div>
               </form>
