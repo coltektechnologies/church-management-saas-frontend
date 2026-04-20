@@ -1,3 +1,4 @@
+import { IncomeForm } from '@/components/treasury/RecordIncomeModal';
 import { ArrowDownCircle } from 'lucide-react';
 
 export default function IncomeRecordingPage() {
@@ -21,13 +22,7 @@ export default function IncomeRecordingPage() {
 
       {/* Placeholder content card */}
       <div className="bg-card border border-border rounded-[20px] p-10 flex flex-col items-center justify-center gap-4 text-center min-h-[320px] shadow-sm">
-        <ArrowDownCircle size={48} className="text-muted-foreground/40" />
-        <p className="text-base font-semibold text-muted-foreground">
-          Income Recording — coming soon
-        </p>
-        <p className="text-xs text-muted-foreground/60 max-w-xs">
-          This section is under construction. Your content will appear here.
-        </p>
+        <IncomeForm />
       </div>
     </div>
   );

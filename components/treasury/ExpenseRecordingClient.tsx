@@ -66,18 +66,36 @@ const formSchema = z.object({
   amount: z.string().min(1, 'Amount is required'),
   currency: z.string().min(1, 'Currency is required'),
   paymentMethod: z.string().min(1, 'Payment method is required'),
-  paidTo: z.string().min(1, 'Payee is required'),
+  paidTo: z.string().optional(),
   phoneNumber: z.string().optional(),
   idNumber: z.string().optional(),
   vendorRegistration: z.string().optional(),
   receiptFile: z.any().optional(),
+
+  // Mobile Money dynamic fields
+  transactionId: z.string().optional(),
+  momoNumber: z.string().optional(),
+  momoName: z.string().optional(),
+
+  // Cash dynamic fields
+  cashRecipientName: z.string().optional(),
+  recipientRole: z.string().optional(),
+
+  // Cheque dynamic fields
+  chequeNumber: z.string().optional(),
+  chequeBankName: z.string().optional(),
+  chequePayeeName: z.string().optional(),
+
+  // Bank dynamic fields
+  bankName: z.string().optional(),
+  accountName: z.string().optional(),
+  accountNumber: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function RecordExpensePage({ backLink = '' }: { backLink: string }) {
   const [activeTab, setActiveTab] = useState('All');
-  const [, setPaymentMethod] = useState('Cash');
 
   // Modals state
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -105,6 +123,17 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
       idNumber: '',
       vendorRegistration: '',
       receiptFile: undefined,
+      transactionId: '',
+      momoNumber: '',
+      momoName: '',
+      cashRecipientName: '',
+      recipientRole: '',
+      chequeNumber: '',
+      chequeBankName: '',
+      chequePayeeName: '',
+      bankName: '',
+      accountName: '',
+      accountNumber: '',
     },
   });
 
@@ -112,6 +141,8 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
     console.log('Valid Form Submitted', data);
     // Integration logic here
   };
+
+  const currentPaymentMethod = form.watch('paymentMethod');
 
   const summaryCards = [
     { label: 'Pending Requests', value: '8', icon: Hourglass, bg: 'bg-[#f59e0b]' },
@@ -449,7 +480,6 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                                   key={method.id}
                                   type="button"
                                   onClick={() => {
-                                    setPaymentMethod(method.id);
                                     field.onChange(method.id);
                                   }}
                                   className={`flex-1 flex flex-col items-center justify-center h-[54px] rounded-lg border transition-all ${
@@ -473,85 +503,203 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <FormField
-                    control={form.control}
-                    name="paidTo"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
-                          <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Paid to{' '}
-                          <span className="text-red-500">*</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
-                          <Phone className="w-3.5 h-3.5 text-[#28c1a6]" /> Phone Number
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="tel"
-                            className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                {/* Dynamic Fields Based on Payment Method */}
+                {currentPaymentMethod === 'Cash' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <FormField
+                      control={form.control}
+                      name="cashRecipientName"
+                      render={({ field }) => (
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                            <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Name of Individual
+                          </FormLabel>
+                          <FormControl>
+                            <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="recipientRole"
+                      render={({ field }) => (
+                        <FormItem className="space-y-1.5">
+                          <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                            <IdCard className="w-3.5 h-3.5 text-[#28c1a6]" /> Their Role in Organisation
+                          </FormLabel>
+                          <FormControl>
+                            <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <FormField
-                    control={form.control}
-                    name="idNumber"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
-                          <IdCard className="w-3.5 h-3.5 text-[#28c1a6]" /> ID Number
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="vendorRegistration"
-                    render={({ field }) => (
-                      <FormItem className="space-y-1.5">
-                        <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
-                          <FileText className="w-3.5 h-3.5 text-[#28c1a6]" /> Vendor Registration
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                {currentPaymentMethod === 'Mobile' && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <FormField
+                        control={form.control}
+                        name="transactionId"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <FileText className="w-3.5 h-3.5 text-[#28c1a6]" /> Transaction ID
+                            </FormLabel>
+                            <FormControl>
+                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="momoNumber"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <Phone className="w-3.5 h-3.5 text-[#28c1a6]" /> Number
+                            </FormLabel>
+                            <FormControl>
+                              <Input type="tel" className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <FormField
+                        control={form.control}
+                        name="momoName"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {currentPaymentMethod === 'Cheque' && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <FormField
+                        control={form.control}
+                        name="chequeNumber"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <FileText className="w-3.5 h-3.5 text-[#28c1a6]" /> Cheque Number
+                            </FormLabel>
+                            <FormControl>
+                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="chequeBankName"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <Landmark className="w-3.5 h-3.5 text-[#28c1a6]" /> Bank Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <FormField
+                        control={form.control}
+                        name="chequePayeeName"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Payee Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {currentPaymentMethod === 'Bank' && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <FormField
+                        control={form.control}
+                        name="bankName"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <Landmark className="w-3.5 h-3.5 text-[#28c1a6]" /> Bank Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="accountName"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Account Name
+                            </FormLabel>
+                            <FormControl>
+                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <FormField
+                        control={form.control}
+                        name="accountNumber"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5">
+                            <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
+                              <FileText className="w-3.5 h-3.5 text-[#28c1a6]" /> Account Number
+                            </FormLabel>
+                            <FormControl>
+                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
