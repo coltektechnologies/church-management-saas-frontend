@@ -4,9 +4,11 @@
  * RecordIncomePage.tsx
  */
 
-import { useState, useEffect, useCallback, startTransition } from 'react';
+import { useState, useEffect, useCallback, startTransition, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Settings2, History } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
@@ -21,17 +23,72 @@ import CurrencyConverterModal from './CurrencyConverterModal';
 import SlideOverPanel from './SlideOverPanel';
 
 // ── Data / helpers ────────────────────────────────────────────────────────────
-import { loadRecords, saveRecords, getCurrencySymbol } from './recordIncomeData';
+import { loadRecords, saveRecords, getCurrencySymbol, type Member } from './recordIncomeData';
 import { appendActivity } from './activityHistory';
-import { getOptions } from './dropdownOptions';
+import { getOptions, type DropdownOption } from './dropdownOptions';
+import { getIncomeCategoriesStrict } from '@/lib/treasuryApi';
+import { getMembersListStrict, type BackendMember } from '@/lib/dashboardApi';
+import { submitTreasuryIncomeRecord } from '@/services/recordIncomeSubmit';
 
 const TREASURY_RECORD_SAVED_EVENT = 'treasury:record-saved';
+
+function toMemberRows(members: BackendMember[]): Member[] {
+  return members.map((m) => {
+    const name =
+      (m.full_name && String(m.full_name).trim()) ||
+      [m.first_name, m.last_name].filter(Boolean).join(' ') ||
+      'Member';
+    const phone = typeof m.phone_number === 'string' ? m.phone_number : '';
+    const email = typeof m.email === 'string' ? m.email : '';
+    const short = m.id.replace(/-/g, '').slice(0, 6).toUpperCase();
+    return {
+      id: m.id,
+      name,
+      phone,
+      email,
+      memberId: `ID ${short}`,
+    };
+  });
+}
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function RecordIncomePage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { profile } = useTreasuryProfile();
   const { profile: churchProfile } = useChurchProfile();
+
+  const {
+    data: rawCategories,
+    isLoading: catLoading,
+    isError: catError,
+  } = useQuery({
+    queryKey: ['treasury', 'record-income', 'categories'],
+    queryFn: getIncomeCategoriesStrict,
+  });
+
+  const incomeCategoryOptions = useMemo<DropdownOption[]>(() => {
+    if (!rawCategories?.length) {
+      return [];
+    }
+    return rawCategories
+      .filter((c) => c.is_active !== false)
+      .map((c) => ({ value: String(c.id), label: c.name }));
+  }, [rawCategories]);
+
+  const { data: backendMembers = [], isLoading: memLoading } = useQuery({
+    queryKey: ['treasury', 'record-income', 'members'],
+    queryFn: () => getMembersListStrict(250),
+  });
+
+  const pickerMembers = useMemo(() => toMemberRows(backendMembers), [backendMembers]);
+
+  const formDisabled =
+    catLoading ||
+    memLoading ||
+    catError ||
+    incomeCategoryOptions.length === 0 ||
+    pickerMembers.length === 0;
 
   // ── Theme ─────────────────────────────────────────────────────────────
   const isDark = profile.darkMode ?? false;
@@ -94,36 +151,51 @@ export default function RecordIncomePage() {
   const isMultiCurrency = [...new Set(entryLog.map((r) => r.currency))].length > 1;
 
   // ── Handlers ───────────────────────────────────────────────────────────
-  const handleRecorded = (record: IncomeRecord) => {
-    startTransition(() => {
-      setEntryLog((prev) => {
-        const next = [record, ...prev];
-        saveRecords(next);
-        return next;
+  const handleRecorded = async (draft: IncomeRecord) => {
+    try {
+      const created = await submitTreasuryIncomeRecord(draft);
+      const record = { ...draft, id: created.id, receiptNumber: created.receipt_number };
+
+      startTransition(() => {
+        setEntryLog((prev) => {
+          const next = [record, ...prev];
+          saveRecords(next);
+          return next;
+        });
+        setLastRecord(record);
+        setShowReceipt(true);
       });
-      setLastRecord(record);
-      setShowReceipt(true);
-    });
 
-    const incomeTypeName =
-      getOptions('income_types').find((o) => o.value === record.incomeType)?.label ??
-      record.incomeType;
+      const incomeTypeName =
+        incomeCategoryOptions.find((o) => o.value === record.incomeType)?.label ??
+        getOptions('income_types').find((o) => o.value === record.incomeType)?.label ??
+        record.incomeType;
 
-    appendActivity({
-      action: 'income_recorded',
-      category: 'income',
-      actor,
-      summary: `Recorded ${incomeTypeName}${record.incomeTypeDetail ? ` (${record.incomeTypeDetail})` : ''} of ${getCurrencySymbol(record.currency)}${record.amount.toLocaleString('en-GH', { minimumFractionDigits: 2 })} for ${record.memberName}`,
-      detail: `Receipt: ${record.receiptNumber} · Date: ${record.date}`,
-      relatedId: record.id,
-      meta: {
-        receiptNumber: record.receiptNumber,
-        amount: record.amount,
-        currency: record.currency,
-        memberName: record.memberName,
-        date: record.date,
-      },
-    });
+      appendActivity({
+        action: 'income_recorded',
+        category: 'income',
+        actor,
+        summary: `Recorded ${incomeTypeName}${record.incomeTypeDetail ? ` (${record.incomeTypeDetail})` : ''} of ${getCurrencySymbol(record.currency)}${record.amount.toLocaleString('en-GH', { minimumFractionDigits: 2 })} for ${record.memberName}`,
+        detail: `Receipt: ${record.receiptNumber} · Date: ${record.date}`,
+        relatedId: record.id,
+        meta: {
+          receiptNumber: record.receiptNumber,
+          amount: record.amount,
+          currency: record.currency,
+          memberName: record.memberName,
+          date: record.date,
+        },
+      });
+
+      toast.success('Income recorded', {
+        description: `${record.receiptNumber} saved successfully.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['treasury'] });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not save income.';
+      toast.error(message);
+      throw err;
+    }
   };
 
   const handleUpdateRecord = (updated: IncomeRecord) => {
@@ -252,16 +324,72 @@ export default function RecordIncomePage() {
           gap: '20px',
         }}
       >
+        {catError && (
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: '10px',
+              border: `1px solid ${borderColor}`,
+              backgroundColor: isDark ? 'rgba(239,68,68,0.12)' : '#FEF2F2',
+              color: isDark ? '#FECACA' : '#991B1B',
+              fontFamily: "'OV Soge', sans-serif",
+              fontSize: '12px',
+            }}
+          >
+            Could not load income categories. Check your connection and try refreshing the page.
+          </div>
+        )}
+
+        {!catLoading && !catError && incomeCategoryOptions.length === 0 && (
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: '10px',
+              border: `1px dashed ${borderColor}`,
+              color: `${textColor}80`,
+              fontFamily: "'OV Soge', sans-serif",
+              fontSize: '12px',
+            }}
+          >
+            No income categories are available. Add categories in treasury settings or ask an
+            administrator.
+          </div>
+        )}
+
+        {!memLoading && pickerMembers.length === 0 && (
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: '10px',
+              border: `1px dashed ${borderColor}`,
+              color: `${textColor}80`,
+              fontFamily: "'OV Soge', sans-serif",
+              fontSize: '12px',
+            }}
+          >
+            No members found in your directory. Add members before recording income.
+          </div>
+        )}
+
         {/* Income entry form */}
         <RecordIncomeForm
           onRecorded={handleRecorded}
           onCancel={() => router.push('/treasury/approvals')}
           actor={actor}
+          incomeCategoryOptions={
+            incomeCategoryOptions.length > 0 ? incomeCategoryOptions : undefined
+          }
+          members={pickerMembers}
+          disabled={formDisabled}
           {...themeProps}
         />
 
         {entryLog.length > 0 ? (
           <IncomeEntryLog
+            records={entryLog}
+            incomeTypeOptionsOverride={
+              incomeCategoryOptions.length > 0 ? incomeCategoryOptions : undefined
+            }
             onUpdateRecord={handleUpdateRecord}
             actor={actor}
             isMultiCurrency={isMultiCurrency}

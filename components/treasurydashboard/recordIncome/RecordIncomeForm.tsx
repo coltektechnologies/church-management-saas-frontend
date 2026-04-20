@@ -20,8 +20,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import type { IncomeRecord } from './IncomeReceipt';
-import { makeReceiptNumber, todayDMY, nowString, DUMMY_MEMBERS } from './recordIncomeData';
-import { getOptions } from './dropdownOptions';
+import { todayDMY, nowString, DUMMY_MEMBERS, type Member } from './recordIncomeData';
+import { getOptions, type DropdownOption } from './dropdownOptions';
 
 // ── Static option lists (payment method details) ──────────
 const MOMO_NETWORKS = [
@@ -567,7 +567,7 @@ function CancelConfirmDialog({
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 export interface RecordIncomeFormProps {
-  onRecorded: (record: IncomeRecord) => void;
+  onRecorded: (record: IncomeRecord) => void | Promise<void>;
   onCancel: () => void;
   textColor?: string;
   accentColor?: string;
@@ -576,6 +576,12 @@ export interface RecordIncomeFormProps {
   _primaryColor?: string;
   isDark?: boolean;
   actor?: string;
+  /** When provided, income type values are category UUIDs from the API (labels shown in UI). */
+  incomeCategoryOptions?: DropdownOption[];
+  /** When provided, replaces demo members (expects real member UUIDs for API submit). */
+  members?: Member[];
+  /** Disable actions while parent is loading categories/members or API is unreachable. */
+  disabled?: boolean;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -588,11 +594,14 @@ export default function RecordIncomeForm({
   borderColor = '#E0E5ED',
   isDark = false,
   actor = 'Treasurer',
+  incomeCategoryOptions,
+  members,
+  disabled = false,
 }: RecordIncomeFormProps) {
   const uid = useId();
 
   // ── Live options — re-read from localStorage on every render ─────────────
-  const incomeTypeOptions = getOptions('income_types');
+  const incomeTypeOptions = incomeCategoryOptions ?? getOptions('income_types');
   const currencyOptions = getOptions('currencies').map((o) => ({
     value: o.value,
     label: o.label.split(' — ')[0] ?? o.label,
@@ -600,9 +609,7 @@ export default function RecordIncomeForm({
 
   // ── Form state ──────────────────────────────────────────────────────────
   const [date, setDate] = useState<string>(() => (typeof window === 'undefined' ? '' : todayDMY()));
-  const [receiptNumber, setReceiptNumber] = useState<string>(() =>
-    typeof window === 'undefined' ? '' : makeReceiptNumber()
-  );
+  const [receiptNumber, setReceiptNumber] = useState('');
 
   // ── FIX: Derive a safe incomeType — if the stored value no longer exists
   //         in the live options list, treat it as empty. No effect needed.
@@ -640,9 +647,21 @@ export default function RecordIncomeForm({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const selectedMember = DUMMY_MEMBERS.find((m) => m.id === memberId);
-  const filteredMembers = DUMMY_MEMBERS.filter(
+  const memberList = members !== undefined ? members : DUMMY_MEMBERS;
+
+  const selectedIncomeLabel = incomeTypeOptions.find((o) => o.value === incomeType)?.label ?? '';
+  const harvestLike =
+    incomeType === 'harvest' ||
+    (selectedIncomeLabel.length > 0 &&
+      /\bharvest\b|\bpledge\b|\bannual\s+harvest\b/i.test(selectedIncomeLabel));
+  const otherLike =
+    incomeType === 'other' ||
+    (selectedIncomeLabel.length > 0 && /\bother\b|\bmisc/i.test(selectedIncomeLabel));
+
+  const selectedMember = memberList.find((m) => m.id === memberId);
+  const filteredMembers = memberList.filter(
     (m) =>
       m.name.toLowerCase().includes(memberQuery.toLowerCase()) ||
       m.memberId.toLowerCase().includes(memberQuery.toLowerCase())
@@ -671,10 +690,10 @@ export default function RecordIncomeForm({
     if (!incomeType) {
       e.incomeType = 'Income type is required';
     }
-    if (incomeType === 'harvest' && !harvestDetail) {
+    if (harvestLike && !harvestDetail) {
       e.harvestDetail = 'Please enter the harvest name';
     }
-    if (incomeType === 'other' && !otherDetail) {
+    if (otherLike && !otherDetail) {
       e.otherDetail = 'Please describe the income type';
     }
     if (!memberId) {
@@ -736,7 +755,7 @@ export default function RecordIncomeForm({
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) {
       return;
     }
@@ -752,34 +771,38 @@ export default function RecordIncomeForm({
       currency,
       paymentMethod,
       paymentDetail: buildPaymentDetail(),
-      receiptNumber,
+      receiptNumber: receiptNumber.trim() || 'Pending',
       notification,
       recordedAt: nowString(),
       recordedBy: actor,
     };
 
-    onRecorded(record);
+    setIsSubmitting(true);
+    try {
+      await Promise.resolve(onRecorded(record));
 
-    // Reset for next entry
-    setIncomeType('');
-    setHarvestDetail('');
-    setPledgeOccasion('');
-    setOtherDetail('');
-    setMemberId('');
-    setMemberQuery('');
-    setAmount('');
-    setCurrency('GHS');
-    setPaymentMethod('Cash');
-    setMomoNetwork('');
-    setMomoTxId('');
-    setMomoName('');
-    setBankTransferType('');
-    setCheckId('');
-    setBankName('');
-    setBankTxId('');
-    setNotification([]);
-    setErrors({});
-    setReceiptNumber(makeReceiptNumber());
+      setIncomeType('');
+      setHarvestDetail('');
+      setPledgeOccasion('');
+      setOtherDetail('');
+      setMemberId('');
+      setMemberQuery('');
+      setAmount('');
+      setCurrency('GHS');
+      setPaymentMethod('cash');
+      setMomoNetwork('');
+      setMomoTxId('');
+      setMomoName('');
+      setBankTransferType('');
+      setCheckId('');
+      setBankName('');
+      setBankTxId('');
+      setNotification([]);
+      setErrors({});
+      setReceiptNumber('');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancelClick = () => {
@@ -923,7 +946,7 @@ export default function RecordIncomeForm({
                 />
                 <input
                   readOnly
-                  value={receiptNumber}
+                  value={receiptNumber || '(assigned when saved)'}
                   style={{
                     ...inputBase(cardBg, textColor, borderColor, false, false, isDark),
                     paddingLeft: '34px',
@@ -958,7 +981,7 @@ export default function RecordIncomeForm({
             />
           </Field>
 
-          {incomeType === 'harvest' && (
+          {harvestLike && (
             <div
               style={{
                 paddingLeft: '14px',
@@ -993,7 +1016,7 @@ export default function RecordIncomeForm({
             </div>
           )}
 
-          {incomeType === 'other' && (
+          {otherLike && (
             <div style={{ paddingLeft: '14px', borderLeft: `3px solid ${accentColor}40` }}>
               <Field
                 label="Describe Income Type"
@@ -1480,7 +1503,8 @@ export default function RecordIncomeForm({
             </button>
             <button
               type="button"
-              onClick={handleSubmit}
+              disabled={disabled || isSubmitting}
+              onClick={() => void handleSubmit()}
               style={{
                 flex: 1,
                 height: '48px',
@@ -1491,7 +1515,8 @@ export default function RecordIncomeForm({
                 backgroundColor: accentColor,
                 color: '#FFFFFF',
                 border: 'none',
-                cursor: 'pointer',
+                cursor: disabled || isSubmitting ? 'not-allowed' : 'pointer',
+                opacity: disabled || isSubmitting ? 0.65 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1499,7 +1524,7 @@ export default function RecordIncomeForm({
                 letterSpacing: '0.01em',
               }}
             >
-              <PlusCircle size={16} /> Record &amp; Print Receipt
+              <PlusCircle size={16} /> {isSubmitting ? 'Saving…' : 'Record & Print Receipt'}
             </button>
           </div>
         </div>

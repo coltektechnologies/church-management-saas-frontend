@@ -344,6 +344,14 @@ export async function getExpenseRequest(id: string): Promise<ExpenseRequestItem 
   );
 }
 
+/** Same as {@link getExpenseRequest} but fails loudly (load-into-form flows). */
+export async function getExpenseRequestStrict(id: string): Promise<ExpenseRequestItem> {
+  const base = getApiBaseUrl();
+  return fetchAuth<ExpenseRequestItem>(`${base}/treasury/expense-requests/${id}/`, {
+    method: 'GET',
+  });
+}
+
 /** GET /api/treasury/expense-requests/?status=&department_id= */
 export async function getExpenseRequests(params?: {
   status?: string;
@@ -482,7 +490,7 @@ export async function getMemberContributions(params?: {
   limit?: number;
   date_from?: string;
   date_to?: string;
-}): Promise<MemberContributionsResponse | null> {
+}): Promise<MemberContributionsResponse> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
   if (params?.limit !== undefined && params?.limit !== null) {
@@ -495,10 +503,8 @@ export async function getMemberContributions(params?: {
     sp.set('date_to', params.date_to);
   }
   const qs = sp.toString();
-  return fetchAuthSafe<MemberContributionsResponse>(
-    `${base}/analytics/finance/member-contributions/${qs ? `?${qs}` : ''}`,
-    undefined,
-    null
+  return fetchAuth<MemberContributionsResponse>(
+    `${base}/analytics/finance/member-contributions/${qs ? `?${qs}` : ''}`
   );
 }
 
@@ -521,6 +527,16 @@ export async function getIncomeCategories(): Promise<IncomeCategoryItem[]> {
     []
   );
   return Array.isArray(raw) ? raw : [];
+}
+
+/** Same list as {@link getIncomeCategories} but fails loudly on auth/network errors (forms). */
+export async function getIncomeCategoriesStrict(): Promise<IncomeCategoryItem[]> {
+  const base = getApiBaseUrl();
+  const raw = await fetchAuth<IncomeCategoryItem[] | { results?: IncomeCategoryItem[] }>(
+    `${base}/treasury/income-categories/`,
+    { method: 'GET' }
+  );
+  return normalizeListResponse<IncomeCategoryItem>(raw);
 }
 
 /** GET /api/treasury/expense-categories/ */

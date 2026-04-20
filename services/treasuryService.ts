@@ -88,6 +88,8 @@ export interface TreasuryFilters {
   period?: PeriodFilter;
   from?: string;
   to?: string;
+  /** Overrides default 15 for member-contributions list (e.g. members-finance page). */
+  contributorsLimit?: number;
 }
 
 /* ─── Period to date range ─── */
@@ -390,15 +392,16 @@ export async function fetchMemberContributions(
 ): Promise<MemberContribution[]> {
   const range = periodToDateRange(filters);
   const res = await treasuryApi.getMemberContributions({
-    limit: 15,
+    limit: filters?.contributorsLimit ?? 15,
     date_from: range.date_from ?? range.start_date,
     date_to: range.date_to ?? range.end_date,
   });
-  if (!res?.contributors?.length) {
+  const rows = res.contributors ?? [];
+  if (!rows.length) {
     return [];
   }
 
-  return res.contributors.map((c) => ({
+  return rows.map((c) => ({
     id: c.id,
     name: c.name,
     avatar: c.avatar ?? '',

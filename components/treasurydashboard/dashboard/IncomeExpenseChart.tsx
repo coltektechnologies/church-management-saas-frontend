@@ -396,8 +396,18 @@ function ColorPickerRow({
   );
 }
 
+/** Optional rows from treasury API (`MonthlyTrend` mapped to expense key). When provided, replaces local-only income records + dummy expenses. */
+export type IncomeExpenseApiRow = { month: string; income: number; expense: number };
+
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function IncomeExpenseChart() {
+export default function IncomeExpenseChart({
+  apiMonthlySeries,
+  isLoadingApi,
+}: {
+  apiMonthlySeries?: IncomeExpenseApiRow[];
+  isLoadingApi?: boolean;
+} = {}) {
+  const useApiSeries = apiMonthlySeries !== undefined;
   const { profile, isReady } = useTreasuryProfile();
 
   const isDark = isReady ? profile.darkMode : false;
@@ -435,17 +445,20 @@ export default function IncomeExpenseChart() {
     expenseColor,
   } = prefs;
 
-  // ── Income records ────────────────────────────────────────────────────────
+  // ── Income records (local demo) — skipped when wired to API ─────────────────
   const [records, setRecords] = useState<IncomeRecord[]>(() => loadIncomeRecords());
 
   useEffect(() => {
+    if (useApiSeries) {
+      return;
+    }
     const id = setInterval(() => {
       setRecords(loadIncomeRecords());
     }, 3000);
     return () => {
       clearInterval(id);
     };
-  }, []);
+  }, [useApiSeries]);
 
   // ── Active date range ─────────────────────────────────────────────────────
   const activeRange = useMemo<TreasuryDateRange>(() => {
@@ -456,10 +469,18 @@ export default function IncomeExpenseChart() {
   }, [rangeMode, preset, customFrom, customTo]);
 
   const chartYear = useMemo(() => new Date().getFullYear(), []);
-  const chartData = useMemo(
+  const chartDataLocal = useMemo(
     () => buildChartData(records, activeRange, chartYear),
     [records, activeRange, chartYear]
   );
+
+  /** Backend trend series is already ranged; show full series (UI presets mainly affect local demo data). */
+  const chartData = useMemo(() => {
+    if (useApiSeries && apiMonthlySeries) {
+      return apiMonthlySeries;
+    }
+    return chartDataLocal;
+  }, [useApiSeries, apiMonthlySeries, chartDataLocal]);
 
   const totalIncome = chartData.reduce((s, d) => s + d.income, 0);
   const totalExpense = chartData.reduce((s, d) => s + d.expense, 0);
@@ -603,6 +624,7 @@ export default function IncomeExpenseChart() {
         minHeight: 380,
       }}
     >
+      <style>{`@keyframes iec-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }`}</style>
       {/* ── Header ── */}
       <div
         style={{
@@ -634,6 +656,7 @@ export default function IncomeExpenseChart() {
               fontFamily: "'Poppins', sans-serif",
             }}
           >
+            {useApiSeries ? 'Live · ' : ''}
             {chartData.length} month{chartData.length !== 1 ? 's' : ''} · {rangeLabel}
           </p>
         </div>
@@ -775,7 +798,19 @@ export default function IncomeExpenseChart() {
 
       {/* ── Chart Area ── */}
       <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
-        {chartData.length === 0 ? (
+        {isLoadingApi && useApiSeries ? (
+          <div
+            style={{
+              height: '100%',
+              minHeight: 220,
+              borderRadius: 12,
+              background:
+                'linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.03) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'iec-shimmer 1.5s infinite',
+            }}
+          />
+        ) : chartData.length === 0 ? (
           <div
             style={{
               height: '100%',
@@ -794,7 +829,9 @@ export default function IncomeExpenseChart() {
             <p
               style={{ fontSize: 12, color: `${textColor}50`, fontFamily: "'Poppins', sans-serif" }}
             >
-              No data for the selected range
+              {useApiSeries
+                ? 'No finance trend data from the API yet.'
+                : 'No data for the selected range'}
             </p>
           </div>
         ) : (

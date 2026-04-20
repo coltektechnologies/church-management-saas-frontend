@@ -13,6 +13,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { mergeTreasuryProfileWithSession } from '@/lib/treasurySessionIdentity';
 
 export interface TreasuryProfile {
   adminName: string;
@@ -98,6 +99,27 @@ const readStored = (): TreasuryProfile => {
   return DEFAULT;
 };
 
+/** Theme/settings storage + signed-in session (`localStorage.user`) for name/email/role/avatar. */
+function readStoredMerged(): TreasuryProfile {
+  const base = readStored();
+  const merged = mergeTreasuryProfileWithSession(base);
+  if (typeof window !== 'undefined') {
+    try {
+      const changed =
+        merged.adminName !== base.adminName ||
+        merged.adminEmail !== base.adminEmail ||
+        merged.adminRole !== base.adminRole ||
+        merged.avatarUrl !== base.avatarUrl;
+      if (changed) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return merged;
+}
+
 const applyTheme = (p: TreasuryProfile) => {
   if (typeof window === 'undefined') {
     return;
@@ -129,7 +151,7 @@ const applyTheme = (p: TreasuryProfile) => {
 const TreasuryProfileContext = createContext<TreasuryProfileContextType | undefined>(undefined);
 
 export function TreasuryProfileProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<TreasuryProfile>(readStored);
+  const [profile, setProfile] = useState<TreasuryProfile>(() => readStoredMerged());
 
   const isReady = useSyncExternalStore(
     () => () => {},

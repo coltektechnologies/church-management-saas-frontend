@@ -4,9 +4,17 @@ import dynamic from 'next/dynamic';
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import WelcomeHeader from '@/components/treasurydashboard/dashboard/WelcomeHeader';
 import KPICard from '@/components/treasurydashboard/dashboard/KPICard';
+import {
+  useIncomeBreakdown,
+  useMemberContributions,
+  useMonthlyTrend,
+  useRecentTransactions,
+  useTreasurySummary,
+} from '@/hooks/useTreasury';
+import { formatCurrency } from '@/services/treasuryService';
 
-const MonthlyTrendChart = dynamic(
-  () => import('@/components/treasurydashboard/dashboard/MonthlyTrendChart'),
+const TreasuryMonthlyTrendApi = dynamic(
+  () => import('@/components/treasurydashboard/dashboard/TreasuryMonthlyTrendApi'),
   { ssr: false, loading: () => <ChartSkeleton height={340} /> }
 );
 const ThisMonthCard = dynamic(
@@ -109,33 +117,25 @@ function MembersIcon() {
   );
 }
 
-const KPI_DATA = [
-  {
-    title: 'Total Income (MTD)',
-    value: 'GHS24,580',
-    badge: '+5.05%',
-    badgePositive: true,
-    icon: <IncomeIcon />,
-  },
-  {
-    title: 'Net Balance',
-    value: 'GHS6,240',
-    badge: '+8.05%',
-    badgePositive: true,
-    icon: <BalanceIcon />,
-  },
-  {
-    title: 'Total Expenses (MTD)',
-    value: 'GHS18,340',
-    badge: '-1.05%',
-    badgePositive: false,
-    icon: <ExpenseIcon />,
-  },
-  { title: 'Active Members', value: '8', badge: '+5', badgePositive: true, icon: <MembersIcon /> },
-];
+function formatPct(n: number | undefined): string {
+  if (n === undefined || n === null || Number.isNaN(n)) {
+    return '—';
+  }
+  const sign = n >= 0 ? '+' : '';
+  return `${sign}${n.toFixed(1)}%`;
+}
 
 export default function TreasuryDashboard() {
   const { profile, isReady } = useTreasuryProfile();
+
+  /** Match admin treasury: `this_week` maps to month-start → today (MTD-style range in service). */
+  const filters = { period: 'this_week' as const };
+
+  const { data: summary, isLoading: loadingSummary } = useTreasurySummary(filters);
+  const { data: monthlyTrend = [], isLoading: loadingTrend } = useMonthlyTrend(filters);
+  const { data: recentTx = [], isLoading: loadingTx } = useRecentTransactions(filters);
+  const { data: incomeBreakdown = [] } = useIncomeBreakdown(filters);
+  const { data: members = [], isLoading: loadingMembers } = useMemberContributions(filters);
 
   const isDark = isReady ? profile.darkMode : false;
   const bgColor = isDark ? profile.darkBackgroundColor || '#0A1628' : '#F5F7FA';
@@ -144,6 +144,43 @@ export default function TreasuryDashboard() {
     ? profile.darkAccentColor || '#2FC4B2'
     : profile.accentColor || '#2FC4B2';
   const cardBg = isDark ? profile.darkSidebarColor || '#0D1F36' : '#FFFFFF';
+
+  const kpiList = [
+    {
+      title: 'Total Income (MTD)',
+      value: loadingSummary ? '…' : formatCurrency(summary?.totalIncome ?? 0),
+      badge: loadingSummary ? '…' : formatPct(summary?.incomeChangePercent),
+      badgePositive: (summary?.incomeChangePercent ?? 0) >= 0,
+      icon: <IncomeIcon />,
+    },
+    {
+      title: 'Net Balance',
+      value: loadingSummary ? '…' : formatCurrency(summary?.netBalance ?? 0),
+      badge: loadingSummary ? '…' : formatPct(summary?.incomeChangePercent),
+      badgePositive: (summary?.netBalance ?? 0) >= 0,
+      icon: <BalanceIcon />,
+    },
+    {
+      title: 'Total Expenses (MTD)',
+      value: loadingSummary ? '…' : formatCurrency(summary?.totalExpenses ?? 0),
+      badge: loadingSummary ? '…' : formatPct(summary?.expenseChangePercent),
+      badgePositive: (summary?.expenseChangePercent ?? 0) <= 0,
+      icon: <ExpenseIcon />,
+    },
+    {
+      title: 'Contributors (period)',
+      value: loadingMembers ? '…' : String(members.length),
+      badge: members.length ? `${members.length} profiles` : '—',
+      badgePositive: true,
+      icon: <MembersIcon />,
+    },
+  ];
+
+  const iecFromTrend = monthlyTrend.map((t) => ({
+    month: t.month,
+    income: t.income,
+    expense: t.expenses,
+  }));
 
   return (
     <>
@@ -199,7 +236,7 @@ export default function TreasuryDashboard() {
 
         {/* KPI Cards */}
         <div className="td-kpi-grid">
-          {KPI_DATA.map((kpi, i) => (
+          {kpiList.map((kpi, i) => (
             <KPICard
               key={i}
               index={i}
@@ -211,16 +248,20 @@ export default function TreasuryDashboard() {
           ))}
         </div>
 
-        {/* Row 1: Monthly Trend Chart + This Month (Tithes / Offerings) */}
+        {/* Row 1: Monthly trend (API) + This month snapshot from income breakdown */}
         <div className="td-row td-row-top">
-          <MonthlyTrendChart />
-          <ThisMonthCard />
+          <TreasuryMonthlyTrendApi data={monthlyTrend} isLoading={loadingTrend} />
+          <ThisMonthCard
+            incomeBreakdown={incomeBreakdown}
+            monthlyTrend={monthlyTrend}
+            isLoading={loadingSummary}
+          />
         </div>
 
         {/* Row 2: Income vs Expense Chart + Recent Transactions */}
         <div className="td-row td-row-bottom">
-          <IncomeExpenseChart />
-          <RecentTransactions />
+          <IncomeExpenseChart apiMonthlySeries={iecFromTrend} isLoadingApi={loadingTrend} />
+          <RecentTransactions apiTransactions={recentTx} isLoadingApi={loadingTx} />
         </div>
       </div>
     </>
