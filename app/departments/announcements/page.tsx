@@ -44,8 +44,14 @@ export default function AnnouncementsPage() {
 
   const listFilters = useMemo(() => filtersForTab(activeTab), [activeTab]);
 
-  const { data: announcements = [], isLoading, isError, error, refetch, isFetching } =
-    useAnnouncements(listFilters);
+  const {
+    data: announcements = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useAnnouncements(listFilters);
 
   const handleCreateAnnouncement = () => {
     setAnnouncementToEdit(undefined);
@@ -61,8 +67,7 @@ export default function AnnouncementsPage() {
     try {
       let ann = announcement;
       const needsDetail =
-        !ann.content?.trim() ||
-        (ann.content.includes('Tap') && ann.content.includes('View'));
+        !ann.content?.trim() || (ann.content.includes('Tap') && ann.content.includes('View'));
       if (needsDetail) {
         ann = await announcementService.getAnnouncementById(announcement.id);
       }

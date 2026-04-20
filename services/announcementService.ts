@@ -215,9 +215,7 @@ class AnnouncementService {
             await tryPublishAnnouncement(created.id);
           } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
-            throw new Error(
-              `Announcement was saved, but the publish workflow failed: ${msg}`
-            );
+            throw new Error(`Announcement was saved, but the publish workflow failed: ${msg}`);
           }
         } else {
           await submitAnnouncementApi(created.id);

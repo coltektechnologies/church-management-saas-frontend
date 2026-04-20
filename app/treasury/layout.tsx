@@ -9,6 +9,7 @@ import {
 } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import { ThemeProvider } from '@/components/treasurydashboard/contexts/ThemeProvider';
 import { RequireAuth } from '@/components/auth/RequireAuth';
+import { RequireTreasuryPortal } from '@/components/auth/RequireTreasuryPortal';
 import TreasurySidebar from '@/components/treasurydashboard/TreasurySidebar';
 import TreasuryTopbar from '@/components/treasurydashboard/TreasuryTopbar';
 
@@ -61,16 +62,15 @@ function TreasuryTree({ children }: { children: ReactNode }) {
 }
 
 // ── Layout root ───────────────────────────────────────────────────────────────
-const skipAuth = process.env.NEXT_PUBLIC_SKIP_TREASURY_AUTH === 'true';
+// const skipAuth = process.env.NEXT_PUBLIC_SKIP_TREASURY_AUTH === 'true';
+// if (skipAuth) return <TreasuryTree>{children}</TreasuryTree>;
 
 export default function TreasuryLayout({ children }: { children: ReactNode }) {
-  if (skipAuth) {
-    return <TreasuryTree>{children}</TreasuryTree>;
-  }
-
   return (
     <RequireAuth>
-      <TreasuryTree>{children}</TreasuryTree>
+      <RequireTreasuryPortal>
+        <TreasuryTree>{children}</TreasuryTree>
+      </RequireTreasuryPortal>
     </RequireAuth>
   );
 }

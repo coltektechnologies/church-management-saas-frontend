@@ -13,10 +13,7 @@ import {
   type ScheduleActivityInitial,
 } from '@/components/departments/activities/ScheduleActivityModal';
 import { usePortalDepartment } from '@/hooks/usePortalDepartment';
-import {
-  fetchDepartmentActivities,
-  type DepartmentActivityRow,
-} from '@/lib/departmentsApi';
+import { fetchDepartmentActivities, type DepartmentActivityRow } from '@/lib/departmentsApi';
 
 const ACTIVITIES_QUERY_KEY = 'department-activities';
 
@@ -55,7 +52,7 @@ function rowToCardMeta(row: DepartmentActivityRow): {
   raw: DepartmentActivityRow;
 } {
   const rawT = row.start_time?.trim();
-  const hhmm = rawT && rawT.includes(':') ? rawT.slice(0, 5) : rawT ?? '';
+  const hhmm = rawT && rawT.includes(':') ? rawT.slice(0, 5) : (rawT ?? '');
   const tp = hhmm ? formatTime12h(hhmm) : '';
   const dateLabel = tp ? `${row.start_date} at ${tp}` : row.start_date;
   return {
@@ -151,9 +148,7 @@ function ActivitiesPageInner() {
   const handleEditActivity = useCallback((row: DepartmentActivityRow) => {
     setIsEditMode(true);
     setEditingActivityId(row.id);
-    const timeShort = row.start_time?.trim()
-      ? row.start_time.slice(0, 5)
-      : '';
+    const timeShort = row.start_time?.trim() ? row.start_time.slice(0, 5) : '';
     setSelectedInitial({
       name: row.title,
       date: row.start_date,

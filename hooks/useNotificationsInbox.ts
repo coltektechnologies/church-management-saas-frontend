@@ -64,9 +64,7 @@ export function useMarkNotificationReadMutation() {
       if (previous) {
         qc.setQueryData(
           inboxKey,
-          previous.map((n) =>
-            n.id === id ? { ...n, is_read: true, status: 'READ' as const } : n
-          )
+          previous.map((n) => (n.id === id ? { ...n, is_read: true, status: 'READ' as const } : n))
         );
       }
       const prevCount = qc.getQueryData<number>(NOTIFICATIONS_UNREAD_COUNT_KEY);

@@ -555,9 +555,9 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
               Generate the same operational reports as in admin (members, departments snapshot,
               announcements, audit trail)—scoped to your ministry where the server supports it. The
               announcements report only includes items created by your department (heads, assistant
-              head, and elder in charge) for the selected period. Preview in the browser or
-              download PDF, Excel, or CSV. Church-wide treasury and finance reports remain on the
-              admin Reports page.
+              head, and elder in charge) for the selected period. Preview in the browser or download
+              PDF, Excel, or CSV. Church-wide treasury and finance reports remain on the admin
+              Reports page.
             </>
           ) : variant === 'secretary' ? (
             <>
@@ -922,145 +922,148 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
 
       {/* Scheduled reports — admin / secretary only */}
       {variant !== 'department' && (
-      <section className="space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold" style={{ color: 'var(--admin-text)' }}>
-              Scheduled deliveries
-            </h2>
-            <p className="text-sm mt-1" style={{ color: 'var(--admin-text-muted)' }}>
-              Reports configured to run on a recurring schedule (managed via API / admin).
-            </p>
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold" style={{ color: 'var(--admin-text)' }}>
+                Scheduled deliveries
+              </h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--admin-text-muted)' }}>
+                Reports configured to run on a recurring schedule (managed via API / admin).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadScheduled()}
+              className="text-sm font-medium px-4 py-2 rounded-lg border transition hover:opacity-90"
+              style={{
+                borderColor: 'var(--admin-border)',
+                color: 'var(--color-primary)',
+              }}
+            >
+              Refresh list
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => void loadScheduled()}
-            className="text-sm font-medium px-4 py-2 rounded-lg border transition hover:opacity-90"
+          <div
+            className="rounded-2xl border overflow-hidden shadow-sm"
             style={{
+              backgroundColor: 'var(--admin-surface)',
               borderColor: 'var(--admin-border)',
-              color: 'var(--color-primary)',
             }}
           >
-            Refresh list
-          </button>
-        </div>
-        <div
-          className="rounded-2xl border overflow-hidden shadow-sm"
-          style={{
-            backgroundColor: 'var(--admin-surface)',
-            borderColor: 'var(--admin-border)',
-          }}
-        >
-          {scheduledLoading ? (
-            <div className="p-8 flex justify-center" style={{ color: 'var(--admin-text-muted)' }}>
-              <Loader2 className="w-6 h-6 animate-spin" />
-            </div>
-          ) : scheduledError ? (
-            <p className="p-6 text-sm text-red-600">{scheduledError}</p>
-          ) : scheduled.length === 0 ? (
-            <p className="p-6 text-sm" style={{ color: 'var(--admin-text-muted)' }}>
-              No scheduled reports yet. Your team can register recurring exports with{' '}
-              <code className="text-xs px-1 rounded" style={{ backgroundColor: 'var(--admin-bg)' }}>
-                POST /api/reports/schedule/
-              </code>
-              .
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--admin-border)' }}>
-                    <th
-                      className="text-left py-3 px-4 font-semibold"
-                      style={{ color: 'var(--admin-text)' }}
-                    >
-                      Name
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 font-semibold"
-                      style={{ color: 'var(--admin-text)' }}
-                    >
-                      Type
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 font-semibold"
-                      style={{ color: 'var(--admin-text)' }}
-                    >
-                      Frequency
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 font-semibold"
-                      style={{ color: 'var(--admin-text)' }}
-                    >
-                      Format
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 font-semibold"
-                      style={{ color: 'var(--admin-text)' }}
-                    >
-                      Next run
-                    </th>
-                    <th
-                      className="text-left py-3 px-4 font-semibold"
-                      style={{ color: 'var(--admin-text)' }}
-                    >
-                      Active
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {scheduled.map((row) => (
-                    <tr
-                      key={row.id}
-                      style={{ borderBottom: '1px solid var(--admin-border)' }}
-                      className="last:border-0"
-                    >
-                      <td className="py-3 px-4" style={{ color: 'var(--admin-text)' }}>
-                        {row.name}
-                      </td>
-                      <td className="py-3 px-4" style={{ color: 'var(--admin-text-muted)' }}>
-                        {row.report_type_display || row.report_type}
-                      </td>
-                      <td className="py-3 px-4" style={{ color: 'var(--admin-text-muted)' }}>
-                        {row.frequency_display || row.frequency}
-                      </td>
-                      <td
-                        className="py-3 px-4 uppercase"
-                        style={{ color: 'var(--admin-text-muted)' }}
+            {scheduledLoading ? (
+              <div className="p-8 flex justify-center" style={{ color: 'var(--admin-text-muted)' }}>
+                <Loader2 className="w-6 h-6 animate-spin" />
+              </div>
+            ) : scheduledError ? (
+              <p className="p-6 text-sm text-red-600">{scheduledError}</p>
+            ) : scheduled.length === 0 ? (
+              <p className="p-6 text-sm" style={{ color: 'var(--admin-text-muted)' }}>
+                No scheduled reports yet. Your team can register recurring exports with{' '}
+                <code
+                  className="text-xs px-1 rounded"
+                  style={{ backgroundColor: 'var(--admin-bg)' }}
+                >
+                  POST /api/reports/schedule/
+                </code>
+                .
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--admin-border)' }}>
+                      <th
+                        className="text-left py-3 px-4 font-semibold"
+                        style={{ color: 'var(--admin-text)' }}
                       >
-                        {row.format}
-                      </td>
-                      <td className="py-3 px-4" style={{ color: 'var(--admin-text-muted)' }}>
-                        {row.next_run_at
-                          ? new Date(row.next_run_at).toLocaleString(undefined, {
-                              dateStyle: 'medium',
-                              timeStyle: 'short',
-                            })
-                          : '—'}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
-                          style={{
-                            backgroundColor: row.is_active
-                              ? 'color-mix(in srgb, var(--color-accent) 20%, transparent)'
-                              : 'var(--admin-bg)',
-                            color: row.is_active
-                              ? 'var(--color-accent)'
-                              : 'var(--admin-text-muted)',
-                          }}
-                        >
-                          {row.is_active ? 'Yes' : 'No'}
-                        </span>
-                      </td>
+                        Name
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 font-semibold"
+                        style={{ color: 'var(--admin-text)' }}
+                      >
+                        Type
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 font-semibold"
+                        style={{ color: 'var(--admin-text)' }}
+                      >
+                        Frequency
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 font-semibold"
+                        style={{ color: 'var(--admin-text)' }}
+                      >
+                        Format
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 font-semibold"
+                        style={{ color: 'var(--admin-text)' }}
+                      >
+                        Next run
+                      </th>
+                      <th
+                        className="text-left py-3 px-4 font-semibold"
+                        style={{ color: 'var(--admin-text)' }}
+                      >
+                        Active
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </section>
+                  </thead>
+                  <tbody>
+                    {scheduled.map((row) => (
+                      <tr
+                        key={row.id}
+                        style={{ borderBottom: '1px solid var(--admin-border)' }}
+                        className="last:border-0"
+                      >
+                        <td className="py-3 px-4" style={{ color: 'var(--admin-text)' }}>
+                          {row.name}
+                        </td>
+                        <td className="py-3 px-4" style={{ color: 'var(--admin-text-muted)' }}>
+                          {row.report_type_display || row.report_type}
+                        </td>
+                        <td className="py-3 px-4" style={{ color: 'var(--admin-text-muted)' }}>
+                          {row.frequency_display || row.frequency}
+                        </td>
+                        <td
+                          className="py-3 px-4 uppercase"
+                          style={{ color: 'var(--admin-text-muted)' }}
+                        >
+                          {row.format}
+                        </td>
+                        <td className="py-3 px-4" style={{ color: 'var(--admin-text-muted)' }}>
+                          {row.next_run_at
+                            ? new Date(row.next_run_at).toLocaleString(undefined, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })
+                            : '—'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor: row.is_active
+                                ? 'color-mix(in srgb, var(--color-accent) 20%, transparent)'
+                                : 'var(--admin-bg)',
+                              color: row.is_active
+                                ? 'var(--color-accent)'
+                                : 'var(--admin-text-muted)',
+                            }}
+                          >
+                            {row.is_active ? 'Yes' : 'No'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
       )}
     </div>
   );

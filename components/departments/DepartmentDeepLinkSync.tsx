@@ -11,8 +11,7 @@ import {
 } from '@/lib/departmentsApi';
 import { mapDepartmentDetailToProfilePatch } from '@/lib/mapDepartmentMyPortalProfile';
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isUuid(s: string | null): s is string {
   return !!s && UUID_RE.test(s.trim());

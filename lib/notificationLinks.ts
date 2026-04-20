@@ -12,7 +12,10 @@ export function normalizeNotificationLinkForSpa(raw: string | null | undefined):
   try {
     const url = href.startsWith('http')
       ? new URL(href)
-      : new URL(href, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+      : new URL(
+          href,
+          typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+        );
     const p = url.pathname.replace(/\/$/, '') || '/';
 
     const changePath = p.match(/^\/admin\/departments\/program\/([^/]+)\/change$/);
