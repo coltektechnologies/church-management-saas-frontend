@@ -175,8 +175,8 @@ export async function loadDepartmentDashboardKpis(input: {
   let pendingAnnouncements = 0;
   try {
     const [drafts, pending] = await Promise.all([
-      fetchAnnouncementsList({ status: 'DRAFT', page_size: 100 }),
-      fetchAnnouncementsList({ status: 'PENDING_REVIEW', page_size: 100 }),
+      fetchAnnouncementsList({ status: 'DRAFT', page_size: 100, mine_only: true }),
+      fetchAnnouncementsList({ status: 'PENDING_REVIEW', page_size: 100, mine_only: true }),
     ]);
     pendingAnnouncements = drafts.length + pending.length;
   } catch {

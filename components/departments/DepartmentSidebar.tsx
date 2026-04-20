@@ -19,7 +19,6 @@ import {
   PanelLeftOpen,
   Megaphone as NewAnnouncementIcon,
   CalendarPlus,
-  HandCoins,
 } from 'lucide-react';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
@@ -44,7 +43,7 @@ const QUICK_ACTIONS = [
     icon: NewAnnouncementIcon,
   },
   { title: 'Schedule Activity', path: '/departments/activities?action=new', icon: CalendarPlus },
-  { title: 'Request Funds', path: '/departments/expenses?action=new', icon: HandCoins },
+  { title: 'Generate report', path: '/departments/reports', icon: FileBarChart },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

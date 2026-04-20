@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { MockNotificationItem } from '@/services/notificationsMock';
 import {
   fetchNotificationsForUi,
   getUnreadCountUi,
@@ -54,8 +55,34 @@ function invalidateNotificationQueries(qc: ReturnType<typeof useQueryClient>) {
 
 export function useMarkNotificationReadMutation() {
   const qc = useQueryClient();
+  const inboxKey = notificationsListQueryKey('inbox');
   return useMutation({
     mutationFn: (id: string) => markNotificationReadUi(id),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: NOTIFICATIONS_LIST_QUERY_KEY });
+      const previous = qc.getQueryData<MockNotificationItem[]>(inboxKey);
+      if (previous) {
+        qc.setQueryData(
+          inboxKey,
+          previous.map((n) =>
+            n.id === id ? { ...n, is_read: true, status: 'READ' as const } : n
+          )
+        );
+      }
+      const prevCount = qc.getQueryData<number>(NOTIFICATIONS_UNREAD_COUNT_KEY);
+      if (typeof prevCount === 'number' && prevCount > 0) {
+        qc.setQueryData(NOTIFICATIONS_UNREAD_COUNT_KEY, prevCount - 1);
+      }
+      return { previous, prevCount };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous !== undefined) {
+        qc.setQueryData(inboxKey, context.previous);
+      }
+      if (context?.prevCount !== undefined) {
+        qc.setQueryData(NOTIFICATIONS_UNREAD_COUNT_KEY, context.prevCount);
+      }
+    },
     onSuccess: () => {
       invalidateNotificationQueries(qc);
     },
@@ -64,8 +91,30 @@ export function useMarkNotificationReadMutation() {
 
 export function useMarkAllNotificationsReadMutation() {
   const qc = useQueryClient();
+  const inboxKey = notificationsListQueryKey('inbox');
   return useMutation({
     mutationFn: () => markAllNotificationsReadUi(),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: NOTIFICATIONS_LIST_QUERY_KEY });
+      const previous = qc.getQueryData<MockNotificationItem[]>(inboxKey);
+      if (previous) {
+        qc.setQueryData(
+          inboxKey,
+          previous.map((n) => ({ ...n, is_read: true, status: 'READ' as const }))
+        );
+      }
+      const prevCount = qc.getQueryData<number>(NOTIFICATIONS_UNREAD_COUNT_KEY);
+      qc.setQueryData(NOTIFICATIONS_UNREAD_COUNT_KEY, 0);
+      return { previous, prevCount };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        qc.setQueryData(inboxKey, context.previous);
+      }
+      if (context?.prevCount !== undefined) {
+        qc.setQueryData(NOTIFICATIONS_UNREAD_COUNT_KEY, context.prevCount);
+      }
+    },
     onSuccess: () => {
       invalidateNotificationQueries(qc);
     },

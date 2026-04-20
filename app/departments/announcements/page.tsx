@@ -1,100 +1,51 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Megaphone, FileEdit, Eye } from 'lucide-react';
+import { Megaphone, FileEdit, Eye, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { QuickCreateModal } from '@/components/announcements/QuickCreateModal';
 import { AnnouncementDetailModal } from '@/components/announcements/AnnouncementDetailModal';
-import type { Announcement } from '@/services/announcementService';
+import {
+  announcementService,
+  type Announcement,
+  type AnnouncementListFilters,
+  type CreateAnnouncementPayload,
+} from '@/services/announcementService';
+import { useAnnouncements } from '@/hooks/useAnnouncements';
+import { toast } from 'sonner';
 
-// Mock data based on the screenshot
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'New Hymnals Available',
-    author: 'Bro. OWUSU WILLIAMS',
-    authorRole: 'Department Head',
-    date: '2024-08-15T00:00:00Z',
-    publish_at: '2024-08-15T00:00:00Z',
-    expires_at: null,
-    content:
-      'We are pleased to announce that new hymnals are now available for all department members. Please ensure you grab one before the next service.',
-    category: 'General Church',
-    priority: 'High',
-    status: 'Approved',
-    audience: ['Adventist Youth'],
-  },
-  {
-    id: '2',
-    title: 'New Hymnals Available',
-    author: 'Bro. OWUSU WILLIAMS',
-    authorRole: 'Department Head',
-    date: '2024-08-15T00:00:00Z',
-    publish_at: '2024-08-15T00:00:00Z',
-    expires_at: null,
-    content: 'We are pleased to announce that new hymnals are now available.',
-    category: 'General Church',
-    priority: 'High',
-    status: 'Approved',
-    audience: ['Adventist Youth'],
-  },
-  {
-    id: '3',
-    title: 'New Hymnals Available',
-    author: 'Bro. OWUSU WILLIAMS',
-    authorRole: 'Department Head',
-    date: '2024-08-15T00:00:00Z',
-    publish_at: '2024-08-15T00:00:00Z',
-    expires_at: null,
-    content: 'We are pleased to announce that new hymnals are now available.',
-    category: 'General Church',
-    priority: 'High',
-    status: 'Approved',
-    audience: ['Adventist Youth'],
-  },
-  {
-    id: '4',
-    title: 'New Hymnals Available',
-    author: 'Bro. OWUSU WILLIAMS',
-    authorRole: 'Department Head',
-    date: '2024-08-15T00:00:00Z',
-    publish_at: '2024-08-15T00:00:00Z',
-    expires_at: null,
-    content: 'We are pleased to announce that new hymnals are now available.',
-    category: 'General Church',
-    priority: 'High',
-    status: 'Approved',
-    audience: ['Adventist Youth'],
-  },
-  {
-    id: '5',
-    title: 'New Hymnals Available',
-    author: 'Bro. OWUSU WILLIAMS',
-    authorRole: 'Department Head',
-    date: '2024-08-15T00:00:00Z',
-    publish_at: '2024-08-15T00:00:00Z',
-    expires_at: null,
-    content: 'We are pleased to announce that new hymnals are now available.',
-    category: 'General Church',
-    priority: 'High',
-    status: 'Approved',
-    audience: ['Adventist Youth'],
-  },
-];
+type TabFilter = 'All' | 'Pending' | 'Approved';
+
+function filtersForTab(tab: TabFilter): AnnouncementListFilters {
+  /** Only announcements this department user authored (matches backend `mine_only`). */
+  const portal: Pick<AnnouncementListFilters, 'mineOnly'> = { mineOnly: true };
+  if (tab === 'Pending') {
+    return { category: 'All', status: ['Pending'], ...portal };
+  }
+  if (tab === 'Approved') {
+    return { category: 'All', status: ['Approved'], ...portal };
+  }
+  return { category: 'All', ...portal };
+}
 
 export default function AnnouncementsPage() {
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState<TabFilter>('All');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // States for viewing and editing
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
 
-  // const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [announcementToEdit, setAnnouncementToEdit] = useState<Partial<any> | undefined>(undefined);
+  const [announcementToEdit, setAnnouncementToEdit] = useState<
+    (Partial<CreateAnnouncementPayload> & { id?: string }) | undefined
+  >(undefined);
+
+  const listFilters = useMemo(() => filtersForTab(activeTab), [activeTab]);
+
+  const { data: announcements = [], isLoading, isError, error, refetch, isFetching } =
+    useAnnouncements(listFilters);
 
   const handleCreateAnnouncement = () => {
     setAnnouncementToEdit(undefined);
@@ -106,11 +57,34 @@ export default function AnnouncementsPage() {
     setIsDetailModalOpen(true);
   };
 
-  const handleEditAnnouncement = (announcement: Announcement) => {
-    // We pass initialData to QuickCreateModal
-    setAnnouncementToEdit(announcement);
-    setIsCreateModalOpen(true);
-  };
+  const handleEditAnnouncement = useCallback(async (announcement: Announcement) => {
+    try {
+      let ann = announcement;
+      const needsDetail =
+        !ann.content?.trim() ||
+        (ann.content.includes('Tap') && ann.content.includes('View'));
+      if (needsDetail) {
+        ann = await announcementService.getAnnouncementById(announcement.id);
+      }
+      setAnnouncementToEdit({
+        id: ann.id,
+        category: ann.category,
+        priority: ann.priority,
+        title: ann.title,
+        content: ann.content,
+        audience: ann.audience,
+        status: ann.status,
+        publish_at: ann.publish_at,
+        expires_at: ann.expires_at,
+      });
+      setIsCreateModalOpen(true);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(`Could not load announcement for editing: ${msg}`);
+    }
+  }, []);
+
+  const showEmpty = !isLoading && !isError && announcements.length === 0;
 
   return (
     <div className="w-full bg-background flex-1 p-4 sm:p-6 lg:px-8 lg:py-6 space-y-5 max-w-6xl mx-auto animate-in fade-in duration-500">
@@ -132,7 +106,7 @@ export default function AnnouncementsPage() {
 
       {/* Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {['All', 'Pending', 'Approved'].map((tab) => (
+        {(['All', 'Pending', 'Approved'] as const).map((tab) => (
           <Button
             key={tab}
             variant="ghost"
@@ -148,62 +122,101 @@ export default function AnnouncementsPage() {
         ))}
       </div>
 
-      {/* Announcements List */}
-      <div className="flex flex-col gap-3.5 pt-1 pb-10">
-        {mockAnnouncements.map((announcement) => (
-          <Card
-            key={announcement.id}
-            className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-muted-foreground/5 border-transparent shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.06)] hover:bg-muted-foreground/40 transition-all duration-300 rounded-xl"
-          >
-            <div className="flex flex-col gap-2.5">
-              <h3 className="text-[17px] font-bold text-foreground tracking-tight">
-                {announcement.title}
-              </h3>
-              <div className="flex flex-col items-start text-[13px] font-medium text-slate-600 dark:text-slate-400">
-                <div className="flex items-center gap-2">
-                  <Megaphone
-                    className="h-4 w-4 text-slate-700 dark:text-slate-300"
-                    strokeWidth={1.75}
-                  />
-                  <span>
-                    {announcement.priority === 'High' ? 'Urgent' : announcement.priority} •{' '}
-                    {announcement.date.split('T')[0]}
-                  </span>
+      {/* Loading / error */}
+      {isLoading && (
+        <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading announcements…</span>
+        </div>
+      )}
+
+      {isError && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-6 text-center space-y-3">
+          <p className="text-sm text-destructive">
+            {error instanceof Error ? error.message : 'Could not load announcements.'}
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {/* List */}
+      {!isLoading && !isError && (
+        <div className="flex flex-col gap-3.5 pt-1 pb-10">
+          {isFetching && announcements.length > 0 && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Updating…
+            </p>
+          )}
+
+          {showEmpty && (
+            <div className="rounded-xl border border-dashed border-muted-foreground/25 bg-muted/20 px-6 py-12 text-center space-y-2">
+              <p className="text-muted-foreground text-sm">
+                No announcements found for this filter yet.
+              </p>
+              <Button variant="secondary" size="sm" onClick={handleCreateAnnouncement}>
+                Create your first announcement
+              </Button>
+            </div>
+          )}
+
+          {announcements.map((announcement) => (
+            <Card
+              key={announcement.id}
+              className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-muted-foreground/5 border-transparent shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.06)] hover:bg-muted-foreground/40 transition-all duration-300 rounded-xl"
+            >
+              <div className="flex flex-col gap-2.5">
+                <h3 className="text-[17px] font-bold text-foreground tracking-tight">
+                  {announcement.title}
+                </h3>
+                <div className="flex flex-col items-start text-[13px] font-medium text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <Megaphone
+                      className="h-4 w-4 text-slate-700 dark:text-slate-300"
+                      strokeWidth={1.75}
+                    />
+                    <span>
+                      {announcement.priority === 'High' ? 'Urgent' : announcement.priority} •{' '}
+                      {announcement.date.split('T')[0]}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-row justify-between md:flex-col items-start md:items-end gap-3.5">
-              <Badge
-                variant="secondary"
-                className="bg-info/15 hover:bg-info/25 text-info border-none font-medium px-3.5 py-0.5 text-[12px] rounded-full pointer-events-none"
-              >
-                {announcement.status}
-              </Badge>
-              <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                <button
-                  onClick={() => handleViewDetails(announcement)}
-                  className="hover:text-foreground transition-colors cursor-pointer p-1 hover:bg-secondary/80 rounded-md"
-                  title="View Announcement"
+              <div className="flex flex-row justify-between md:flex-col items-start md:items-end gap-3.5">
+                <Badge
+                  variant="secondary"
+                  className="bg-info/15 hover:bg-info/25 text-info border-none font-medium px-3.5 py-0.5 text-[12px] rounded-full pointer-events-none"
                 >
-                  <Eye className="h-5 w-5" strokeWidth={1.75} />
-                  <span className="sr-only">View</span>
-                </button>
-                <button
-                  onClick={() => handleEditAnnouncement(announcement)}
-                  className="hover:text-foreground transition-colors cursor-pointer p-1 hover:bg-secondary/80 rounded-md"
-                  title="Edit Announcement"
-                >
-                  <FileEdit className="h-5 w-5" strokeWidth={1.75} />
-                  <span className="sr-only">Edit</span>
-                </button>
+                  {announcement.status}
+                </Badge>
+                <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
+                  <button
+                    type="button"
+                    onClick={() => handleViewDetails(announcement)}
+                    className="hover:text-foreground transition-colors cursor-pointer p-1 hover:bg-secondary/80 rounded-md"
+                    title="View Announcement"
+                  >
+                    <Eye className="h-5 w-5" strokeWidth={1.75} />
+                    <span className="sr-only">View</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleEditAnnouncement(announcement)}
+                    className="hover:text-foreground transition-colors cursor-pointer p-1 hover:bg-secondary/80 rounded-md"
+                    title="Edit Announcement"
+                  >
+                    <FileEdit className="h-5 w-5" strokeWidth={1.75} />
+                    <span className="sr-only">Edit</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {/* Modals from existing codebase */}
       <QuickCreateModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
