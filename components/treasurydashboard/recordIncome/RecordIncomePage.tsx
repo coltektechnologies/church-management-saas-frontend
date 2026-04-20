@@ -73,7 +73,11 @@ export default function RecordIncomePage() {
     }
     return rawCategories
       .filter((c) => c.is_active !== false)
-      .map((c) => ({ value: String(c.id), label: c.name }));
+      .map((c) => ({
+        value: String(c.id),
+        label: c.name,
+        isDefault: false,
+      }));
   }, [rawCategories]);
 
   const { data: backendMembers = [], isLoading: memLoading } = useQuery({

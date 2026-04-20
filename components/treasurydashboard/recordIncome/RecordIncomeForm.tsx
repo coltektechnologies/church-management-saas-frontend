@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import type { IncomeRecord } from './IncomeReceipt';
 import { todayDMY, nowString, DUMMY_MEMBERS, type Member } from './recordIncomeData';
-import { getOptions, type DropdownOption } from './dropdownOptions';
+import { getOptions, type DropdownOption as StoredDropdownOption } from './dropdownOptions';
 
 // ── Static option lists (payment method details) ──────────
 const MOMO_NETWORKS = [
@@ -81,7 +81,7 @@ function inputBase(
 }
 
 // ── Searchable Dropdown ───────────────────────────────────────────────────────
-interface DropdownOption {
+interface SearchableOption {
   value: string;
   label: string;
 }
@@ -90,7 +90,7 @@ interface SearchableDropdownProps {
   id: string;
   value: string;
   onChange: (v: string) => void;
-  options: DropdownOption[];
+  options: SearchableOption[];
   placeholder: string;
   searchable?: boolean;
   cardBg: string;
@@ -577,7 +577,7 @@ export interface RecordIncomeFormProps {
   isDark?: boolean;
   actor?: string;
   /** When provided, income type values are category UUIDs from the API (labels shown in UI). */
-  incomeCategoryOptions?: DropdownOption[];
+  incomeCategoryOptions?: StoredDropdownOption[];
   /** When provided, replaces demo members (expects real member UUIDs for API submit). */
   members?: Member[];
   /** Disable actions while parent is loading categories/members or API is unreachable. */

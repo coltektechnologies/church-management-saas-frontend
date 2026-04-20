@@ -90,10 +90,16 @@ export function treasuryPatchFromSessionUser(): TreasurySessionIdentityPatch | n
   return Object.keys(patch).length ? patch : null;
 }
 
+/** Shape required for identity merge (matches {@link TreasuryProfile} fields we touch). */
+type TreasuryIdentityMergeBase = {
+  adminName: string;
+  adminEmail: string;
+  adminRole: string;
+  avatarUrl: string | null;
+};
+
 /** Merge session identity into stored treasury profile — only fills empty slots. */
-export function mergeTreasuryProfileWithSession<
-  T extends TreasurySessionIdentityPatch & Record<string, unknown>,
->(base: T): T {
+export function mergeTreasuryProfileWithSession<T extends TreasuryIdentityMergeBase>(base: T): T {
   const patch = treasuryPatchFromSessionUser();
   if (!patch) {
     return base;
