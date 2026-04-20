@@ -515,7 +515,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                             <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Name of Individual
                           </FormLabel>
                           <FormControl>
-                            <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            <Input
+                              className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -527,10 +530,14 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                       render={({ field }) => (
                         <FormItem className="space-y-1.5">
                           <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
-                            <IdCard className="w-3.5 h-3.5 text-[#28c1a6]" /> Their Role in Organisation
+                            <IdCard className="w-3.5 h-3.5 text-[#28c1a6]" /> Their Role in
+                            Organisation
                           </FormLabel>
                           <FormControl>
-                            <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                            <Input
+                              className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -551,7 +558,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <FileText className="w-3.5 h-3.5 text-[#28c1a6]" /> Transaction ID
                             </FormLabel>
                             <FormControl>
-                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -566,7 +576,11 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <Phone className="w-3.5 h-3.5 text-[#28c1a6]" /> Number
                             </FormLabel>
                             <FormControl>
-                              <Input type="tel" className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                type="tel"
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -583,7 +597,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Name
                             </FormLabel>
                             <FormControl>
-                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -605,7 +622,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <FileText className="w-3.5 h-3.5 text-[#28c1a6]" /> Cheque Number
                             </FormLabel>
                             <FormControl>
-                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -620,7 +640,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <Landmark className="w-3.5 h-3.5 text-[#28c1a6]" /> Bank Name
                             </FormLabel>
                             <FormControl>
-                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -637,7 +660,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Payee Name
                             </FormLabel>
                             <FormControl>
-                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -659,7 +685,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <Landmark className="w-3.5 h-3.5 text-[#28c1a6]" /> Bank Name
                             </FormLabel>
                             <FormControl>
-                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -674,7 +703,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <User className="w-3.5 h-3.5 text-[#28c1a6]" /> Account Name
                             </FormLabel>
                             <FormControl>
-                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -691,7 +723,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                               <FileText className="w-3.5 h-3.5 text-[#28c1a6]" /> Account Number
                             </FormLabel>
                             <FormControl>
-                              <Input className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]" {...field} />
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
