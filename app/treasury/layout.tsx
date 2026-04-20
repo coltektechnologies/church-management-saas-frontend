@@ -62,10 +62,13 @@ function TreasuryTree({ children }: { children: ReactNode }) {
 }
 
 // ── Layout root ───────────────────────────────────────────────────────────────
-// const skipAuth = process.env.NEXT_PUBLIC_SKIP_TREASURY_AUTH === 'true';
-// if (skipAuth) return <TreasuryTree>{children}</TreasuryTree>;
+const skipAuth = process.env.NEXT_PUBLIC_SKIP_TREASURY_AUTH === 'true';
 
 export default function TreasuryLayout({ children }: { children: ReactNode }) {
+  if (skipAuth) {
+    return <TreasuryTree>{children}</TreasuryTree>;
+  }
+
   return (
     <RequireAuth>
       <RequireTreasuryPortal>

@@ -10,8 +10,9 @@ import { getSafeInternalPath } from '@/lib/safeReturnPath';
  * Everything else requires `church_session=1` (set on successful login / token storage).
  * With a session cookie, `/` and `/features` redirect to `/admin` so users leave only via Sign out.
  *
- * Optional local preview (cookie bypass): uncomment the `skip*` block below and set the matching
- * NEXT_PUBLIC_SKIP_*_AUTH=true in .env.local, then restart dev. Never enable in production.
+ * Optional local preview for /secretary without cookie: set NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true
+ * in .env.local and uncomment the skipSecretaryCookie block below, then restart dev.
+ * Never enable that in production.
  */
 const CHURCH_SESSION_COOKIE = 'church_session';
 const CHURCH_SESSION_COOKIE_VALUE = '1';
@@ -26,18 +27,7 @@ const PUBLIC_EXACT = new Set([
 ]);
 
 /** Prefixes: path === prefix or path starts with prefix + '/' */
-const PUBLIC_PREFIXES = [
-  '/login',
-  '/signup',
-  '/features',
-  '/developers',
-  '/contact',
-  '/pricing',
-  '/secretary',
-  '/treasury',
-  '/admin',
-  '/department',
-];
+const PUBLIC_PREFIXES = ['/login', '/signup', '/features', '/developers', '/contact', '/pricing'];
 
 /** Where to send users who already have a session cookie but hit login/signup. */
 const LOGGED_IN_AUTH_REDIRECT = '/dashboard';
@@ -113,33 +103,36 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(dest);
   }
 
-  // Local dev only: set NEXT_PUBLIC_SKIP_*_AUTH in .env.local to bypass session cookie for a route
-  // group. **Keep these blocks commented in production** so the edge always enforces
-  // `church_session` (see .env.example). Uncomment only for specific local UI preview.
-  // const skipDepartmentsAuth =
-  //   process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true' &&
-  //   (pathname === '/departments' || pathname.startsWith('/departments/'));
-  // const skipSecretaryAuth =
-  //   process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
-  //   (pathname === '/secretary' || pathname.startsWith('/secretary/'));
-  // const skipAdminAuth =
-  //   process.env.NEXT_PUBLIC_SKIP_ADMIN_AUTH === 'true' &&
-  //   (pathname === '/admin' || pathname.startsWith('/admin/'));
-  // const skipDashboardAuth =
-  //   process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true' &&
-  //   (pathname === '/dashboard' || pathname.startsWith('/dashboard/'));
-  // const skipTreasuryAuth =
-  //   process.env.NEXT_PUBLIC_SKIP_TREASURY_AUTH === 'true' &&
-  //   (pathname === '/treasury' || pathname.startsWith('/treasury/'));
-  // const skipAuth =
-  //   skipDepartmentsAuth ||
-  //   skipSecretaryAuth ||
-  //   skipAdminAuth ||
-  //   skipDashboardAuth ||
-  //   skipTreasuryAuth;
+  // auth bypasses for local preview without cookie: set NEXT_PUBLIC_SKIP_*_AUTH=true in .env.local and restart dev
+  const skipDepartmentsAuth =
+    process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH === 'true' &&
+    (pathname === '/departments' || pathname.startsWith('/departments/'));
+
+  const skipSecretaryAuth =
+    process.env.NEXT_PUBLIC_SKIP_SECRETARY_AUTH === 'true' &&
+    (pathname === '/secretary' || pathname.startsWith('/secretary/'));
+
+  const skipAdminAuth =
+    process.env.NEXT_PUBLIC_SKIP_ADMIN_AUTH === 'true' &&
+    (pathname === '/admin' || pathname.startsWith('/admin/'));
+
+  const skipDashboardAuth =
+    process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true' &&
+    (pathname === '/dashboard' || pathname.startsWith('/dashboard/'));
+
+  const skipTreasuryAuth =
+    process.env.NEXT_PUBLIC_SKIP_TREASURY_AUTH === 'true' &&
+    (pathname === '/treasury' || pathname.startsWith('/treasury/'));
+
+  const skipAuth =
+    skipDepartmentsAuth ||
+    skipSecretaryAuth ||
+    skipAdminAuth ||
+    skipDashboardAuth ||
+    skipTreasuryAuth;
 
   // ✅ Single unified check — no duplicate block after this
-  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname)) {
+  if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipAuth) {
     return NextResponse.next();
   }
 
