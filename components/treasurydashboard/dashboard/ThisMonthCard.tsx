@@ -6,6 +6,8 @@
 
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import { ResponsiveContainer, BarChart, Bar, Cell, YAxis } from 'recharts';
+import type { IncomeCategory, MonthlyTrend } from '@/services/treasuryService';
+import { formatCurrency } from '@/services/treasuryService';
 
 function autoText(hex: string): string {
   const h = (hex || '#ffffff').replace('#', '');
@@ -19,28 +21,42 @@ function autoText(hex: string): string {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179 ? '#0B2A4A' : '#FFFFFF';
 }
 
-const TITHE_DATA = [
-  { v: 120 },
-  { v: 280 },
-  { v: 180 },
-  { v: 450 },
-  { v: 220 },
-  { v: 80 },
-  { v: 110 },
-  { v: 280 },
-];
-const OFFERING_DATA = [
-  { v: 200 },
-  { v: 110 },
-  { v: 280 },
-  { v: 180 },
-  { v: 450 },
-  { v: 220 },
-  { v: 90 },
-  { v: 120 },
-];
-const TITHE_PEAK = 3;
-const OFFERING_PEAK = 4;
+function splitTitheOffering(breakdown: IncomeCategory[]): { tithe: number; offering: number } {
+  if (!breakdown.length) {
+    return { tithe: 0, offering: 0 };
+  }
+  const by = (re: RegExp) => breakdown.find((b) => re.test(b.name))?.value ?? 0;
+  let tithe = by(/tithe/i);
+  let offering = by(/offering/i);
+  if (tithe === 0 && offering === 0) {
+    const sorted = [...breakdown].sort((a, b) => b.value - a.value);
+    tithe = sorted[0]?.value ?? 0;
+    offering = sorted[1]?.value ?? 0;
+  }
+  return { tithe, offering };
+}
+
+function sparkFromTrend(
+  trend: MonthlyTrend[],
+  titheShare: number,
+  offeringShare: number,
+  count = 8
+): { tithe: { v: number }[]; offering: { v: number }[]; tithePeak: number; offeringPeak: number } {
+  const slice = trend.length ? trend.slice(-count) : [];
+  if (!slice.length) {
+    const zeros = Array.from({ length: count }, () => ({ v: 0 }));
+    return { tithe: zeros, offering: zeros, tithePeak: 0, offeringPeak: 0 };
+  }
+  const titheArr = slice.map((t) => ({
+    v: Math.max(0, Math.round(t.income * titheShare)),
+  }));
+  const offArr = slice.map((t) => ({
+    v: Math.max(0, Math.round(t.income * offeringShare)),
+  }));
+  const tithePeak = titheArr.reduce((bi, row, i) => (row.v > titheArr[bi].v ? i : bi), 0);
+  const offeringPeak = offArr.reduce((bi, row, i) => (row.v > offArr[bi].v ? i : bi), 0);
+  return { tithe: titheArr, offering: offArr, tithePeak, offeringPeak };
+}
 
 interface SparkProps {
   data: { v: number }[];
@@ -70,7 +86,15 @@ function SparkBar({ data, peakIndex, color }: SparkProps) {
   );
 }
 
-export default function ThisMonthCard() {
+export default function ThisMonthCard({
+  incomeBreakdown,
+  monthlyTrend,
+  isLoading,
+}: {
+  incomeBreakdown?: IncomeCategory[];
+  monthlyTrend?: MonthlyTrend[];
+  isLoading?: boolean;
+} = {}) {
   const { profile, isReady } = useTreasuryProfile();
 
   const isDark = isReady ? profile.darkMode : false;
@@ -82,6 +106,19 @@ export default function ThisMonthCard() {
   const primaryColor = isDark
     ? profile.darkPrimaryColor || '#0B2A4A'
     : profile.primaryColor || '#0B2A4A';
+
+  const bd = incomeBreakdown ?? [];
+  const trend = monthlyTrend ?? [];
+  const { tithe: titheAmt, offering: offeringAmt } = splitTitheOffering(bd);
+  const incSum = titheAmt + offeringAmt;
+  const titheShare = incSum > 0 ? titheAmt / incSum : 0.5;
+  const offeringShare = incSum > 0 ? offeringAmt / incSum : 0.5;
+  const {
+    tithe: TITHE_DATA,
+    offering: OFFERING_DATA,
+    tithePeak: TITHE_PEAK,
+    offeringPeak: OFFERING_PEAK,
+  } = sparkFromTrend(trend, titheShare, offeringShare);
 
   return (
     <div
@@ -148,7 +185,7 @@ export default function ThisMonthCard() {
               whiteSpace: 'nowrap',
             }}
           >
-            GHS250,025,222
+            {isLoading ? '…' : formatCurrency(titheAmt)}
           </p>
 
           <SparkBar data={TITHE_DATA} peakIndex={TITHE_PEAK} color={accentColor} />
@@ -184,7 +221,7 @@ export default function ThisMonthCard() {
               whiteSpace: 'nowrap',
             }}
           >
-            GHS250,025
+            {isLoading ? '…' : formatCurrency(offeringAmt)}
           </p>
 
           <SparkBar data={OFFERING_DATA} peakIndex={OFFERING_PEAK} color={primaryColor} />

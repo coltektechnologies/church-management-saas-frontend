@@ -7,6 +7,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Clock, ArrowDown, ArrowUp } from 'lucide-react';
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
+import type { Transaction } from '@/services/treasuryService';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface IncomeRecord {
@@ -97,6 +98,18 @@ function dmyToDisplay(s: string): string {
   });
 }
 
+function formatApiDate(iso: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) {
+    return iso;
+  }
+  return new Date(t).toLocaleDateString('en-GH', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 function incomeTypeLabel(type: string, detail?: string): string {
   const MAP: Record<string, string> = {
     tithe: 'Tithe Collection',
@@ -174,8 +187,32 @@ function toTransactionRows(records: IncomeRecord[]): TransactionRow[] {
   }));
 }
 
+function apiTransactionsToRows(rows: Transaction[]): TransactionRow[] {
+  return rows.map((t) => {
+    const amt = Math.abs(Number(t.amount)) || 0;
+    const prefix = t.type === 'income' ? '+' : '-';
+    const sym = 'GHS';
+    return {
+      id: t.id,
+      type: t.type,
+      title: t.description || (t.type === 'income' ? 'Income' : 'Expense'),
+      subtitle: `${t.category} • ${formatApiDate(t.date)}`,
+      amount: `${prefix}${sym}${amt.toLocaleString('en-GH', { minimumFractionDigits: 0 })}`,
+      isPositive: t.type === 'income',
+      sortKey: Date.parse(t.date) || 0,
+    };
+  });
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function RecentTransactions() {
+export default function RecentTransactions({
+  apiTransactions,
+  isLoadingApi,
+}: {
+  apiTransactions?: Transaction[];
+  isLoadingApi?: boolean;
+} = {}) {
+  const useApiList = apiTransactions !== undefined;
   const { profile, isReady } = useTreasuryProfile();
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
 
@@ -183,13 +220,16 @@ export default function RecentTransactions() {
   const [incomeRecords, setIncomeRecords] = useState<IncomeRecord[]>(() => loadIncomeRecords());
 
   useEffect(() => {
+    if (useApiList) {
+      return;
+    }
     const id = setInterval(() => {
       setIncomeRecords(loadIncomeRecords());
     }, 3000);
     return () => {
       clearInterval(id);
     };
-  }, []);
+  }, [useApiList]);
 
   const isDark = isReady ? profile.darkMode : false;
   const cardBg = isDark ? profile.darkBackgroundColor || '#0A1628' : '#FFFFFF';
@@ -203,9 +243,12 @@ export default function RecentTransactions() {
   const expenseColor = '#F76D6F';
 
   const allTransactions: TransactionRow[] = useMemo(() => {
+    if (useApiList && apiTransactions) {
+      return apiTransactionsToRows(apiTransactions).sort((a, b) => b.sortKey - a.sortKey);
+    }
     const incomeRows = toTransactionRows(incomeRecords);
     return [...incomeRows, ...DUMMY_EXPENSES].sort((a, b) => b.sortKey - a.sortKey);
-  }, [incomeRecords]);
+  }, [useApiList, apiTransactions, incomeRecords]);
 
   const filtered = useMemo(() => {
     const list =
@@ -239,6 +282,7 @@ export default function RecentTransactions() {
         height: '100%',
       }}
     >
+      <style>{`@keyframes rtx-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }`}</style>
       {/* ── Header ── */}
       <div
         style={{
@@ -315,7 +359,19 @@ export default function RecentTransactions() {
       </div>
 
       {/* ── Transaction List ── */}
-      {filtered.length === 0 ? (
+      {isLoadingApi && useApiList ? (
+        <div
+          style={{
+            flex: 1,
+            minHeight: 200,
+            borderRadius: 12,
+            background:
+              'linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.03) 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'rtx-shimmer 1.5s infinite',
+          }}
+        />
+      ) : filtered.length === 0 ? (
         <div
           style={{
             flex: 1,
@@ -339,11 +395,13 @@ export default function RecentTransactions() {
               margin: 0,
             }}
           >
-            {filter === 'income'
-              ? 'No income records yet — add one via Record Income.'
-              : filter === 'expense'
-                ? 'No expense records yet.'
-                : 'No transactions yet.'}
+            {useApiList
+              ? 'No transactions in this period.'
+              : filter === 'income'
+                ? 'No income records yet — add one via Record Income.'
+                : filter === 'expense'
+                  ? 'No expense records yet.'
+                  : 'No transactions yet.'}
           </p>
         </div>
       ) : (

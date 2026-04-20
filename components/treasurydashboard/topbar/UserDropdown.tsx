@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import { performLogout } from '@/lib/churchSessionBrowser';
+import { treasuryDisplayName, treasuryPortalRoleLabel } from '@/lib/treasuryPortalDisplay';
 
 const AVATAR_COLORS = ['#0B2A4A', '#065F46', '#7C3AED', '#B45309', '#9D174D', '#1E40AF'];
 
@@ -48,7 +49,7 @@ interface Props {
 }
 
 export default function UserDropdown({
-  triggerName = 'User',
+  triggerName = '',
   initials = 'U',
   avatarUrl: _avatarUrl = null,
   accentColor: _accentColor = '#2FC4B2',
@@ -67,8 +68,10 @@ export default function UserDropdown({
   const churchName = churchReady
     ? church.churchName || 'SDA Church - Adenta'
     : 'SDA Church - Adenta';
-  const displayName = userReady ? user.adminName || 'User' : 'User';
-  const displayRole = userReady ? user.adminRole || 'Treasurer' : 'Treasurer';
+  const preferredName = userReady ? user.preferredName || '' : '';
+  const adminName = userReady ? user.adminName || '' : '';
+  const displayName = treasuryDisplayName(preferredName, adminName) || 'Account';
+  const displayRole = userReady ? treasuryPortalRoleLabel(user.adminRole || '') : 'Treasurer';
   const adminEmail = userReady ? user.adminEmail || '' : '';
   const currentUrl = userReady ? (user.avatarUrl ?? null) : null;
 
@@ -115,12 +118,14 @@ export default function UserDropdown({
             initials
           )}
         </div>
-        <span
-          className="hidden lg:block text-[13px] font-normal max-w-[80px] truncate"
-          style={{ color: textColor }}
-        >
-          {triggerName}
-        </span>
+        {(triggerName || '').trim() ? (
+          <span
+            className="hidden lg:block text-[13px] font-normal max-w-[min(200px,22vw)] truncate"
+            style={{ color: textColor }}
+          >
+            {triggerName.trim()}
+          </span>
+        ) : null}
         {open ? (
           <ChevronUp
             size={12}

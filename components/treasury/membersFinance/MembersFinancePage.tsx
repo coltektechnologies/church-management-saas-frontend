@@ -1,30 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import MemberList from './MemberList';
 import MemberDetail from './MemberDetail';
-import { MemberContribution } from '@/types/memberFinance';
-import { MOCK_MEMBER_CONTRIBUTIONS } from '@/components/treasury/membersFinance/mockMemberFinance';
+import type { MemberContribution } from '@/types/memberFinance';
+import {
+  downloadContributionStatementPdf,
+  downloadReceiptPdf,
+} from '@/components/treasury/membersFinance/exportMemberFinanceDocuments';
+import { fetchMembersFinanceMerged } from '@/services/membersFinanceDirectory';
+
+const FILTERS = {
+  period: 'this_year' as const,
+  /** Backend caps at 100 — used only for the contributions aggregate query. */
+  contributorsLimit: 100,
+};
 
 export default function MembersFinancePage() {
-  const [selected, setSelected] = useState<MemberContribution | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // API integration point: swap MOCK_MEMBER_CONTRIBUTIONS with useSWR/useQuery fetching
-  // e.g. const { data: members, isLoading } = useQuery(['members'], getMemberContributions)
-  const members: MemberContribution[] = MOCK_MEMBER_CONTRIBUTIONS;
+  const {
+    data = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['treasury', 'members-finance-directory', FILTERS],
+    queryFn: () => fetchMembersFinanceMerged(FILTERS),
+  });
 
-  // API integration point: generate and download PDF statement for member
-  const handleStatement = (_member: MemberContribution) => {
-    // e.g. const blob = await generateMemberStatement(member.id)
-    // downloadBlob(blob, `${member.name}-statement.pdf`)
-    alert(`Statement for ${_member.name} — wire to PDF API`);
+  const members = data;
+
+  const selected = useMemo(
+    () => (selectedId ? (members.find((m) => m.id === selectedId) ?? null) : null),
+    [members, selectedId]
+  );
+
+  const handleStatement = (member: MemberContribution) => {
+    try {
+      downloadContributionStatementPdf(member);
+      toast.success('Statement PDF downloaded.');
+    } catch {
+      toast.error('Could not generate the statement PDF.');
+    }
   };
 
-  // API integration point: generate and download receipt PDF for member
-  const handleReceipt = (_member: MemberContribution) => {
-    // e.g. const blob = await generateMemberReceipt(member.id)
-    // downloadBlob(blob, `${member.name}-receipt.pdf`)
-    alert(`Receipt for ${_member.name} — wire to PDF API`);
+  const handleReceipt = (member: MemberContribution) => {
+    try {
+      downloadReceiptPdf(member);
+      toast.success('Receipt PDF downloaded.');
+    } catch {
+      toast.error('Could not generate the receipt PDF.');
+    }
   };
 
   return (
@@ -33,9 +62,13 @@ export default function MembersFinancePage() {
       <div className="w-full max-w-[420px] flex-shrink-0 flex flex-col min-h-0">
         <MemberList
           members={members}
-          selectedId={selected?.id ?? null}
-          onSelect={setSelected}
+          selectedId={selectedId}
+          onSelect={(m) => setSelectedId(m.id)}
           pageSize={7}
+          isLoading={isLoading}
+          loadError={
+            isError ? (error instanceof Error ? error.message : 'Could not load members.') : null
+          }
         />
       </div>
 

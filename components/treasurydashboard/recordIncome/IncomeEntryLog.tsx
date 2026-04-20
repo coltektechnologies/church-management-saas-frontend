@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import type { IncomeRecord } from './IncomeReceipt';
 import { formatCurrency } from './IncomeReceipt';
-import { getOptions } from './dropdownOptions';
+import { getOptions, type DropdownOption } from './dropdownOptions';
 import { appendActivity } from './activityHistory';
 
 // ── Shared storage key — must match record-income/page.tsx ────────────────────
@@ -70,13 +70,12 @@ const TYPE_BADGES: Record<string, { bg: string; text: string }> = {
   other: { bg: '#F1F5F9', text: '#475569' },
 };
 
-function typeLabel(value: string): string {
-  const opts = getOptions('income_types');
+function typeLabelFromOpts(value: string, opts: DropdownOption[]): string {
   return opts.find((o) => o.value === value)?.label ?? value;
 }
 
-function fullTypeLabel(r: IncomeRecord): string {
-  const base = typeLabel(r.incomeType);
+function fullTypeLabelFromOpts(r: IncomeRecord, opts: DropdownOption[]): string {
+  const base = typeLabelFromOpts(r.incomeType, opts);
   return r.incomeTypeDetail ? `${base} — ${r.incomeTypeDetail}` : base;
 }
 
@@ -178,6 +177,7 @@ function EntryCard({
   accentColor,
   onSave,
   actor,
+  incomeTypeOpts,
 }: {
   record: IncomeRecord;
   cardBg: string;
@@ -185,6 +185,7 @@ function EntryCard({
   accentColor: string;
   actor: string;
   onSave: (updated: IncomeRecord) => void;
+  incomeTypeOpts: DropdownOption[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -243,12 +244,12 @@ function EntryCard({
       </style></head><body>
       <h1>Income Receipt</h1>
       <div class="sub">${r.receiptNumber}</div>
-      <div style="text-align:center"><span class="badge">${fullTypeLabel(r)}</span></div>
+      <div style="text-align:center"><span class="badge">${fullTypeLabelFromOpts(r, incomeTypeOpts)}</span></div>
       <table>
         <tr><td>Member</td><td>${r.memberName}</td></tr>
         <tr><td>Amount</td><td class="amount">${formatCurrency(r.amount, r.currency)}</td></tr>
         <tr><td>Date</td><td>${r.date}</td></tr>
-        <tr><td>Income Type</td><td>${fullTypeLabel(r)}</td></tr>
+        <tr><td>Income Type</td><td>${fullTypeLabelFromOpts(r, incomeTypeOpts)}</td></tr>
         <tr><td>Payment</td><td>${r.paymentMethod}${r.paymentDetail ? ' (' + r.paymentDetail + ')' : ''}</td></tr>
         <tr><td>Notification</td><td>${r.notification.join(', ') || '—'}</td></tr>
         <tr><td>Recorded At</td><td>${r.recordedAt}</td></tr>
@@ -363,7 +364,7 @@ function EntryCard({
                 {record.memberName}
               </span>
               <span
-                title={fullTypeLabel(record)}
+                title={fullTypeLabelFromOpts(record, incomeTypeOpts)}
                 style={{
                   fontSize: '10px',
                   fontWeight: 700,
@@ -378,7 +379,7 @@ function EntryCard({
                   display: 'inline-block',
                 }}
               >
-                {fullTypeLabel(record)}
+                {fullTypeLabelFromOpts(record, incomeTypeOpts)}
               </span>
               {editing && (
                 <span
@@ -520,7 +521,7 @@ function EntryCard({
             />
             <EditableField
               label="Income Type"
-              value={fullTypeLabel(editing ? draft : record)}
+              value={fullTypeLabelFromOpts(editing ? draft : record, incomeTypeOpts)}
               editing={false}
               onChange={() => {}}
               textColor={tc}
@@ -640,7 +641,8 @@ function EntryCard({
 function doExport(
   format: 'csv' | 'excel' | 'word' | 'json' | 'print',
   records: IncomeRecord[],
-  actor: string
+  actor: string,
+  incomeTypeOpts: DropdownOption[]
 ): void {
   appendActivity({
     action:
@@ -677,7 +679,7 @@ function doExport(
       r.receiptNumber,
       r.date,
       r.memberName,
-      typeLabel(r.incomeType),
+      typeLabelFromOpts(r.incomeType, incomeTypeOpts),
       r.incomeTypeDetail || '',
       r.amount,
       r.currency,
@@ -715,7 +717,7 @@ function doExport(
       r.receiptNumber,
       r.date,
       r.memberName,
-      typeLabel(r.incomeType),
+      typeLabelFromOpts(r.incomeType, incomeTypeOpts),
       r.incomeTypeDetail || '',
       r.amount,
       r.currency,
@@ -739,7 +741,7 @@ function doExport(
     const rows = records
       .map(
         (r) =>
-          `<tr><td>${r.receiptNumber}</td><td>${r.date}</td><td>${r.memberName}</td><td>${fullTypeLabel(r)}</td><td style="text-align:right;font-weight:600">${formatCurrency(r.amount, r.currency)}</td><td>${r.paymentMethod}</td><td>${r.notification.join(', ') || '—'}</td><td>${r.recordedBy}</td></tr>`
+          `<tr><td>${r.receiptNumber}</td><td>${r.date}</td><td>${r.memberName}</td><td>${fullTypeLabelFromOpts(r, incomeTypeOpts)}</td><td style="text-align:right;font-weight:600">${formatCurrency(r.amount, r.currency)}</td><td>${r.paymentMethod}</td><td>${r.notification.join(', ') || '—'}</td><td>${r.recordedBy}</td></tr>`
       )
       .join('');
     const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>body{font-family:Calibri,sans-serif;font-size:11pt;color:#0B2A4A}h1{font-size:18pt;text-align:center}table{width:100%;border-collapse:collapse;font-size:9pt}th{background:#0B2A4A;color:#fff;padding:6pt 8pt;text-align:left}td{padding:5pt 8pt;border-bottom:1pt solid #e0e0e0}</style></head><body><h1>Income Records</h1><table><tr><th>Receipt No</th><th>Date</th><th>Member</th><th>Type</th><th>Amount</th><th>Payment</th><th>Notification</th><th>Recorded By</th></tr>${rows}</table></body></html>`;
@@ -772,7 +774,7 @@ function doExport(
     const rows = records
       .map(
         (r) =>
-          `<tr><td>${r.receiptNumber}</td><td>${r.date}</td><td>${r.memberName}</td><td>${fullTypeLabel(r)}</td><td style="text-align:right;font-weight:600">${formatCurrency(r.amount, r.currency)}</td><td>${r.paymentMethod}</td><td>${r.recordedBy}</td></tr>`
+          `<tr><td>${r.receiptNumber}</td><td>${r.date}</td><td>${r.memberName}</td><td>${fullTypeLabelFromOpts(r, incomeTypeOpts)}</td><td style="text-align:right;font-weight:600">${formatCurrency(r.amount, r.currency)}</td><td>${r.paymentMethod}</td><td>${r.recordedBy}</td></tr>`
       )
       .join('');
     win.document.write(
@@ -860,6 +862,8 @@ interface IncomeEntryLogProps {
    * Optional externally-managed records.
    */
   records?: IncomeRecord[];
+  /** When set (e.g. API categories with UUID keys), labels for income type filters and exports. */
+  incomeTypeOptionsOverride?: DropdownOption[];
   onUpdateRecord?: (updated: IncomeRecord) => void;
   actor?: string;
   primaryColor?: string;
@@ -874,6 +878,7 @@ interface IncomeEntryLogProps {
 
 export default function IncomeEntryLog({
   records: externalRecords,
+  incomeTypeOptionsOverride,
   onUpdateRecord,
   actor = 'Treasurer',
   primaryColor = '#0B2A4A',
@@ -896,6 +901,8 @@ export default function IncomeEntryLog({
 
   // Use external records if provided (backwards-compat), else use localStorage
   const records = externalRecords ?? storedRecords;
+
+  const incomeTypeOpts = incomeTypeOptionsOverride ?? getOptions('income_types');
 
   // ── Update handler ────────────────────────────────────────────────────────
   const handleUpdateRecord = (updated: IncomeRecord) => {
@@ -936,14 +943,21 @@ export default function IncomeEntryLog({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const incomeTypeOptions = getOptions('income_types');
-
   const otherDetails = useMemo(() => {
     const details = records
-      .filter((r) => r.incomeType === 'other' && r.incomeTypeDetail)
+      .filter((r) => {
+        if (!r.incomeTypeDetail) {
+          return false;
+        }
+        if (r.incomeType === 'other') {
+          return true;
+        }
+        const lb = typeLabelFromOpts(r.incomeType, incomeTypeOpts).toLowerCase();
+        return lb.includes('other') || lb.includes('misc');
+      })
       .map((r) => r.incomeTypeDetail as string);
     return [...new Set(details)];
-  }, [records]);
+  }, [records, incomeTypeOpts]);
 
   const filtered = useMemo(() => {
     let result = records;
@@ -953,7 +967,7 @@ export default function IncomeEntryLog({
         (r) =>
           r.memberName.toLowerCase().includes(q) ||
           r.receiptNumber.toLowerCase().includes(q) ||
-          typeLabel(r.incomeType).toLowerCase().includes(q) ||
+          typeLabelFromOpts(r.incomeType, incomeTypeOpts).toLowerCase().includes(q) ||
           (r.incomeTypeDetail ?? '').toLowerCase().includes(q) ||
           r.date.includes(q) ||
           r.recordedBy.toLowerCase().includes(q)
@@ -962,7 +976,12 @@ export default function IncomeEntryLog({
     if (filterType) {
       if (filterType.startsWith('__other__:')) {
         const detail = filterType.slice('__other__:'.length);
-        result = result.filter((r) => r.incomeType === 'other' && r.incomeTypeDetail === detail);
+        result = result.filter((r) => {
+          const label = typeLabelFromOpts(r.incomeType, incomeTypeOpts).toLowerCase();
+          const isOtherType =
+            r.incomeType === 'other' || label.includes('other') || label.includes('misc');
+          return isOtherType && r.incomeTypeDetail === detail;
+        });
       } else {
         result = result.filter((r) => r.incomeType === filterType);
       }
@@ -983,14 +1002,14 @@ export default function IncomeEntryLog({
       });
     }
     return result;
-  }, [records, search, filterType, filterFrom, filterTo]);
+  }, [records, search, filterType, filterFrom, filterTo, incomeTypeOpts]);
 
   const isFiltering = !!search || !!filterType || !!filterFrom || !!filterTo;
 
   const typesInRecords = useMemo(() => {
     const seen = new Set(records.map((r) => r.incomeType));
-    return incomeTypeOptions.filter((t) => seen.has(t.value));
-  }, [records, incomeTypeOptions]);
+    return incomeTypeOpts.filter((t) => seen.has(t.value));
+  }, [records, incomeTypeOpts]);
 
   const inputStyle: React.CSSProperties = {
     fontFamily: "'OV Soge', sans-serif",
@@ -1271,7 +1290,7 @@ export default function IncomeEntryLog({
                 <button
                   key={item.label}
                   onClick={() => {
-                    doExport(item.fmt, filtered, actor);
+                    doExport(item.fmt, filtered, actor, incomeTypeOpts);
                     setShowExport(false);
                   }}
                   style={{
@@ -1522,7 +1541,7 @@ export default function IncomeEntryLog({
             >
               {filterType.startsWith('__other__:')
                 ? filterType.slice('__other__:'.length)
-                : typeLabel(filterType)}
+                : typeLabelFromOpts(filterType, incomeTypeOpts)}
               <button
                 onClick={() => setFilterType('')}
                 style={{
@@ -1698,6 +1717,7 @@ export default function IncomeEntryLog({
               accentColor={accentColor}
               actor={actor}
               onSave={handleUpdateRecord}
+              incomeTypeOpts={incomeTypeOpts}
             />
           ))}
         </div>

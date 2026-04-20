@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
@@ -51,49 +53,116 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { RequestDetailsModal } from '@/components/treasury/RequestDetailsModal';
 import { LoadRequestAlertModal } from '@/components/treasury/LoadRequestAlertModal';
+import {
+  fetchExpenseCategoriesActive,
+  getExpenseRequests,
+  getExpenseRequestStrict,
+} from '@/lib/treasuryApi';
+import { getDepartmentsListStrict } from '@/lib/dashboardApi';
+import {
+  submitTreasuryExpenseRecord,
+  type RecordExpenseFormShape,
+} from '@/services/recordExpenseSubmit';
 
-const formSchema = z.object({
-  date: z.string().min(1, 'Date is required'),
-  voucherNo: z.string().min(1, 'Voucher No is required'),
-  expenseType: z.string().min(1, 'Expense type is required'),
-  department: z.string().min(1, 'Department is required'),
-  description: z.string().min(1, 'Description is required'),
-  amount: z.string().min(1, 'Amount is required'),
-  currency: z.string().min(1, 'Currency is required'),
-  paymentMethod: z.string().min(1, 'Payment method is required'),
-  paidTo: z.string().min(1, 'Payee is required'),
-  phoneNumber: z.string().optional(),
-  idNumber: z.string().optional(),
-  vendorRegistration: z.string().optional(),
-  receiptFile: z.any().optional(),
-});
+const formSchema = z
+  .object({
+    date: z.string().min(1, 'Date is required'),
+    voucherNo: z.string().optional(),
+    expenseType: z.string().min(1, 'Expense category is required'),
+    department: z.string().min(1, 'Department is required'),
+    description: z.string().min(1, 'Description is required'),
+    amount: z.string().min(1, 'Amount is required'),
+    currency: z.string().min(1, 'Currency is required'),
+    paymentMethod: z.string().min(1, 'Payment method is required'),
+    paidTo: z.string().min(1, 'Payee is required'),
+    phoneNumber: z.string().optional(),
+    idNumber: z.string().optional(),
+    vendorRegistration: z.string().optional(),
+    receiptFile: z.any().optional(),
+    chequeNumber: z.string().optional(),
+    transactionRef: z.string().optional(),
+    bankName: z.string().optional(),
+    linkedExpenseRequestId: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const pm = data.paymentMethod;
+    if (pm === 'Cheque' && !(data.chequeNumber ?? '').trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Cheque number is required',
+        path: ['chequeNumber'],
+      });
+    }
+    if ((pm === 'Bank' || pm === 'Mobile') && !(data.transactionRef ?? '').trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Transaction reference is required',
+        path: ['transactionRef'],
+      });
+    }
+    if (pm === 'Bank' && !(data.bankName ?? '').trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Bank name is required',
+        path: ['bankName'],
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof formSchema>;
 
+/** Row shown in the approved-requests sidebar (mapped from API). */
+interface ExpenseRequestSidebarRow {
+  id: string;
+  title: string;
+  dept: string;
+  date: string;
+  amount: string;
+  status: string;
+}
+
 export default function RecordExpensePage({ backLink = '' }: { backLink: string }) {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('All');
   const [, setPaymentMethod] = useState('Cash');
 
   // Modals state
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<ExpenseRequestSidebarRow | null>(null);
   const [loadedRequestId, setLoadedRequestId] = useState<string>('');
 
   // File Upload State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const { data: categories = [], isLoading: catLoading } = useQuery({
+    queryKey: ['treasury', 'expenses', 'categories'],
+    queryFn: fetchExpenseCategoriesActive,
+  });
+
+  const { data: departments = [], isLoading: deptLoading } = useQuery({
+    queryKey: ['treasury', 'expenses', 'departments'],
+    queryFn: () => getDepartmentsListStrict(150),
+  });
+
+  const { data: expenseRequests = [], isLoading: requestsLoading } = useQuery({
+    queryKey: ['treasury', 'expense-requests', 'expenses-page'],
+    queryFn: () => getExpenseRequests({ page_size: 200 }),
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      date: '2025-03-14',
-      voucherNo: 'EXP-2024-0158',
+      date: today,
+      voucherNo: '',
       expenseType: '',
       department: '',
       description: '',
@@ -105,55 +174,112 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
       idNumber: '',
       vendorRegistration: '',
       receiptFile: undefined,
+      chequeNumber: '',
+      transactionRef: '',
+      bankName: '',
+      linkedExpenseRequestId: '',
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    console.log('Valid Form Submitted', data);
-    // Integration logic here
+  const paymentMethodWatch = useWatch({ control: form.control, name: 'paymentMethod' }) ?? 'Cash';
+
+  const pendingStatuses = useMemo(
+    () =>
+      new Set(['SUBMITTED', 'DEPT_HEAD_APPROVED', 'TREASURER_APPROVED', 'FIRST_ELDER_APPROVED']),
+    []
+  );
+
+  const summaryCards = useMemo(() => {
+    const total = expenseRequests.length;
+    const pending = expenseRequests.filter((r) => pendingStatuses.has(r.status)).length;
+    const approved = expenseRequests.filter((r) => r.status === 'APPROVED').length;
+    const recorded = expenseRequests.filter((r) => r.status === 'DISBURSED').length;
+    return [
+      { label: 'Pending Requests', value: String(pending), icon: Hourglass, bg: 'bg-[#f59e0b]' },
+      {
+        label: 'Approved (ready)',
+        value: String(approved),
+        icon: CheckCircle2,
+        bg: 'bg-[#10b981]',
+      },
+      { label: 'Total Requests', value: String(total), icon: LayoutList, bg: 'bg-[#3b82f6]' },
+      { label: 'Disbursed', value: String(recorded), icon: CheckSquare, bg: 'bg-[#8b5cf6]' },
+    ];
+  }, [expenseRequests, pendingStatuses]);
+
+  const approvedRequests = useMemo(() => {
+    let rows = expenseRequests;
+    if (activeTab === 'Approved') {
+      rows = rows.filter((r) => r.status === 'APPROVED');
+    } else if (activeTab === 'Recorded') {
+      rows = rows.filter((r) => r.status === 'DISBURSED');
+    } else {
+      rows = rows.filter((r) => ['APPROVED', 'DISBURSED'].includes(r.status));
+    }
+    return rows.map((r) => {
+      const amt = parseFloat(String(r.amount_requested ?? '0'));
+      return {
+        id: r.id,
+        title: r.purpose ?? r.request_number,
+        dept: r.department_name ?? '—',
+        date: r.required_by_date ?? (r.created_at ? String(r.created_at).slice(0, 10) : ''),
+        amount: `GHS ${amt.toLocaleString('en-GH', { minimumFractionDigits: 2 })}`,
+        status: r.status === 'DISBURSED' ? 'Recorded' : 'Approved',
+      };
+    });
+  }, [expenseRequests, activeTab]);
+
+  const dataLoading = catLoading || deptLoading;
+
+  const onSubmit = async (data: FormValues) => {
+    const payload: RecordExpenseFormShape = {
+      date: data.date,
+      expenseType: data.expenseType,
+      department: data.department,
+      description: data.description,
+      amount: data.amount,
+      currency: data.currency,
+      paymentMethod: data.paymentMethod,
+      paidTo: data.paidTo,
+      phoneNumber: data.phoneNumber,
+      idNumber: data.idNumber,
+      vendorRegistration: data.vendorRegistration,
+      chequeNumber: data.chequeNumber,
+      transactionRef: data.transactionRef,
+      bankName: data.bankName,
+      linkedExpenseRequestId: data.linkedExpenseRequestId,
+    };
+    try {
+      const created = await submitTreasuryExpenseRecord(payload);
+      toast.success('Expense recorded', {
+        description: `Voucher ${created.voucher_number} saved.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['treasury'] });
+      queryClient.invalidateQueries({ queryKey: ['treasury', 'expense-requests'] });
+      form.reset({
+        date: today,
+        voucherNo: '',
+        expenseType: '',
+        department: '',
+        description: '',
+        amount: '',
+        currency: 'GHS',
+        paymentMethod: 'Cash',
+        paidTo: '',
+        phoneNumber: '',
+        idNumber: '',
+        vendorRegistration: '',
+        receiptFile: undefined,
+        chequeNumber: '',
+        transactionRef: '',
+        bankName: '',
+        linkedExpenseRequestId: '',
+      });
+      setSelectedFile(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not save expense.');
+    }
   };
-
-  const summaryCards = [
-    { label: 'Pending Requests', value: '8', icon: Hourglass, bg: 'bg-[#f59e0b]' },
-    { label: 'Approved Requests', value: '12', icon: CheckCircle2, bg: 'bg-[#10b981]' },
-    { label: 'Total Requests', value: '20', icon: LayoutList, bg: 'bg-[#3b82f6]' },
-    { label: 'Already Recorded', value: '16', icon: CheckSquare, bg: 'bg-[#8b5cf6]' },
-  ];
-
-  const approvedRequests = [
-    {
-      id: 'REQ-2024-001',
-      title: 'Sound System Repair',
-      dept: 'Music Ministry',
-      date: '2024-08-15',
-      amount: 'GHS800',
-      status: 'Approved',
-    },
-    {
-      id: 'REQ-2024-002',
-      title: 'Sound System Repair',
-      dept: 'Music Ministry',
-      date: '2024-08-15',
-      amount: 'GHS800',
-      status: 'Recorded',
-    },
-    {
-      id: 'REQ-2024-003',
-      title: 'Sound System Repair',
-      dept: 'Music Ministry',
-      date: '2024-08-15',
-      amount: 'GHS800',
-      status: 'Approved',
-    },
-    {
-      id: 'REQ-2024-004',
-      title: 'Youth Camp Materials',
-      dept: 'Adventist Youth',
-      date: '2024-08-14',
-      amount: 'GHS700',
-      status: 'Approved',
-    },
-  ];
 
   const paymentMethodsRow = [
     { id: 'Cash', icon: Banknote },
@@ -162,18 +288,40 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
     { id: 'Mobile', icon: Smartphone },
   ];
 
-  const handlePreviewRequest = (req: any) => {
+  const handlePreviewRequest = (req: ExpenseRequestSidebarRow) => {
     setSelectedRequest(req);
     setIsDetailsModalOpen(true);
   };
 
-  const handleLoadRequest = (req: any) => {
-    // Mock autofill
-    form.setValue('amount', req.amount.replace('GHS', ''));
-    form.setValue('description', req.title);
-
-    setLoadedRequestId(req.id);
-    setIsAlertModalOpen(true);
+  const handleLoadRequest = async (req: { id: string; title?: string }) => {
+    try {
+      const d = await getExpenseRequestStrict(req.id);
+      const ext = d as Record<string, unknown>;
+      const deptObj = ext.department as { id?: string } | undefined;
+      const catObj = ext.category as { id?: string } | undefined;
+      if (catObj?.id) {
+        form.setValue('expenseType', catObj.id);
+      }
+      if (deptObj?.id) {
+        form.setValue('department', deptObj.id);
+      }
+      const amtApproved = ext.amount_approved as string | undefined;
+      const amtReq = ext.amount_requested as string | undefined;
+      const amt = amtApproved ?? amtReq;
+      if (amt) {
+        form.setValue('amount', String(amt).replace(/[^\d.]/g, ''));
+      }
+      const purpose = ext.purpose as string | undefined;
+      if (purpose) {
+        form.setValue('description', purpose);
+      }
+      form.setValue('linkedExpenseRequestId', req.id);
+      setLoadedRequestId(req.id);
+      setIsAlertModalOpen(true);
+      toast.success('Request details loaded into the form.');
+    } catch {
+      toast.error('Could not load this expense request.');
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,8 +436,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                         <FormControl>
                           <Input
                             readOnly
+                            placeholder="Assigned when saved"
                             className="h-11 bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed font-medium"
                             {...field}
+                            value={field.value ? field.value : '(assigned when saved)'}
                           />
                         </FormControl>
                         <FormMessage />
@@ -305,19 +455,27 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                     render={({ field }) => (
                       <FormItem className="space-y-1.5">
                         <FormLabel className="flex items-center gap-1.5 text-[#1c385c] font-medium text-[13px]">
-                          <Tag className="w-3.5 h-3.5 text-[#28c1a6]" /> Expense Type{' '}
+                          <Tag className="w-3.5 h-3.5 text-[#28c1a6]" /> Expense Category{' '}
                           <span className="text-red-500">*</span>
                         </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || undefined}
+                          disabled={dataLoading || categories.length === 0}
+                        >
                           <FormControl>
                             <SelectTrigger className="h-11 border-slate-200 focus:ring-[#28c1a6]">
-                              <SelectValue placeholder="Select Type" />
+                              <SelectValue
+                                placeholder={catLoading ? 'Loading categories…' : 'Select category'}
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="operational">Operational</SelectItem>
-                            <SelectItem value="maintenance">Maintenance</SelectItem>
-                            <SelectItem value="equipment">Equipment</SelectItem>
+                            {categories.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -333,16 +491,26 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                           <Building2 className="w-3.5 h-3.5 text-[#28c1a6]" /> Department{' '}
                           <span className="text-red-500">*</span>
                         </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || undefined}
+                          disabled={dataLoading || departments.length === 0}
+                        >
                           <FormControl>
                             <SelectTrigger className="h-11 border-slate-200 focus:ring-[#28c1a6]">
-                              <SelectValue placeholder="Select Department" />
+                              <SelectValue
+                                placeholder={
+                                  deptLoading ? 'Loading departments…' : 'Select department'
+                                }
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="music">Music Ministry</SelectItem>
-                            <SelectItem value="youth">Youth Ministry</SelectItem>
-                            <SelectItem value="welfare">Welfare</SelectItem>
+                            {departments.map((d) => (
+                              <SelectItem key={d.id} value={d.id}>
+                                {d.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -472,6 +640,75 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                     )}
                   />
                 </div>
+
+                {(paymentMethodWatch === 'Cheque' ||
+                  paymentMethodWatch === 'Bank' ||
+                  paymentMethodWatch === 'Mobile') && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 rounded-lg border border-slate-100 bg-slate-50/80 p-4">
+                    {paymentMethodWatch === 'Cheque' && (
+                      <FormField
+                        control={form.control}
+                        name="chequeNumber"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1.5 sm:col-span-2">
+                            <FormLabel className="text-[#1c385c] font-medium text-[13px]">
+                              Cheque number <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                    {(paymentMethodWatch === 'Bank' || paymentMethodWatch === 'Mobile') && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="transactionRef"
+                          render={({ field }) => (
+                            <FormItem className="space-y-1.5 sm:col-span-2">
+                              <FormLabel className="text-[#1c385c] font-medium text-[13px]">
+                                Transaction reference <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {paymentMethodWatch === 'Bank' && (
+                          <FormField
+                            control={form.control}
+                            name="bankName"
+                            render={({ field }) => (
+                              <FormItem className="space-y-1.5 sm:col-span-2">
+                                <FormLabel className="text-[#1c385c] font-medium text-[13px]">
+                                  Bank name <span className="text-red-500">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    className="h-11 border-slate-200 focus-visible:ring-[#28c1a6]"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <FormField
@@ -634,22 +871,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                   </div>
                 </div>
 
-                {/* Budget Impact */}
-                <div className="bg-[#f0fcfa] border border-[#28c1a6]/30 rounded-xl p-5 mb-8">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-bold text-[#147e6b] text-[14px]">
-                      Music Ministry Budget:
-                    </span>
-                    <span className="font-bold text-[#28c1a6] text-[14px]">GHS8,000</span>
-                  </div>
-                  <div className="w-full h-2 bg-white rounded-full overflow-hidden mb-3 border border-slate-200">
-                    <div className="h-full bg-[#28c1a6] w-[45%]" />
-                  </div>
-                  <div className="flex items-center justify-between text-[12px] font-medium">
-                    <span className="text-slate-600">Spent: GHS3,750</span>
-                    <span className="text-slate-600">Remaining: GHS4,250</span>
-                    <span className="text-red-500 font-bold">This expense: GHS850</span>
-                  </div>
+                {/* Budget note */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 mb-8 text-[12px] text-slate-600">
+                  Budget utilization by department is available on the main treasury dashboard after
+                  expenses are recorded.
                 </div>
 
                 {/* Actions Footer */}
@@ -677,7 +902,8 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 sm:flex-none bg-[#28c1a6] hover:bg-[#21a48c] text-white px-6 h-11 text-[14px] font-bold shadow-sm"
+                      disabled={dataLoading || categories.length === 0 || departments.length === 0}
+                      className="flex-1 sm:flex-none bg-[#28c1a6] hover:bg-[#21a48c] text-white px-6 h-11 text-[14px] font-bold shadow-sm disabled:opacity-50"
                     >
                       <Check className="w-4 h-4 mr-2" /> Record & Print
                     </Button>
@@ -711,74 +937,83 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
               </div>
 
               <div className="flex flex-col gap-3 max-h-[1400px] overflow-y-auto custom-scrollbar pr-1">
-                {approvedRequests.map((req, idx) => {
-                  const isRecorded = req.status === 'Recorded';
-                  return (
-                    <div
-                      key={idx}
-                      className="bg-[#f8fdfb] border border-[#28c1a6]/20 rounded-xl p-4 flex flex-col hover:border-[#28c1a6] transition-colors relative group"
-                    >
-                      {/* Status Badge */}
-                      <div className="absolute top-4 right-4">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            isRecorded
-                              ? 'bg-slate-200 text-slate-500'
-                              : 'bg-[#bbf7d0] text-[#166534]'
-                          }`}
-                        >
-                          {req.status}
-                        </span>
-                      </div>
-
-                      <span className="text-[12px] font-bold text-slate-500 mb-1 tracking-wide">
-                        {req.id}
-                      </span>
-                      <h4 className="text-[14px] font-bold text-[#0f2846] mb-2">{req.title}</h4>
-
-                      <div className="flex items-center gap-4 text-[11px] font-medium text-slate-400 mb-4">
-                        <div className="flex items-center gap-1">
-                          <Search className="w-3 h-3" /> {req.dept}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Search className="w-3 h-3" /> {req.date}
-                        </div>
-                      </div>
-
-                      <div className="flex items-end justify-between mt-auto pt-2 border-t border-[#28c1a6]/10 leading-none">
-                        <span className="text-[15px] font-bold text-[#28c1a6]">{req.amount}</span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            title="view detail"
-                            onClick={() => handlePreviewRequest(req)}
-                            className="w-7 h-7 rounded-md bg-[#e6fcf8] text-[#147e6b] flex items-center justify-center hover:bg-[#28c1a6] hover:text-white transition-colors cursor-pointer"
+                {requestsLoading && (
+                  <p className="text-[13px] text-slate-500 py-6 text-center">Loading requests…</p>
+                )}
+                {!requestsLoading && approvedRequests.length === 0 && (
+                  <p className="text-[13px] text-slate-500 py-6 text-center">
+                    No requests match this filter.
+                  </p>
+                )}
+                {!requestsLoading &&
+                  approvedRequests.map((req) => {
+                    const isRecorded = req.status === 'Recorded';
+                    return (
+                      <div
+                        key={req.id}
+                        className="bg-[#f8fdfb] border border-[#28c1a6]/20 rounded-xl p-4 flex flex-col hover:border-[#28c1a6] transition-colors relative group"
+                      >
+                        {/* Status Badge */}
+                        <div className="absolute top-4 right-4">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              isRecorded
+                                ? 'bg-slate-200 text-slate-500'
+                                : 'bg-[#bbf7d0] text-[#166534]'
+                            }`}
                           >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          {isRecorded ? (
+                            {req.status}
+                          </span>
+                        </div>
+
+                        <span className="text-[12px] font-bold text-slate-500 mb-1 tracking-wide">
+                          {req.id}
+                        </span>
+                        <h4 className="text-[14px] font-bold text-[#0f2846] mb-2">{req.title}</h4>
+
+                        <div className="flex items-center gap-4 text-[11px] font-medium text-slate-400 mb-4">
+                          <div className="flex items-center gap-1">
+                            <Search className="w-3 h-3" /> {req.dept}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Search className="w-3 h-3" /> {req.date}
+                          </div>
+                        </div>
+
+                        <div className="flex items-end justify-between mt-auto pt-2 border-t border-[#28c1a6]/10 leading-none">
+                          <span className="text-[15px] font-bold text-[#28c1a6]">{req.amount}</span>
+                          <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              title="already recorded"
-                              className="w-7 h-7 rounded-md bg-slate-100 text-slate-400 flex items-center justify-center cursor-not-allowed"
+                              title="view detail"
+                              onClick={() => handlePreviewRequest(req)}
+                              className="w-7 h-7 rounded-md bg-[#e6fcf8] text-[#147e6b] flex items-center justify-center hover:bg-[#28c1a6] hover:text-white transition-colors cursor-pointer"
                             >
-                              <Check className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </button>
-                          ) : (
-                            <button
-                              type="button"
-                              title="load request"
-                              onClick={() => handleLoadRequest(req)}
-                              className="w-7 h-7 rounded-md bg-[#28c1a6] text-white flex items-center justify-center hover:bg-[#21a48c] transition-colors cursor-pointer"
-                            >
-                              <FileDown className="w-4 h-4" />
-                            </button>
-                          )}
+                            {isRecorded ? (
+                              <button
+                                type="button"
+                                title="already recorded"
+                                className="w-7 h-7 rounded-md bg-slate-100 text-slate-400 flex items-center justify-center cursor-not-allowed"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                title="load request"
+                                onClick={() => handleLoadRequest(req)}
+                                className="w-7 h-7 rounded-md bg-[#28c1a6] text-white flex items-center justify-center hover:bg-[#21a48c] transition-colors cursor-pointer"
+                              >
+                                <FileDown className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </div>
           </div>
