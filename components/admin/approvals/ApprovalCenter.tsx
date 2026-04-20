@@ -39,7 +39,7 @@ const EXPENSE_PENDING_STATUSES = [
   'FIRST_ELDER_APPROVED',
 ] as const;
 
-export type ApprovalCenterVariant = 'admin' | 'secretary';
+export type ApprovalCenterVariant = 'admin' | 'secretary' | 'treasury';
 
 export type ApprovalCenterProps = {
   variant?: ApprovalCenterVariant;
@@ -68,6 +68,7 @@ function friendlyStatus(status?: string): string {
 
 export default function ApprovalCenter({ variant = 'admin' }: ApprovalCenterProps) {
   const isSecretary = variant === 'secretary';
+  const isTreasury = variant === 'treasury';
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -172,7 +173,25 @@ export default function ApprovalCenter({ variant = 'admin' }: ApprovalCenterProp
 
   const rejectAnnNote = isSecretary
     ? 'Rejected from secretariat approvals'
+    : isTreasury
+      ? 'Rejected from treasury approvals'
+      : 'Rejected from approval center';
+
+  const rejectExpenseNote = isTreasury
+    ? 'Rejected from treasury approvals'
     : 'Rejected from approval center';
+
+  const programApproveNote = isSecretary
+    ? 'Approved via secretariat approvals'
+    : isTreasury
+      ? 'Approved via treasury approvals'
+      : 'Approved via approval center';
+
+  const programRejectNote = isSecretary
+    ? 'Rejected from secretariat approvals'
+    : isTreasury
+      ? 'Rejected from treasury approvals'
+      : 'Rejected from approval center';
 
   return (
     <div className="space-y-6 pb-10">
@@ -186,7 +205,7 @@ export default function ApprovalCenter({ variant = 'admin' }: ApprovalCenterProp
               className="text-xl sm:text-2xl font-semibold"
               style={{ color: 'var(--admin-text)' }}
             >
-              {isSecretary ? 'Approvals' : 'Approval Center'}
+              {isSecretary ? 'Approvals' : isTreasury ? 'Treasury approvals' : 'Approval Center'}
             </h1>
             <p className="text-sm mt-1" style={{ color: 'var(--admin-text-muted)' }}>
               {isSecretary ? (
@@ -194,6 +213,12 @@ export default function ApprovalCenter({ variant = 'admin' }: ApprovalCenterProp
                   Announcements pending review and program proposals that have passed elder approval
                   and need secretariat sign-off. Treasury expense approvals stay in the admin
                   dashboard.
+                </>
+              ) : isTreasury ? (
+                <>
+                  Same approval queues as the admin center: announcements, department program
+                  proposals, and treasury expense requests at each workflow stage. You will only
+                  succeed on actions your role is permitted to perform (others show an error).
                 </>
               ) : (
                 <>
@@ -392,9 +417,7 @@ export default function ApprovalCenter({ variant = 'admin' }: ApprovalCenterProp
                                     p.id,
                                     {
                                       action: 'APPROVE',
-                                      notes: isSecretary
-                                        ? 'Approved via secretariat approvals'
-                                        : 'Approved via approval center',
+                                      notes: programApproveNote,
                                     },
                                     p.status
                                   ),
@@ -417,9 +440,7 @@ export default function ApprovalCenter({ variant = 'admin' }: ApprovalCenterProp
                                     p.id,
                                     {
                                       action: 'REJECT',
-                                      notes: isSecretary
-                                        ? 'Rejected from secretariat approvals'
-                                        : 'Rejected from approval center',
+                                      notes: programRejectNote,
                                     },
                                     p.status
                                   ),
@@ -529,7 +550,7 @@ export default function ApprovalCenter({ variant = 'admin' }: ApprovalCenterProp
                                   key,
                                   () =>
                                     rejectExpenseRequest(e.id, {
-                                      rejection_reason: 'Rejected from approval center',
+                                      rejection_reason: rejectExpenseNote,
                                     }),
                                   'Expense request rejected'
                                 )

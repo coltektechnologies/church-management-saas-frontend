@@ -183,11 +183,14 @@ const REPORT_CATEGORIES: ReportCategory[] = [
 /** Secretary / department portal: hide finance (treasury) report tiles only. */
 const NON_TREASURY_EXCLUDED_CATEGORY_IDS = new Set<string>(['finance']);
 
-export type AdminReportsHubVariant = 'admin' | 'secretary' | 'department';
+export type AdminReportsHubVariant = 'admin' | 'secretary' | 'department' | 'treasury';
 
 function reportCategoriesForVariant(variant: AdminReportsHubVariant): ReportCategory[] {
   if (variant === 'admin') {
     return REPORT_CATEGORIES;
+  }
+  if (variant === 'treasury') {
+    return REPORT_CATEGORIES.filter((c) => c.id === 'finance');
   }
   return REPORT_CATEGORIES.filter((c) => !NON_TREASURY_EXCLUDED_CATEGORY_IDS.has(c.id));
 }
@@ -544,7 +547,11 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
           className="text-2xl font-semibold tracking-tight"
           style={{ color: 'var(--admin-text)' }}
         >
-          {variant === 'department' ? 'Department reports' : 'Reports'}
+          {variant === 'department'
+            ? 'Department reports'
+            : variant === 'treasury'
+              ? 'Financial Reports'
+              : 'Reports'}
         </h1>
         <p
           className="text-sm max-w-3xl leading-relaxed"
@@ -558,6 +565,12 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
               head, and elder in charge) for the selected period. Preview in the browser or download
               PDF, Excel, or CSV. Church-wide treasury and finance reports remain on the admin
               Reports page.
+            </>
+          ) : variant === 'treasury' ? (
+            <>
+              Generate the same finance reports as the admin dashboard—income, expenses, balance
+              sheet, and cash flow—from live treasury data. Pick a date range, preview in the
+              browser, or download PDF, Excel, or CSV.
             </>
           ) : variant === 'secretary' ? (
             <>
@@ -649,7 +662,9 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
           server if you clear dates—we recommend keeping a range for
           {variant === 'secretary' || variant === 'department'
             ? ' membership and communications.'
-            : ' finance and membership.'}
+            : variant === 'treasury'
+              ? ' income, expenses, and cash-flow exports.'
+              : ' finance and membership.'}
         </p>
       </section>
 
