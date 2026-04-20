@@ -180,20 +180,22 @@ const REPORT_CATEGORIES: ReportCategory[] = [
   },
 ];
 
-/** Secretary / non-treasury roles: hide finance (treasury) report tiles only. */
-const SECRETARY_EXCLUDED_CATEGORY_IDS = new Set<string>(['finance']);
+/** Secretary / department portal: hide finance (treasury) report tiles only. */
+const NON_TREASURY_EXCLUDED_CATEGORY_IDS = new Set<string>(['finance']);
 
-export type AdminReportsHubVariant = 'admin' | 'secretary';
+export type AdminReportsHubVariant = 'admin' | 'secretary' | 'department';
 
 function reportCategoriesForVariant(variant: AdminReportsHubVariant): ReportCategory[] {
   if (variant === 'admin') {
     return REPORT_CATEGORIES;
   }
-  return REPORT_CATEGORIES.filter((c) => !SECRETARY_EXCLUDED_CATEGORY_IDS.has(c.id));
+  return REPORT_CATEGORIES.filter((c) => !NON_TREASURY_EXCLUDED_CATEGORY_IDS.has(c.id));
 }
 
 export type AdminReportsHubProps = {
   variant?: AdminReportsHubVariant;
+  /** Passed when variant is `department` — sent as `department_id` on report requests where supported. */
+  departmentId?: string;
 };
 
 function defaultDateRange(): { from: string; to: string } {
@@ -391,7 +393,7 @@ function DataPreview({ value }: { value: unknown }) {
   );
 }
 
-const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin' }) => {
+const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departmentId }) => {
   const categories = useMemo(() => reportCategoriesForVariant(variant), [variant]);
   const initialRange = useMemo(() => defaultDateRange(), []);
   const [dateFrom, setDateFrom] = useState(initialRange.from);
@@ -427,8 +429,12 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin' }) => {
   }, []);
 
   useEffect(() => {
+    if (variant === 'department') {
+      setScheduledLoading(false);
+      return;
+    }
     void loadScheduled();
-  }, [loadScheduled]);
+  }, [loadScheduled, variant]);
 
   const buildParams = useCallback(
     (item: ReportItem): ReportQueryParams => {
@@ -443,9 +449,12 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin' }) => {
       if (item.announcementStatusFilter && announcementStatus) {
         p.status = announcementStatus;
       }
+      if (variant === 'department' && departmentId) {
+        p.department_id = departmentId;
+      }
       return p;
     },
-    [dateFrom, dateTo, membershipStatus, announcementStatus]
+    [dateFrom, dateTo, membershipStatus, announcementStatus, variant, departmentId]
   );
 
   const is404Error = (error: unknown): boolean => {
@@ -535,13 +544,22 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin' }) => {
           className="text-2xl font-semibold tracking-tight"
           style={{ color: 'var(--admin-text)' }}
         >
-          Reports
+          {variant === 'department' ? 'Department reports' : 'Reports'}
         </h1>
         <p
           className="text-sm max-w-3xl leading-relaxed"
           style={{ color: 'var(--admin-text-muted)' }}
         >
-          {variant === 'secretary' ? (
+          {variant === 'department' ? (
+            <>
+              Generate the same operational reports as in admin (members, departments snapshot,
+              announcements, audit trail)—scoped to your ministry where the server supports it. The
+              announcements report only includes items created by your department (heads, assistant
+              head, and elder in charge) for the selected period. Preview in the browser or
+              download PDF, Excel, or CSV. Church-wide treasury and finance reports remain on the
+              admin Reports page.
+            </>
+          ) : variant === 'secretary' ? (
             <>
               Generate operational reports from live data—members, departments, and announcements.
               Choose a date range where applicable, preview in the browser, or download PDF, Excel,
@@ -629,7 +647,9 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin' }) => {
         <p className="text-xs mt-3" style={{ color: 'var(--admin-text-muted)' }}>
           Reports without dates (e.g. departments snapshot) ignore this range. Others default on the
           server if you clear dates—we recommend keeping a range for
-          {variant === 'secretary' ? ' membership and communications.' : ' finance and membership.'}
+          {variant === 'secretary' || variant === 'department'
+            ? ' membership and communications.'
+            : ' finance and membership.'}
         </p>
       </section>
 
@@ -900,7 +920,8 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin' }) => {
         </section>
       )}
 
-      {/* Scheduled reports */}
+      {/* Scheduled reports — admin / secretary only */}
+      {variant !== 'department' && (
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -1040,6 +1061,7 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin' }) => {
           )}
         </div>
       </section>
+      )}
     </div>
   );
 };
