@@ -43,8 +43,16 @@ interface DropdownManagerProps {
 
 // ── Dropdown sections metadata ────────────────────────────────────────────────
 const SECTIONS: { key: DropdownKey; label: string; description: string }[] = [
-  { key: 'income_types',        label: 'Income Types',        description: 'Types of income that appear in the "Income Type" field.' },
-  { key: 'currencies',          label: 'Currencies',          description: 'Available currencies in the amount field.' },
+  {
+    key: 'income_types',
+    label: 'Income Types',
+    description: 'Types of income that appear in the "Income Type" field.',
+  },
+  {
+    key: 'currencies',
+    label: 'Currencies',
+    description: 'Available currencies in the amount field.',
+  },
 ];
 
 // ── Option row ────────────────────────────────────────────────────────────────
@@ -69,9 +77,9 @@ function OptionRow({
   isDragging?: boolean;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }) {
-  const [editing, setEditing]   = useState(false);
-  const [draft,   setDraft]     = useState(option.label);
-  const inputRef                = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(option.label);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const startEdit = () => {
     setDraft(option.label);
@@ -209,13 +217,35 @@ function OptionRow({
         <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
           <button
             onClick={commitEdit}
-            style={{ width: '26px', height: '26px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${accentColor}18`, color: accentColor, border: 'none', cursor: 'pointer' }}
+            style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: `${accentColor}18`,
+              color: accentColor,
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
             <Check size={12} />
           </button>
           <button
             onClick={cancelEdit}
-            style={{ width: '26px', height: '26px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FEE2E2', color: '#DC2626', border: 'none', cursor: 'pointer' }}
+            style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#FEE2E2',
+              color: '#DC2626',
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
             <X size={12} />
           </button>
@@ -226,7 +256,18 @@ function OptionRow({
             <button
               onClick={() => onRestore(option.value)}
               title="Restore option"
-              style={{ width: '26px', height: '26px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0FDF4', color: '#15803D', border: 'none', cursor: 'pointer' }}
+              style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#F0FDF4',
+                color: '#15803D',
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
               <Eye size={12} />
             </button>
@@ -235,18 +276,52 @@ function OptionRow({
               <button
                 onClick={startEdit}
                 title="Rename"
-                style={{ width: '26px', height: '26px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${textColor}08`, color: `${textColor}70`, border: 'none', cursor: 'pointer' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${accentColor}18`; (e.currentTarget as HTMLButtonElement).style.color = accentColor; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${textColor}08`; (e.currentTarget as HTMLButtonElement).style.color = `${textColor}70`; }}
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: `${textColor}08`,
+                  color: `${textColor}70`,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${accentColor}18`;
+                  (e.currentTarget as HTMLButtonElement).style.color = accentColor;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${textColor}08`;
+                  (e.currentTarget as HTMLButtonElement).style.color = `${textColor}70`;
+                }}
               >
                 <Edit2 size={12} />
               </button>
               <button
                 onClick={() => onRemove(option.value)}
                 title={option.isDefault ? 'Hide this option' : 'Remove this option'}
-                style={{ width: '26px', height: '26px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${textColor}08`, color: `${textColor}70`, border: 'none', cursor: 'pointer' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#FEE2E2'; (e.currentTarget as HTMLButtonElement).style.color = '#DC2626'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${textColor}08`; (e.currentTarget as HTMLButtonElement).style.color = `${textColor}70`; }}
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: `${textColor}08`,
+                  color: `${textColor}70`,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#FEE2E2';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#DC2626';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = `${textColor}08`;
+                  (e.currentTarget as HTMLButtonElement).style.color = `${textColor}70`;
+                }}
               >
                 {option.isDefault ? <EyeOff size={12} /> : <Trash2 size={12} />}
               </button>
@@ -281,15 +356,15 @@ function SectionPanel({
   isDark: boolean;
 }) {
   // Use lazy initialization to set the initial state without triggering an effect render
-  const [options, setOptions] = useState<DropdownOption[]>(() => 
+  const [options, setOptions] = useState<DropdownOption[]>(() =>
     getAllOptionsIncludingHidden(sectionKey)
   );
-  
-  const [collapsed,  setCollapsed]  = useState(true);
-  const [addingNew,  setAddingNew]  = useState(false);
-  const [newLabel,   setNewLabel]   = useState('');
-  const [addError,   setAddError]   = useState('');
-  const newInputRef                 = useRef<HTMLInputElement>(null);
+
+  const [collapsed, setCollapsed] = useState(true);
+  const [addingNew, setAddingNew] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [addError, setAddError] = useState('');
+  const newInputRef = useRef<HTMLInputElement>(null);
 
   // Wrap reload in useCallback so it can be safely listed as a useEffect dep.
   const reload = useCallback(() => {
@@ -301,9 +376,9 @@ function SectionPanel({
     setOptions(getAllOptionsIncludingHidden(sectionKey));
   }, [sectionKey]);
 
-  const visibleCount  = options.filter((o) => !o.isHidden).length;
-  const hiddenCount   = options.filter((o) => o.isHidden).length;
-  const customCount   = options.filter((o) => !o.isDefault).length;
+  const visibleCount = options.filter((o) => !o.isHidden).length;
+  const hiddenCount = options.filter((o) => o.isHidden).length;
+  const customCount = options.filter((o) => !o.isDefault).length;
 
   const handleAdd = () => {
     const trimmedLabel = newLabel.trim();
@@ -375,17 +450,37 @@ function SectionPanel({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontFamily: "'Poppins',sans-serif", fontWeight: 600, fontSize: '13px', color: textColor }}>
+          <span
+            style={{
+              fontFamily: "'Poppins',sans-serif",
+              fontWeight: 600,
+              fontSize: '13px',
+              color: textColor,
+            }}
+          >
             {label}
           </span>
-          <span style={{ fontSize: '10px', color: `${textColor}50`, fontFamily: "'OV Soge',sans-serif" }}>
+          <span
+            style={{
+              fontSize: '10px',
+              color: `${textColor}50`,
+              fontFamily: "'OV Soge',sans-serif",
+            }}
+          >
             {visibleCount} visible
             {customCount > 0 && ` · ${customCount} custom`}
             {hiddenCount > 0 && ` · ${hiddenCount} hidden`}
           </span>
         </div>
         <div style={{ color: `${textColor}50`, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '10px', fontFamily: "'OV Soge',sans-serif", fontWeight: 600, color: `${textColor}40` }}>
+          <span
+            style={{
+              fontSize: '10px',
+              fontFamily: "'OV Soge',sans-serif",
+              fontWeight: 600,
+              color: `${textColor}40`,
+            }}
+          >
             {description}
           </span>
           {collapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
@@ -395,7 +490,15 @@ function SectionPanel({
       {!collapsed && (
         <div style={{ padding: '16px' }}>
           {options.length === 0 ? (
-            <p style={{ fontFamily: "'OV Soge',sans-serif", fontSize: '12px', color: `${textColor}50`, textAlign: 'center', padding: '20px' }}>
+            <p
+              style={{
+                fontFamily: "'OV Soge',sans-serif",
+                fontSize: '12px',
+                color: `${textColor}50`,
+                textAlign: 'center',
+                padding: '20px',
+              }}
+            >
               No options yet — add one below.
             </p>
           ) : (
@@ -416,8 +519,24 @@ function SectionPanel({
           )}
 
           {addingNew ? (
-            <div style={{ marginTop: '10px', padding: '12px', borderRadius: '8px', border: `1.5px dashed ${accentColor}60`, backgroundColor: `${accentColor}06` }}>
-              <p style={{ fontFamily: "'OV Soge',sans-serif", fontSize: '11px', fontWeight: 700, color: accentColor, marginBottom: '8px' }}>
+            <div
+              style={{
+                marginTop: '10px',
+                padding: '12px',
+                borderRadius: '8px',
+                border: `1.5px dashed ${accentColor}60`,
+                backgroundColor: `${accentColor}06`,
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "'OV Soge',sans-serif",
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: accentColor,
+                  marginBottom: '8px',
+                }}
+              >
                 New option for &ldquo;{label}&rdquo;
               </p>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -425,10 +544,19 @@ function SectionPanel({
                   ref={newInputRef}
                   type="text"
                   value={newLabel}
-                  onChange={(e) => { setNewLabel(e.target.value); setAddError(''); }}
+                  onChange={(e) => {
+                    setNewLabel(e.target.value);
+                    setAddError('');
+                  }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') { handleAdd(); }
-                    if (e.key === 'Escape') { setAddingNew(false); setNewLabel(''); setAddError(''); }
+                    if (e.key === 'Enter') {
+                      handleAdd();
+                    }
+                    if (e.key === 'Escape') {
+                      setAddingNew(false);
+                      setNewLabel('');
+                      setAddError('');
+                    }
                   }}
                   placeholder={`e.g. Special Offering`}
                   style={{
@@ -448,19 +576,50 @@ function SectionPanel({
                 />
                 <button
                   onClick={handleAdd}
-                  style={{ padding: '8px 14px', borderRadius: '7px', fontSize: '12px', fontFamily: "'OV Soge',sans-serif", fontWeight: 700, backgroundColor: accentColor, color: '#fff', border: 'none', cursor: 'pointer' }}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '7px',
+                    fontSize: '12px',
+                    fontFamily: "'OV Soge',sans-serif",
+                    fontWeight: 700,
+                    backgroundColor: accentColor,
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
                   Add
                 </button>
                 <button
-                  onClick={() => { setAddingNew(false); setNewLabel(''); setAddError(''); }}
-                  style={{ padding: '8px 12px', borderRadius: '7px', fontSize: '12px', fontFamily: "'OV Soge',sans-serif", fontWeight: 600, backgroundColor: '#FEE2E2', color: '#DC2626', border: 'none', cursor: 'pointer' }}
+                  onClick={() => {
+                    setAddingNew(false);
+                    setNewLabel('');
+                    setAddError('');
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '7px',
+                    fontSize: '12px',
+                    fontFamily: "'OV Soge',sans-serif",
+                    fontWeight: 600,
+                    backgroundColor: '#FEE2E2',
+                    color: '#DC2626',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
                   <X size={13} />
                 </button>
               </div>
               {addError && (
-                <p style={{ fontSize: '11px', color: '#DC2626', fontFamily: "'OV Soge',sans-serif", marginTop: '6px' }}>
+                <p
+                  style={{
+                    fontSize: '11px',
+                    color: '#DC2626',
+                    fontFamily: "'OV Soge',sans-serif",
+                    marginTop: '6px',
+                  }}
+                >
                   {addError}
                 </p>
               )}
@@ -472,14 +631,40 @@ function SectionPanel({
                   setAddingNew(true);
                   setTimeout(() => newInputRef.current?.focus(), 50);
                 }}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', borderRadius: '8px', fontSize: '11px', fontFamily: "'OV Soge',sans-serif", fontWeight: 700, backgroundColor: `${accentColor}15`, color: accentColor, border: `1px dashed ${accentColor}50`, cursor: 'pointer' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  fontFamily: "'OV Soge',sans-serif",
+                  fontWeight: 700,
+                  backgroundColor: `${accentColor}15`,
+                  color: accentColor,
+                  border: `1px dashed ${accentColor}50`,
+                  cursor: 'pointer',
+                }}
               >
                 <Plus size={13} /> Add Option
               </button>
               <button
                 onClick={handleResetToDefault}
                 title="Reset to defaults — removes custom options and restores all hidden defaults"
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', borderRadius: '8px', fontSize: '11px', fontFamily: "'OV Soge',sans-serif", fontWeight: 600, backgroundColor: `${textColor}08`, color: `${textColor}60`, border: `1px solid ${borderColor}`, cursor: 'pointer' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  fontFamily: "'OV Soge',sans-serif",
+                  fontWeight: 600,
+                  backgroundColor: `${textColor}08`,
+                  color: `${textColor}60`,
+                  border: `1px solid ${borderColor}`,
+                  cursor: 'pointer',
+                }}
               >
                 <RotateCcw size={12} /> Reset
               </button>
@@ -493,13 +678,13 @@ function SectionPanel({
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function DropdownManager({
-  actor        = 'Treasurer',
-  textColor    = '#0B2A4A',
-  accentColor  = '#2FC4B2',
-  cardBg       = '#FFFFFF',
-  borderColor  = '#DFDADA',
+  actor = 'Treasurer',
+  textColor = '#0B2A4A',
+  accentColor = '#2FC4B2',
+  cardBg = '#FFFFFF',
+  borderColor = '#DFDADA',
   primaryColor = '#0B2A4A',
-  isDark       = false,
+  isDark = false,
 }: DropdownManagerProps) {
   return (
     <div
@@ -513,14 +698,39 @@ export default function DropdownManager({
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: `${primaryColor}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '8px',
+            backgroundColor: `${primaryColor}15`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Settings2 size={16} style={{ color: primaryColor }} />
         </div>
         <div>
-          <h3 style={{ fontFamily: "'Poppins',sans-serif", fontWeight: 600, fontSize: '14px', color: textColor, margin: 0 }}>
+          <h3
+            style={{
+              fontFamily: "'Poppins',sans-serif",
+              fontWeight: 600,
+              fontSize: '14px',
+              color: textColor,
+              margin: 0,
+            }}
+          >
             Manage Dropdown Options
           </h3>
-          <p style={{ fontFamily: "'OV Soge',sans-serif", fontSize: '11px', color: `${textColor}60`, margin: 0 }}>
+          <p
+            style={{
+              fontFamily: "'OV Soge',sans-serif",
+              fontSize: '11px',
+              color: `${textColor}60`,
+              margin: 0,
+            }}
+          >
             Add, rename, or hide options from any form dropdown. Changes save instantly.
           </p>
         </div>
@@ -541,11 +751,30 @@ export default function DropdownManager({
       >
         {[
           { color: accentColor, label: 'Default — built-in option (can be hidden, not deleted)' },
-          { color: '#15803D',   label: 'Custom — added by you (can be fully removed)' },
-          { color: '#DC2626',   label: 'Hidden — removed from the form, can be restored' },
+          { color: '#15803D', label: 'Custom — added by you (can be fully removed)' },
+          { color: '#DC2626', label: 'Hidden — removed from the form, can be restored' },
         ].map((item) => (
-          <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', fontFamily: "'OV Soge',sans-serif", color: `${textColor}70` }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, display: 'inline-block', flexShrink: 0 }} />
+          <span
+            key={item.label}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '10px',
+              fontFamily: "'OV Soge',sans-serif",
+              color: `${textColor}70`,
+            }}
+          >
+            <span
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: item.color,
+                display: 'inline-block',
+                flexShrink: 0,
+              }}
+            />
             {item.label}
           </span>
         ))}

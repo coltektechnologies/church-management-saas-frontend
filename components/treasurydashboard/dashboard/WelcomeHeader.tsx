@@ -4,8 +4,12 @@ import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/Trea
 
 function getTimeGreeting(): string {
   const h = new Date().getHours();
-  if (h < 12) { return 'Good morning'; }
-  if (h < 17) { return 'Good afternoon'; }
+  if (h < 12) {
+    return 'Good morning';
+  }
+  if (h < 17) {
+    return 'Good afternoon';
+  }
   return 'Good evening';
 }
 
@@ -24,14 +28,12 @@ function autoText(hex: string): string {
 export default function WelcomeHeader() {
   const { profile, isReady } = useTreasuryProfile();
 
-  const isDark    = isReady ? profile.darkMode            : false;
-  const bgColor   = isDark  ? profile.darkBackgroundColor || '#0A1628' : '#F5F7FA';
+  const isDark = isReady ? profile.darkMode : false;
+  const bgColor = isDark ? profile.darkBackgroundColor || '#0A1628' : '#F5F7FA';
   const textColor = autoText(bgColor);
 
   // Prefer preferredName → adminName → warm generic fallback (no role label)
-  const displayName = isReady
-    ? (profile.preferredName || profile.adminName || null)
-    : null;
+  const displayName = isReady ? profile.preferredName || profile.adminName || null : null;
 
   const greeting = isReady ? getTimeGreeting() : 'Welcome';
 
@@ -43,7 +45,15 @@ export default function WelcomeHeader() {
     : '\u00A0';
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 8,
+      }}
+    >
       <div>
         <h1
           suppressHydrationWarning

@@ -46,21 +46,33 @@ function autoText(hex: string): string {
     const s = c / 255;
     return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
   };
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179
-    ? '#0B2A4A'
-    : '#FFFFFF';
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179 ? '#0B2A4A' : '#FFFFFF';
 }
 
 function IncomeIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
     </svg>
   );
 }
 function BalanceIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <rect width="20" height="14" x="2" y="5" rx="2" />
       <line x1="2" x2="22" y1="10" y2="10" />
     </svg>
@@ -68,14 +80,28 @@ function BalanceIcon() {
 }
 function ExpenseIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
     </svg>
   );
 }
 function MembersIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
@@ -84,18 +110,36 @@ function MembersIcon() {
 }
 
 const KPI_DATA = [
-  { title: 'Total Income (MTD)',   value: 'GHS24,580',  badge: '+5.05%', badgePositive: true,  icon: <IncomeIcon />  },
-  { title: 'Net Balance',          value: 'GHS6,240',   badge: '+8.05%', badgePositive: true,  icon: <BalanceIcon /> },
-  { title: 'Total Expenses (MTD)', value: 'GHS18,340',  badge: '-1.05%', badgePositive: false, icon: <ExpenseIcon /> },
-  { title: 'Active Members',       value: '8',          badge: '+5',     badgePositive: true,  icon: <MembersIcon /> },
+  {
+    title: 'Total Income (MTD)',
+    value: 'GHS24,580',
+    badge: '+5.05%',
+    badgePositive: true,
+    icon: <IncomeIcon />,
+  },
+  {
+    title: 'Net Balance',
+    value: 'GHS6,240',
+    badge: '+8.05%',
+    badgePositive: true,
+    icon: <BalanceIcon />,
+  },
+  {
+    title: 'Total Expenses (MTD)',
+    value: 'GHS18,340',
+    badge: '-1.05%',
+    badgePositive: false,
+    icon: <ExpenseIcon />,
+  },
+  { title: 'Active Members', value: '8', badge: '+5', badgePositive: true, icon: <MembersIcon /> },
 ];
 
 export default function TreasuryDashboard() {
   const { profile, isReady } = useTreasuryProfile();
 
-  const isDark      = isReady ? profile.darkMode : false;
-  const bgColor     = isDark ? profile.darkBackgroundColor || '#0A1628' : '#F5F7FA';
-  const textColor   = autoText(bgColor);
+  const isDark = isReady ? profile.darkMode : false;
+  const bgColor = isDark ? profile.darkBackgroundColor || '#0A1628' : '#F5F7FA';
+  const textColor = autoText(bgColor);
   const accentColor = isDark
     ? profile.darkAccentColor || '#2FC4B2'
     : profile.accentColor || '#2FC4B2';

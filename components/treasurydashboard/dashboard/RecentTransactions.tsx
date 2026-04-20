@@ -11,7 +11,7 @@ import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/Trea
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface IncomeRecord {
   id: string;
-  date: string;         // "DD/MM/YYYY"
+  date: string; // "DD/MM/YYYY"
   amount: number;
   currency: string;
   incomeType: string;
@@ -77,17 +77,23 @@ function autoText(hex: string): string {
 
 function dmyToMs(s: string): number {
   const parts = s?.split('/');
-  if (!parts || parts.length !== 3) { return 0; }
+  if (!parts || parts.length !== 3) {
+    return 0;
+  }
   const [d, m, y] = parts.map(Number);
   return new Date(y, m - 1, d).getTime() || 0;
 }
 
 function dmyToDisplay(s: string): string {
   const parts = s?.split('/');
-  if (!parts || parts.length !== 3) { return s ?? ''; }
+  if (!parts || parts.length !== 3) {
+    return s ?? '';
+  }
   const [d, m, y] = parts.map(Number);
   return new Date(y, m - 1, d).toLocaleDateString('en-GH', {
-    month: 'short', day: 'numeric', year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   });
 }
 
@@ -114,7 +120,9 @@ function formatAmt(amount: number, currency: string): string {
 const INCOME_RECORDS_KEY = 'treasury_income_records_v1';
 
 function loadIncomeRecords(): IncomeRecord[] {
-  if (typeof window === 'undefined') { return []; }
+  if (typeof window === 'undefined') {
+    return [];
+  }
   try {
     const raw = localStorage.getItem(INCOME_RECORDS_KEY);
     return raw ? (JSON.parse(raw) as IncomeRecord[]) : [];
@@ -172,24 +180,26 @@ export default function RecentTransactions() {
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   //    data — no setState call needed inside the effect body ─────────────────
-  const [incomeRecords, setIncomeRecords] = useState<IncomeRecord[]>(
-    () => loadIncomeRecords(),
-  );
+  const [incomeRecords, setIncomeRecords] = useState<IncomeRecord[]>(() => loadIncomeRecords());
 
   useEffect(() => {
-    const id = setInterval(() => { setIncomeRecords(loadIncomeRecords()); }, 3000);
-    return () => { clearInterval(id); };
+    const id = setInterval(() => {
+      setIncomeRecords(loadIncomeRecords());
+    }, 3000);
+    return () => {
+      clearInterval(id);
+    };
   }, []);
 
-  const isDark      = isReady ? profile.darkMode : false;
-  const cardBg      = isDark ? profile.darkBackgroundColor || '#0A1628' : '#FFFFFF';
-  const textColor   = autoText(cardBg);
+  const isDark = isReady ? profile.darkMode : false;
+  const cardBg = isDark ? profile.darkBackgroundColor || '#0A1628' : '#FFFFFF';
+  const textColor = autoText(cardBg);
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB';
   const accentColor = isDark
     ? profile.darkAccentColor || '#2FC4B2'
-    : profile.accentColor     || '#2FC4B2';
+    : profile.accentColor || '#2FC4B2';
 
-  const incomeColor  = accentColor;
+  const incomeColor = accentColor;
   const expenseColor = '#F76D6F';
 
   const allTransactions: TransactionRow[] = useMemo(() => {
@@ -199,9 +209,7 @@ export default function RecentTransactions() {
 
   const filtered = useMemo(() => {
     const list =
-      filter === 'all'
-        ? allTransactions
-        : allTransactions.filter((t) => t.type === filter);
+      filter === 'all' ? allTransactions : allTransactions.filter((t) => t.type === filter);
     return list.slice(0, 8);
   }, [allTransactions, filter]);
 
@@ -219,89 +227,123 @@ export default function RecentTransactions() {
   });
 
   return (
-    <div style={{
-      backgroundColor: cardBg,
-      borderRadius: 16,
-      padding: '20px',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-      border: `1px solid ${borderColor}`,
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-    }}>
-      {/* ── Header ── */}
-      <div style={{
+    <div
+      style={{
+        backgroundColor: cardBg,
+        borderRadius: 16,
+        padding: '20px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+        border: `1px solid ${borderColor}`,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-      }}>
+        flexDirection: 'column',
+        height: '100%',
+      }}
+    >
+      {/* ── Header ── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 16,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Clock size={18} style={{ color: textColor }} />
-          <h3 style={{
-            fontFamily: "'Poppins', sans-serif",
-            fontWeight: 700,
-            fontSize: 16,
-            color: textColor,
-            margin: 0,
-          }}>
+          <h3
+            style={{
+              fontFamily: "'Poppins', sans-serif",
+              fontWeight: 700,
+              fontSize: 16,
+              color: textColor,
+              margin: 0,
+            }}
+          >
             Recent Transactions
           </h3>
         </div>
-        <button style={{
-          fontFamily: "'Poppins', sans-serif",
-          fontSize: 13,
-          fontWeight: 600,
-          color: accentColor,
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-        }}>
+        <button
+          style={{
+            fontFamily: "'Poppins', sans-serif",
+            fontSize: 13,
+            fontWeight: 600,
+            color: accentColor,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
           View All
         </button>
       </div>
 
       {/* ── Filter Tabs ── */}
-      <div style={{
-        display: 'flex',
-        gap: 6,
-        marginBottom: 16,
-        paddingBottom: 14,
-        borderBottom: `1.5px solid ${borderColor}`,
-        flexWrap: 'wrap',
-      }}>
-  
-        <button onClick={() => { setFilter('all'); }}     style={getPillStyle(filter === 'all',     accentColor)}>All</button>
-        <button onClick={() => { setFilter('income'); }}  style={getPillStyle(filter === 'income',  incomeColor)}>Income</button>
-        <button onClick={() => { setFilter('expense'); }} style={getPillStyle(filter === 'expense', expenseColor)}>Expenses</button>
+      <div
+        style={{
+          display: 'flex',
+          gap: 6,
+          marginBottom: 16,
+          paddingBottom: 14,
+          borderBottom: `1.5px solid ${borderColor}`,
+          flexWrap: 'wrap',
+        }}
+      >
+        <button
+          onClick={() => {
+            setFilter('all');
+          }}
+          style={getPillStyle(filter === 'all', accentColor)}
+        >
+          All
+        </button>
+        <button
+          onClick={() => {
+            setFilter('income');
+          }}
+          style={getPillStyle(filter === 'income', incomeColor)}
+        >
+          Income
+        </button>
+        <button
+          onClick={() => {
+            setFilter('expense');
+          }}
+          style={getPillStyle(filter === 'expense', expenseColor)}
+        >
+          Expenses
+        </button>
       </div>
 
       {/* ── Transaction List ── */}
       {filtered.length === 0 ? (
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          border: `1px dashed ${borderColor}`,
-          borderRadius: 10,
-          padding: 24,
-        }}>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            border: `1px dashed ${borderColor}`,
+            borderRadius: 10,
+            padding: 24,
+          }}
+        >
           <span style={{ fontSize: 28, opacity: 0.2 }}>💳</span>
-          <p style={{
-            fontSize: 12,
-            color: `${textColor}50`,
-            fontFamily: "'Poppins', sans-serif",
-            textAlign: 'center',
-            margin: 0,
-          }}>
+          <p
+            style={{
+              fontSize: 12,
+              color: `${textColor}50`,
+              fontFamily: "'Poppins', sans-serif",
+              textAlign: 'center',
+              margin: 0,
+            }}
+          >
             {filter === 'income'
               ? 'No income records yet — add one via Record Income.'
               : filter === 'expense'
-              ? 'No expense records yet.'
-              : 'No transactions yet.'}
+                ? 'No expense records yet.'
+                : 'No transactions yet.'}
           </p>
         </div>
       ) : (
@@ -313,67 +355,79 @@ export default function RecentTransactions() {
             const amtColor = isIncome ? incomeColor : expenseColor;
 
             return (
-              <div key={tx.id} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                paddingBottom: 14,
-                borderBottom: `1px solid ${borderColor}`,
-              }}>
-                {/* Vibrant Avatar circle with auto-matched icon color */}
-                <div style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '50%',
-                  backgroundColor: dotColor,
+              <div
+                key={tx.id}
+                style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: `0 3px 8px ${dotColor}40`,
-                }}>
-                  {isIncome
-                    ? <ArrowDown size={17} color={autoText(dotColor)} strokeWidth={3} />
-                    : <ArrowUp   size={17} color={autoText(dotColor)} strokeWidth={3} />
-                  }
+                  gap: 14,
+                  paddingBottom: 14,
+                  borderBottom: `1px solid ${borderColor}`,
+                }}
+              >
+                {/* Vibrant Avatar circle with auto-matched icon color */}
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    backgroundColor: dotColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    boxShadow: `0 3px 8px ${dotColor}40`,
+                  }}
+                >
+                  {isIncome ? (
+                    <ArrowDown size={17} color={autoText(dotColor)} strokeWidth={3} />
+                  ) : (
+                    <ArrowUp size={17} color={autoText(dotColor)} strokeWidth={3} />
+                  )}
                 </div>
 
                 {/* Text */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h4 style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 700,
-                    fontSize: 13,
-                    color: textColor,
-                    margin: '0 0 2px 0',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
+                  <h4
+                    style={{
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      color: textColor,
+                      margin: '0 0 2px 0',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {tx.title}
                   </h4>
-                  <p style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontSize: 11,
-                    color: `${textColor}70`,
-                    margin: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
+                  <p
+                    style={{
+                      fontFamily: "'Poppins', sans-serif",
+                      fontSize: 11,
+                      color: `${textColor}70`,
+                      margin: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {tx.subtitle}
                   </p>
                 </div>
 
                 {/* Amount */}
-                <div style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 13,
-                  color: amtColor,
-                  textAlign: 'right',
-                  flexShrink: 0,
-                }}>
+                <div
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 800,
+                    fontSize: 13,
+                    color: amtColor,
+                    textAlign: 'right',
+                    flexShrink: 0,
+                  }}
+                >
                   {tx.amount}
                 </div>
               </div>

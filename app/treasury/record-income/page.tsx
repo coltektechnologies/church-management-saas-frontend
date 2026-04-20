@@ -11,16 +11,18 @@ import RecordIncomeForm from '@/components/treasurydashboard/recordIncome/Record
 import type { IncomeRecord } from '@/components/treasurydashboard/recordIncome/IncomeReceipt';
 
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
-import { appendActivity }     from '@/components/treasurydashboard/recordIncome/activityHistory';
-import { getOptions }         from '@/components/treasurydashboard/recordIncome/dropdownOptions';
-import { getCurrencySymbol }  from '@/components/treasurydashboard/recordIncome/recordIncomeData';
+import { appendActivity } from '@/components/treasurydashboard/recordIncome/activityHistory';
+import { getOptions } from '@/components/treasurydashboard/recordIncome/dropdownOptions';
+import { getCurrencySymbol } from '@/components/treasurydashboard/recordIncome/recordIncomeData';
 
 // ── Shared storage key (must match IncomeEntryLog / RecordIncomePage) ─────────
 const INCOME_RECORDS_KEY = 'treasury_income_records_v1';
 export const TREASURY_RECORD_SAVED_EVENT = 'treasury:record-saved';
 
 function loadRecordsFromStorage(): IncomeRecord[] {
-  if (typeof window === 'undefined') { return []; }
+  if (typeof window === 'undefined') {
+    return [];
+  }
   try {
     const raw = localStorage.getItem(INCOME_RECORDS_KEY);
     return raw ? (JSON.parse(raw) as IncomeRecord[]) : [];
@@ -33,10 +35,7 @@ function saveRecordToStorage(record: IncomeRecord): void {
   try {
     const existing = loadRecordsFromStorage();
     // newest first so IncomeEntryLog shows them in the right order
-    localStorage.setItem(
-      INCOME_RECORDS_KEY,
-      JSON.stringify([record, ...existing]),
-    );
+    localStorage.setItem(INCOME_RECORDS_KEY, JSON.stringify([record, ...existing]));
     // Notify any open RecordIncomePage tab/component immediately
     window.dispatchEvent(new CustomEvent(TREASURY_RECORD_SAVED_EVENT));
   } catch {
@@ -46,8 +45,12 @@ function saveRecordToStorage(record: IncomeRecord): void {
 
 // ── Dropdown-change fingerprint ───────────────────────────────────────────────
 function optionsFingerprint(): string {
-  const types      = getOptions('income_types').map((o) => `${o.value}:${o.label}`).join(',');
-  const currencies = getOptions('currencies').map((o) => `${o.value}:${o.label}`).join(',');
+  const types = getOptions('income_types')
+    .map((o) => `${o.value}:${o.label}`)
+    .join(',');
+  const currencies = getOptions('currencies')
+    .map((o) => `${o.value}:${o.label}`)
+    .join(',');
   return `${types}|${currencies}`;
 }
 
@@ -61,9 +64,7 @@ function autoText(hex: string): string {
     const s = c / 255;
     return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
   };
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179
-    ? '#0B2A4A'
-    : '#FFFFFF';
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179 ? '#0B2A4A' : '#FFFFFF';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,21 +73,25 @@ export default function RecordIncomePage() {
   const { profile, isReady } = useTreasuryProfile();
 
   // ── Theme ─────────────────────────────────────────────────────────────────
-  const isDark       = isReady ? (profile.darkMode ?? false)                        : false;
-  const bgColor      = isDark  ? (profile.darkBackgroundColor || '#0A1628')          : '#F5F7FA';
-  const cardBg       = isDark  ? (profile.darkSidebarColor    || '#0D1F36')          : '#FFFFFF';
-  const borderColor  = isDark  ? 'rgba(255,255,255,0.08)'                            : '#E0E5ED';
-  const textColor    = autoText(bgColor);
-  const accentColor  = isDark  ? (profile.darkAccentColor  || '#2FC4B2')             : (profile.accentColor  || '#2FC4B2');
-  const primaryColor = isDark  ? (profile.darkPrimaryColor || '#1A3F6B')             : (profile.primaryColor || '#0B2A4A');
-  const actor        = isReady ? (profile.preferredName || profile.adminName || 'Treasurer') : 'Treasurer';
+  const isDark = isReady ? (profile.darkMode ?? false) : false;
+  const bgColor = isDark ? profile.darkBackgroundColor || '#0A1628' : '#F5F7FA';
+  const cardBg = isDark ? profile.darkSidebarColor || '#0D1F36' : '#FFFFFF';
+  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : '#E0E5ED';
+  const textColor = autoText(bgColor);
+  const accentColor = isDark
+    ? profile.darkAccentColor || '#2FC4B2'
+    : profile.accentColor || '#2FC4B2';
+  const primaryColor = isDark
+    ? profile.darkPrimaryColor || '#1A3F6B'
+    : profile.primaryColor || '#0B2A4A';
+  const actor = isReady ? profile.preferredName || profile.adminName || 'Treasurer' : 'Treasurer';
 
   // ── Toast ─────────────────────────────────────────────────────────────────
   const [toast, setToast] = useState<string | null>(null);
 
   // ── Dropdown-change detection → remount form ──────────────────────────────
-  const [formKey,       setFormKey]      = useState<number>(0);
-  const fingerprintRef                   = useRef<string>('');
+  const [formKey, setFormKey] = useState<number>(0);
+  const fingerprintRef = useRef<string>('');
 
   useEffect(() => {
     fingerprintRef.current = optionsFingerprint();
@@ -109,22 +114,22 @@ export default function RecordIncomePage() {
 
       // 2. Log to activity history so ActivityHistoryPanel sees it.
       const incomeTypeName =
-        getOptions('income_types').find((o) => o.value === record.incomeType)?.label
-        ?? record.incomeType;
+        getOptions('income_types').find((o) => o.value === record.incomeType)?.label ??
+        record.incomeType;
 
       appendActivity({
-        action:    'income_recorded',
-        category:  'income',
+        action: 'income_recorded',
+        category: 'income',
         actor,
-        summary:   `Recorded ${incomeTypeName}${record.incomeTypeDetail ? ` (${record.incomeTypeDetail})` : ''} of ${getCurrencySymbol(record.currency)}${record.amount.toLocaleString('en-GH', { minimumFractionDigits: 2 })} for ${record.memberName}`,
-        detail:    `Receipt: ${record.receiptNumber} · Date: ${record.date} · Payment: ${record.paymentMethod}`,
+        summary: `Recorded ${incomeTypeName}${record.incomeTypeDetail ? ` (${record.incomeTypeDetail})` : ''} of ${getCurrencySymbol(record.currency)}${record.amount.toLocaleString('en-GH', { minimumFractionDigits: 2 })} for ${record.memberName}`,
+        detail: `Receipt: ${record.receiptNumber} · Date: ${record.date} · Payment: ${record.paymentMethod}`,
         relatedId: record.id,
         meta: {
           receiptNumber: record.receiptNumber,
-          amount:        record.amount,
-          currency:      record.currency,
-          memberName:    record.memberName,
-          date:          record.date,
+          amount: record.amount,
+          currency: record.currency,
+          memberName: record.memberName,
+          date: record.date,
         },
       });
 
@@ -132,7 +137,7 @@ export default function RecordIncomePage() {
       setToast(`Receipt ${record.receiptNumber} saved successfully!`);
       setTimeout(() => setToast(null), 4000);
     },
-    [actor],
+    [actor]
   );
 
   const handleCancel = useCallback(() => {
@@ -141,52 +146,59 @@ export default function RecordIncomePage() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{
-      minHeight: '100%',
-      padding:   'clamp(12px, 3vw, 32px)',
-      position:  'relative',
-    }}>
-
+    <div
+      style={{
+        minHeight: '100%',
+        padding: 'clamp(12px, 3vw, 32px)',
+        position: 'relative',
+      }}
+    >
       {/* Toast */}
       {toast && (
-        <div style={{
-          position:        'fixed',
-          top:             20,
-          left:            '50%',
-          transform:       'translateX(-50%)',
-          zIndex:          9999,
-          padding:         '12px 24px',
-          borderRadius:    12,
-          backgroundColor: accentColor,
-          color:           autoText(accentColor),
-          fontFamily:      "'OV Soge', sans-serif",
-          fontWeight:      700,
-          fontSize:        13,
-          boxShadow:       '0 8px 32px rgba(0,0,0,0.18)',
-          whiteSpace:      'nowrap',
-          pointerEvents:   'none',
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            padding: '12px 24px',
+            borderRadius: 12,
+            backgroundColor: accentColor,
+            color: autoText(accentColor),
+            fontFamily: "'OV Soge', sans-serif",
+            fontWeight: 700,
+            fontSize: 13,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+          }}
+        >
           ✓ {toast}
         </div>
       )}
 
       {/* Page heading */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{
-          fontFamily: "'Poppins', sans-serif",
-          fontWeight: 700,
-          fontSize:   'clamp(16px, 2.2vw, 22px)',
-          color:      textColor,
-          margin:     0,
-        }}>
+        <h1
+          style={{
+            fontFamily: "'Poppins', sans-serif",
+            fontWeight: 700,
+            fontSize: 'clamp(16px, 2.2vw, 22px)',
+            color: textColor,
+            margin: 0,
+          }}
+        >
           Record Income
         </h1>
-        <p style={{
-          fontFamily: "'OV Soge', sans-serif",
-          fontSize:   13,
-          color:      `${textColor}60`,
-          margin:     '4px 0 0',
-        }}>
+        <p
+          style={{
+            fontFamily: "'OV Soge', sans-serif",
+            fontSize: 13,
+            color: `${textColor}60`,
+            margin: '4px 0 0',
+          }}
+        >
           Create and save individual or department income records
         </p>
       </div>

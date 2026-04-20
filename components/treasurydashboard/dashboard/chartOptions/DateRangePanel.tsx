@@ -4,47 +4,53 @@ import React, { useState, useRef } from 'react';
 
 // ── Types & Helpers ──────────────────────────────────────────────────────────
 
-export interface TreasuryDateRange { from: string; to: string; }
-export interface TreasuryPreset    { value: string; label: string; }
+export interface TreasuryDateRange {
+  from: string;
+  to: string;
+}
+export interface TreasuryPreset {
+  value: string;
+  label: string;
+}
 
 interface DateInputProps {
-  label:       string;
-  isoValue:    string;
-  onChange:    (value: string) => void;
+  label: string;
+  isoValue: string;
+  onChange: (value: string) => void;
   accentColor: string;
-  textColor:   string;
+  textColor: string;
   borderColor: string;
 }
 
 interface DateRangeDropdownProps {
-  mode:         'preset' | 'range';           // ← fixed: was `string`
-  preset:       string;
-  customFrom:   string;
-  customTo:     string;
-  onMode:       (mode: 'preset' | 'range') => void;  // ← fixed: was `(mode: string) => void`
-  onPreset:     (preset: string) => void;
+  mode: 'preset' | 'range'; // ← fixed: was `string`
+  preset: string;
+  customFrom: string;
+  customTo: string;
+  onMode: (mode: 'preset' | 'range') => void; // ← fixed: was `(mode: string) => void`
+  onPreset: (preset: string) => void;
   onFromChange: (value: string) => void;
-  onToChange:   (value: string) => void;
-  textColor:    string;
-  accentColor:  string;
-  borderColor:  string;
+  onToChange: (value: string) => void;
+  textColor: string;
+  accentColor: string;
+  borderColor: string;
 }
 
 export const TREASURY_PRESETS: TreasuryPreset[] = [
-  { value: 'today',        label: 'Today' },
-  { value: 'last_7_days',  label: 'Last 7 Days' },
-  { value: 'this_month',   label: 'This Month' },
-  { value: 'last_month',   label: 'Last Month' },
+  { value: 'today', label: 'Today' },
+  { value: 'last_7_days', label: 'Last 7 Days' },
+  { value: 'this_month', label: 'This Month' },
+  { value: 'last_month', label: 'Last Month' },
   { value: 'last_90_days', label: 'Last 90 Days' },
-  { value: 'ytd',          label: 'Year to Date' },
-  { value: 'last_12_m',    label: 'Last 12 Months' },
-  { value: 'all',          label: 'All Time' },
+  { value: 'ytd', label: 'Year to Date' },
+  { value: 'last_12_m', label: 'Last 12 Months' },
+  { value: 'all', label: 'All Time' },
 ];
 
 export function resolveTreasuryPreset(preset: string, now = new Date()): TreasuryDateRange {
-  const y   = now.getFullYear();
-  const m   = now.getMonth();
-  const d   = now.getDate();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
   const pad = (n: number) => String(n).padStart(2, '0');
   const iso = (yr: number, mo: number, dy: number) => `${yr}-${pad(mo)}-${pad(dy)}`;
 
@@ -57,7 +63,7 @@ export function resolveTreasuryPreset(preset: string, now = new Date()): Treasur
       past.setDate(d - 7);
       return {
         from: iso(past.getFullYear(), past.getMonth() + 1, past.getDate()),
-        to:   iso(y, m + 1, d),
+        to: iso(y, m + 1, d),
       };
     }
     case 'this_month': {
@@ -77,8 +83,7 @@ export function resolveTreasuryPreset(preset: string, now = new Date()): Treasur
   }
 }
 
-const isoToDisplay = (iso: string): string =>
-  iso ? iso.split('-').reverse().join('/') : '';
+const isoToDisplay = (iso: string): string => (iso ? iso.split('-').reverse().join('/') : '');
 
 const autoSlash = (next: string): string => {
   let v = next.replace(/[^\d]/g, '').slice(0, 8);
@@ -106,8 +111,15 @@ function autoText(hex: string): string {
 }
 
 // ── Sub-component: DateInput ─────────────────────────────────────────────────
-function DateInput({ label, isoValue, onChange, accentColor, textColor, borderColor }: DateInputProps) {
-  const [display,      setDisplay]      = useState<string>(isoToDisplay(isoValue));
+function DateInput({
+  label,
+  isoValue,
+  onChange,
+  accentColor,
+  textColor,
+  borderColor,
+}: DateInputProps) {
+  const [display, setDisplay] = useState<string>(isoToDisplay(isoValue));
   const [prevIsoValue, setPrevIsoValue] = useState<string>(isoValue);
   if (isoValue !== prevIsoValue) {
     setPrevIsoValue(isoValue);
@@ -116,34 +128,58 @@ function DateInput({ label, isoValue, onChange, accentColor, textColor, borderCo
 
   return (
     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-      <label style={{
-        fontSize: 9, fontWeight: 800, color: `${textColor}80`,
-        textTransform: 'uppercase', marginBottom: 5, display: 'block', letterSpacing: '0.04em',
-      }}>
+      <label
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          color: `${textColor}80`,
+          textTransform: 'uppercase',
+          marginBottom: 5,
+          display: 'block',
+          letterSpacing: '0.04em',
+        }}
+      >
         {label}
       </label>
-      <div style={{
-        position: 'relative', display: 'flex', alignItems: 'center',
-        border: `1.5px solid ${borderColor}`, borderRadius: 10,
-        padding: '6px 8px', boxSizing: 'border-box', overflow: 'hidden',
-      }}>
+      <div
+        style={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          border: `1.5px solid ${borderColor}`,
+          borderRadius: 10,
+          padding: '6px 8px',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+        }}
+      >
         <input
           type="text"
           value={display}
           placeholder="DD/MM/YY"
           onChange={(e) => setDisplay(autoSlash(e.target.value))}
           style={{
-            flex: 1, minWidth: 0, background: 'transparent',
-            border: 'none', color: textColor, fontSize: 11, outline: 'none', width: '100%',
+            flex: 1,
+            minWidth: 0,
+            background: 'transparent',
+            border: 'none',
+            color: textColor,
+            fontSize: 11,
+            outline: 'none',
+            width: '100%',
           }}
         />
         <svg
-          width="12" height="12" viewBox="0 0 24 24"
-          fill="none" stroke={accentColor} strokeWidth="2.5"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={accentColor}
+          strokeWidth="2.5"
           style={{ flexShrink: 0, marginLeft: 4 }}
         >
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <path d="M16 2v4M8 2v4M3 10h18"/>
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
         </svg>
         <input
           type="date"
@@ -159,9 +195,17 @@ function DateInput({ label, isoValue, onChange, accentColor, textColor, borderCo
 // ── Main Dropdown Component ──────────────────────────────────────────────────
 
 export default function DateRangeDropdown({
-  mode, preset, customFrom, customTo,
-  onMode, onPreset, onFromChange, onToChange,
-  textColor, accentColor, borderColor,
+  mode,
+  preset,
+  customFrom,
+  customTo,
+  onMode,
+  onPreset,
+  onFromChange,
+  onToChange,
+  textColor,
+  accentColor,
+  borderColor,
 }: DateRangeDropdownProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -176,74 +220,113 @@ export default function DateRangeDropdown({
     return () => document.removeEventListener('mousedown', clickOut);
   }, []);
 
-  const panelBg     = '#1A3F6B';
-  const panelText   = autoText(panelBg);
+  const panelBg = '#1A3F6B';
+  const panelText = autoText(panelBg);
   const secondaryBg = 'rgba(255,255,255,0.08)';
   const panelBorder = 'rgba(255,255,255,0.14)';
   const inputBorder = 'rgba(255,255,255,0.22)';
 
   const triggerLabel =
     mode === 'preset'
-      ? (TREASURY_PRESETS.find(p => p.value === preset)?.label ?? 'Select Date')
-      : (customFrom && customTo
-          ? `${isoToDisplay(customFrom)} – ${isoToDisplay(customTo)}`
-          : 'Custom Range');
+      ? (TREASURY_PRESETS.find((p) => p.value === preset)?.label ?? 'Select Date')
+      : customFrom && customTo
+        ? `${isoToDisplay(customFrom)} – ${isoToDisplay(customTo)}`
+        : 'Custom Range';
 
   return (
     <div
       ref={dropdownRef}
       style={{ position: 'relative', display: 'inline-block', fontFamily: "'Poppins', sans-serif" }}
     >
-
       {/* ── Trigger ── */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderRadius: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '10px 16px',
+          borderRadius: 12,
           border: `1.5px solid ${isOpen ? accentColor : borderColor}`,
           backgroundColor: isOpen ? `${accentColor}10` : 'transparent',
-          color: textColor, cursor: 'pointer', transition: '0.2s', outline: 'none',
+          color: textColor,
+          cursor: 'pointer',
+          transition: '0.2s',
+          outline: 'none',
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5">
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <path d="M16 2v4M8 2v4M3 10h18"/>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={accentColor}
+          strokeWidth="2.5"
+        >
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
         </svg>
         <span style={{ fontSize: 13, fontWeight: 600 }}>{triggerLabel}</span>
         <svg
-          width="12" height="12" viewBox="0 0 24 24" fill="none"
-          stroke={`${textColor}40`} strokeWidth="3"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={`${textColor}40`}
+          strokeWidth="3"
           style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: '0.2s' }}
         >
-          <path d="M6 9l6 6 6-6"/>
+          <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
 
       {/* ── Panel ── */}
       {isOpen && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 12px)', left: 0,
-          width: '320px', boxSizing: 'border-box', backgroundColor: panelBg,
-          borderRadius: 20, padding: '18px', zIndex: 1000,
-          border: `1px solid ${panelBorder}`,
-          boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
-          animation: 'pop 0.2s ease-out', overflow: 'hidden',
-        }}>
-
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 12px)',
+            left: 0,
+            width: '320px',
+            boxSizing: 'border-box',
+            backgroundColor: panelBg,
+            borderRadius: 20,
+            padding: '18px',
+            zIndex: 1000,
+            border: `1px solid ${panelBorder}`,
+            boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+            animation: 'pop 0.2s ease-out',
+            overflow: 'hidden',
+          }}
+        >
           {/* Tabs */}
-          <div style={{ display: 'flex', background: secondaryBg, padding: '4px', borderRadius: 12, marginBottom: 18 }}>
-            {(['preset', 'range'] as const).map(m => (
+          <div
+            style={{
+              display: 'flex',
+              background: secondaryBg,
+              padding: '4px',
+              borderRadius: 12,
+              marginBottom: 18,
+            }}
+          >
+            {(['preset', 'range'] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => onMode(m)}
                 style={{
-                  flex: 1, padding: '8px', border: 'none', borderRadius: 10,
-                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  flex: 1,
+                  padding: '8px',
+                  border: 'none',
+                  borderRadius: 10,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
                   backgroundColor: mode === m ? 'rgba(255,255,255,0.15)' : 'transparent',
                   color: mode === m ? '#FFFFFF' : `${panelText}55`,
-                  transition: '0.2s', textTransform: 'uppercase',
+                  transition: '0.2s',
+                  textTransform: 'uppercase',
                 }}
               >
                 {m === 'preset' ? 'Presets' : 'Custom'}
@@ -253,14 +336,21 @@ export default function DateRangeDropdown({
 
           {mode === 'preset' ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {TREASURY_PRESETS.map(p => (
+              {TREASURY_PRESETS.map((p) => (
                 <button
                   key={p.value}
                   type="button"
-                  onClick={() => { onPreset(p.value); setIsOpen(false); }}
+                  onClick={() => {
+                    onPreset(p.value);
+                    setIsOpen(false);
+                  }}
                   style={{
-                    padding: '10px', borderRadius: 10, textAlign: 'left',
-                    fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                    padding: '10px',
+                    borderRadius: 10,
+                    textAlign: 'left',
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
                     border: `1px solid ${preset === p.value ? accentColor : inputBorder}`,
                     backgroundColor: preset === p.value ? `${accentColor}20` : 'transparent',
                     color: preset === p.value ? accentColor : panelText,
@@ -273,10 +363,16 @@ export default function DateRangeDropdown({
             </div>
           ) : (
             <div style={{ boxSizing: 'border-box', width: '100%' }}>
-              <div style={{
-                display: 'flex', gap: 8, alignItems: 'flex-start',
-                width: '100%', boxSizing: 'border-box', overflow: 'hidden',
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  alignItems: 'flex-start',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  overflow: 'hidden',
+                }}
+              >
                 <DateInput
                   label="Start"
                   isoValue={customFrom}
@@ -286,8 +382,15 @@ export default function DateRangeDropdown({
                   borderColor={inputBorder}
                 />
                 <div style={{ marginTop: 32, color: `${panelText}30`, flexShrink: 0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <path d="M5 12h14"/>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                  >
+                    <path d="M5 12h14" />
                   </svg>
                 </div>
                 <DateInput
@@ -305,11 +408,20 @@ export default function DateRangeDropdown({
                 onClick={() => setIsOpen(false)}
                 disabled={!customFrom || !customTo}
                 style={{
-                  width: '100%', marginTop: 16, padding: '13px', borderRadius: 14, border: 'none',
-                  backgroundColor: (!customFrom || !customTo) ? 'rgba(255,255,255,0.12)' : accentColor,
-                  color: '#FFFFFF', fontWeight: 800, fontSize: 12,
-                  cursor: (!customFrom || !customTo) ? 'not-allowed' : 'pointer',
-                  transition: '0.2s', letterSpacing: '0.06em', boxSizing: 'border-box',
+                  width: '100%',
+                  marginTop: 16,
+                  padding: '13px',
+                  borderRadius: 14,
+                  border: 'none',
+                  backgroundColor:
+                    !customFrom || !customTo ? 'rgba(255,255,255,0.12)' : accentColor,
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: !customFrom || !customTo ? 'not-allowed' : 'pointer',
+                  transition: '0.2s',
+                  letterSpacing: '0.06em',
+                  boxSizing: 'border-box',
                 }}
               >
                 APPLY RANGE
@@ -317,11 +429,20 @@ export default function DateRangeDropdown({
 
               <button
                 type="button"
-                onClick={() => { onFromChange(''); onToChange(''); }}
+                onClick={() => {
+                  onFromChange('');
+                  onToChange('');
+                }}
                 style={{
-                  width: '100%', marginTop: 10, background: 'none', border: 'none',
-                  color: '#F87171', fontSize: 11, fontWeight: 700,
-                  cursor: 'pointer', letterSpacing: '0.05em',
+                  width: '100%',
+                  marginTop: 10,
+                  background: 'none',
+                  border: 'none',
+                  color: '#F87171',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  letterSpacing: '0.05em',
                 }}
               >
                 RESET DATES
@@ -333,8 +454,14 @@ export default function DateRangeDropdown({
 
       <style jsx>{`
         @keyframes pop {
-          from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-          to   { opacity: 1; transform: scale(1)    translateY(0); }
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
         }
       `}</style>
     </div>

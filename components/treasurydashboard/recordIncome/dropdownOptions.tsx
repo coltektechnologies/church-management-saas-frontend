@@ -7,33 +7,31 @@
 import { appendActivity } from './activityHistory';
 
 export interface DropdownOption {
-  value: string;   // stable key (slugified)
-  label: string;   // display text
+  value: string; // stable key (slugified)
+  label: string; // display text
   isDefault: boolean; // default options can be hidden but not truly deleted
   isHidden?: boolean; // soft-delete for default items
 }
 
-export type DropdownKey =
-  | 'income_types'
-  | 'currencies';
+export type DropdownKey = 'income_types' | 'currencies';
 
 const DROPDOWNS_KEY = 'treasury_dropdowns_v1';
 
 // ── Default option sets ───────────────────────────────────────────────────────
 export const DEFAULT_OPTIONS: Record<DropdownKey, DropdownOption[]> = {
   income_types: [
-    { value: 'tithe',        label: 'Tithe',            isDefault: true },
-    { value: 'offering',     label: 'Offering',         isDefault: true },
-    { value: 'thanksgiving', label: 'Thanksgiving',     isDefault: true },
-    { value: 'harvest',      label: 'Harvest & Pledge', isDefault: true },
-    { value: 'welfare',      label: 'Welfare',          isDefault: true },
-    { value: 'other',        label: 'Other',            isDefault: true },
+    { value: 'tithe', label: 'Tithe', isDefault: true },
+    { value: 'offering', label: 'Offering', isDefault: true },
+    { value: 'thanksgiving', label: 'Thanksgiving', isDefault: true },
+    { value: 'harvest', label: 'Harvest & Pledge', isDefault: true },
+    { value: 'welfare', label: 'Welfare', isDefault: true },
+    { value: 'other', label: 'Other', isDefault: true },
   ],
   currencies: [
-    { value: 'GHS', label: '₵ GHS — Ghana Cedis',   isDefault: true },
-    { value: 'USD', label: '$ USD — US Dollar',       isDefault: true },
-    { value: 'EUR', label: '€ EUR — Euro',            isDefault: true },
-    { value: 'GBP', label: '£ GBP — British Pound',  isDefault: true },
+    { value: 'GHS', label: '₵ GHS — Ghana Cedis', isDefault: true },
+    { value: 'USD', label: '$ USD — US Dollar', isDefault: true },
+    { value: 'EUR', label: '€ EUR — Euro', isDefault: true },
+    { value: 'GBP', label: '£ GBP — British Pound', isDefault: true },
   ],
 };
 
@@ -56,8 +54,8 @@ function loadAll(): Record<DropdownKey, DropdownOption[]> {
     // corrupt — fall through
   }
   return {
-    income_types:        [...DEFAULT_OPTIONS.income_types],
-    currencies:          [...DEFAULT_OPTIONS.currencies],
+    income_types: [...DEFAULT_OPTIONS.income_types],
+    currencies: [...DEFAULT_OPTIONS.currencies],
   };
 }
 
@@ -87,12 +85,8 @@ export function slugify(label: string): string {
     .replace(/^_|_$/g, '');
 }
 
-export function addOption(
-  key: DropdownKey,
-  label: string,
-  actor: string,
-): DropdownOption | null {
-  const all  = loadAll();
+export function addOption(key: DropdownKey, label: string, actor: string): DropdownOption | null {
+  const all = loadAll();
   const list = all[key];
   const slug = slugify(label);
 
@@ -105,12 +99,12 @@ export function addOption(
   saveAll(all);
 
   appendActivity({
-    action:    'dropdown_option_added',
-    category:  'dropdown',
+    action: 'dropdown_option_added',
+    category: 'dropdown',
     actor,
-    summary:   `Added "${label}" to ${key.replace(/_/g, ' ')}`,
+    summary: `Added "${label}" to ${key.replace(/_/g, ' ')}`,
     relatedId: key,
-    meta:      { key, option: newOpt },
+    meta: { key, option: newOpt },
   });
 
   return newOpt;
@@ -120,38 +114,34 @@ export function editOption(
   key: DropdownKey,
   value: string,
   newLabel: string,
-  actor: string,
+  actor: string
 ): boolean {
-  const all  = loadAll();
+  const all = loadAll();
   const list = all[key];
-  const idx  = list.findIndex((o) => o.value === value);
+  const idx = list.findIndex((o) => o.value === value);
   if (idx === -1) {
     return false;
   }
   const oldLabel = list[idx].label;
   list[idx] = { ...list[idx], label: newLabel.trim() };
-  all[key]  = list;
+  all[key] = list;
   saveAll(all);
 
   appendActivity({
-    action:    'dropdown_option_edited',
-    category:  'dropdown',
+    action: 'dropdown_option_edited',
+    category: 'dropdown',
     actor,
-    summary:   `Renamed "${oldLabel}" → "${newLabel}" in ${key.replace(/_/g, ' ')}`,
-    detail:    `${oldLabel} → ${newLabel}`,
+    summary: `Renamed "${oldLabel}" → "${newLabel}" in ${key.replace(/_/g, ' ')}`,
+    detail: `${oldLabel} → ${newLabel}`,
     relatedId: key,
-    meta:      { key, value, oldLabel, newLabel },
+    meta: { key, value, oldLabel, newLabel },
   });
 
   return true;
 }
 
-export function removeOption(
-  key: DropdownKey,
-  value: string,
-  actor: string,
-): boolean {
-  const all  = loadAll();
+export function removeOption(key: DropdownKey, value: string, actor: string): boolean {
+  const all = loadAll();
   const list = all[key];
   const item = list.find((o) => o.value === value);
   if (!item) {
@@ -161,39 +151,39 @@ export function removeOption(
   if (item.isDefault) {
     const idx = list.findIndex((o) => o.value === value);
     list[idx] = { ...list[idx], isHidden: true };
-    all[key]  = list;
+    all[key] = list;
   } else {
     all[key] = list.filter((o) => o.value !== value);
   }
   saveAll(all);
 
   appendActivity({
-    action:    'dropdown_option_removed',
-    category:  'dropdown',
+    action: 'dropdown_option_removed',
+    category: 'dropdown',
     actor,
-    summary:   `Removed "${item.label}" from ${key.replace(/_/g, ' ')}`,
+    summary: `Removed "${item.label}" from ${key.replace(/_/g, ' ')}`,
     relatedId: key,
-    meta:      { key, value, label: item.label },
+    meta: { key, value, label: item.label },
   });
 
   return true;
 }
 
 export function restoreOption(key: DropdownKey, value: string): boolean {
-  const all  = loadAll();
+  const all = loadAll();
   const list = all[key];
-  const idx  = list.findIndex((o) => o.value === value);
+  const idx = list.findIndex((o) => o.value === value);
   if (idx === -1) {
     return false;
   }
   list[idx] = { ...list[idx], isHidden: false };
-  all[key]  = list;
+  all[key] = list;
   saveAll(all);
   return true;
 }
 
 export function reorderOptions(key: DropdownKey, ordered: DropdownOption[]): void {
   const all = loadAll();
-  all[key]  = ordered;
+  all[key] = ordered;
   saveAll(all);
 }

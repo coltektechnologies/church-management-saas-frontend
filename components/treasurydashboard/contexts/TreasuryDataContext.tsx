@@ -35,7 +35,7 @@ interface TreasuryDataContextType {
   budgets: Budget[];
   funds: Fund[];
   auditLogs: TreasuryAuditLog[];
-  isLocked: boolean; 
+  isLocked: boolean;
 
   setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
   setFunds: React.Dispatch<React.SetStateAction<Fund[]>>;
@@ -75,32 +75,40 @@ export const TreasuryDataProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   /* ── Actions ── */
-  const addBudget = useCallback((b: Budget) => {
-    setBudgets((prev) => [b, ...prev]);
-    logTreasuryAction('Budget Created', `Category: ${b.category}`);
-  }, [logTreasuryAction]);
+  const addBudget = useCallback(
+    (b: Budget) => {
+      setBudgets((prev) => [b, ...prev]);
+      logTreasuryAction('Budget Created', `Category: ${b.category}`);
+    },
+    [logTreasuryAction]
+  );
 
-  const updateBudget = useCallback((id: string, patch: Partial<Budget>) => {
-    setBudgets((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
-    logTreasuryAction('Budget Updated', `ID: ${id}`);
-  }, [logTreasuryAction]);
+  const updateBudget = useCallback(
+    (id: string, patch: Partial<Budget>) => {
+      setBudgets((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+      logTreasuryAction('Budget Updated', `ID: ${id}`);
+    },
+    [logTreasuryAction]
+  );
 
-  const allocateFunds = useCallback((fundId: string, amount: number) => {
-    setFunds((prev) => prev.map((f) => 
-      f.id === fundId ? { ...f, balance: f.balance + amount } : f
-    ));
-    logTreasuryAction('Funds Allocated', `Amount: ₵${amount.toLocaleString()}`);
-  }, [logTreasuryAction]);
+  const allocateFunds = useCallback(
+    (fundId: string, amount: number) => {
+      setFunds((prev) =>
+        prev.map((f) => (f.id === fundId ? { ...f, balance: f.balance + amount } : f))
+      );
+      logTreasuryAction('Funds Allocated', `Amount: ₵${amount.toLocaleString()}`);
+    },
+    [logTreasuryAction]
+  );
 
   /* ── Derived Stats ── */
   const derived = useMemo(() => {
     const totalAllocatedBudget = budgets.reduce((s, b) => s + b.allocated, 0);
     const totalSpentBudget = budgets.reduce((s, b) => s + b.spent, 0);
     const availableLiquidity = funds.reduce((s, f) => s + f.balance, 0);
-    
-    const budgetUtilization = totalAllocatedBudget > 0 
-      ? Math.round((totalSpentBudget / totalAllocatedBudget) * 100) 
-      : 0;
+
+    const budgetUtilization =
+      totalAllocatedBudget > 0 ? Math.round((totalSpentBudget / totalAllocatedBudget) * 100) : 0;
 
     return {
       totalAllocatedBudget,
