@@ -6,6 +6,8 @@ import { useDepartmentProfile } from '@/components/departments/contexts/Departme
 export type Period = 'this_month' | 'this_quarter' | 'this_year' | 'custom';
 
 interface Props {
+  /** Syncs chip highlight with the period the dashboard is actually using (e.g. default month). */
+  appliedPeriod?: Period | null;
   onPeriodChange?: (p: Period | null) => void;
   onApply?: (p: Period | null, dateRange?: { from: string; to: string }) => void;
 }
@@ -36,9 +38,15 @@ const STYLE = {
   inputBg: '#F9FAFB', // Date input background
 };
 
-export default function DeptPeriodFilter({ onPeriodChange, onApply }: Props) {
-  // No default selection — null means nothing is active
-  const [selected, setSelected] = useState<Period | null>(null);
+export default function DeptPeriodFilter({ appliedPeriod, onPeriodChange, onApply }: Props) {
+  const [selected, setSelected] = useState<Period | null>(appliedPeriod ?? null);
+  const [prevAppliedPeriod, setPrevAppliedPeriod] = useState(appliedPeriod);
+  if (appliedPeriod !== prevAppliedPeriod) {
+    setPrevAppliedPeriod(appliedPeriod);
+    if (appliedPeriod !== undefined && appliedPeriod !== null) {
+      setSelected(appliedPeriod);
+    }
+  }
 
   // Custom date range state — shown only when 'custom' is selected
   const [customFrom, setCustomFrom] = useState<string>('');
@@ -56,17 +64,21 @@ export default function DeptPeriodFilter({ onPeriodChange, onApply }: Props) {
     onPeriodChangeRef.current = onPeriodChange;
   }, [onPeriodChange]);
 
-  // Click-outside handler — deselects any active filter
+  const appliedPeriodRef = useRef(appliedPeriod);
+  useEffect(() => {
+    appliedPeriodRef.current = appliedPeriod;
+  }, [appliedPeriod]);
+
+  // Click-outside: reset chip highlight to the dashboard’s applied period (never clear parent period).
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setSelected(null);
-        onPeriodChangeRef.current?.(null);
+        setSelected(appliedPeriodRef.current ?? null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []); // Empty dep array — uses ref so no stale closure and no re-registration
+  }, []);
 
   const select = (k: Period) => {
     // Clicking an already-active filter deselects it

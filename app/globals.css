@@ -307,3 +307,9 @@
     rgba(239, 68, 68, 0.6)
   );
 }
+
+/* Sonner default z-index (999999999) sits below Dialog (dialog.tsx z-[2147483640]/41) and
+   in-modal Popover/Select (z-[2147483642]). Lift toasts so they stay visible on modal pages. */
+[data-sonner-toaster] {
+  z-index: 2147483643 !important;
+}

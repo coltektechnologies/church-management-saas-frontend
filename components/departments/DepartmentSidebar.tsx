@@ -19,10 +19,10 @@ import {
   PanelLeftOpen,
   Megaphone as NewAnnouncementIcon,
   CalendarPlus,
-  HandCoins,
 } from 'lucide-react';
 import { useDepartmentProfile } from '@/components/departments/contexts/DepartmentProfileContext';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { performLogout } from '@/lib/churchSessionBrowser';
 
 // ── Nav items ─────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
@@ -43,7 +43,7 @@ const QUICK_ACTIONS = [
     icon: NewAnnouncementIcon,
   },
   { title: 'Schedule Activity', path: '/departments/activities?action=new', icon: CalendarPlus },
-  { title: 'Request Funds', path: '/departments/expenses?action=new', icon: HandCoins },
+  { title: 'Generate report', path: '/departments/reports', icon: FileBarChart },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ export default function DepartmentSidebar() {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
 
-  const { profile, isReady } = useDepartmentProfile();
+  const { profile, isReady, portalIdentityLoaded } = useDepartmentProfile();
   const { profile: churchProfile, isReady: churchReady } = useChurchProfile();
 
   const isDark = isReady ? profile.darkMode : false;
@@ -86,19 +86,24 @@ export default function DepartmentSidebar() {
       : profile.sidebarColor || '#FFFFFF'
     : '#FFFFFF';
 
-  const headName = isReady ? profile.headName || 'Department Head' : 'Department Head';
-  const headRole = isReady ? profile.departmentType || 'Department' : 'Department';
+  const headName = isReady ? profile.headName || '—' : '—';
+  const headRole = isReady
+    ? profile.portalRoleLabel.trim() || profile.departmentType.trim() || '—'
+    : '—';
   const avatarUrl = isReady ? (profile.avatarUrl ?? null) : null;
-  const deptName = isReady ? profile.departmentName || 'Adventist Youth' : 'Adventist Youth';
+  const deptName =
+    !portalIdentityLoaded && process.env.NEXT_PUBLIC_SKIP_DEPARTMENT_AUTH !== 'true'
+      ? 'Loading…'
+      : [profile.departmentName.trim(), profile.departmentCode.trim()]
+          .filter(Boolean)
+          .join(' · ') || '—';
 
   /*
    * FIX 3a — display name on the user card.
    * Priority: preferredName → full headName (never a hardcoded fallback string).
-   * The sub-label shows headRole (departmentType).
+   * The sub-label shows portal role (or legacy departmentType from settings).
    */
-  const displayName = isReady
-    ? profile.preferredName?.trim() || profile.headName || 'Department Head'
-    : 'Department Head';
+  const displayName = isReady ? profile.preferredName?.trim() || profile.headName || '—' : '—';
 
   const churchName = churchReady
     ? churchProfile.churchName || 'SDA Church - Adenta'
@@ -614,7 +619,11 @@ export default function DepartmentSidebar() {
         */}
         <div style={{ padding: collapsed ? '0 8px 16px' : '0 12px 16px' }}>
           <button
-            onClick={() => router.push('/login')}
+            type="button"
+            onClick={async () => {
+              await performLogout();
+              router.push('/login');
+            }}
             title={collapsed ? 'Log out' : undefined}
             className="w-full flex items-center rounded-lg transition-all duration-200 group relative"
             style={{

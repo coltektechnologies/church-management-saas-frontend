@@ -144,6 +144,8 @@ export async function fetchAnnouncementsList(params?: {
   page_size?: number;
   search?: string;
   status?: string;
+  /** Department portal: only announcements created by the current user (backend `mine_only`). */
+  mine_only?: boolean;
 }): Promise<AnnouncementListItemApi[]> {
   const q = new URLSearchParams();
   q.set('page_size', String(params?.page_size ?? 100));
@@ -152,6 +154,9 @@ export async function fetchAnnouncementsList(params?: {
   }
   if (params?.status) {
     q.set('status', params.status);
+  }
+  if (params?.mine_only) {
+    q.set('mine_only', 'true');
   }
   const url = `${announcementsBase()}/?${q.toString()}`;
   const data = await fetchAuth<unknown>(url, { method: 'GET' });

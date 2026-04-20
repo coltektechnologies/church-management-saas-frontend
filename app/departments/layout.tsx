@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { Suspense } from 'react';
+import DepartmentDeepLinkSync from '@/components/departments/DepartmentDeepLinkSync';
 import { DepartmentProfileProvider } from '@/components/departments/contexts/DepartmentProfileContext';
 import { DeptActivityProvider } from '@/components/departments/contexts/DeptActivityContext';
 import { DeptThemeProvider } from '@/components/departments/contexts/DeptThemeProvider';
@@ -56,6 +58,9 @@ function DepartmentShell({ children }: { children: ReactNode }) {
         } as React.CSSProperties
       }
     >
+      <Suspense fallback={null}>
+        <DepartmentDeepLinkSync />
+      </Suspense>
       {/*
         Sidebar — its own flex child.
         DepartmentSidebar manages its own collapsed/expanded width internally

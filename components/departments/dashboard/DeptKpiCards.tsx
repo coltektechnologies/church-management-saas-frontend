@@ -76,7 +76,7 @@ const PERIOD_DATA: Record<Period, KpiData> = {
   },
 };
 
-interface KpiData {
+export interface KpiData {
   members: number;
   membersChange: string;
   activitiesThisMonth: number;
@@ -91,6 +91,12 @@ interface KpiData {
 interface KpiCardsProps {
   data?: Partial<KpiData>;
   period?: Period | null; // null = no filter selected → cards show placeholder dashes
+  /** True while fetching API metrics — avoids flashing dummy PERIOD_DATA. */
+  loading?: boolean;
+  /** After a failed fetch, show placeholders instead of dummy demo numbers. */
+  failed?: boolean;
+  /** Department roster size from context — shown for the Members card while live KPIs are still loading. */
+  snapshotMemberCount?: number;
 }
 
 // Computes accessible text color (dark or white) against a given solid hex background
@@ -171,7 +177,13 @@ function KpiCard({
   );
 }
 
-export default function DeptKpiCards({ data = {}, period = null }: KpiCardsProps) {
+export default function DeptKpiCards({
+  data = {},
+  period = null,
+  loading = false,
+  failed = false,
+  snapshotMemberCount,
+}: KpiCardsProps) {
   const { profile, isReady } = useDepartmentProfile();
 
   // Derive the live KPI data directly from props (no setState in effect)
@@ -179,8 +191,11 @@ export default function DeptKpiCards({ data = {}, period = null }: KpiCardsProps
     if (!period) {
       return null; // No period selected → show dashes
     }
+    if (loading || failed) {
+      return null; // Fetching or error — show dashes until real data arrives
+    }
     return { ...PERIOD_DATA[period], ...data };
-  }, [period, data]);
+  }, [period, data, loading, failed]);
 
   const isDark = isReady ? profile.darkMode : false;
   const primaryColor = isReady
@@ -205,9 +220,12 @@ export default function DeptKpiCards({ data = {}, period = null }: KpiCardsProps
   const valueColor = isDark ? CARD_STYLE.valueColorDark : CARD_STYLE.valueColorLight;
   const labelColor = isDark ? CARD_STYLE.labelColorDark : CARD_STYLE.labelColorLight;
 
-  // Shorthand — null when no period selected
+  // Shorthand — null when no period selected / loading / error
   const m = liveData;
   const E = CARD_STYLE.emptyValue;
+  const membersValue =
+    m?.members ??
+    (typeof snapshotMemberCount === 'number' && snapshotMemberCount >= 0 ? snapshotMemberCount : E);
 
   // Card definitions — values fall back to '—' when liveData is null
   const cards = [
@@ -216,7 +234,7 @@ export default function DeptKpiCards({ data = {}, period = null }: KpiCardsProps
       iconBg: accentColor, // Solid teal
       iconColor: '#FFFFFF',
       label: 'Department Members',
-      value: m ? m.members : E,
+      value: membersValue,
       sub: m ? m.membersChange : undefined,
       subColor: accentColor,
     },
@@ -244,7 +262,9 @@ export default function DeptKpiCards({ data = {}, period = null }: KpiCardsProps
       iconColor: '#FFFFFF',
       label: 'Pending Items',
       value: m ? m.pendingItems : E,
-      sub: m ? `${m.pendingAnnouncements} announcements, ${m.pendingRequests} request` : undefined,
+      sub: m
+        ? `${m.pendingAnnouncements} announcements, ${m.pendingRequests} request${m.pendingRequests === 1 ? '' : 's'}`
+        : undefined,
       subColor: CARD_STYLE.subDefaultColor,
     },
   ];

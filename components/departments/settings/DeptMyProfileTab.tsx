@@ -169,9 +169,8 @@ export default function DeptMyProfileTab() {
 
   const handleSave = () => {
     /**
-     * departmentType is the single source of truth for the sidebar role badge.
-     * The sidebar reads profile.departmentType directly — no separate adminRole
-     * field needed, so we only update the fields that exist on DepartmentProfile.
+     * Sidebar/topbar portal role comes from API (`portalRoleLabel`). `departmentType`
+     * here is the optional ministry/category label in settings.
      */
     updateProfile({
       departmentName: form.departmentName,

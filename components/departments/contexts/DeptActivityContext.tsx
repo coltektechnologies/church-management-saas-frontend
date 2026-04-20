@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useState,
   useCallback,
   useSyncExternalStore,
   type ReactNode,
@@ -45,6 +44,11 @@ interface DeptActivityContextValue {
 const STORAGE_KEY = 'department_activity_v1';
 const MAX_ENTRIES = 100;
 
+/** Stable reference for SSR — getServerSnapshot must not return a new [] each call. */
+const SERVER_ACTIVITY_SNAPSHOT: DeptActivityEntry[] = [];
+/** Same-tab updates do not fire `storage`; we dispatch this after writes. */
+const INTERNAL_UPDATE = 'department_activity_internal';
+
 function load(): DeptActivityEntry[] {
   if (typeof window === 'undefined') {
     return [];
@@ -65,10 +69,64 @@ function save(entries: DeptActivityEntry[]) {
   }
 }
 
+/** Invalidate memo used by getClientSnapshot after any write or cross-tab change. */
+let snapshotCache: DeptActivityEntry[] | null = null;
+
+function invalidateActivitySnapshotCache() {
+  snapshotCache = null;
+}
+
+function notifyActivityListeners() {
+  invalidateActivitySnapshotCache();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(INTERNAL_UPDATE));
+  }
+}
+
+function subscribeToActivityStore(onStoreChange: () => void) {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY || e.key === null) {
+      invalidateActivitySnapshotCache();
+      onStoreChange();
+    }
+  };
+  const onInternal = () => {
+    invalidateActivitySnapshotCache();
+    onStoreChange();
+  };
+  window.addEventListener('storage', onStorage);
+  window.addEventListener(INTERNAL_UPDATE, onInternal);
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener(INTERNAL_UPDATE, onInternal);
+  };
+}
+
+function getServerActivitySnapshot(): DeptActivityEntry[] {
+  return SERVER_ACTIVITY_SNAPSHOT;
+}
+
+function getClientActivitySnapshot(): DeptActivityEntry[] {
+  if (typeof window === 'undefined') {
+    return SERVER_ACTIVITY_SNAPSHOT;
+  }
+  if (snapshotCache === null) {
+    snapshotCache = load();
+  }
+  return snapshotCache;
+}
+
 const DeptActivityContext = createContext<DeptActivityContextValue | undefined>(undefined);
 
 export function DeptActivityProvider({ children }: { children: ReactNode }) {
-  const [activities, setActivities] = useState<DeptActivityEntry[]>(load);
+  const activities = useSyncExternalStore(
+    subscribeToActivityStore,
+    getClientActivitySnapshot,
+    getServerActivitySnapshot
+  );
 
   const isReady = useSyncExternalStore(
     () => () => {},
@@ -77,19 +135,18 @@ export function DeptActivityProvider({ children }: { children: ReactNode }) {
   );
 
   const logActivity = useCallback((entry: Omit<DeptActivityEntry, 'id' | 'timestamp'>) => {
-    setActivities((prev) => {
-      const next = [{ id: crypto.randomUUID(), timestamp: Date.now(), ...entry }, ...prev].slice(
-        0,
-        MAX_ENTRIES
-      );
-      save(next);
-      return next;
-    });
+    const prev = load();
+    const next = [{ id: crypto.randomUUID(), timestamp: Date.now(), ...entry }, ...prev].slice(
+      0,
+      MAX_ENTRIES
+    );
+    save(next);
+    notifyActivityListeners();
   }, []);
 
   const clearActivity = useCallback(() => {
-    setActivities([]);
     save([]);
+    notifyActivityListeners();
   }, []);
 
   return (

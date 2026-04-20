@@ -21,6 +21,8 @@ export interface ReportQueryParams {
   membership_status?: string;
   status?: string;
   department_id?: string;
+  /** When true, announcements report restricts to rows created_by the current user (backend). */
+  mine_only?: boolean;
 }
 
 function buildSearchParams(base: ReportQueryParams, format?: ReportExportFormat): string {
@@ -39,6 +41,9 @@ function buildSearchParams(base: ReportQueryParams, format?: ReportExportFormat)
   }
   if (base.department_id) {
     q.set('department_id', base.department_id);
+  }
+  if (base.mine_only === true) {
+    q.set('mine_only', 'true');
   }
   if (format) {
     q.set('format', format);

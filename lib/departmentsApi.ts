@@ -139,6 +139,7 @@ export interface DepartmentActivityRow {
   start_time?: string | null;
   end_time?: string | null;
   location?: string | null;
+  /** ISO timestamps when present (activity feed / sorting). */
   created_at?: string;
   updated_at?: string;
 }
@@ -275,9 +276,43 @@ export async function fetchDepartmentsList(): Promise<DepartmentListRow[]> {
   return normalizeListResponse<DepartmentListRow>(data);
 }
 
+/** GET /api/departments/for-program/ — departments with primary head contact for budget step 1 */
+export interface DepartmentForProgramRow {
+  id: string;
+  name: string;
+  code?: string;
+  head_name: string | null;
+  head_email: string | null;
+  head_phone: string | null;
+  elder_in_charge_name?: string | null;
+  is_current_user_head?: boolean;
+}
+
+export async function fetchDepartmentsForProgram(): Promise<DepartmentForProgramRow[]> {
+  const base = getApiBaseUrl();
+  const data = await fetchAuth<unknown>(`${base}/departments/for-program/`, { method: 'GET' });
+  return Array.isArray(data) ? data : normalizeListResponse<DepartmentForProgramRow>(data);
+}
+
 export async function fetchDepartmentDetail(id: string): Promise<DepartmentDetailResponse> {
   const base = getApiBaseUrl();
   return fetchAuth<DepartmentDetailResponse>(`${base}/departments/${id}/`, { method: 'GET' });
+}
+
+export type DepartmentPortalRole = 'department_head' | 'elder_in_charge';
+
+/** Signed-in user’s department portal (primary head or elder in charge). */
+export interface DepartmentMyPortalResponse {
+  portal_role: DepartmentPortalRole;
+  department: DepartmentDetailResponse;
+  viewer_member: Record<string, unknown>;
+}
+
+export async function fetchDepartmentMyPortal(): Promise<DepartmentMyPortalResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<DepartmentMyPortalResponse>(`${base}/departments/my-portal/`, {
+    method: 'GET',
+  });
 }
 
 export interface CreateDepartmentBody {
@@ -351,11 +386,80 @@ export async function deleteDepartment(id: string): Promise<void> {
   }
 }
 
-/** All member–department rows for current church (filter client-side by department). */
-export async function fetchMemberDepartments(): Promise<MemberDepartmentRow[]> {
+const DEFAULT_MEMBER_DEPARTMENT_PAGE_SIZE = 50;
+
+/** Single page of member–department rows (`?page=` when page > 1). */
+export async function fetchMemberDepartmentsPage(page?: number): Promise<MemberDepartmentRow[]> {
   const base = getApiBaseUrl();
-  const data = await fetchAuth<unknown>(`${base}/member-departments/`, { method: 'GET' });
+  const sp = new URLSearchParams();
+  if (page !== undefined && page !== null && page > 1) {
+    sp.set('page', String(page));
+  }
+  const qs = sp.toString();
+  const url = `${base}/member-departments/${qs ? `?${qs}` : ''}`;
+  const data = await fetchAuth<unknown>(url, { method: 'GET' });
   return normalizeListResponse<MemberDepartmentRow>(data);
+}
+
+/**
+ * Walk all pages until a partial page (DRF default PAGE_SIZE = 50).
+ * `maxPages` is a safety cap; if the last page is still full, a console warning is logged.
+ */
+export async function fetchMemberDepartmentsAllPages(options?: {
+  maxPages?: number;
+}): Promise<MemberDepartmentRow[]> {
+  const maxPages = options?.maxPages ?? 200;
+  const all: MemberDepartmentRow[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const chunk = await fetchMemberDepartmentsPage(page > 1 ? page : undefined);
+    all.push(...chunk);
+    if (chunk.length < DEFAULT_MEMBER_DEPARTMENT_PAGE_SIZE) {
+      break;
+    }
+    if (page === maxPages) {
+      console.warn(
+        '[departmentsApi] fetchMemberDepartmentsAllPages reached maxPages; increase maxPages if assignments are missing.'
+      );
+      break;
+    }
+  }
+  return all;
+}
+
+/** All member–department rows for current church (fully paginated; filter client-side by department). */
+export async function fetchMemberDepartments(options?: {
+  maxPages?: number;
+}): Promise<MemberDepartmentRow[]> {
+  return fetchMemberDepartmentsAllPages(options);
+}
+
+/**
+ * GET /api/departments/{id}/members/ — church members in this department (MemberSerializer).
+ * Join with `fetchMemberDepartments()` for assignment id + role in this department.
+ */
+export interface DepartmentMemberApiRow {
+  id: string;
+  first_name?: string;
+  middle_name?: string | null;
+  last_name?: string | null;
+  membership_status?: string;
+  member_since?: string | null;
+  profile_photo?: string | null;
+  location?: {
+    phone_primary?: string | null;
+    email?: string | null;
+  } | null;
+  department_names?: string[];
+}
+
+export async function fetchDepartmentMembers(
+  departmentId: string
+): Promise<DepartmentMemberApiRow[]> {
+  const base = getApiBaseUrl();
+  const data = await fetchAuth<unknown>(`${base}/departments/${departmentId}/members/`, {
+    method: 'GET',
+  });
+  return normalizeListResponse<DepartmentMemberApiRow>(data);
 }
 
 export async function assignMemberToDepartment(payload: {
@@ -395,6 +499,72 @@ export async function fetchDepartmentActivities(
     { method: 'GET' }
   );
   return normalizeListResponse<DepartmentActivityRow>(data);
+}
+
+/** Per-department stats from GET /api/departments/{id}/statistics/ */
+export interface DepartmentStatisticsResponse {
+  total_members?: number;
+  current_program?: {
+    title?: string | null;
+    start_date?: string | null;
+    end_date?: string | null;
+    total_income?: number;
+    total_expenses?: number;
+    net_budget?: number;
+  } | null;
+  /** Count of programs starting in the next 30 days (backend definition). */
+  upcoming_programs?: number;
+}
+
+export async function fetchDepartmentStatistics(
+  departmentId: string
+): Promise<DepartmentStatisticsResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<DepartmentStatisticsResponse>(
+    `${base}/departments/${departmentId}/statistics/`,
+    { method: 'GET' }
+  );
+}
+
+export async function fetchDepartmentActivitiesPage(
+  departmentId: string,
+  opts?: { time_filter?: 'upcoming' | 'past'; page?: number }
+): Promise<DepartmentActivityRow[]> {
+  const base = getApiBaseUrl();
+  const sp = new URLSearchParams();
+  if (opts?.page !== undefined && opts?.page !== null && opts.page > 1) {
+    sp.set('page', String(opts.page));
+  }
+  if (opts?.time_filter) {
+    sp.set('time_filter', opts.time_filter);
+  }
+  const qs = sp.toString();
+  const url = `${base}/departments/${departmentId}/activities/${qs ? `?${qs}` : ''}`;
+  const data = await fetchAuth<unknown>(url, { method: 'GET' });
+  return normalizeListResponse<DepartmentActivityRow>(data);
+}
+
+const DEFAULT_ACTIVITY_PAGE_SIZE = 50;
+
+/** Walk pages until a short page or maxPages (backend default page size = 50). */
+export async function fetchDepartmentActivitiesAllPages(
+  departmentId: string,
+  options?: { time_filter?: 'upcoming' | 'past'; maxPages?: number }
+): Promise<DepartmentActivityRow[]> {
+  const maxPages = options?.maxPages ?? 8;
+  const tf = options?.time_filter;
+  const all: DepartmentActivityRow[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const chunk = await fetchDepartmentActivitiesPage(departmentId, {
+      time_filter: tf,
+      page: page > 1 ? page : undefined,
+    });
+    all.push(...chunk);
+    if (chunk.length < DEFAULT_ACTIVITY_PAGE_SIZE) {
+      break;
+    }
+  }
+  return all;
 }
 
 export interface CreateActivityBody {
@@ -440,6 +610,21 @@ export async function createDepartmentActivity(
     method: 'POST',
     body: JSON.stringify(body),
   });
+}
+
+export async function updateDepartmentActivity(
+  departmentId: string,
+  activityId: string,
+  body: Partial<CreateActivityBody>
+): Promise<DepartmentActivityRow> {
+  const base = getApiBaseUrl();
+  return fetchAuth<DepartmentActivityRow>(
+    `${base}/departments/${departmentId}/activities/${activityId}/`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }
+  );
 }
 
 export async function deleteDepartmentActivity(
@@ -501,6 +686,12 @@ function inferProgramApprovalDepartment(
   return null;
 }
 
+/** GET /api/programs/{id}/ — for deep links (notification → department context). */
+export async function fetchProgramDetail(programId: string): Promise<ProgramListItem> {
+  const base = getApiBaseUrl();
+  return fetchAuth<ProgramListItem>(`${base}/programs/${programId}/`, { method: 'GET' });
+}
+
 /** GET /api/programs/?status= */
 export async function fetchProgramsByStatus(
   status: ProgramApprovalStatus
@@ -533,4 +724,60 @@ export async function reviewProgramApproval(
       notes: opts.notes ?? '',
     }),
   });
+}
+
+/** GET /api/departments/{id}/member-messages/ — in-app batch history for department portal. */
+export interface DepartmentMemberMessageHistoryItem {
+  id: string;
+  title: string;
+  content: string;
+  type: 'in_app';
+  recipientCount: number;
+  recipientIds: string[];
+  status: string;
+  sentAt: string | null;
+}
+
+export async function fetchDepartmentMemberMessages(
+  departmentId: string
+): Promise<DepartmentMemberMessageHistoryItem[]> {
+  const base = getApiBaseUrl();
+  const data = await fetchAuth<unknown>(`${base}/departments/${departmentId}/member-messages/`, {
+    method: 'GET',
+  });
+  return Array.isArray(data) ? (data as DepartmentMemberMessageHistoryItem[]) : [];
+}
+
+export interface SendDepartmentMemberMessageResponse {
+  success: boolean;
+  message_id: string;
+  sent: number;
+  skipped_member_ids?: string[];
+  errors?: string[];
+  detail?: string;
+}
+
+/** POST bulk email, SMS, or in-app message to department members (head / elder in charge only). */
+export async function sendDepartmentMemberMessage(
+  departmentId: string,
+  payload: {
+    channel: 'email' | 'sms' | 'in_app';
+    subject: string;
+    body: string;
+    member_ids: string[];
+  }
+): Promise<SendDepartmentMemberMessageResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<SendDepartmentMemberMessageResponse>(
+    `${base}/departments/${departmentId}/member-messages/`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        channel: payload.channel,
+        subject: payload.subject,
+        body: payload.body,
+        member_ids: payload.member_ids,
+      }),
+    }
+  );
 }

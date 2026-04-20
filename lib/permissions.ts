@@ -9,6 +9,7 @@ export type Permission =
   | 'canDeleteActivity'
   | 'canScheduleActivity'
   | 'canSubmitExpense'
+  | 'canSubmitDepartmentBudget'
   | 'canAssignBudget'
   | 'canViewSettings'
   | 'canEditSettings'
@@ -25,6 +26,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Record<Permission, boolean>> = {
     canDeleteActivity: true,
     canScheduleActivity: true,
     canSubmitExpense: true,
+    canSubmitDepartmentBudget: true,
     canAssignBudget: true,
     canViewSettings: true,
     canEditSettings: true,
@@ -38,6 +40,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Record<Permission, boolean>> = {
     canDeleteActivity: false,
     canScheduleActivity: false,
     canSubmitExpense: false,
+    canSubmitDepartmentBudget: false,
     canAssignBudget: false,
     canViewSettings: true,
     canEditSettings: false,
@@ -51,6 +54,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Record<Permission, boolean>> = {
     canDeleteActivity: false,
     canScheduleActivity: false,
     canSubmitExpense: false,
+    canSubmitDepartmentBudget: false,
     canAssignBudget: false,
     canViewSettings: false,
     canEditSettings: false,
@@ -64,6 +68,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Record<Permission, boolean>> = {
     canDeleteActivity: false,
     canScheduleActivity: false,
     canSubmitExpense: false,
+    canSubmitDepartmentBudget: false,
     canAssignBudget: false,
     canViewSettings: true,
     canEditSettings: false,
@@ -77,6 +82,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, Record<Permission, boolean>> = {
     canDeleteActivity: true,
     canScheduleActivity: true,
     canSubmitExpense: true,
+    canSubmitDepartmentBudget: true,
     canAssignBudget: false,
     canViewSettings: true,
     canEditSettings: false,
