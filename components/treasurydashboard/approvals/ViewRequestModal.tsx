@@ -45,7 +45,9 @@ export default function ViewRequestModal({ request, onClose, onApprove, onReject
   const bodyText = isDark ? 'rgba(255,255,255,0.9)' : '#1F2937';
   const metaBg = isDark ? `${primaryColor}30` : '#F5F7FA';
 
-  if (!request) {return null;}
+  if (!request) {
+    return null;
+  }
 
   return (
     <div

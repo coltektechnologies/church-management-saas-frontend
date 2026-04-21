@@ -50,7 +50,9 @@ const EMPTY_FORM = {
 function loadAssets(): Asset[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {return JSON.parse(raw) as Asset[];}
+    if (raw) {
+      return JSON.parse(raw) as Asset[];
+    }
   } catch {}
   return DUMMY_ASSETS;
 }
@@ -100,14 +102,22 @@ export default function AssetRegisterModal({ onClose }: Props) {
 
   const handleChange = (k: keyof typeof EMPTY_FORM, v: string) => {
     setForm((p) => ({ ...p, [k]: v }));
-    if (errors[k]) {setErrors((e) => ({ ...e, [k]: '' }));}
+    if (errors[k]) {
+      setErrors((e) => ({ ...e, [k]: '' }));
+    }
   };
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) {e.name = 'Asset name is required';}
-    if (!form.category) {e.category = 'Category is required';}
-    if (!form.value || isNaN(parseFloat(form.value))) {e.value = 'Valid value is required';}
+    if (!form.name.trim()) {
+      e.name = 'Asset name is required';
+    }
+    if (!form.category) {
+      e.category = 'Category is required';
+    }
+    if (!form.value || isNaN(parseFloat(form.value))) {
+      e.value = 'Valid value is required';
+    }
     return e;
   };
 

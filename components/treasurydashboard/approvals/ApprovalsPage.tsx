@@ -223,8 +223,11 @@ export default function ApprovalsPage() {
               <button
                 key={label}
                 onClick={() => {
-                  if (modal) {setShowAssetModal(true);}
-                  else if (href) {router.push(href);}
+                  if (modal) {
+                    setShowAssetModal(true);
+                  } else if (href) {
+                    router.push(href);
+                  }
                 }}
                 className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 font-bold text-xs sm:text-sm transition-all hover:opacity-80 active:scale-95"
                 style={{
