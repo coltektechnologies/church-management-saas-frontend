@@ -19,7 +19,9 @@ function autoText(hex: string): string {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179 ? '#0B2A4A' : '#FFFFFF';
 }
 
-type Props = { onClose: () => void };
+type Props = { 
+  action: () => Promise<void>; 
+};
 
 const STORAGE_KEY = 'church_treasury_assets';
 
@@ -70,7 +72,7 @@ const conditionColor: Record<string, string> = {
   Poor: '#FA5C5C',
 };
 
-export default function AssetRegisterModal({ onClose }: Props) {
+export default function AssetRegisterModal({ action }: Props) {
   const { profile, isReady } = useTreasuryProfile();
   const isDark = isReady ? profile.darkMode : false;
 
@@ -177,7 +179,7 @@ export default function AssetRegisterModal({ onClose }: Props) {
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={(e) => e.target === e.currentTarget && action()}
     >
       <div
         className="w-full sm:w-[640px] flex flex-col overflow-hidden"
@@ -237,7 +239,7 @@ export default function AssetRegisterModal({ onClose }: Props) {
               )}
             </button>
             <button
-              onClick={onClose}
+              onClick={action}
               className="w-8 h-8 flex items-center justify-center transition-all hover:opacity-70"
               style={{
                 backgroundColor: `${textOnPrimary}15`,
