@@ -19,8 +19,8 @@ function autoText(hex: string): string {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179 ? '#0B2A4A' : '#FFFFFF';
 }
 
-type Props = { 
-  action: () => Promise<void>; 
+type Props = {
+  action: () => Promise<void>;
 };
 
 const STORAGE_KEY = 'church_treasury_assets';

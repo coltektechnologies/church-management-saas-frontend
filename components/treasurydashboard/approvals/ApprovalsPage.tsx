@@ -255,7 +255,7 @@ export default function ApprovalsPage() {
         <DepartmentBudgetSection budgets={DUMMY_DEPARTMENT_BUDGETS} />
       </div>
 
-      {showAssetModal && <AssetRegisterModal onClose={() => setShowAssetModal(false)} />}
+      {showAssetModal && <AssetRegisterModal action={async () => setShowAssetModal(false)} />}
     </div>
   );
 }
