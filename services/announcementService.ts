@@ -25,6 +25,7 @@ import {
   mapListItemToAnnouncement,
   uiPriorityToApi,
 } from '@/lib/announcementMappers';
+import { canInstantPublishAnnouncementsFromUi } from '@/lib/announcementPublishPolicy';
 
 export interface AnnouncementListFilters {
   category?: AnnouncementCategory | 'All';
@@ -33,6 +34,8 @@ export interface AnnouncementListFilters {
   search?: string;
   sortBy?: 'date' | 'priority' | 'title';
   sortOrder?: 'asc' | 'desc';
+  /** Department portal: list only announcements authored by the signed-in user. */
+  mineOnly?: boolean;
 }
 
 export interface CreateAnnouncementPayload {
@@ -123,6 +126,7 @@ class AnnouncementService {
       const rows = await fetchAnnouncementsList({
         page_size: 100,
         search: filters.search || undefined,
+        mine_only: filters.mineOnly === true ? true : undefined,
       });
       // List API has no body; leave content empty so cards do not show an internal placeholder string.
       let mapped = rows.map((r) => mapListItemToAnnouncement(r, ''));
@@ -206,11 +210,15 @@ class AnnouncementService {
       };
       const created = await createAnnouncementApi(body);
       if (payload.status === 'Approved') {
-        try {
-          await tryPublishAnnouncement(created.id);
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          throw new Error(`Announcement was saved as draft, but publish workflow failed: ${msg}`);
+        if (canInstantPublishAnnouncementsFromUi()) {
+          try {
+            await tryPublishAnnouncement(created.id);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            throw new Error(`Announcement was saved, but the publish workflow failed: ${msg}`);
+          }
+        } else {
+          await submitAnnouncementApi(created.id);
         }
       }
       const refreshed = await fetchAnnouncementDetail(created.id);
@@ -247,11 +255,15 @@ class AnnouncementService {
   async updateAnnouncementStatus(id: string, newStatus: AnnouncementStatus): Promise<Announcement> {
     if (shouldUseLiveApi()) {
       if (newStatus === 'Approved') {
-        try {
-          await tryPublishAnnouncement(id);
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          throw new Error(`Status update failed: ${msg}`);
+        if (canInstantPublishAnnouncementsFromUi()) {
+          try {
+            await tryPublishAnnouncement(id);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            throw new Error(`Status update failed: ${msg}`);
+          }
+        } else {
+          await submitAnnouncementApi(id);
         }
       }
       const refreshed = await fetchAnnouncementDetail(id);

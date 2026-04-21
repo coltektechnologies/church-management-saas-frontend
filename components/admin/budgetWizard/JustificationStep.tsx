@@ -8,30 +8,31 @@ interface Props {
   setFormData: React.Dispatch<React.SetStateAction<BudgetFormData>>;
 }
 
-const APPROVAL_CHAIN = [
+/** Matches backend budget approval order (see program flow / notifications). No placeholder names. */
+const APPROVAL_PIPELINE = [
   {
-    initials: 'OW',
-    name: 'Owusu William',
-    role: 'Department Head',
-    status: 'Completed',
-    avatarBg: 'bg-orange-400',
-    statusColor: 'bg-green-100 text-green-700',
+    initials: 'DE',
+    role: 'Department Elder',
+    detail: 'Reviews first after you submit',
+    avatarBg: 'bg-orange-500',
+    statusLabel: 'After submission',
+    statusColor: 'bg-slate-100 text-slate-700',
   },
   {
-    initials: 'DW',
-    name: 'David Wilson',
-    role: 'Secretary',
-    status: 'Current',
-    avatarBg: 'bg-blue-500',
-    statusColor: 'bg-teal-100 text-teal-700',
+    initials: 'SC',
+    role: 'Secretariat',
+    detail: 'Second approval step',
+    avatarBg: 'bg-blue-600',
+    statusLabel: 'After submission',
+    statusColor: 'bg-slate-100 text-slate-700',
   },
   {
-    initials: 'JL',
-    name: 'Jonas Lantam Gbati',
-    role: 'Treasurer',
-    status: 'Pending',
+    initials: 'TR',
+    role: 'Treasury',
+    detail: 'Final approval',
     avatarBg: 'bg-teal-600',
-    statusColor: 'bg-pink-100 text-pink-700',
+    statusLabel: 'After submission',
+    statusColor: 'bg-slate-100 text-slate-700',
   },
 ];
 
@@ -116,22 +117,28 @@ export default function JustificationStep({ formData, setFormData }: Props) {
 
 export function ApprovalChain() {
   return (
-    <div className="border border-gray-200 rounded-2xl p-6 space-y-5">
-      <h3 className="font-semibold text-gray-900">Approval Chain Preview</h3>
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-16">
-        {APPROVAL_CHAIN.map((person, i) => (
-          <div key={i} className="flex flex-col items-center gap-2">
+    <div className="border border-gray-200 rounded-2xl p-6 space-y-4">
+      <div>
+        <h3 className="font-semibold text-gray-900">Approval chain</h3>
+        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+          Your church routes submitted budgets through these roles in order. Specific approvers are
+          determined by your church&apos;s assignments—not shown here until the request is live.
+        </p>
+      </div>
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12 lg:gap-16">
+        {APPROVAL_PIPELINE.map((step) => (
+          <div key={step.role} className="flex flex-col items-center gap-2 max-w-[140px]">
             <div
-              className={`w-14 h-14 rounded-full ${person.avatarBg} text-white flex items-center justify-center text-lg font-bold`}
+              className={`w-14 h-14 rounded-full ${step.avatarBg} text-white flex items-center justify-center text-sm font-bold`}
             >
-              {person.initials}
+              {step.initials}
             </div>
             <div className="text-center">
-              <p className="font-semibold text-sm text-gray-900">{person.name}</p>
-              <p className="text-xs text-gray-500">{person.role}</p>
+              <p className="font-semibold text-sm text-gray-900">{step.role}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{step.detail}</p>
             </div>
-            <span className={`text-xs px-3 py-1 rounded-full font-medium ${person.statusColor}`}>
-              {person.status}
+            <span className={`text-xs px-3 py-1 rounded-full font-medium ${step.statusColor}`}>
+              {step.statusLabel}
             </span>
           </div>
         ))}

@@ -43,6 +43,9 @@ interface DeptActivityContextValue {
 
 const STORAGE_KEY = 'department_activity_v1';
 const MAX_ENTRIES = 100;
+
+/** Stable reference for SSR — getServerSnapshot must not return a new [] each call. */
+const SERVER_ACTIVITY_SNAPSHOT: DeptActivityEntry[] = [];
 /** Same-tab updates do not fire `storage`; we dispatch this after writes. */
 const INTERNAL_UPDATE = 'department_activity_internal';
 
@@ -103,12 +106,12 @@ function subscribeToActivityStore(onStoreChange: () => void) {
 }
 
 function getServerActivitySnapshot(): DeptActivityEntry[] {
-  return [];
+  return SERVER_ACTIVITY_SNAPSHOT;
 }
 
 function getClientActivitySnapshot(): DeptActivityEntry[] {
   if (typeof window === 'undefined') {
-    return [];
+    return SERVER_ACTIVITY_SNAPSHOT;
   }
   if (snapshotCache === null) {
     snapshotCache = load();

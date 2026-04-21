@@ -6,6 +6,8 @@ export interface BudgetItem {
 }
 
 export interface BudgetFormData {
+  /** Set after POST /api/programs/step1/ so Next steps PATCH the same draft program */
+  draftProgramId?: string;
   title: string;
   fiscalYear: string;
   departmentId?: string;

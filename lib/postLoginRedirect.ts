@@ -68,6 +68,35 @@ export function userHasDepartmentPortalAccess(user: PostLoginUser | null | undef
   return roles.some((r) => isDepartmentPortalRoleName(r.name));
 }
 
+/** Role names like "Treasury", "Treasury Committee", etc. (broader than treasurer-only). */
+function isTreasuryTeamRoleName(raw: string | undefined | null): boolean {
+  const n = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  if (!n) {
+    return false;
+  }
+  if (n === 'treasury') {
+    return true;
+  }
+  return /\btreasury\b/.test(n);
+}
+
+/**
+ * Standalone `/treasury` app — treasurer/treasury roles or platform admin.
+ * (The admin shell still links to `/admin/treasury` for pastors/staff without these roles.)
+ */
+export function userHasTreasuryPortalAccess(user: PostLoginUser | null | undefined): boolean {
+  if (!user) {
+    return false;
+  }
+  if (user.is_platform_admin) {
+    return true;
+  }
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  return roles.some((r) => isTreasurerRoleName(r.name) || isTreasuryTeamRoleName(r.name));
+}
+
 /**
  * After login, choose home URL when `next` is not provided.
  * Uses JWT `user.roles` from church **UserRole** rows (see backend `UserSerializer.get_roles`).
@@ -96,8 +125,8 @@ export function defaultHomePathForUser(user: PostLoginUser | null | undefined): 
   }
 
   // Core staff (typically level 2): route by named role among this tier only
-  if (atTier.some((r) => isTreasurerRoleName(r.name))) {
-    return '/admin/treasury';
+  if (atTier.some((r) => isTreasurerRoleName(r.name) || isTreasuryTeamRoleName(r.name))) {
+    return '/treasury';
   }
   if (atTier.some((r) => isSecretaryRoleName(r.name))) {
     return '/secretary';

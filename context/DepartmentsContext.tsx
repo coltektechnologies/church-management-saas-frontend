@@ -78,8 +78,10 @@ type DepartmentsContextType = {
 
   departmentExpensesMap: Record<string, Expense[]>;
   loadDepartmentExpenseRequests: (departmentId: string) => Promise<void>;
+
   /** Refresh annualBudget / budgetUsed for one department from treasury API */
   syncDepartmentBudgetFromApi: (departmentId: string) => Promise<void>;
+
   submitExpense: (
     departmentId: string,
     expense: Expense,
@@ -370,7 +372,15 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
             `• ${i.name} × ${i.quantity} @ GHS ${i.unitCost} = GHS ${(i.quantity * i.unitCost).toFixed(2)}`
         )
         .join('\n');
-      const justification = `${expense.description}\n\n--- Line items ---\n${itemsLines}`;
+      const submittedBy = expense.submitterName?.trim();
+      const justification = [
+        submittedBy ? `Submitted by: ${submittedBy}` : null,
+        expense.description?.trim() || '',
+        '--- Line items ---',
+        itemsLines,
+      ]
+        .filter(Boolean)
+        .join('\n\n');
 
       const result = await createAndSubmitExpenseRequest({
         departmentId,

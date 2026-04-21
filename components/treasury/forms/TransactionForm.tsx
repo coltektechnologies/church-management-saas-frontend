@@ -270,6 +270,7 @@ export function TransactionForm() {
                 Date <span className="text-red-500">*</span>
               </label>
               <input
+                title="date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}

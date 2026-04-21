@@ -24,6 +24,7 @@ import {
 } from '@/hooks/useTreasury';
 import type { PeriodFilter } from '@/services/treasuryService';
 import { Landmark, PlusCircle, ArrowLeft } from 'lucide-react';
+import { RecordIncomeModal } from '@/components/treasury/RecordIncomeModal';
 import { useRouter } from 'next/navigation';
 
 const PERIOD_OPTIONS: { label: string; value: PeriodFilter }[] = [
@@ -43,6 +44,7 @@ export default function TreasuryPage() {
   const [period, setPeriod] = useState<PeriodFilter>('this_year');
   const [customFrom, setCustomFrom] = useState(defaultCustomDates()[0]);
   const [customTo, setCustomTo] = useState(defaultCustomDates()[1]);
+  const [isRecordIncomeModalOpen, setIsRecordIncomeModalOpen] = useState(false);
 
   const filters: { period: PeriodFilter; from?: string; to?: string } = { period };
   if (period === 'custom') {
@@ -122,6 +124,7 @@ export default function TreasuryPage() {
           className={`flex items-center gap-2 ${period !== 'custom' ? 'opacity-0 w-0 overflow-hidden scale-95' : 'opacity-100 scale-100'} ease-in-out duration-500`}
         >
           <input
+            title="custom from"
             type="date"
             value={customFrom}
             onChange={(e) => setCustomFrom(e.target.value)}
@@ -129,6 +132,7 @@ export default function TreasuryPage() {
           />
           <span className="text-muted-foreground">–</span>
           <input
+            title="custom to"
             type="date"
             value={customTo}
             onChange={(e) => setCustomTo(e.target.value)}
@@ -141,7 +145,7 @@ export default function TreasuryPage() {
       <SummaryCards data={summary} isLoading={loadingSummary} />
 
       {/* ─── Quick Actions ─── */}
-      <QuickActions />
+      <QuickActions onRecordIncome={() => setIsRecordIncomeModalOpen(true)} />
 
       {/* ─── Financial Overview Tab ─── */}
       <div className="space-y-6 mt-4">
@@ -175,6 +179,8 @@ export default function TreasuryPage() {
           isRejecting={rejectMutation.isPending}
         />
       </div>
+
+      <RecordIncomeModal open={isRecordIncomeModalOpen} onOpenChange={setIsRecordIncomeModalOpen} />
     </div>
   );
 }
