@@ -142,6 +142,81 @@ export interface DepartmentActivityRow {
   /** ISO timestamps when present (activity feed / sorting). */
   created_at?: string;
   updated_at?: string;
+  /** From API serializer — prefer deriving labels from dates when absent. */
+  is_upcoming?: boolean;
+}
+
+/** Badge label for department activity cards (do not trust `status` alone — it defaults to UPCOMING and is not auto-updated). */
+export type ActivityDisplayStatus = 'Past' | 'Ongoing' | 'Upcoming';
+
+function formatLocalYmd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseHmOnDate(ymd: string, hhmmss: string): number | null {
+  const part = hhmmss.trim().slice(0, 5);
+  const [hs, ms] = part.split(':');
+  const h = parseInt(hs ?? '', 10);
+  const m = parseInt(ms ?? '', 10);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) {
+    return null;
+  }
+  const [y, mo, d] = ymd.split('-').map((x) => parseInt(x, 10));
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) {
+    return null;
+  }
+  return new Date(y, mo - 1, d, h, m, 0, 0).getTime();
+}
+
+/**
+ * Derive Past / Ongoing / Upcoming from calendar dates and times.
+ * Aligns with list filters that use `end_date` vs today, not the stored `status` field.
+ */
+export function deriveActivityDisplayStatus(
+  row: DepartmentActivityRow,
+  now = new Date()
+): ActivityDisplayStatus {
+  const sd = row.start_date;
+  const ed = row.end_date;
+  if (!sd || !ed) {
+    const u = (row.status || '').toUpperCase();
+    if (u === 'PAST') {return 'Past';}
+    if (u === 'ONGOING') {return 'Ongoing';}
+    return 'Upcoming';
+  }
+
+  const today = formatLocalYmd(now);
+
+  if (ed < today) {
+    return 'Past';
+  }
+  if (sd > today) {
+    return 'Upcoming';
+  }
+
+  // Today lies within [sd, ed] (inclusive)
+  if (ed === today && row.end_time?.trim()) {
+    const endMs = parseHmOnDate(ed, row.end_time);
+    if (endMs !== null && now.getTime() > endMs) {
+      return 'Past';
+    }
+  }
+
+  if (sd === today && row.start_time?.trim()) {
+    const startMs = parseHmOnDate(sd, row.start_time);
+    if (startMs !== null && now.getTime() < startMs) {
+      return 'Upcoming';
+    }
+  }
+
+  const u = (row.status || '').toUpperCase();
+  if (u === 'ONGOING') {
+    return 'Ongoing';
+  }
+  return 'Ongoing';
 }
 
 function numFromBudget(s: string | undefined): number {

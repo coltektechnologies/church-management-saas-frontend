@@ -13,7 +13,13 @@ import {
   type ScheduleActivityInitial,
 } from '@/components/departments/activities/ScheduleActivityModal';
 import { usePortalDepartment } from '@/hooks/usePortalDepartment';
-import { fetchDepartmentActivities, type DepartmentActivityRow } from '@/lib/departmentsApi';
+import { cn } from '@/lib/utils';
+import {
+  deriveActivityDisplayStatus,
+  fetchDepartmentActivities,
+  type ActivityDisplayStatus,
+  type DepartmentActivityRow,
+} from '@/lib/departmentsApi';
 
 const ACTIVITIES_QUERY_KEY = 'department-activities';
 
@@ -32,15 +38,28 @@ function formatTime12h(hhmm: string): string {
   return `${hour12}:${String(m || 0).padStart(2, '0')} ${ampm}`;
 }
 
-function statusBadge(row: DepartmentActivityRow): string {
-  const u = (row.status || '').toUpperCase();
-  if (u === 'PAST') {
-    return 'Past';
+/** Distinct badge colors: Past (neutral), Upcoming (future), Ongoing (happening now / in progress). */
+function activityStatusBadgeClass(phase: ActivityDisplayStatus): string {
+  const base =
+    'border-none font-medium px-3.5 py-0.5 text-[12px] rounded-full pointer-events-none';
+  switch (phase) {
+    case 'Past':
+      return cn(
+        base,
+        'bg-slate-500/15 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300'
+      );
+    case 'Ongoing':
+      return cn(
+        base,
+        'bg-amber-500/18 text-amber-900 dark:bg-amber-400/15 dark:text-amber-300'
+      );
+    case 'Upcoming':
+    default:
+      return cn(
+        base,
+        'bg-sky-500/15 text-sky-800 dark:bg-sky-400/15 dark:text-sky-300'
+      );
   }
-  if (u === 'ONGOING') {
-    return 'Ongoing';
-  }
-  return 'Upcoming';
 }
 
 function rowToCardMeta(row: DepartmentActivityRow): {
@@ -48,7 +67,7 @@ function rowToCardMeta(row: DepartmentActivityRow): {
   title: string;
   dateLabel: string;
   location: string;
-  status: string;
+  status: ActivityDisplayStatus;
   raw: DepartmentActivityRow;
 } {
   const rawT = row.start_time?.trim();
@@ -60,7 +79,7 @@ function rowToCardMeta(row: DepartmentActivityRow): {
     title: row.title,
     dateLabel,
     location: row.location?.trim() || '—',
-    status: statusBadge(row),
+    status: deriveActivityDisplayStatus(row),
     raw: row,
   };
 }
@@ -272,10 +291,7 @@ function ActivitiesPageInner() {
               </div>
 
               <div className="flex flex-row justify-between md:flex-col items-start md:items-end gap-3.5">
-                <Badge
-                  variant="secondary"
-                  className="bg-info/15 hover:bg-info/25 text-info border-none font-medium px-3.5 py-0.5 text-[12px] rounded-full pointer-events-none"
-                >
+                <Badge variant="secondary" className={activityStatusBadgeClass(activity.status)}>
                   {activity.status}
                 </Badge>
                 <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">

@@ -5,6 +5,7 @@
 import type { Period } from '@/components/departments/dashboard/DeptPeriodFilter';
 import type { KpiData } from '@/components/departments/dashboard/DeptKpiCards';
 import {
+  deriveActivityDisplayStatus,
   fetchDepartmentStatistics,
   fetchDepartmentActivitiesAllPages,
   fetchDepartmentActivities,
@@ -84,13 +85,15 @@ function activityStartsInRange(row: DepartmentActivityRow, from: Date, to: Date)
 
 export function mapActivityRowToDeptActivity(row: DepartmentActivityRow): DeptActivity {
   const time = row.start_time && row.start_time.length >= 5 ? row.start_time.slice(0, 5) : '—';
+  const phase = deriveActivityDisplayStatus(row);
+  const status: DeptActivity['status'] = phase === 'Past' ? 'completed' : 'upcoming';
   return {
     id: String(row.id),
     name: row.title,
     date: row.start_date,
     time,
     location: row.location?.trim() || '—',
-    status: 'upcoming',
+    status,
   };
 }
 
