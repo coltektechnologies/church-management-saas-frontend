@@ -1,9 +1,7 @@
-import TreasuryApprovalCenter from '@/components/treasurydashboard/TreasuryApprovalCenter';
+// /app/treasury/approvals/page.tsx
 
-export const metadata = {
-  title: 'Treasury Approvals | Pending Review',
-};
+import ApprovalsPage from '@/components/treasurydashboard/approvals/ApprovalsPage';
 
 export default function PendingApprovalsPage() {
-  return <TreasuryApprovalCenter />;
+  return <ApprovalsPage />;
 }
