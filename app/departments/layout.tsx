@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Suspense } from 'react';
+import { AuthProvider } from '@/context/AuthContext';
 import DepartmentDeepLinkSync from '@/components/departments/DepartmentDeepLinkSync';
 import { DepartmentProfileProvider } from '@/components/departments/contexts/DepartmentProfileContext';
 import { DeptActivityProvider } from '@/components/departments/contexts/DeptActivityContext';
@@ -24,17 +25,19 @@ export const metadata = {
  */
 export default function DepartmentLayout({ children }: { children: ReactNode }) {
   return (
-    <ChurchProfileProvider>
-      <DepartmentProfileProvider>
-        <DeptThemeProvider>
-          <DeptActivityProvider>
-            <DepartmentLayoutClient>
-              <DepartmentShell>{children}</DepartmentShell>
-            </DepartmentLayoutClient>
-          </DeptActivityProvider>
-        </DeptThemeProvider>
-      </DepartmentProfileProvider>
-    </ChurchProfileProvider>
+    <AuthProvider defaultRole="department_head">
+      <ChurchProfileProvider>
+        <DepartmentProfileProvider>
+          <DeptThemeProvider>
+            <DeptActivityProvider>
+              <DepartmentLayoutClient>
+                <DepartmentShell>{children}</DepartmentShell>
+              </DepartmentLayoutClient>
+            </DeptActivityProvider>
+          </DeptThemeProvider>
+        </DepartmentProfileProvider>
+      </ChurchProfileProvider>
+    </AuthProvider>
   );
 }
 
