@@ -183,8 +183,12 @@ export function deriveActivityDisplayStatus(
   const ed = row.end_date;
   if (!sd || !ed) {
     const u = (row.status || '').toUpperCase();
-    if (u === 'PAST') {return 'Past';}
-    if (u === 'ONGOING') {return 'Ongoing';}
+    if (u === 'PAST') {
+      return 'Past';
+    }
+    if (u === 'ONGOING') {
+      return 'Ongoing';
+    }
     return 'Upcoming';
   }
 
