@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { defaultHomePathForUser, type PostLoginUser } from '@/lib/postLoginRedirect';
 
 /**
- * Role-aware home: proxy and legacy links send everyone here first; then we route
- * Secretary → /secretary, others → /admin (was hard-coded admin only).
+ * Role-aware home: proxy sends session users here first; then we route by role
+ * (treasury / secretary / departments / admin shell / **`/start`** hub).
  */
 export default function DashboardRedirect() {
   const router = useRouter();

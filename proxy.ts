@@ -8,10 +8,10 @@ import { getSafeInternalPath } from '@/lib/safeReturnPath';
  *
  * Public (no session cookie): marketing + auth + registration only.
  * Everything else requires `church_session=1` (set on successful login / token storage).
- * With a session cookie, `/` and `/features` redirect to `/admin` so users leave only via Sign out.
+ * With a session cookie, `/` and `/features` redirect to `/dashboard` (role-based → /admin, /start, etc.).
  *
  * Optional local preview for /secretary without cookie: set NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true
- * in .env.local, then restart dev.
+ * in .env.local, then restart dev (see `skipSecretaryAuth` below).
  * Never enable that in production.
  */
 const CHURCH_SESSION_COOKIE = 'church_session';
@@ -27,18 +27,7 @@ const PUBLIC_EXACT = new Set([
 ]);
 
 /** Prefixes: path === prefix or path starts with prefix + '/' */
-const PUBLIC_PREFIXES = [
-  '/login',
-  '/signup',
-  '/features',
-  '/developers',
-  '/contact',
-  '/pricing',
-  '/secretary',
-  '/treasury',
-  '/admin',
-  '/department',
-];
+const PUBLIC_PREFIXES = ['/login', '/signup', '/features', '/developers', '/contact', '/pricing'];
 
 /** Where to send users who already have a session cookie but hit login/signup. */
 const LOGGED_IN_AUTH_REDIRECT = '/dashboard';
@@ -109,7 +98,7 @@ export function proxy(request: NextRequest) {
   // Signed-in users cannot "exit" to the marketing site without logging out (clears cookie).
   if (sessionOk && isMarketingShellPath(pathname)) {
     const dest = request.nextUrl.clone();
-    dest.pathname = '/admin';
+    dest.pathname = LOGGED_IN_AUTH_REDIRECT;
     dest.search = '';
     return NextResponse.redirect(dest);
   }

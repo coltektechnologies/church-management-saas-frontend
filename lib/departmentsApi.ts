@@ -142,11 +142,11 @@ export interface DepartmentActivityRow {
   /** ISO timestamps when present (activity feed / sorting). */
   created_at?: string;
   updated_at?: string;
-  /** From API serializer when present. */
+  /** From API serializer when present; derive display status from dates when absent. */
   is_upcoming?: boolean;
 }
 
-/** Badge label for department activities (do not rely on stored `status` alone). */
+/** Badge label for department activities (stored `status` defaults to UPCOMING and is not auto-updated). */
 export type ActivityDisplayStatus = 'Past' | 'Ongoing' | 'Upcoming';
 
 function formatLocalYmd(d: Date): string {
@@ -172,8 +172,8 @@ function parseHmOnDate(ymd: string, hhmmss: string): number | null {
 }
 
 /**
- * Derive Past / Ongoing / Upcoming from calendar dates and times
- * (aligns with API time_filter using end_date vs today).
+ * Derive Past / Ongoing / Upcoming from calendar dates and times.
+ * Aligns with API time_filter / list filters using `end_date` vs today, not the stored `status` field.
  */
 export function deriveActivityDisplayStatus(
   row: DepartmentActivityRow,
@@ -183,8 +183,12 @@ export function deriveActivityDisplayStatus(
   const ed = row.end_date;
   if (!sd || !ed) {
     const u = (row.status || '').toUpperCase();
-    if (u === 'PAST') {return 'Past';}
-    if (u === 'ONGOING') {return 'Ongoing';}
+    if (u === 'PAST') {
+      return 'Past';
+    }
+    if (u === 'ONGOING') {
+      return 'Ongoing';
+    }
     return 'Upcoming';
   }
 
@@ -197,6 +201,7 @@ export function deriveActivityDisplayStatus(
     return 'Upcoming';
   }
 
+  // Today lies within [sd, ed] (inclusive)
   if (ed === today && row.end_time?.trim()) {
     const endMs = parseHmOnDate(ed, row.end_time);
     if (endMs !== null && now.getTime() > endMs) {
