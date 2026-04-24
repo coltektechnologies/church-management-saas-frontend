@@ -4,6 +4,7 @@ import { FileText, Receipt } from 'lucide-react';
 import MemberAvatar from './MemberAvatar';
 import ContributionStats from './ContributionStats';
 import TransactionList from './TransactionList';
+import { readableMemberTitle } from '@/components/treasury/membersFinance/exportMemberFinanceDocuments';
 import { MemberContribution } from '@/types/memberFinance';
 
 interface Props {
@@ -54,19 +55,23 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
     );
   }
 
+  const displayName = readableMemberTitle(member);
+  const avatarName =
+    displayName.startsWith('Member (') && member.memberId ? member.memberId : member.name;
+
   return (
     <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden">
       <div className="flex flex-col flex-1 overflow-y-auto">
         {/* Member header */}
         <div className="px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
-            <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} size={56} />
+            <MemberAvatar name={avatarName} avatarUrl={member.avatarUrl} size={56} />
             <div className="min-w-0">
               <p
                 className="text-lg font-bold text-gray-900 truncate"
                 style={{ fontFamily: "'OV Soge', sans-serif" }}
               >
-                {member.name}
+                {displayName}
               </p>
               <div className="flex items-center gap-4 mt-1 flex-wrap">
                 <span className="text-xs text-gray-400 flex items-center gap-1">

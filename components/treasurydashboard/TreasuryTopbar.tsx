@@ -11,13 +11,13 @@ import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchPr
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import NotificationsDropdown from '@/components/treasurydashboard/topbar/NotificationsDropdown';
 import UserDropdown from '@/components/treasurydashboard/topbar/UserDropdown';
+import { treasuryDisplayName, treasuryInitials } from '@/lib/treasuryPortalDisplay';
 import type { SubscriptionStatus } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import {
   LayoutDashboard,
   Users,
   ArrowDownCircle,
   ArrowUpCircle,
-  ClipboardCheck,
   Receipt,
   BarChart2,
   PlusCircle,
@@ -29,8 +29,7 @@ const mobileNavItems = [
   { title: 'Members & Finance', path: '/treasury/members-finance', icon: Users },
   { title: 'Income Recording', path: '/treasury/income', icon: ArrowDownCircle },
   { title: 'Expense Recording', path: '/treasury/expenses', icon: ArrowUpCircle },
-  { title: 'Pending Approvals', path: '/treasury/approvals', icon: ClipboardCheck },
-  { title: 'Record Expense', path: '/treasury/record-expense', icon: Receipt },
+  { title: 'Pending Approvals', path: '/treasury/approvals', icon: Receipt },
   { title: 'Financial Reports', path: '/treasury/reports', icon: BarChart2 },
   { title: 'Record Income', path: '/treasury/record-income', icon: PlusCircle },
   { title: 'Settings', path: '/treasury/settings', icon: Settings },
@@ -188,16 +187,11 @@ export default function TreasuryTopbar() {
   const subStatus = churchReady ? church.subscriptionStatus || 'trial' : 'trial';
 
   const avatarUrl = userReady ? (user.avatarUrl ?? null) : null;
-  const adminName = userReady ? user.adminName || 'User' : 'User';
-  const triggerName = userReady
-    ? user.preferredName?.trim() || adminName.split(' ').filter(Boolean).slice(-1)[0] || 'User'
-    : 'User';
-  const initials = adminName
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
+  const preferredName = userReady ? user.preferredName || '' : '';
+  const adminName = userReady ? user.adminName || '' : '';
+  const triggerName = treasuryDisplayName(preferredName, adminName);
+  const adminEmail = userReady ? user.adminEmail || '' : '';
+  const initials = treasuryInitials(preferredName, adminName, adminEmail);
 
   const isActive = (path: string) =>
     path === '/treasury' ? pathname === '/treasury' : pathname.startsWith(path);

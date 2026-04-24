@@ -85,12 +85,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     </AuthProvider>
   );
 
-  // Local preview without RequireAuth — uncomment the block below (and set NEXT_PUBLIC_SKIP_ADMIN_AUTH=true
-  // in .env.local so proxy.ts allows /admin without the session cookie). Restart dev after .env changes.
-  const skipAuth = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
-  if (skipAuth) {
-    return tree;
-  }
+  // Local preview without RequireAuth — only when NEXT_PUBLIC_SKIP_DASHBOARD_AUTH=true in .env.local.
+  // Keep commented so production always requires JWT:
+  // const skipAuth = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
+  // if (skipAuth) return tree;
 
   return <RequireAuth>{tree}</RequireAuth>;
 }

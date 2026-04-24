@@ -19,6 +19,15 @@ import { Department } from '@/types/Department';
 import { fetchExpenseCategoriesActive, type ExpenseCategoryItem } from '@/lib/treasuryApi';
 import ExpenseDashboardHeader from './ExpenseDashboardHeader';
 
+/** Row/expense ids in the browser; `randomUUID` is not available in some HTTP / older clients. */
+function clientRandomId(): string {
+  const c = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined;
+  if (c && typeof c.randomUUID === 'function') {
+    return c.randomUUID();
+  }
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
 interface Props {
   department: Department;
   expenses: Expense[];
@@ -80,7 +89,7 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
   const [title, setTitle] = useState('');
   const [justification, setJustification] = useState('');
   const [items, setItems] = useState<ExpenseItem[]>([
-    { id: crypto.randomUUID(), name: '', quantity: 1, unitCost: 0 },
+    { id: clientRandomId(), name: '', quantity: 1, unitCost: 0 },
   ]);
   const [documents, setDocuments] = useState<File[]>([]);
   const [error, setError] = useState('');
@@ -147,7 +156,7 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
     grandTotal > 0 && grandTotal <= department.settings.autoApprovalThreshold;
 
   const addItem = () =>
-    setItems((prev) => [...prev, { id: crypto.randomUUID(), name: '', quantity: 1, unitCost: 0 }]);
+    setItems((prev) => [...prev, { id: clientRandomId(), name: '', quantity: 1, unitCost: 0 }]);
 
   const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
 
@@ -198,7 +207,7 @@ export default function ExpenseFormPage({ department, expenses, onSubmit }: Prop
     }
 
     const expense: Expense = {
-      id: crypto.randomUUID(),
+      id: clientRandomId(),
       expenseRef: '',
       title,
       category: selectedCategory?.name ?? '',

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   BookOpen,
+  BarChart3,
   FileText,
   PlusCircle,
   CreditCard,
@@ -81,7 +82,7 @@ const actions: ActionDef[] = [
   },
   {
     label: 'Financial Statement',
-    icon: '/treasury/financial-statement.svg',
+    icon: BarChart3,
     color:
       'bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 border border-emerald-200 mt-2 sm:mt-0 lg:ml-auto w-full sm:w-auto',
     handler: 'onFinancialStatement',
@@ -114,11 +115,16 @@ export function QuickActions(props: QuickActionsProps) {
           className={`${action.color} rounded-md px-4 h-9 gap-2 shadow-sm cursor-pointer font-medium transition-colors`}
         >
           {typeof action.icon === 'string' ? (
-            <Image alt={`${action.label}`} src={action.icon} width={24} height={24} />
+            <Image
+              alt={action.label}
+              src={action.icon}
+              width={18}
+              height={18}
+              className="shrink-0"
+            />
           ) : (
-            <action.icon size={24} />
+            <action.icon className="size-[18px] shrink-0" aria-hidden />
           )}
-
           <span className="text-[13px]">{action.label}</span>
         </Button>
       ))}

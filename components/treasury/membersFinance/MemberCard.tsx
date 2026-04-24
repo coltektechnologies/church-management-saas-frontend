@@ -1,6 +1,7 @@
 'use client';
 
 import MemberAvatar from './MemberAvatar';
+import { readableMemberTitle } from '@/components/treasury/membersFinance/exportMemberFinanceDocuments';
 import { MemberContribution } from '@/types/memberFinance';
 
 interface Props {
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export default function MemberCard({ member, isSelected, onClick }: Props) {
+  const displayName = readableMemberTitle(member);
+
   return (
     <button
       onClick={onClick}
@@ -19,10 +22,14 @@ export default function MemberCard({ member, isSelected, onClick }: Props) {
           : 'border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300'
       }`}
     >
-      <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} size={44} />
+      <MemberAvatar
+        name={displayName.startsWith('Member (') ? member.memberId : member.name}
+        avatarUrl={member.avatarUrl}
+        size={44}
+      />
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-900 truncate">{member.name}</p>
+        <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
           <span className="text-xs text-gray-400 flex items-center gap-1">
             <span className="text-gray-300 text-[10px]">⊞</span>

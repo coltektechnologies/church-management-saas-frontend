@@ -372,6 +372,17 @@ export async function getMembersList(pageSize = 100): Promise<BackendMember[]> {
 }
 
 /**
+ * Same as {@link getMembersList} but throws on auth/network errors so callers can surface failures.
+ */
+export async function getMembersListStrict(pageSize = 250): Promise<BackendMember[]> {
+  const base = getApiBaseUrl();
+  const raw = await _fetchAuth<PaginatedResponse<BackendMember> | BackendMember[]>(
+    `${base}/members/members/?page_size=${pageSize}`
+  );
+  return normalizeListResponse<BackendMember>(raw);
+}
+
+/**
  * GET /api/treasury/income-transactions/?page_size=100
  * Income transactions for dashboard charts.
  */
@@ -439,6 +450,17 @@ export async function getDepartmentsList(pageSize = 100): Promise<BackendDepartm
     `${base}/departments/?page_size=${pageSize}`,
     undefined,
     null
+  );
+  return normalizeListResponse<BackendDepartment>(raw);
+}
+
+/**
+ * Same as {@link getDepartmentsList} but throws on auth/network errors (forms).
+ */
+export async function getDepartmentsListStrict(pageSize = 150): Promise<BackendDepartment[]> {
+  const base = getApiBaseUrl();
+  const raw = await _fetchAuth<PaginatedResponse<BackendDepartment> | BackendDepartment[]>(
+    `${base}/departments/?page_size=${pageSize}`
   );
   return normalizeListResponse<BackendDepartment>(raw);
 }

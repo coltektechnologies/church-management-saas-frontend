@@ -10,7 +10,6 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Tags,
-  ClipboardCheck,
   Receipt,
   BarChart2,
   PlusCircle,
@@ -22,6 +21,11 @@ import {
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import { performLogout } from '@/lib/churchSessionBrowser';
+import {
+  treasuryDisplayName,
+  treasuryInitials,
+  treasuryPortalRoleLabel,
+} from '@/lib/treasuryPortalDisplay';
 
 const navItems = [
   { title: 'Dashboard', path: '/treasury', icon: LayoutDashboard },
@@ -29,8 +33,7 @@ const navItems = [
   { title: 'Income Recording', path: '/treasury/income', icon: ArrowDownCircle },
   { title: 'Expense Recording', path: '/treasury/expenses', icon: ArrowUpCircle },
   { title: 'Expense categories', path: '/treasury/expense-categories', icon: Tags },
-  { title: 'Pending Approvals', path: '/treasury/approvals', icon: ClipboardCheck },
-  { title: 'Record Expense', path: '/treasury/record-expense', icon: Receipt },
+  { title: 'Pending Approvals', path: '/treasury/approvals', icon: Receipt },
   { title: 'Financial Reports', path: '/treasury/reports', icon: BarChart2 },
   { title: 'Record Income', path: '/treasury/record-income', icon: PlusCircle },
   { title: 'Settings', path: '/treasury/settings', icon: Settings },
@@ -68,23 +71,13 @@ export default function TreasurySidebar() {
   // ── User info ──────────────────────────────────────────────────────────────
   const adminName = userReady ? user.adminName || '' : '';
   const preferredName = userReady ? user.preferredName || '' : '';
-  const userRole = userReady ? user.adminRole || 'Admin' : 'Admin';
-  // avatarUrl
+  const userRole = userReady ? treasuryPortalRoleLabel(user.adminRole || '') : 'Treasurer';
   const avatarUrl = userReady ? (user.avatarUrl ?? null) : null;
   const isDark = userReady ? user.darkMode : false;
 
-  // Preferred name if set, otherwise full name, otherwise fallback
-  const displayName = preferredName.trim() || adminName.trim() || 'Ps Owusu William';
-
-  // Initials always from full name
-  const initials =
-    adminName
-      .split(' ')
-      .filter(Boolean)
-      .map((w) => w[0])
-      .join('')
-      .substring(0, 2)
-      .toUpperCase() || 'PW';
+  const displayName = treasuryDisplayName(preferredName, adminName) || 'Account';
+  const adminEmail = userReady ? user.adminEmail || '' : '';
+  const initials = treasuryInitials(preferredName, adminName, adminEmail);
 
   // ── Theme colours ──────────────────────────────────────────────────────────
   const primaryColor = userReady

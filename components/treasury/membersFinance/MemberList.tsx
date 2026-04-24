@@ -10,9 +10,18 @@ interface Props {
   selectedId: string | null;
   onSelect: (member: MemberContribution) => void;
   pageSize?: number;
+  isLoading?: boolean;
+  loadError?: string | null;
 }
 
-export default function MemberList({ members, selectedId, onSelect, pageSize = 7 }: Props) {
+export default function MemberList({
+  members,
+  selectedId,
+  onSelect,
+  pageSize = 7,
+  isLoading = false,
+  loadError = null,
+}: Props) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
@@ -60,16 +69,34 @@ export default function MemberList({ members, selectedId, onSelect, pageSize = 7
           placeholder="Search members..."
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none bg-white transition"
+          disabled={isLoading}
+          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none bg-white transition disabled:opacity-60"
         />
       </div>
 
+      {loadError ? (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+          {loadError}
+        </p>
+      ) : null}
+
       {/* List */}
       <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-0.5">
-        {paginated.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[72px] rounded-2xl bg-gray-100 animate-pulse border border-gray-200/80"
+              />
+            ))}
+          </div>
+        ) : paginated.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Users size={32} className="text-gray-200 mb-3" />
-            <p className="text-sm text-gray-400">No members found</p>
+            <p className="text-sm text-gray-400">
+              {members.length === 0 ? 'No members loaded.' : 'No matches — try another search.'}
+            </p>
           </div>
         ) : (
           paginated.map((member) => (

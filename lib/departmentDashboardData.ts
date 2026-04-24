@@ -5,6 +5,7 @@
 import type { Period } from '@/components/departments/dashboard/DeptPeriodFilter';
 import type { KpiData } from '@/components/departments/dashboard/DeptKpiCards';
 import {
+  deriveActivityDisplayStatus,
   fetchDepartmentStatistics,
   fetchDepartmentActivitiesAllPages,
   fetchDepartmentActivities,
@@ -84,13 +85,15 @@ function activityStartsInRange(row: DepartmentActivityRow, from: Date, to: Date)
 
 export function mapActivityRowToDeptActivity(row: DepartmentActivityRow): DeptActivity {
   const time = row.start_time && row.start_time.length >= 5 ? row.start_time.slice(0, 5) : '—';
+  const phase = deriveActivityDisplayStatus(row);
+  const status: DeptActivity['status'] = phase === 'Past' ? 'completed' : 'upcoming';
   return {
     id: String(row.id),
     name: row.title,
     date: row.start_date,
     time,
     location: row.location?.trim() || '—',
-    status: 'upcoming',
+    status,
   };
 }
 
@@ -175,8 +178,8 @@ export async function loadDepartmentDashboardKpis(input: {
   let pendingAnnouncements = 0;
   try {
     const [drafts, pending] = await Promise.all([
-      fetchAnnouncementsList({ status: 'DRAFT', page_size: 100 }),
-      fetchAnnouncementsList({ status: 'PENDING_REVIEW', page_size: 100 }),
+      fetchAnnouncementsList({ status: 'DRAFT', page_size: 100, mine_only: true }),
+      fetchAnnouncementsList({ status: 'PENDING_REVIEW', page_size: 100, mine_only: true }),
     ]);
     pendingAnnouncements = drafts.length + pending.length;
   } catch {
