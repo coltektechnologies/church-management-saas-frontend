@@ -11,7 +11,7 @@ import { getSafeInternalPath } from '@/lib/safeReturnPath';
  * With a session cookie, `/` and `/features` redirect to `/admin` so users leave only via Sign out.
  *
  * Optional local preview for /secretary without cookie: set NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true
- * in .env.local and uncomment the skipSecretaryCookie block below, then restart dev.
+ * in .env.local, then restart dev.
  * Never enable that in production.
  */
 const CHURCH_SESSION_COOKIE = 'church_session';
@@ -27,7 +27,18 @@ const PUBLIC_EXACT = new Set([
 ]);
 
 /** Prefixes: path === prefix or path starts with prefix + '/' */
-const PUBLIC_PREFIXES = ['/login', '/signup', '/features', '/developers', '/contact', '/pricing'];
+const PUBLIC_PREFIXES = [
+  '/login',
+  '/signup',
+  '/features',
+  '/developers',
+  '/contact',
+  '/pricing',
+  '/secretary',
+  '/treasury',
+  '/admin',
+  '/department',
+];
 
 /** Where to send users who already have a session cookie but hit login/signup. */
 const LOGGED_IN_AUTH_REDIRECT = '/dashboard';

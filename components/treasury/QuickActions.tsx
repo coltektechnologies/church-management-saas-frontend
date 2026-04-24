@@ -12,6 +12,7 @@ import {
   Tags,
   type LucideIcon,
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface QuickActionsProps {
   onRecordIncome?: () => void;
@@ -25,7 +26,7 @@ interface QuickActionsProps {
 type ActionDef =
   | {
       label: string;
-      icon: LucideIcon;
+      icon: LucideIcon | string;
       color: string;
       handler:
         | 'onRecordIncome'
@@ -37,7 +38,7 @@ type ActionDef =
     }
   | {
       label: string;
-      icon: LucideIcon;
+      icon: LucideIcon | string;
       color: string;
       href: string;
     };
@@ -113,7 +114,17 @@ export function QuickActions(props: QuickActionsProps) {
           }
           className={`${action.color} rounded-md px-4 h-9 gap-2 shadow-sm cursor-pointer font-medium transition-colors`}
         >
-          <action.icon className="size-[18px] shrink-0" aria-hidden />
+          {typeof action.icon === 'string' ? (
+            <Image
+              alt={action.label}
+              src={action.icon}
+              width={18}
+              height={18}
+              className="shrink-0"
+            />
+          ) : (
+            <action.icon className="size-[18px] shrink-0" aria-hidden />
+          )}
           <span className="text-[13px]">{action.label}</span>
         </Button>
       ))}
