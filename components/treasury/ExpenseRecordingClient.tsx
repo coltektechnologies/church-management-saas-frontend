@@ -365,8 +365,8 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
         approvalChain: chain ?? null,
         amountRaw: rawAmt,
         amountInWords: amountToCurrencyWords(rawAmt, 'GHS'),
-        treasurerApprovedAt: chain?.treasury?.approved_at
-          ? String(chain.treasury.approved_at).slice(0, 10)
+        treasurerApprovedAt: chain?.treasurer?.approved_at
+          ? String(chain.treasurer.approved_at).slice(0, 10)
           : null,
       };
     });
