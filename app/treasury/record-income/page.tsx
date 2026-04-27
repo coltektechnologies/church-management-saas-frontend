@@ -109,7 +109,7 @@ export default function RecordIncomePage() {
 
   // ── Record handler ────────────────────────────────────────────────────────
   const handleRecorded = useCallback(
-    (record: IncomeRecord) => {
+    (record: IncomeRecord, _options?: { showReceipt?: boolean }) => {
       saveRecordToStorage(record);
 
       // 2. Log to activity history so ActivityHistoryPanel sees it.

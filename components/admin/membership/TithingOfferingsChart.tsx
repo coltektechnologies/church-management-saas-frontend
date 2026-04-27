@@ -33,28 +33,36 @@ export default function TithingOfferingsChart({
       style={{
         height: 281,
         borderRadius: 8,
-        border: '1px solid #2FC4B2',
-        background: '#FFFFFF',
+        border: '1px solid var(--color-accent, #2FC4B2)',
+        background: 'var(--admin-surface, #FFFFFF)',
       }}
     >
-      <h3 className="text-lg font-bold text-gray-900 mb-2">This Month</h3>
+      <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--admin-text, #111827)' }}>
+        This Month
+      </h3>
       <div className="grid grid-cols-2 gap-4 flex-1 min-h-0 items-start">
         <div className="flex flex-col h-full">
           <div className="flex items-baseline gap-2 mb-4 flex-wrap">
-            <span className="text-sm text-gray-500">Tithing</span>
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-sm" style={{ color: 'var(--admin-text-muted, #6b7280)' }}>
+              Tithing
+            </span>
+            <span className="text-2xl font-bold" style={{ color: 'var(--admin-text, #111827)' }}>
               {Number(titheTotal).toLocaleString()}
             </span>
           </div>
           <div className="h-[140px] flex-1 min-h-[140px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={titheData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--admin-border, #e5e7eb)"
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  tick={{ fontSize: 12, fill: 'var(--admin-text-muted, #6b7280)' }}
                 />
                 <YAxis type="number" hide domain={[0, 100]} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={15}>
@@ -68,20 +76,26 @@ export default function TithingOfferingsChart({
         </div>
         <div className="flex flex-col h-full">
           <div className="flex items-baseline gap-2 mb-4 flex-wrap">
-            <span className="text-sm text-gray-500">Offerings</span>
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-sm" style={{ color: 'var(--admin-text-muted, #6b7280)' }}>
+              Offerings
+            </span>
+            <span className="text-2xl font-bold" style={{ color: 'var(--admin-text, #111827)' }}>
               {Number(offeringTotal).toLocaleString()}
             </span>
           </div>
           <div className="h-[140px] flex-1 min-h-[140px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={offeringData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--admin-border, #e5e7eb)"
+                  vertical={false}
+                />
                 <XAxis
                   dataKey="name"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  tick={{ fontSize: 12, fill: 'var(--admin-text-muted, #6b7280)' }}
                 />
                 <YAxis type="number" hide domain={[0, 100]} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={15}>

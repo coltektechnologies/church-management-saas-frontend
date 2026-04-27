@@ -78,7 +78,9 @@ function DepartmentShell({ children }: { children: ReactNode }) {
         <DepartmentTopbar />
 
         {/* Scrollable page content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="department-content flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {children}
+        </main>
       </div>
     </div>
   );

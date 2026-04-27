@@ -56,13 +56,29 @@ export function isDepartmentPortalRoleName(raw: string | undefined | null): bool
   if (!n) {
     return false;
   }
-  if (/\bdepartment\s+head\b/.test(n) || n === 'department head') {
+  if (/\bdepartment[\s-]+head\b/.test(n) || n === 'department head') {
     return true;
   }
-  if (/\belder\s+in\s+charge\b/.test(n) || n === 'elder in charge') {
+  /* Match "Elder in charge", "Elder-in-charge", "Elder In Charge", minor spacing variants */
+  if (/\belder[\s-]+in[\s-]+charge\b/.test(n) || n === 'elder in charge') {
     return true;
   }
   return false;
+}
+
+/**
+ * Department portal access from the API (`GET /departments/my-portal/`), which uses
+ * `Member.system_user_id` + department head / elder-in-charge assignment — not JWT `UserRole`
+ * rows. Call this when role-based routing would otherwise send the user to `/start`.
+ */
+export async function canAccessDepartmentPortalViaApi(): Promise<boolean> {
+  try {
+    const { fetchDepartmentMyPortal } = await import('@/lib/departmentsApi');
+    await fetchDepartmentMyPortal();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** True if the signed-in user has at least one department-portal role (any level). */

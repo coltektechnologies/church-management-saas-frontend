@@ -19,19 +19,21 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Receipt,
+  ClipboardList,
   BarChart2,
-  PlusCircle,
   Settings,
+  PieChart,
 } from 'lucide-react';
 
 const mobileNavItems = [
   { title: 'Dashboard', path: '/treasury', icon: LayoutDashboard },
   { title: 'Members & Finance', path: '/treasury/members-finance', icon: Users },
   { title: 'Income Recording', path: '/treasury/income', icon: ArrowDownCircle },
+  { title: 'Income allocation', path: '/treasury/allocations', icon: PieChart },
   { title: 'Expense Recording', path: '/treasury/expenses', icon: ArrowUpCircle },
+  { title: 'Expense requests', path: '/treasury/expense-requests', icon: ClipboardList },
   { title: 'Pending Approvals', path: '/treasury/approvals', icon: Receipt },
   { title: 'Financial Reports', path: '/treasury/reports', icon: BarChart2 },
-  { title: 'Record Income', path: '/treasury/record-income', icon: PlusCircle },
   { title: 'Settings', path: '/treasury/settings', icon: Settings },
 ];
 

@@ -63,7 +63,7 @@ export default function MembershipDashboardPage() {
             fontSize: '24px',
             lineHeight: '100%',
             letterSpacing: 0,
-            color: '#000000',
+            color: 'var(--admin-text, #000000)',
           }}
         >
           Membership Dashboard
@@ -76,7 +76,7 @@ export default function MembershipDashboardPage() {
             fontSize: '16px',
             lineHeight: '100%',
             letterSpacing: 0,
-            color: '#666666',
+            color: 'var(--admin-text-muted, #666666)',
           }}
         >
           <Link href={appHomeHref} className="flex items-center gap-1 hover:opacity-80">

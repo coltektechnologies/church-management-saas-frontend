@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Wallet,
   Receipt,
+  ClipboardCheck,
   FileBarChart,
   Settings,
   LogOut,
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
   { title: 'Announcements', path: '/departments/announcements', icon: Megaphone },
   { title: 'Message Member', path: '/departments/communications', icon: MessageSquare },
   { title: 'Budget & Expenses', path: '/departments/budget', icon: Wallet },
+  { title: 'Approvals', path: '/departments/approvals', icon: ClipboardCheck },
   { title: 'Expense Requests', path: '/departments/expenses', icon: Receipt },
   { title: 'Department Reports', path: '/departments/reports', icon: FileBarChart },
 ];

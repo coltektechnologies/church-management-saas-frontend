@@ -26,8 +26,8 @@ export default function MonthlyTrendChart({
       style={{
         height: 281,
         borderRadius: 8,
-        border: '1px solid #2FC4B2',
-        background: '#FFFFFF',
+        border: '1px solid var(--color-accent, #2FC4B2)',
+        background: 'var(--admin-surface, #FFFFFF)',
         paddingLeft: 18,
         paddingRight: 23,
         paddingBottom: 4,
@@ -38,9 +38,16 @@ export default function MonthlyTrendChart({
         className="flex items-center justify-between shrink-0"
         style={{ paddingTop: 0, paddingBottom: 4 }}
       >
-        <h3 className="text-sm font-bold text-gray-900">Monthly trend of tithes vs offerings</h3>
+        <h3 className="text-sm font-bold" style={{ color: 'var(--admin-text, #111827)' }}>
+          Monthly trend of tithes vs offerings
+        </h3>
         <select
-          className="text-sm font-medium text-gray-700 border border-gray-300 rounded-none px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          className="text-sm font-medium rounded-none px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          style={{
+            color: 'var(--admin-text, #374151)',
+            border: '1px solid var(--admin-border, #d1d5db)',
+            background: 'var(--admin-surface, #fff)',
+          }}
           defaultValue={period}
         >
           <option>This Month</option>
@@ -56,15 +63,15 @@ export default function MonthlyTrendChart({
             data={data.length ? data : [{ month: '-', tithe: 0, offering: 0 }]}
             margin={{ top: 2, right: 5, left: 0, bottom: 2 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--admin-border, #e5e7eb)" />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
+              tick={{ fontSize: 12, fill: 'var(--admin-text-muted, #6b7280)' }}
+              axisLine={{ stroke: 'var(--admin-border, #e5e7eb)' }}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: '#6b7280' }}
-              axisLine={{ stroke: '#e5e7eb' }}
+              tick={{ fontSize: 12, fill: 'var(--admin-text-muted, #6b7280)' }}
+              axisLine={{ stroke: 'var(--admin-border, #e5e7eb)' }}
               tickFormatter={(v) => String(v)}
             />
             <Tooltip />

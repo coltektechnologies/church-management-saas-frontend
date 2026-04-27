@@ -1,22 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface Notification {
-  id: string;
-  text: string;
-  time: string;
-  read: boolean;
-}
-
-const INITIAL: Notification[] = [
-  { id: '1', text: 'New member registration pending approval', time: '2 min ago', read: false },
-  { id: '2', text: 'Expense request submitted by Treasury Dept.', time: '15 min ago', read: false },
-  { id: '3', text: 'Announcement approved by Pastor Mensah', time: '1 hr ago', read: false },
-  { id: '4', text: 'Monthly report is ready for download', time: 'Yesterday', read: true },
-];
+import {
+  NOTIFICATIONS_LIST_QUERY_KEY,
+  NOTIFICATIONS_UNREAD_COUNT_KEY,
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+  useNotificationsListQuery,
+  useUnreadNotificationCountQuery,
+} from '@/hooks/useNotificationsInbox';
+import type { MockNotificationItem } from '@/services/notificationsMock';
+import { notificationsApiEnabled } from '@/services/notificationsService';
+import { normalizeNotificationLinkForSpa } from '@/lib/notificationLinks';
 
 interface Props {
   iconColor?: string;
@@ -29,12 +29,51 @@ export default function NotificationsDropdown({
   hoverBg = 'rgba(0,0,0,0.06)',
   badgeBg = '#2FC4B2',
 }: Props) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const apiEnabled = notificationsApiEnabled();
+
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifs] = useState(INITIAL);
+  const inboxQuery = useNotificationsListQuery('inbox', { enabled: apiEnabled });
+  const unreadQuery = useUnreadNotificationCountQuery({ enabled: apiEnabled });
+  const markOne = useMarkNotificationReadMutation();
+  const markAll = useMarkAllNotificationsReadMutation();
 
-  const unread = notifications.filter((n) => !n.read).length;
+  const items = useMemo(() => inboxQuery.data ?? [], [inboxQuery.data]);
+  const unread = apiEnabled ? (unreadQuery.data ?? 0) : 0;
 
-  const markAllRead = () => setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  useEffect(() => {
+    if (!open || !apiEnabled) {
+      return;
+    }
+    void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_LIST_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_UNREAD_COUNT_KEY });
+  }, [open, apiEnabled, queryClient]);
+
+  const handleRowClick = (item: MockNotificationItem) => {
+    if (!item.is_read) {
+      markOne.mutate(item.id);
+    }
+    const rawLink = item.link?.trim();
+    if (rawLink) {
+      const href = normalizeNotificationLinkForSpa(rawLink);
+      if (href.startsWith('http')) {
+        try {
+          const url = new URL(href);
+          if (typeof window !== 'undefined' && url.origin === window.location.origin) {
+            router.push(`${url.pathname}${url.search}${url.hash}`);
+          } else {
+            window.open(href, '_blank', 'noopener,noreferrer');
+          }
+        } catch {
+          window.open(href, '_blank', 'noopener,noreferrer');
+        }
+      } else {
+        router.push(href.startsWith('/') ? href : `/${href}`);
+      }
+    }
+    setOpen(false);
+  };
 
   // Badge text colour — white or dark depending on badge bg
   function autoText(hex: string) {
@@ -86,46 +125,84 @@ export default function NotificationsDropdown({
               </div>
               {unread > 0 && (
                 <button
-                  onClick={markAllRead}
-                  className="text-[11px] font-medium text-primary hover:underline"
+                  type="button"
+                  onClick={() => markAll.mutate()}
+                  disabled={markAll.isPending}
+                  className="text-[11px] font-medium text-primary hover:underline disabled:opacity-60"
                 >
-                  Mark all read
+                  {markAll.isPending ? 'Updating…' : 'Mark all read'}
                 </button>
               )}
             </div>
             <div className="max-h-72 overflow-y-auto">
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={cn(
-                    'flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 cursor-pointer transition-colors',
-                    !n.read ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-accent/50'
-                  )}
-                  onClick={() =>
-                    setNotifs((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))
-                  }
-                >
-                  <div className="mt-1.5 flex-shrink-0">
-                    {!n.read ? (
-                      <div className="w-2 h-2 rounded-full bg-primary" />
-                    ) : (
-                      <div className="w-2 h-2" />
+              {!apiEnabled && (
+                <p className="px-4 py-8 text-xs text-muted-foreground text-center">
+                  Enable live notifications in this environment to load your inbox.
+                </p>
+              )}
+              {apiEnabled && inboxQuery.isLoading && (
+                <p className="px-4 py-8 text-sm text-muted-foreground text-center">
+                  Loading notifications...
+                </p>
+              )}
+              {apiEnabled && inboxQuery.isError && (
+                <p className="px-4 py-8 text-sm text-destructive text-center">
+                  Could not load notifications.
+                </p>
+              )}
+              {apiEnabled && !inboxQuery.isLoading && !inboxQuery.isError && items.length === 0 && (
+                <p className="px-4 py-8 text-sm text-muted-foreground text-center">
+                  No notifications yet.
+                </p>
+              )}
+              {apiEnabled &&
+                !inboxQuery.isLoading &&
+                !inboxQuery.isError &&
+                items.map((n) => (
+                  <div
+                    key={n.id}
+                    role="button"
+                    tabIndex={0}
+                    className={cn(
+                      'flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 cursor-pointer transition-colors',
+                      !n.is_read ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-accent/50'
                     )}
+                    onClick={() => handleRowClick(n)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleRowClick(n);
+                      }
+                    }}
+                  >
+                    <div className="mt-1.5 flex-shrink-0">
+                      {!n.is_read ? (
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground leading-snug">
+                        {n.message?.trim() && n.message !== n.title
+                          ? `${n.title}: ${n.message}`
+                          : n.title}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {new Date(n.created_at).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground leading-snug">{n.text}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{n.time}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
             <div className="px-4 py-2.5 border-t border-border text-center">
-              <button
+              <Link
+                href="/secretary/settings?tab=notifications"
                 onClick={() => setOpen(false)}
-                className="text-[12px] font-medium text-primary hover:underline"
+                className="text-[12px] font-medium text-primary hover:underline inline-block"
               >
-                View all notifications
-              </button>
+                Notification preferences
+              </Link>
             </div>
           </div>
         </>
