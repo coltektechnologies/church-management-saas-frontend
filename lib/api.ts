@@ -703,10 +703,7 @@ export async function getTitheOfferingStats(
   const sp = new URLSearchParams();
   if (typeof arg === 'number') {
     sp.set('period_months', String(arg));
-  } else if (
-    arg.calendarYear !== null &&
-    arg.calendarYear !== undefined
-  ) {
+  } else if (arg.calendarYear !== null && arg.calendarYear !== undefined) {
     sp.set('calendar_year', String(arg.calendarYear));
   } else if (
     arg.yearlyFrom !== null &&
