@@ -17,7 +17,7 @@ interface Props {
 function EmptyState() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center text-center p-8 gap-3">
-      <div className="w-24 h-24 text-blue-200">
+      <div className="w-24 h-24 text-slate-200 dark:text-slate-600">
         <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="48" cy="34" r="18" stroke="currentColor" strokeWidth="3" />
           <path
@@ -31,13 +31,13 @@ function EmptyState() {
         </svg>
       </div>
       <p
-        className="text-lg font-semibold text-blue-300"
+        className="text-lg font-semibold text-slate-500 dark:text-slate-300"
         style={{ fontFamily: "'OV Soge', sans-serif" }}
       >
         Select a member to view
       </p>
       <p
-        className="text-lg font-semibold text-blue-300"
+        className="text-lg font-semibold text-slate-500 dark:text-slate-300"
         style={{ fontFamily: "'OV Soge', sans-serif" }}
       >
         contribution details
@@ -49,7 +49,7 @@ function EmptyState() {
 export default function MemberDetail({ member, onStatement, onReceipt }: Props) {
   if (!member) {
     return (
-      <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden">
+      <div className="flex-1 min-w-0 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-600 rounded-2xl flex flex-col overflow-hidden">
         <EmptyState />
       </div>
     );
@@ -60,27 +60,29 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
     displayName.startsWith('Member (') && member.memberId ? member.memberId : member.name;
 
   return (
-    <div className="flex-1 min-w-0 bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden">
+    <div className="flex-1 min-w-0 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-600 rounded-2xl flex flex-col overflow-hidden">
       <div className="flex flex-col flex-1 overflow-y-auto">
         {/* Member header */}
-        <div className="px-6 pt-6 pb-5 border-b border-gray-100">
+        <div className="px-6 pt-6 pb-5 border-b border-slate-100 dark:border-slate-700/80">
           <div className="flex items-center gap-4">
             <MemberAvatar name={avatarName} avatarUrl={member.avatarUrl} size={56} />
             <div className="min-w-0">
               <p
-                className="text-lg font-bold text-gray-900 truncate"
+                className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate"
                 style={{ fontFamily: "'OV Soge', sans-serif" }}
               >
                 {displayName}
               </p>
               <div className="flex items-center gap-4 mt-1 flex-wrap">
-                <span className="text-xs text-gray-400 flex items-center gap-1">
-                  <span className="text-gray-300">⊞</span> {member.memberId}
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <span className="text-slate-300 dark:text-slate-600">⊞</span> {member.memberId}
                 </span>
-                <span className="text-xs text-gray-400 flex items-center gap-1">
-                  <span className="text-gray-300">☎</span> {member.phone}
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                  <span className="text-slate-300 dark:text-slate-600">☎</span> {member.phone}
                 </span>
-                <span className="text-xs text-gray-400">Member since {member.memberSince}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Member since {member.memberSince}
+                </span>
               </div>
             </div>
           </div>
@@ -92,7 +94,7 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
         {/* Recent Transactions */}
         <div className="px-6 pb-6 flex-1">
           <h3
-            className="text-base font-bold text-gray-900 mb-4"
+            className="text-base font-bold text-slate-900 dark:text-slate-100 mb-4"
             style={{ fontFamily: "'OV Soge', sans-serif" }}
           >
             Recent Transactions
@@ -102,17 +104,17 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
       </div>
 
       {/* Action buttons */}
-      <div className="px-6 py-5 border-t border-gray-100 flex gap-4 flex-shrink-0">
+      <div className="px-6 py-5 border-t border-slate-100 dark:border-slate-700/80 flex gap-4 flex-shrink-0">
         <button
           onClick={() => onStatement(member)}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 active:scale-95 transition-all"
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-200 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-500 active:scale-95 transition-all"
         >
           <FileText size={16} />
           Statement
         </button>
         <button
           onClick={() => onReceipt(member)}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 active:scale-95 transition-all"
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border border-slate-200 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-500 active:scale-95 transition-all"
         >
           <Receipt size={16} />
           Receipt

@@ -9,7 +9,8 @@ import {
   CalendarDays,
   ChevronDown,
   Search,
-  PlusCircle,
+  Save,
+  Printer,
   Banknote,
   Smartphone,
   Building2,
@@ -566,8 +567,13 @@ function CancelConfirmDialog({
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
+export type RecordIncomeSaveOptions = {
+  /** When true, parent opens the receipt UI after a successful save (e.g. print dialog). */
+  showReceipt?: boolean;
+};
+
 export interface RecordIncomeFormProps {
-  onRecorded: (record: IncomeRecord) => void | Promise<void>;
+  onRecorded: (record: IncomeRecord, options?: RecordIncomeSaveOptions) => void | Promise<void>;
   onCancel: () => void;
   textColor?: string;
   accentColor?: string;
@@ -621,6 +627,7 @@ export default function RecordIncomeForm({
   const [otherDetail, setOtherDetail] = useState('');
 
   const [memberId, setMemberId] = useState('');
+  const [contributorName, setContributorName] = useState('');
   const [memberQuery, setMemberQuery] = useState('');
   const [memberOpen, setMemberOpen] = useState(false);
   const memberRef = useRef<HTMLDivElement>(null);
@@ -696,8 +703,8 @@ export default function RecordIncomeForm({
     if (otherLike && !otherDetail) {
       e.otherDetail = 'Please describe the income type';
     }
-    if (!memberId) {
-      e.member = 'Please select a member';
+    if (!memberId && !contributorName.trim()) {
+      e.member = 'Select a member from the list or enter a contributor name below';
     }
     if (!amount || Number(amount) <= 0) {
       e.amount = 'Enter a valid amount';
@@ -755,51 +762,56 @@ export default function RecordIncomeForm({
   };
 
   // ── Submit ─────────────────────────────────────────────────────────────
-  const handleSubmit = async () => {
+  const buildIncomeRecord = (): IncomeRecord => ({
+    id: crypto.randomUUID(),
+    date,
+    incomeType,
+    incomeTypeDetail: buildIncomeTypeDetail(),
+    memberId,
+    memberName: selectedMember?.name?.trim() || contributorName.trim() || '—',
+    amount: Number(amount),
+    currency,
+    paymentMethod,
+    paymentDetail: buildPaymentDetail(),
+    receiptNumber: receiptNumber.trim() || 'Pending',
+    notification,
+    recordedAt: nowString(),
+    recordedBy: actor,
+  });
+
+  const resetAfterSuccessfulSave = () => {
+    setIncomeType('');
+    setHarvestDetail('');
+    setPledgeOccasion('');
+    setOtherDetail('');
+    setMemberId('');
+    setContributorName('');
+    setMemberQuery('');
+    setAmount('');
+    setCurrency('GHS');
+    setPaymentMethod('cash');
+    setMomoNetwork('');
+    setMomoTxId('');
+    setMomoName('');
+    setBankTransferType('');
+    setCheckId('');
+    setBankName('');
+    setBankTxId('');
+    setNotification([]);
+    setErrors({});
+    setReceiptNumber('');
+  };
+
+  const handleSave = async (showReceiptAfterSave: boolean) => {
     if (!validate()) {
       return;
     }
-
-    const record: IncomeRecord = {
-      id: crypto.randomUUID(),
-      date,
-      incomeType,
-      incomeTypeDetail: buildIncomeTypeDetail(),
-      memberId,
-      memberName: selectedMember?.name ?? '—',
-      amount: Number(amount),
-      currency,
-      paymentMethod,
-      paymentDetail: buildPaymentDetail(),
-      receiptNumber: receiptNumber.trim() || 'Pending',
-      notification,
-      recordedAt: nowString(),
-      recordedBy: actor,
-    };
+    const record = buildIncomeRecord();
 
     setIsSubmitting(true);
     try {
-      await Promise.resolve(onRecorded(record));
-
-      setIncomeType('');
-      setHarvestDetail('');
-      setPledgeOccasion('');
-      setOtherDetail('');
-      setMemberId('');
-      setMemberQuery('');
-      setAmount('');
-      setCurrency('GHS');
-      setPaymentMethod('cash');
-      setMomoNetwork('');
-      setMomoTxId('');
-      setMomoName('');
-      setBankTransferType('');
-      setCheckId('');
-      setBankName('');
-      setBankTxId('');
-      setNotification([]);
-      setErrors({});
-      setReceiptNumber('');
+      await Promise.resolve(onRecorded(record, { showReceipt: showReceiptAfterSave }));
+      resetAfterSuccessfulSave();
     } finally {
       setIsSubmitting(false);
     }
@@ -809,6 +821,7 @@ export default function RecordIncomeForm({
     const isDirty =
       incomeType ||
       memberId ||
+      contributorName.trim() ||
       amount ||
       momoTxId ||
       momoName ||
@@ -829,6 +842,7 @@ export default function RecordIncomeForm({
   return (
     <>
       <div
+        id="treasury-record-income-form"
         style={{
           backgroundColor: cardBg,
           border: `1px solid ${borderColor}`,
@@ -1035,8 +1049,8 @@ export default function RecordIncomeForm({
             </div>
           )}
 
-          {/* ── Member ── */}
-          <Field label="Member" required textColor={textColor} error={errors.member}>
+          {/* ── Member / contributor ── */}
+          <Field label="Member" required={false} textColor={textColor} error={errors.member}>
             <div ref={memberRef} style={{ position: 'relative' }}>
               <div
                 style={{
@@ -1104,7 +1118,11 @@ export default function RecordIncomeForm({
                       setMemberQuery(e.target.value);
                       setMemberOpen(true);
                     }}
-                    placeholder="Search or select member"
+                    placeholder={
+                      memberList.length === 0
+                        ? 'No directory members — use contributor name below'
+                        : 'Search or select member'
+                    }
                     style={{
                       flex: 1,
                       backgroundColor: 'transparent',
@@ -1169,6 +1187,7 @@ export default function RecordIncomeForm({
                         type="button"
                         onClick={() => {
                           setMemberId(m.id);
+                          setContributorName('');
                           setMemberQuery('');
                           setMemberOpen(false);
                           setErrors((p) => ({ ...p, member: '' }));
@@ -1227,6 +1246,35 @@ export default function RecordIncomeForm({
                 </div>
               )}
             </div>
+          </Field>
+
+          <Field
+            label="Contributor name"
+            required={false}
+            textColor={textColor}
+            error={errors.member}
+          >
+            <TextInput
+              value={contributorName}
+              onChange={(v) => {
+                setContributorName(v);
+                setErrors((p) => ({ ...p, member: '' }));
+              }}
+              placeholder="Use when the payer is not in the list (visitor, guest, external donor)"
+              {...dp}
+              error={!!errors.member && !memberId}
+            />
+            <p
+              style={{
+                margin: '8px 0 0',
+                fontSize: '11px',
+                color: `${textColor}55`,
+                fontFamily: "'OV Soge', sans-serif",
+              }}
+            >
+              Required only if no member is selected. If you pick a member, this name is ignored for
+              the receipt.
+            </p>
           </Field>
 
           {/* ── Amount + Currency — LIVE from dropdownOptions ── */}
@@ -1476,6 +1524,7 @@ export default function RecordIncomeForm({
           <div
             style={{
               display: 'flex',
+              flexWrap: 'wrap',
               gap: '12px',
               paddingTop: '16px',
               borderTop: `1px solid ${borderColor}`,
@@ -1504,9 +1553,39 @@ export default function RecordIncomeForm({
             <button
               type="button"
               disabled={disabled || isSubmitting}
-              onClick={() => void handleSubmit()}
+              title="Save to the server without opening the receipt"
+              onClick={() => void handleSave(false)}
               style={{
-                flex: 1,
+                flex: '1 1 140px',
+                minWidth: '120px',
+                height: '48px',
+                borderRadius: '10px',
+                fontFamily: "'OV Soge', sans-serif",
+                fontWeight: 700,
+                fontSize: '13px',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+                color: textColor,
+                border: `1px solid ${borderColor}`,
+                cursor: disabled || isSubmitting ? 'not-allowed' : 'pointer',
+                opacity: disabled || isSubmitting ? 0.65 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                letterSpacing: '0.01em',
+              }}
+            >
+              <Save size={16} strokeWidth={2.25} />
+              {isSubmitting ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              type="button"
+              disabled={disabled || isSubmitting}
+              title="Save and open the receipt for printing"
+              onClick={() => void handleSave(true)}
+              style={{
+                flex: '1 1 160px',
+                minWidth: '140px',
                 height: '48px',
                 borderRadius: '10px',
                 fontFamily: "'OV Soge', sans-serif",
@@ -1524,7 +1603,8 @@ export default function RecordIncomeForm({
                 letterSpacing: '0.01em',
               }}
             >
-              <PlusCircle size={16} /> {isSubmitting ? 'Saving…' : 'Record & Print Receipt'}
+              <Printer size={16} strokeWidth={2.25} />
+              {isSubmitting ? 'Saving…' : 'Print receipt'}
             </button>
           </div>
         </div>

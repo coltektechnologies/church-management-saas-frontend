@@ -639,8 +639,22 @@ const emptyMemberStats: MemberStats = {
 };
 
 /** Get member statistics for the current church. */
+export type TitheOfferingStatsRequest =
+  | number
+  | {
+      periodMonths?: number;
+      calendarYear?: number;
+      yearlyFrom?: number;
+      yearlyTo?: number;
+    };
+
 export interface TitheOfferingStats {
+  view?: string;
+  calendar_year?: number;
+  yearly_from?: number;
+  yearly_to?: number;
   monthly_trend: { month: string; tithe: number; offering: number }[];
+  yearly_trend: { year: string; tithe: number; offering: number }[];
   this_month: {
     tithe_total: string;
     offering_total: string;
@@ -649,62 +663,85 @@ export interface TitheOfferingStats {
   };
 }
 
+function emptyTitheOfferingStats(): TitheOfferingStats {
+  const w = [
+    { name: 'W1', value: 0 },
+    { name: 'W2', value: 0 },
+    { name: 'W3', value: 0 },
+    { name: 'W4', value: 0 },
+  ];
+  return {
+    monthly_trend: [],
+    yearly_trend: [],
+    this_month: {
+      tithe_total: '0',
+      offering_total: '0',
+      tithe_by_week: w,
+      offering_by_week: w,
+    },
+  };
+}
+
+function num(v: unknown): number {
+  if (v === null || v === undefined) {
+    return 0;
+  }
+  const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /** Get tithe and offering statistics for the current church. */
-export async function getTitheOfferingStats(periodMonths = 9): Promise<TitheOfferingStats> {
+export async function getTitheOfferingStats(
+  arg: TitheOfferingStatsRequest = 9
+): Promise<TitheOfferingStats> {
   const base = getApiBaseUrl();
   const token = getAccessToken();
   if (!token) {
-    return {
-      monthly_trend: [],
-      this_month: {
-        tithe_total: '0',
-        offering_total: '0',
-        tithe_by_week: [
-          { name: 'W1', value: 0 },
-          { name: 'W2', value: 0 },
-          { name: 'W3', value: 0 },
-          { name: 'W4', value: 0 },
-        ],
-        offering_by_week: [
-          { name: 'W1', value: 0 },
-          { name: 'W2', value: 0 },
-          { name: 'W3', value: 0 },
-          { name: 'W4', value: 0 },
-        ],
-      },
-    };
+    return emptyTitheOfferingStats();
+  }
+
+  const sp = new URLSearchParams();
+  if (typeof arg === 'number') {
+    sp.set('period_months', String(arg));
+  } else if (
+    arg.calendarYear !== null &&
+    arg.calendarYear !== undefined
+  ) {
+    sp.set('calendar_year', String(arg.calendarYear));
+  } else if (
+    arg.yearlyFrom !== null &&
+    arg.yearlyFrom !== undefined &&
+    arg.yearlyTo !== null &&
+    arg.yearlyTo !== undefined
+  ) {
+    sp.set('year_from', String(arg.yearlyFrom));
+    sp.set('year_to', String(arg.yearlyTo));
+  } else {
+    sp.set('period_months', String(arg.periodMonths ?? 9));
   }
 
   try {
-    const res = await fetch(
-      `${base}/analytics/finance/tithe-offerings/?period_months=${periodMonths}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const res = await fetch(`${base}/analytics/finance/tithe-offerings/?${sp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
     if (!res.ok) {
-      return {
-        monthly_trend: [],
-        this_month: {
-          tithe_total: '0',
-          offering_total: '0',
-          tithe_by_week: [
-            { name: 'W1', value: 0 },
-            { name: 'W2', value: 0 },
-            { name: 'W3', value: 0 },
-            { name: 'W4', value: 0 },
-          ],
-          offering_by_week: [
-            { name: 'W1', value: 0 },
-            { name: 'W2', value: 0 },
-            { name: 'W3', value: 0 },
-            { name: 'W4', value: 0 },
-          ],
-        },
-      };
+      return emptyTitheOfferingStats();
     }
 
     const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-    const trend = (data.monthly_trend as TitheOfferingStats['monthly_trend']) ?? [];
+    const trendRaw = (data.monthly_trend as Record<string, unknown>[]) ?? [];
+    const trend = trendRaw.map((r) => ({
+      month: String(r.month ?? ''),
+      tithe: num(r.tithe),
+      offering: num(r.offering),
+    }));
+    const yearlyRaw = (data.yearly_trend as Record<string, unknown>[]) ?? [];
+    const yearly = yearlyRaw.map((r) => ({
+      year: String(r.year ?? ''),
+      tithe: num(r.tithe),
+      offering: num(r.offering),
+    }));
     const tm = (data.this_month as TitheOfferingStats['this_month']) ?? {
       tithe_total: '0',
       offering_total: '0',
@@ -712,7 +749,12 @@ export async function getTitheOfferingStats(periodMonths = 9): Promise<TitheOffe
       offering_by_week: [],
     };
     return {
+      view: typeof data.view === 'string' ? data.view : undefined,
+      calendar_year: typeof data.calendar_year === 'number' ? data.calendar_year : undefined,
+      yearly_from: typeof data.yearly_from === 'number' ? data.yearly_from : undefined,
+      yearly_to: typeof data.yearly_to === 'number' ? data.yearly_to : undefined,
       monthly_trend: trend,
+      yearly_trend: yearly,
       this_month: {
         tithe_total: String(tm.tithe_total ?? '0'),
         offering_total: String(tm.offering_total ?? '0'),
@@ -721,25 +763,7 @@ export async function getTitheOfferingStats(periodMonths = 9): Promise<TitheOffe
       },
     };
   } catch {
-    return {
-      monthly_trend: [],
-      this_month: {
-        tithe_total: '0',
-        offering_total: '0',
-        tithe_by_week: [
-          { name: 'W1', value: 0 },
-          { name: 'W2', value: 0 },
-          { name: 'W3', value: 0 },
-          { name: 'W4', value: 0 },
-        ],
-        offering_by_week: [
-          { name: 'W1', value: 0 },
-          { name: 'W2', value: 0 },
-          { name: 'W3', value: 0 },
-          { name: 'W4', value: 0 },
-        ],
-      },
-    };
+    return emptyTitheOfferingStats();
   }
 }
 

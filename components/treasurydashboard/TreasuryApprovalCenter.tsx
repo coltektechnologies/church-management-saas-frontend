@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * Treasury portal approval hub — same queues as admin ({@link ApprovalCenter} variant admin):
- * announcements, program proposals, and expense requests (all workflow stages).
- * Maps treasury theme colors onto ApprovalCenter CSS variables.
+ * Treasury portal approval hub — {@link ApprovalCenter} variant `treasury`:
+ * only expense requests awaiting treasurer (after first elder) and programs awaiting treasury
+ * (after secretariat). Maps treasury theme colors onto ApprovalCenter CSS variables.
  */
 
 import { useMemo, type CSSProperties } from 'react';

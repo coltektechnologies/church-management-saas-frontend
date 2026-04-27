@@ -437,7 +437,12 @@ const PENDING_STATUSES = new Set([
 ]);
 
 export async function fetchPendingExpenseRequests(): Promise<ExpenseRequest[]> {
-  const items = await treasuryApi.getExpenseRequests({ page_size: 100 });
+  let items: Awaited<ReturnType<typeof treasuryApi.getExpenseRequests>>;
+  try {
+    items = await treasuryApi.getExpenseRequests({ page_size: 100 });
+  } catch {
+    return [];
+  }
   return items
     .filter((r) => PENDING_STATUSES.has(r.status))
     .map((r) => ({

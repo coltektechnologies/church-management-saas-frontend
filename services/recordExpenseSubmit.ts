@@ -1,3 +1,4 @@
+import { amountToCurrencyWords } from '@/lib/amountInWords';
 import { createExpenseTransaction } from '@/lib/treasuryApi';
 
 export interface RecordExpenseFormShape {
@@ -10,8 +11,6 @@ export interface RecordExpenseFormShape {
   paymentMethod: string;
   paidTo: string;
   phoneNumber?: string;
-  idNumber?: string;
-  vendorRegistration?: string;
   chequeNumber?: string;
   transactionRef?: string;
   bankName?: string;
@@ -35,9 +34,6 @@ export function mapExpensePaymentMethod(ui: string): string {
 
 function buildNotes(data: RecordExpenseFormShape): string {
   const parts: string[] = [];
-  if (data.vendorRegistration?.trim()) {
-    parts.push(`Vendor reg: ${data.vendorRegistration.trim()}`);
-  }
   if (data.currency && data.currency !== 'GHS') {
     parts.push(`Currency: ${data.currency}`);
   }
@@ -56,20 +52,21 @@ export function mapRecordExpenseToApiPayload(
   const bank_name = payment_method === 'BANK_TRANSFER' ? (data.bankName ?? '').trim() || '' : '';
 
   const notes = buildNotes(data);
+  const amountInWords = amountToCurrencyWords(data.amount, data.currency);
 
   const payload: Record<string, unknown> = {
     transaction_date: data.date,
     category_id: data.expenseType,
     department_id: data.department,
     amount: Number(data.amount).toFixed(2),
-    amount_in_words: '',
+    amount_in_words: amountInWords,
     payment_method,
     cheque_number,
     transaction_reference,
     bank_name,
     paid_to: data.paidTo.trim(),
     recipient_phone: (data.phoneNumber ?? '').trim(),
-    recipient_id: (data.idNumber ?? '').trim(),
+    recipient_id: '',
     description: data.description.trim(),
     notes: notes || '',
   };

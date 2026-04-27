@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback, startTransition, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings2, History } from 'lucide-react';
+import { Settings2, History, PlusCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -87,12 +87,16 @@ export default function RecordIncomePage() {
 
   const pickerMembers = useMemo(() => toMemberRows(backendMembers), [backendMembers]);
 
-  const formDisabled =
-    catLoading ||
-    memLoading ||
-    catError ||
-    incomeCategoryOptions.length === 0 ||
-    pickerMembers.length === 0;
+  const formDisabled = catLoading || memLoading || catError || incomeCategoryOptions.length === 0;
+
+  const scrollToIncomeForm = useCallback(() => {
+    document.getElementById('treasury-record-income-form')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, []);
+
+  const layoutMax = '1280px';
 
   // ── Theme ─────────────────────────────────────────────────────────────
   const isDark = profile.darkMode ?? false;
@@ -155,10 +159,12 @@ export default function RecordIncomePage() {
   const isMultiCurrency = [...new Set(entryLog.map((r) => r.currency))].length > 1;
 
   // ── Handlers ───────────────────────────────────────────────────────────
-  const handleRecorded = async (draft: IncomeRecord) => {
+  const handleRecorded = async (draft: IncomeRecord, options?: { showReceipt?: boolean }) => {
     try {
       const created = await submitTreasuryIncomeRecord(draft);
       const record = { ...draft, id: created.id, receiptNumber: created.receipt_number };
+
+      const openReceipt = options?.showReceipt === true;
 
       startTransition(() => {
         setEntryLog((prev) => {
@@ -167,7 +173,9 @@ export default function RecordIncomePage() {
           return next;
         });
         setLastRecord(record);
-        setShowReceipt(true);
+        if (openReceipt) {
+          setShowReceipt(true);
+        }
       });
 
       const incomeTypeName =
@@ -266,61 +274,97 @@ export default function RecordIncomePage() {
       >
         <div
           style={{
-            maxWidth: '800px',
+            maxWidth: layoutMax,
             margin: '0 auto',
             padding: '0 clamp(16px,4vw,32px)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             height: '52px',
-            gap: '8px',
+            gap: '12px',
+            flexWrap: 'wrap',
           }}
         >
           <button
             type="button"
-            style={navBtn}
-            onClick={() => setShowDropdownPanel(true)}
-            onMouseEnter={(e) => {
-              const b = e.currentTarget;
-              b.style.backgroundColor = `${accentColor}10`;
-              b.style.borderColor = accentColor;
-              b.style.color = accentColor;
-            }}
-            onMouseLeave={(e) => {
-              const b = e.currentTarget;
-              b.style.backgroundColor = 'transparent';
-              b.style.borderColor = borderColor;
-              b.style.color = textColor;
-            }}
-          >
-            <Settings2 size={13} /> Manage Dropdowns
-          </button>
-          <button
-            type="button"
-            style={navBtn}
-            onClick={() => setShowActivityPanel(true)}
-            onMouseEnter={(e) => {
-              const b = e.currentTarget;
-              b.style.backgroundColor = `${accentColor}10`;
-              b.style.borderColor = accentColor;
-              b.style.color = accentColor;
-            }}
-            onMouseLeave={(e) => {
-              const b = e.currentTarget;
-              b.style.backgroundColor = 'transparent';
-              b.style.borderColor = borderColor;
-              b.style.color = textColor;
+            title={
+              formDisabled
+                ? catLoading || memLoading
+                  ? 'Loading categories and members…'
+                  : catError
+                    ? 'Fix category load error before recording'
+                    : 'Add income categories first'
+                : 'Scroll to the form, then use Save or Print receipt'
+            }
+            disabled={formDisabled}
+            onClick={() => scrollToIncomeForm()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontFamily: "'OV Soge', sans-serif",
+              fontWeight: 700,
+              fontSize: '12px',
+              cursor: formDisabled ? 'not-allowed' : 'pointer',
+              border: 'none',
+              backgroundColor: formDisabled ? `${textColor}22` : accentColor,
+              color: formDisabled ? `${textColor}99` : '#FFFFFF',
+              opacity: formDisabled ? 0.75 : 1,
+              whiteSpace: 'nowrap',
             }}
           >
-            <History size={13} /> Activity
+            <PlusCircle size={15} strokeWidth={2.25} />
+            Record income
           </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+            <button
+              type="button"
+              style={navBtn}
+              onClick={() => setShowDropdownPanel(true)}
+              onMouseEnter={(e) => {
+                const b = e.currentTarget;
+                b.style.backgroundColor = `${accentColor}10`;
+                b.style.borderColor = accentColor;
+                b.style.color = accentColor;
+              }}
+              onMouseLeave={(e) => {
+                const b = e.currentTarget;
+                b.style.backgroundColor = 'transparent';
+                b.style.borderColor = borderColor;
+                b.style.color = textColor;
+              }}
+            >
+              <Settings2 size={13} /> Manage Dropdowns
+            </button>
+            <button
+              type="button"
+              style={navBtn}
+              onClick={() => setShowActivityPanel(true)}
+              onMouseEnter={(e) => {
+                const b = e.currentTarget;
+                b.style.backgroundColor = `${accentColor}10`;
+                b.style.borderColor = accentColor;
+                b.style.color = accentColor;
+              }}
+              onMouseLeave={(e) => {
+                const b = e.currentTarget;
+                b.style.backgroundColor = 'transparent';
+                b.style.borderColor = borderColor;
+                b.style.color = textColor;
+              }}
+            >
+              <History size={13} /> Activity
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ════════ Main content column ════════ */}
+      {/* ════════ Main: form (left) + entry log (right) ════════ */}
       <div
         style={{
-          maxWidth: '800px',
+          maxWidth: layoutMax,
           margin: '0 auto',
           padding: 'clamp(28px,4vw,44px) clamp(16px,4vw,32px)',
           display: 'flex',
@@ -355,8 +399,10 @@ export default function RecordIncomePage() {
               fontSize: '12px',
             }}
           >
-            No income categories are available. Add categories in treasury settings or ask an
-            administrator.
+            No <strong style={{ color: textColor }}>active</strong> income categories for this
+            church. Refresh once: the backend now creates standard types (Tithe, Offering, …) when
+            none exist. If this message remains, every category may be disabled—an administrator
+            should re-enable or add them (Django admin: Income categories).
           </div>
         )}
 
@@ -371,58 +417,111 @@ export default function RecordIncomePage() {
               fontSize: '12px',
             }}
           >
-            No members found in your directory. Add members before recording income.
+            No members were returned from the directory (or the list is empty). You can still record
+            income: use <strong style={{ color: textColor }}>Contributor name</strong> in the form
+            below when no member is selected.
           </div>
         )}
 
-        {/* Income entry form */}
-        <RecordIncomeForm
-          onRecorded={handleRecorded}
-          onCancel={() => router.push('/treasury/approvals')}
-          actor={actor}
-          incomeCategoryOptions={
-            incomeCategoryOptions.length > 0 ? incomeCategoryOptions : undefined
-          }
-          members={pickerMembers}
-          disabled={formDisabled}
-          {...themeProps}
-        />
+        <div
+          className="record-income-two-col"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.08fr) minmax(300px, 0.92fr)',
+            gap: '24px',
+            alignItems: 'start',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <RecordIncomeForm
+              onRecorded={handleRecorded}
+              onCancel={() => router.push('/treasury/approvals')}
+              actor={actor}
+              incomeCategoryOptions={
+                incomeCategoryOptions.length > 0 ? incomeCategoryOptions : undefined
+              }
+              members={pickerMembers}
+              disabled={formDisabled}
+              {...themeProps}
+            />
+          </div>
 
-        {entryLog.length > 0 ? (
-          <IncomeEntryLog
-            records={entryLog}
-            incomeTypeOptionsOverride={
-              incomeCategoryOptions.length > 0 ? incomeCategoryOptions : undefined
-            }
-            onUpdateRecord={handleUpdateRecord}
-            actor={actor}
-            isMultiCurrency={isMultiCurrency}
-            onShowConverter={() => setShowConverter(true)}
-            {...themeProps}
-          />
-        ) : (
           <div
+            className="record-income-log-aside"
             style={{
-              textAlign: 'center',
-              padding: '36px 24px',
-              borderRadius: '12px',
-              border: `1px dashed ${borderColor}`,
-              backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(11,42,74,0.03)',
+              position: 'sticky',
+              top: '64px',
+              alignSelf: 'start',
+              minWidth: 0,
+              width: '100%',
+              maxHeight: 'calc(100vh - 80px)',
+              overflowY: 'auto',
             }}
           >
-            <p
-              style={{
-                fontFamily: "'OV Soge',sans-serif",
-                fontSize: '13px',
-                color: `${textColor}45`,
-                margin: 0,
-              }}
-            >
-              No records yet — submit your first income entry above
-            </p>
+            {entryLog.length > 0 ? (
+              <IncomeEntryLog
+                records={entryLog}
+                incomeTypeOptionsOverride={
+                  incomeCategoryOptions.length > 0 ? incomeCategoryOptions : undefined
+                }
+                onUpdateRecord={handleUpdateRecord}
+                actor={actor}
+                isMultiCurrency={isMultiCurrency}
+                onShowConverter={() => setShowConverter(true)}
+                {...themeProps}
+              />
+            ) : (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '36px 24px',
+                  borderRadius: '12px',
+                  border: `1px dashed ${borderColor}`,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(11,42,74,0.03)',
+                }}
+              >
+                <h3
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: 600,
+                    fontSize: '15px',
+                    color: textColor,
+                    margin: '0 0 8px',
+                  }}
+                >
+                  Income Entry Log
+                </h3>
+                <p
+                  style={{
+                    fontFamily: "'OV Soge',sans-serif",
+                    fontSize: '13px',
+                    color: `${textColor}55`,
+                    margin: 0,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  No records yet — use <strong style={{ color: textColor }}>Save</strong> or{' '}
+                  <strong style={{ color: textColor }}>Print receipt</strong> on the left to add
+                  your first entry.
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
+
+      <style>{`
+        @media (max-width: 1024px) {
+          .record-income-two-col {
+            grid-template-columns: 1fr !important;
+          }
+          .record-income-log-aside {
+            position: static !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+          }
+        }
+      `}</style>
 
       {/* ════════ Slide-over panels ════════ */}
       <SlideOverPanel

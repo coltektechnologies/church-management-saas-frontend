@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { getStoredUser } from '@/lib/settingsApi';
 import {
+  canAccessDepartmentPortalViaApi,
   defaultHomePathForUser,
   userHasDepartmentPortalAccess,
   type PostLoginUser,
@@ -30,12 +31,32 @@ export function RequireDepartmentPortal({ children }: { children: React.ReactNod
 
   useEffect(() => {
     const user = storedUserToPostLogin(getStoredUser());
-    if (!userHasDepartmentPortalAccess(user)) {
-      router.replace(defaultHomePathForUser(user));
-      return;
+    let cancelled = false;
+
+    if (userHasDepartmentPortalAccess(user)) {
+      const id = requestAnimationFrame(() => setAllowed(true));
+      return () => cancelAnimationFrame(id);
     }
-    const id = requestAnimationFrame(() => setAllowed(true));
-    return () => cancelAnimationFrame(id);
+
+    (async () => {
+      try {
+        if (await canAccessDepartmentPortalViaApi()) {
+          if (!cancelled) {
+            setAllowed(true);
+          }
+          return;
+        }
+      } catch {
+        /* fall through */
+      }
+      if (!cancelled) {
+        router.replace(defaultHomePathForUser(user));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   if (!allowed) {

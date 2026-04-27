@@ -49,9 +49,12 @@ export default function MemberList({
     <div className="flex flex-col gap-4 h-full">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Users size={20} className="text-teal-600 flex-shrink-0" />
+        <Users
+          size={20}
+          className="text-teal-600 dark:text-[var(--secretary-accent,#2FC4B2)] flex-shrink-0"
+        />
         <h2
-          className="text-base font-bold text-gray-900"
+          className="text-base font-bold text-slate-900 dark:text-slate-100"
           style={{ fontFamily: "'OV Soge', sans-serif" }}
         >
           Member Contributions
@@ -62,7 +65,7 @@ export default function MemberList({
       <div className="relative">
         <Search
           size={15}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
         />
         <input
           type="text"
@@ -70,12 +73,12 @@ export default function MemberList({
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
           disabled={isLoading}
-          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none bg-white transition disabled:opacity-60"
+          className="w-full pl-9 pr-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-teal-500/30 dark:focus:ring-[var(--secretary-accent,#2FC4B2)]/30 focus:border-teal-500 dark:focus:border-slate-500 outline-none bg-white dark:bg-slate-800/90 transition disabled:opacity-60"
         />
       </div>
 
       {loadError ? (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+        <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-100 dark:border-red-900/60 rounded-xl px-3 py-2">
           {loadError}
         </p>
       ) : null}
@@ -87,14 +90,14 @@ export default function MemberList({
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="h-[72px] rounded-2xl bg-gray-100 animate-pulse border border-gray-200/80"
+                className="h-[72px] rounded-2xl bg-slate-100 dark:bg-slate-800/80 animate-pulse border border-slate-200/80 dark:border-slate-600/80"
               />
             ))}
           </div>
         ) : paginated.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Users size={32} className="text-gray-200 mb-3" />
-            <p className="text-sm text-gray-400">
+            <Users size={32} className="text-slate-200 dark:text-slate-600 mb-3" />
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {members.length === 0 ? 'No members loaded.' : 'No matches — try another search.'}
             </p>
           </div>
@@ -116,17 +119,17 @@ export default function MemberList({
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             <ChevronLeft size={15} />
           </button>
-          <span className="text-sm text-gray-600 font-medium tabular-nums">
+          <span className="text-sm text-slate-600 dark:text-slate-300 font-medium tabular-nums">
             {currentCount} / {filtered.length}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             <ChevronRight size={15} />
           </button>

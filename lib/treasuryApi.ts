@@ -10,6 +10,8 @@
 
 import type { Expense } from '@/types/expense';
 
+import { messageFromApiErrorJson } from '@/lib/apiMessages';
+
 import { getApiBaseUrl, getAccessToken } from './api';
 
 function getAuthHeaders(): Record<string, string> {
@@ -31,11 +33,7 @@ async function fetchAuth<T>(url: string, init?: RequestInit): Promise<T> {
   });
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
-    const msg =
-      (typeof data?.detail === 'string' ? data.detail : null) ||
-      (data?.error as string) ||
-      `Request failed: ${res.status}`;
-    throw new Error(msg);
+    throw new Error(messageFromApiErrorJson(data, `Request failed: ${res.status}`));
   }
   return data as T;
 }
@@ -121,6 +119,15 @@ export interface FinanceTrendsResponse {
   generated_at?: string;
 }
 
+/** One Church / Conference line from the treasury income allocation engine. */
+export interface IncomeAllocationRow {
+  id?: string;
+  destination: 'CHURCH' | 'CONFERENCE' | string;
+  destination_display?: string;
+  amount: string;
+  percentage: string;
+}
+
 export interface IncomeTransactionItem {
   id: string;
   receipt_number?: string;
@@ -129,6 +136,8 @@ export interface IncomeTransactionItem {
   amount: string;
   contributor_display?: string;
   payment_method_display?: string;
+  /** Present on list/detail from the API; drives Church–Conference demarcation. */
+  allocations?: IncomeAllocationRow[];
   [key: string]: unknown;
 }
 
@@ -144,6 +153,31 @@ export interface ExpenseTransactionItem {
   [key: string]: unknown;
 }
 
+/** Next actor in the expense approval workflow (from API `pending_step`). */
+export interface ExpensePendingStep {
+  code: string;
+  label: string;
+}
+
+/** One step in the expense approval chain (from API `approval_chain`). */
+export interface ExpenseApprovalStage {
+  approved: boolean;
+  approved_by: string | null;
+  approved_at: string | null;
+}
+
+export interface ExpenseApprovalChain {
+  dept_head: ExpenseApprovalStage;
+  first_elder: ExpenseApprovalStage;
+  treasurer: ExpenseApprovalStage;
+}
+
+export interface ExpenseReviewPermissions {
+  dept_head: boolean;
+  first_elder: boolean;
+  treasurer: boolean;
+}
+
 export interface ExpenseRequestItem {
   id: string;
   request_number: string;
@@ -152,10 +186,14 @@ export interface ExpenseRequestItem {
   amount_requested: string;
   amount_approved?: string;
   status: string;
+  status_display?: string;
   requested_by_name?: string;
   required_by_date?: string;
   purpose?: string;
   created_at?: string;
+  pending_step?: ExpensePendingStep | null;
+  approval_chain?: ExpenseApprovalChain | null;
+  review_permissions?: ExpenseReviewPermissions | null;
   [key: string]: unknown;
 }
 
@@ -352,10 +390,11 @@ export async function getExpenseRequestStrict(id: string): Promise<ExpenseReques
   });
 }
 
-/** GET /api/treasury/expense-requests/?status=&department_id= */
+/** GET /api/treasury/expense-requests/?status=&department_id=&church_id= */
 export async function getExpenseRequests(params?: {
   status?: string;
   department_id?: string;
+  church_id?: string;
   page_size?: number;
 }): Promise<ExpenseRequestItem[]> {
   const base = getApiBaseUrl();
@@ -367,12 +406,14 @@ export async function getExpenseRequests(params?: {
   if (params?.department_id) {
     sp.set('department_id', params.department_id);
   }
-  const raw = await fetchAuthSafe<{ results?: ExpenseRequestItem[] } | ExpenseRequestItem[]>(
+  if (params?.church_id) {
+    sp.set('church_id', params.church_id);
+  }
+  const raw = await fetchAuth<{ results?: ExpenseRequestItem[] } | ExpenseRequestItem[]>(
     `${base}/treasury/expense-requests/?${sp}`,
-    undefined,
-    []
+    { method: 'GET' }
   );
-  return normalizeListResponse<ExpenseRequestItem>(raw ?? []);
+  return normalizeListResponse<ExpenseRequestItem>(raw);
 }
 
 /** POST /api/treasury/expense-requests/ — create (usually status DRAFT, then call submit) */

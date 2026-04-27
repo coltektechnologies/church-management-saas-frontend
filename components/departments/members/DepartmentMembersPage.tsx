@@ -93,17 +93,34 @@ export default function DepartmentMembersPage() {
     setListError(null);
     setListLoading(true);
     try {
-      const [apiMembers, assignments] = await Promise.all([
-        fetchDepartmentMembers(departmentId),
-        fetchMemberDepartments(),
-      ]);
+      const apiMembers = await fetchDepartmentMembers(departmentId);
+
+      let assignments: Awaited<ReturnType<typeof fetchMemberDepartments>> = [];
+      try {
+        assignments = await fetchMemberDepartments();
+      } catch (assignErr) {
+        console.warn('[DepartmentMembersPage] fetchMemberDepartments failed', assignErr);
+        toast.warning(
+          'Could not load department roles from the server. Showing members without assignment details; try again when the API is stable.',
+          { duration: 7000 }
+        );
+      }
+
       const byMember = indexAssignmentsByMember(assignments, departmentId);
       const mapped = apiMembers.map((r) =>
         mapDepartmentMemberApiRow(r, byMember.get(String(r.id)))
       );
       setRemoteMembers(mapped);
     } catch (e) {
-      setListError(e instanceof Error ? e.message : 'Failed to load members');
+      const raw = e instanceof Error ? e.message : 'Failed to load members';
+      const looksLikeNetwork =
+        /networkerror|failed to fetch|load failed|fetch/i.test(raw) ||
+        raw === 'NetworkError when attempting to fetch resource.';
+      setListError(
+        looksLikeNetwork
+          ? `${raw} Ensure the backend is running and the database is reachable (for example local Postgres or a resolvable DATABASE_URL).`
+          : raw
+      );
       setRemoteMembers([]);
     } finally {
       setListLoading(false);

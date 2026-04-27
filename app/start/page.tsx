@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { performLogout } from '@/lib/churchSessionBrowser';
 import {
   canAccessAdminShell,
+  canAccessDepartmentPortalViaApi,
   defaultHomePathForUser,
   START_HUB_PATH,
   type PostLoginUser,
@@ -33,6 +34,7 @@ function readUser(): PostLoginUser | null {
 function StartPageInner() {
   const router = useRouter();
   const [user] = useState<PostLoginUser | null>(() => readUser());
+  const [departmentProbeDone, setDepartmentProbeDone] = useState(false);
 
   const home = useMemo(() => defaultHomePathForUser(user), [user]);
   const showAdmin = canAccessAdminShell(user);
@@ -44,13 +46,40 @@ function StartPageInner() {
     }
     if (home !== START_HUB_PATH) {
       router.replace(home);
+      return;
     }
+    let cancelled = false;
+    (async () => {
+      try {
+        if (await canAccessDepartmentPortalViaApi()) {
+          if (!cancelled) {
+            router.replace('/departments');
+          }
+          return;
+        }
+      } finally {
+        if (!cancelled) {
+          setDepartmentProbeDone(true);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user, home, router]);
 
   if (home !== START_HUB_PATH) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600 text-sm">
         Taking you to your workspace…
+      </div>
+    );
+  }
+
+  if (!departmentProbeDone) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600 text-sm">
+        Checking department portal access…
       </div>
     );
   }
@@ -78,9 +107,10 @@ function StartPageInner() {
               </>
             ) : (
               <>
-                No dedicated portal is linked to this login yet (for example secretary, treasury, or
-                department head). Ask your church administrator to assign the right role if you need
-                access.
+                No dedicated portal is linked to this login yet (for example secretary, treasury,
+                department head, or elder in charge). If you should manage a department, ask your
+                administrator to link your member profile to this account and assign head or elder
+                in charge.
               </>
             )}
           </p>

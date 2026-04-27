@@ -36,7 +36,11 @@ function TransactionIcon({ type }: { type: ContributionType }) {
 
 export default function TransactionList({ transactions }: Props) {
   if (transactions.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-8">No transactions yet</p>;
+    return (
+      <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+        No transactions yet
+      </p>
+    );
   }
 
   return (
@@ -45,12 +49,12 @@ export default function TransactionList({ transactions }: Props) {
         <div key={tx.id} className="flex items-center gap-4">
           <TransactionIcon type={tx.type} />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900">{tx.type}</p>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{tx.type}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {tx.date} · {tx.receiptNumber}
             </p>
           </div>
-          <p className="text-sm font-bold text-green-600 flex-shrink-0">
+          <p className="text-sm font-bold text-green-600 dark:text-emerald-400 flex-shrink-0">
             GHS{tx.amount.toLocaleString()}
           </p>
         </div>

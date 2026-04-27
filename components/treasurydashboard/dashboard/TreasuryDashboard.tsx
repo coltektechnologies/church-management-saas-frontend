@@ -250,7 +250,7 @@ export default function TreasuryDashboard() {
 
         {/* Row 1: Monthly trend (API) + This month snapshot from income breakdown */}
         <div className="td-row td-row-top">
-          <TreasuryMonthlyTrendApi data={monthlyTrend} isLoading={loadingTrend} />
+          <TreasuryMonthlyTrendApi />
           <ThisMonthCard
             incomeBreakdown={incomeBreakdown}
             monthlyTrend={monthlyTrend}

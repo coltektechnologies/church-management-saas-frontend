@@ -61,14 +61,26 @@ function autoText(hex: string): string {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179 ? '#0B2A4A' : '#FFFFFF';
 }
 
-const TYPE_BADGES: Record<string, { bg: string; text: string }> = {
-  tithe: { bg: '#EFF6FF', text: '#1D4ED8' },
-  offering: { bg: '#F0FDF4', text: '#15803D' },
-  thanksgiving: { bg: '#FFF7ED', text: '#C2410C' },
-  harvest: { bg: '#FDF4FF', text: '#7E22CE' },
-  welfare: { bg: '#FFF1F2', text: '#BE123C' },
-  other: { bg: '#F1F5F9', text: '#475569' },
-};
+/** Pill for Tithe only — everything else (including offerings) uses {@link LOG_DEFAULT_TYPE_BADGE}. */
+const LOG_TITHE_TYPE_BADGE = { bg: '#DCFCE7', text: '#166534' };
+const LOG_DEFAULT_TYPE_BADGE = { bg: '#F1F5F9', text: '#475569' };
+
+function getIncomeLogTypeBadge(
+  record: IncomeRecord,
+  opts: DropdownOption[]
+): { bg: string; text: string } {
+  const rawLabel = typeLabelFromOpts(record.incomeType, opts);
+  const label = rawLabel.toLowerCase();
+  const slug = (record.incomeType || '').toLowerCase();
+
+  const isTithe =
+    slug === 'tithe' || label === 'tithe' || /\btithe\b/i.test(rawLabel) || /^tithe\b/i.test(label);
+
+  if (isTithe) {
+    return LOG_TITHE_TYPE_BADGE;
+  }
+  return LOG_DEFAULT_TYPE_BADGE;
+}
 
 function typeLabelFromOpts(value: string, opts: DropdownOption[]): string {
   return opts.find((o) => o.value === value)?.label ?? value;
@@ -193,7 +205,7 @@ function EntryCard({
   const [justEntered, setJustEntered] = useState(false);
 
   const tc = autoText(cardBg);
-  const badge = TYPE_BADGES[record.incomeType] ?? TYPE_BADGES.other;
+  const badge = getIncomeLogTypeBadge(record, incomeTypeOpts);
 
   const startEditing = () => {
     setEditing(true);
