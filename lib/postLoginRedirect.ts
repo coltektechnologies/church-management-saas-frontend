@@ -1,5 +1,8 @@
 import { getSafeReturnPath } from '@/lib/safeReturnPath';
 
+/** When the user has no dedicated portal, send them here instead of `/admin`. */
+export const START_HUB_PATH = '/start';
+
 /** Role objects returned on login from UserSerializer.get_roles */
 export type LoginUserRole = { id?: string; name?: string; level?: number | string };
 
@@ -53,13 +56,29 @@ export function isDepartmentPortalRoleName(raw: string | undefined | null): bool
   if (!n) {
     return false;
   }
-  if (/\bdepartment\s+head\b/.test(n) || n === 'department head') {
+  if (/\bdepartment[\s-]+head\b/.test(n) || n === 'department head') {
     return true;
   }
-  if (/\belder\s+in\s+charge\b/.test(n) || n === 'elder in charge') {
+  /* Match "Elder in charge", "Elder-in-charge", "Elder In Charge", minor spacing variants */
+  if (/\belder[\s-]+in[\s-]+charge\b/.test(n) || n === 'elder in charge') {
     return true;
   }
   return false;
+}
+
+/**
+ * Department portal access from the API (`GET /departments/my-portal/`), which uses
+ * `Member.system_user_id` + department head / elder-in-charge assignment — not JWT `UserRole`
+ * rows. Call this when role-based routing would otherwise send the user to `/start`.
+ */
+export async function canAccessDepartmentPortalViaApi(): Promise<boolean> {
+  try {
+    const { fetchDepartmentMyPortal } = await import('@/lib/departmentsApi');
+    await fetchDepartmentMyPortal();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** True if the signed-in user has at least one department-portal role (any level). */
@@ -100,44 +119,52 @@ export function userHasTreasuryPortalAccess(user: PostLoginUser | null | undefin
 /**
  * After login, choose home URL when `next` is not provided.
  * Uses JWT `user.roles` from church **UserRole** rows (see backend `UserSerializer.get_roles`).
- * Department head assignment on a department must grant the "Department Head" UserRole
- * (and the member must have `system_user_id`) or this function will not send them to `/departments`.
+ * Department head assignment must grant the "Department Head" (or elder in charge) UserRole
+ * or this function will not send them to `/departments`.
  *
- * Uses roles at the user's **minimum** `level` (1 = highest privilege).
- * For that tier, picks a destination by **explicit role name** — not `reduce` tie-breaks,
- * so Treasurer+Secretary users get a stable rule: Treasurer routes to treasury first.
+ * Dedicated portal roles are evaluated **across all roles**, not only the lowest-`level` tier.
+ * Otherwise a Level-1 role (Pastor / First Elder, etc.) would win first and send users who are
+ * also Department Head (typically Level 3) to `/admin` instead of `/departments`.
+ *
+ * Priority: treasury → secretary → department portal → admin shell (level ≤ 1 only) → `Start` hub.
+ * Users without a mapped app no longer default to `/admin` (see START_HUB_PATH).
  */
+export function canAccessAdminShell(user: PostLoginUser | null | undefined): boolean {
+  if (user?.is_platform_admin) {
+    return true;
+  }
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  if (roles.length === 0) {
+    return false;
+  }
+  const minLevel = Math.min(...roles.map(roleLevel));
+  return minLevel <= 1;
+}
+
 export function defaultHomePathForUser(user: PostLoginUser | null | undefined): string {
   if (user?.is_platform_admin) {
     return '/admin';
   }
   const roles = Array.isArray(user?.roles) ? user.roles : [];
   if (roles.length === 0) {
-    return '/admin';
+    return START_HUB_PATH;
   }
 
-  const minLevel = Math.min(...roles.map(roleLevel));
-  const atTier = roles.filter((r) => roleLevel(r) === minLevel);
-
-  // Level 1 (Pastor / First Elder, etc.) — main admin shell
-  if (minLevel <= 1) {
-    return '/admin';
-  }
-
-  // Core staff (typically level 2): route by named role among this tier only
-  if (atTier.some((r) => isTreasurerRoleName(r.name) || isTreasuryTeamRoleName(r.name))) {
+  if (roles.some((r) => isTreasurerRoleName(r.name) || isTreasuryTeamRoleName(r.name))) {
     return '/treasury';
   }
-  if (atTier.some((r) => isSecretaryRoleName(r.name))) {
+  if (roles.some((r) => isSecretaryRoleName(r.name))) {
     return '/secretary';
   }
-
-  // Department heads / elders in charge (typically level 3) — dedicated app shell
-  if (atTier.some((r) => isDepartmentPortalRoleName(r.name))) {
+  if (roles.some((r) => isDepartmentPortalRoleName(r.name))) {
     return '/departments';
   }
 
-  return '/admin';
+  if (canAccessAdminShell(user)) {
+    return '/admin';
+  }
+
+  return START_HUB_PATH;
 }
 
 /**

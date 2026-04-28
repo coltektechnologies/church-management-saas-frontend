@@ -49,7 +49,7 @@ function SecretaryShell({ children }: { children: ReactNode }) {
           <SecretarySidebar />
         </div>
         <main
-          className="flex-1 min-w-0 overflow-y-auto transition-colors duration-300"
+          className="secretary-content flex-1 min-w-0 overflow-y-auto transition-colors duration-300"
           style={{ minHeight: '100vh', backgroundColor: mainBg }}
         >
           <div className="px-6 py-6 max-w-screen-2xl mx-auto w-full">{children}</div>

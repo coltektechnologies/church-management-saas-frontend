@@ -420,7 +420,12 @@ export default function MembersTable({ filters }: MembersTableProps) {
 
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden w-full min-w-0">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 py-4 border-b border-gray-100 bg-white">
-          <h3 className="text-lg font-bold text-[#0B2A4A] shrink-0">All Members</h3>
+          <h3
+            className="text-lg font-bold shrink-0"
+            style={{ color: 'var(--color-primary, #0B2A4A)' }}
+          >
+            All Members
+          </h3>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:ml-auto">
             <Button
               type="button"
@@ -589,7 +594,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
             <TableHeader>
               <TableRow
                 className="border-gray-200 hover:bg-transparent [&>th]:h-14 [&>th]:px-3 [&>th]:text-xs [&>th]:font-semibold [&>th]:uppercase [&>th]:tracking-wide [&>th]:text-gray-500"
-                style={{ background: '#F6F8FA' }}
+                style={{ background: 'var(--admin-bg, #F6F8FA)' }}
               >
                 <TableHead className="w-12 align-middle">
                   <input

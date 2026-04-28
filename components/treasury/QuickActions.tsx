@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import Image from 'next/image';
+
 interface QuickActionsProps {
   onRecordIncome?: () => void;
   onRecordExpenditure?: () => void;

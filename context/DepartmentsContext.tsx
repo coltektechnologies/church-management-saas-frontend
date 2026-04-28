@@ -346,9 +346,13 @@ export function DepartmentsProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const loadDepartmentExpenseRequests = useCallback(async (departmentId: string) => {
-    const rows = await getExpenseRequests({ department_id: departmentId, page_size: 100 });
-    const mapped = rows.map(mapExpenseRequestRowToExpense);
-    setDepartmentExpensesMap((prev) => ({ ...prev, [departmentId]: mapped }));
+    try {
+      const rows = await getExpenseRequests({ department_id: departmentId, page_size: 100 });
+      const mapped = rows.map(mapExpenseRequestRowToExpense);
+      setDepartmentExpensesMap((prev) => ({ ...prev, [departmentId]: mapped }));
+    } catch {
+      setDepartmentExpensesMap((prev) => ({ ...prev, [departmentId]: [] }));
+    }
   }, []);
 
   const syncDepartmentBudgetFromApi = useCallback(async (departmentId: string) => {

@@ -92,6 +92,8 @@ export interface AnnouncementListItemApi {
   category: string | { name?: string };
   created_by: string;
   attachment_count?: number;
+  /** When false, the current user may not approve/reject this announcement (API-enforced). */
+  can_approve?: boolean;
 }
 
 export interface AnnouncementDetailApi {

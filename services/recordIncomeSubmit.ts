@@ -101,6 +101,9 @@ export function mapIncomeRecordToApiPayload(record: IncomeRecord): Record<string
   }
 
   const pm = mapPaymentFields(record);
+  const memberId = typeof record.memberId === 'string' ? record.memberId.trim() : '';
+  const hasMember = memberId.length > 0;
+  const contributor = (record.memberName ?? '').trim();
 
   return {
     transaction_date: iso,
@@ -111,9 +114,9 @@ export function mapIncomeRecordToApiPayload(record: IncomeRecord): Record<string
     cheque_number: pm.cheque_number ?? '',
     transaction_reference: pm.transaction_reference ?? '',
     bank_name: pm.bank_name ?? '',
-    member: record.memberId,
+    member: hasMember ? memberId : null,
     is_anonymous: false,
-    contributor_name: '',
+    contributor_name: hasMember ? '' : contributor,
     notes: notesParts.join(' | '),
     amount_in_words: '',
   };

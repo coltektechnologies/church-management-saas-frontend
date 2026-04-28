@@ -142,11 +142,11 @@ export interface DepartmentActivityRow {
   /** ISO timestamps when present (activity feed / sorting). */
   created_at?: string;
   updated_at?: string;
-  /** From API serializer when present. */
+  /** From API serializer when present; derive display status from dates when absent. */
   is_upcoming?: boolean;
 }
 
-/** Badge label for department activities (do not rely on stored `status` alone). */
+/** Badge label for department activities (stored `status` defaults to UPCOMING and is not auto-updated). */
 export type ActivityDisplayStatus = 'Past' | 'Ongoing' | 'Upcoming';
 
 function formatLocalYmd(d: Date): string {
@@ -172,8 +172,8 @@ function parseHmOnDate(ymd: string, hhmmss: string): number | null {
 }
 
 /**
- * Derive Past / Ongoing / Upcoming from calendar dates and times
- * (aligns with API time_filter using end_date vs today).
+ * Derive Past / Ongoing / Upcoming from calendar dates and times.
+ * Aligns with API time_filter / list filters using `end_date` vs today, not the stored `status` field.
  */
 export function deriveActivityDisplayStatus(
   row: DepartmentActivityRow,
@@ -183,8 +183,12 @@ export function deriveActivityDisplayStatus(
   const ed = row.end_date;
   if (!sd || !ed) {
     const u = (row.status || '').toUpperCase();
-    if (u === 'PAST') {return 'Past';}
-    if (u === 'ONGOING') {return 'Ongoing';}
+    if (u === 'PAST') {
+      return 'Past';
+    }
+    if (u === 'ONGOING') {
+      return 'Ongoing';
+    }
     return 'Upcoming';
   }
 
@@ -197,6 +201,7 @@ export function deriveActivityDisplayStatus(
     return 'Upcoming';
   }
 
+  // Today lies within [sd, ed] (inclusive)
   if (ed === today && row.end_time?.trim()) {
     const endMs = parseHmOnDate(ed, row.end_time);
     if (endMs !== null && now.getTime() > endMs) {
@@ -729,6 +734,32 @@ export type ProgramApprovalStatus =
 export type ProgramApprovalDepartment = 'ELDER' | 'SECRETARIAT' | 'TREASURY';
 export type ProgramApprovalAction = 'APPROVE' | 'REJECT';
 
+/** One office in the program approval pipeline (from API `approval_chain`). */
+export interface ProgramApprovalStage {
+  required: boolean;
+  approved: boolean;
+  approved_at?: string | null;
+  /** e.g. department elder name when that step is relevant */
+  hint?: string | null;
+}
+
+export interface ProgramApprovalChain {
+  elder: ProgramApprovalStage;
+  secretariat: ProgramApprovalStage;
+  treasury: ProgramApprovalStage;
+}
+
+export interface ProgramPendingStep {
+  code: string;
+  label: string;
+}
+
+export interface ProgramReviewPermissions {
+  elder: boolean;
+  secretariat: boolean;
+  treasury: boolean;
+}
+
 export interface ProgramListItem {
   id: string;
   title: string;
@@ -740,22 +771,42 @@ export interface ProgramListItem {
   end_date?: string;
   location?: string;
   submission_type?: string;
+  submitted_to_secretariat?: boolean;
+  submitted_to_treasury?: boolean;
   submitted_at?: string | null;
   approved_at?: string | null;
   requires_approval?: string[];
+  approval_chain?: ProgramApprovalChain | null;
+  pending_step?: ProgramPendingStep | null;
+  review_permissions?: ProgramReviewPermissions | null;
 }
 
 function inferProgramApprovalDepartment(
-  status: ProgramApprovalStatus
+  status: ProgramApprovalStatus,
+  program?: Pick<
+    ProgramListItem,
+    'submitted_to_secretariat' | 'submitted_to_treasury' | 'approval_chain'
+  >
 ): ProgramApprovalDepartment | null {
   if (status === 'SUBMITTED') {
     return 'ELDER';
   }
   if (status === 'ELDER_APPROVED') {
-    return 'SECRETARIAT';
+    const chain = program?.approval_chain;
+    if (program?.submitted_to_secretariat && chain?.secretariat && !chain.secretariat.approved) {
+      return 'SECRETARIAT';
+    }
+    if (program?.submitted_to_treasury && chain?.treasury && !chain.treasury.approved) {
+      return 'TREASURY';
+    }
+    return null;
   }
   if (status === 'SECRETARIAT_APPROVED') {
-    return 'TREASURY';
+    const chain = program?.approval_chain;
+    if (program?.submitted_to_treasury && chain?.treasury && !chain.treasury.approved) {
+      return 'TREASURY';
+    }
+    return null;
   }
   return null;
 }
@@ -766,14 +817,18 @@ export async function fetchProgramDetail(programId: string): Promise<ProgramList
   return fetchAuth<ProgramListItem>(`${base}/programs/${programId}/`, { method: 'GET' });
 }
 
-/** GET /api/programs/?status= */
+/** GET /api/programs/?status=&church_id= */
 export async function fetchProgramsByStatus(
-  status: ProgramApprovalStatus
+  status: ProgramApprovalStatus,
+  opts?: { church_id?: string }
 ): Promise<ProgramListItem[]> {
   const base = getApiBaseUrl();
   const sp = new URLSearchParams();
   sp.set('status', status);
   sp.set('page_size', '200');
+  if (opts?.church_id) {
+    sp.set('church_id', opts.church_id);
+  }
   const data = await fetchAuth<unknown>(`${base}/programs/?${sp.toString()}`, { method: 'GET' });
   return normalizeListResponse<ProgramListItem>(data);
 }
@@ -782,11 +837,16 @@ export async function fetchProgramsByStatus(
 export async function reviewProgramApproval(
   programId: string,
   opts: { action: ProgramApprovalAction; department?: ProgramApprovalDepartment; notes?: string },
-  currentStatus?: ProgramApprovalStatus
+  currentStatus?: ProgramApprovalStatus,
+  program?: Pick<
+    ProgramListItem,
+    'submitted_to_secretariat' | 'submitted_to_treasury' | 'approval_chain'
+  >
 ): Promise<unknown> {
   const base = getApiBaseUrl();
   const department =
-    opts.department ?? (currentStatus ? inferProgramApprovalDepartment(currentStatus) : null);
+    opts.department ??
+    (currentStatus ? inferProgramApprovalDepartment(currentStatus, program) : null);
   if (!department) {
     throw new Error('Program is not in a reviewable approval stage.');
   }

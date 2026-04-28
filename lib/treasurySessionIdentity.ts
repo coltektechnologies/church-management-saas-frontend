@@ -90,6 +90,16 @@ export function treasuryPatchFromSessionUser(): TreasurySessionIdentityPatch | n
   return Object.keys(patch).length ? patch : null;
 }
 
+/** Display name from `localStorage` user (login response). */
+export function getSessionUserDisplayName(): string {
+  const p = treasuryPatchFromSessionUser();
+  const n = p?.adminName?.trim();
+  if (n) {
+    return n;
+  }
+  return '—';
+}
+
 /** Shape required for identity merge (matches {@link TreasuryProfile} fields we touch). */
 type TreasuryIdentityMergeBase = {
   adminName: string;

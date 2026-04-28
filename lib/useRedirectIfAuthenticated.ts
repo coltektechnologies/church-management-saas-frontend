@@ -9,10 +9,15 @@ import { isAccessTokenExpired } from '@/lib/jwtExpiry';
 /**
  * If a non-expired access token exists, sync the session cookie and leave auth routes.
  * Use inside a `<Suspense>` boundary (required for useSearchParams).
+ *
+ * Important: depend on `next` (string | null), not the whole `searchParams` object —
+ * in the App Router its identity can change every render and re-fire this effect,
+ * causing an infinite loop of `router.replace` and repeated GET /login requests.
  */
 export function useRedirectIfAuthenticated(): void {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const next = searchParams.get('next');
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -20,7 +25,6 @@ export function useRedirectIfAuthenticated(): void {
       return;
     }
     setChurchSessionCookie();
-    const next = searchParams.get('next');
     let storedUser: PostLoginUser | null = null;
     try {
       const raw = localStorage.getItem('user');
@@ -31,5 +35,5 @@ export function useRedirectIfAuthenticated(): void {
       /* ignore */
     }
     router.replace(resolvePostLoginPath(next, storedUser));
-  }, [router, searchParams]);
+  }, [router, next]);
 }
