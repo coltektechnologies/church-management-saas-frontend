@@ -38,6 +38,7 @@ const PUBLIC_PREFIXES = [
   '/treasury',
   '/admin',
   '/department',
+  '/membership',
 ];
 
 /** Where to send users who already have a session cookie but hit login/signup. */
@@ -134,13 +135,17 @@ export function proxy(request: NextRequest) {
   const skipTreasuryAuth =
     process.env.NEXT_PUBLIC_SKIP_TREASURY_AUTH === 'true' &&
     (pathname === '/treasury' || pathname.startsWith('/treasury/'));
+  const skipMembershipAuth =
+    process.env.NEXT_PUBLIC_SKIP_MEMBERSHIP_AUTH === 'true' &&
+    (pathname === '/membership' || pathname.startsWith('/membership/'));
 
   const skipAuth =
     skipDepartmentsAuth ||
     skipSecretaryAuth ||
     skipAdminAuth ||
     skipDashboardAuth ||
-    skipTreasuryAuth;
+    skipTreasuryAuth ||
+    skipMembershipAuth;
 
   // ✅ Single unified check — no duplicate block after this
   if (isPublicPath(pathname) || isNextOrStaticAsset(pathname) || skipAuth) {
