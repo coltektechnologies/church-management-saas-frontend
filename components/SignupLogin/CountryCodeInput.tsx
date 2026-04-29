@@ -17,6 +17,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 interface CountryCodeInputProps {
   value: string;
   onChange: (value: string) => void;
+  /** ISO alpha-2 from church country (step 1) — default dial code for this field */
+  defaultCountryIso?: string;
   className?: string;
   placeholder?: string;
   error?: boolean;
@@ -170,19 +172,63 @@ export const dialCountries = [
   { name: 'Zimbabwe', code: 'ZW', dial: '+263' },
 ].sort((a, b) => a.name.localeCompare(b.name));
 
+function matchDialPrefix(
+  full: string,
+  countries: typeof dialCountries
+): { code: string; local: string } {
+  const t = full.trim();
+  if (!t) {
+    return { code: 'GH', local: '' };
+  }
+  const sorted = [...countries].sort((a, b) => b.dial.length - a.dial.length);
+  for (const c of sorted) {
+    if (t.startsWith(c.dial)) {
+      const rest = t.slice(c.dial.length).trim().replace(/^[\s\-]+/, '');
+      return { code: c.code, local: rest };
+    }
+  }
+  const digitsOnly = t.replace(/\D/g, '');
+  return { code: 'GH', local: digitsOnly };
+}
+
 export function CountryCodeInput({
-  value: _value,
+  value,
   onChange,
+  defaultCountryIso,
   className,
   placeholder = '000 000 0000',
   error = false,
 }: CountryCodeInputProps) {
   const [open, setOpen] = React.useState(false);
-  const [selectedCode, setSelectedCode] = React.useState('GH');
-  // localNumber holds ONLY the digits after the dial code
+  const [selectedCode, setSelectedCode] = React.useState(() => {
+    const iso = defaultCountryIso?.trim().toUpperCase();
+    if (iso && dialCountries.some((d) => d.code === iso)) {
+      return iso;
+    }
+    return 'GH';
+  });
   const [localNumber, setLocalNumber] = React.useState('');
 
   const selectedCountry = dialCountries.find((c) => c.code === selectedCode);
+
+  React.useEffect(() => {
+    const iso = defaultCountryIso?.trim().toUpperCase();
+    if (!iso || !dialCountries.some((d) => d.code === iso)) {
+      return;
+    }
+    setSelectedCode(iso);
+  }, [defaultCountryIso]);
+
+  React.useEffect(() => {
+    const v = (value || '').trim();
+    if (!v) {
+      setLocalNumber('');
+      return;
+    }
+    const parsed = matchDialPrefix(value, dialCountries);
+    setSelectedCode(parsed.code);
+    setLocalNumber(parsed.local);
+  }, [value]);
 
   // When user picks a country from dropdown
   const handleCountrySelect = (code: string) => {

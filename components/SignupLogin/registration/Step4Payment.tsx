@@ -41,6 +41,8 @@ export interface RegistrationData {
   lastName?: string;
   adminEmail: string;
   role: string;
+  /** Display label for review (optional; fallback from role code). */
+  roleLabel?: string;
   phone?: string;
   password?: string;
   confirmPassword?: string;

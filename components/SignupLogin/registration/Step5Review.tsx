@@ -30,7 +30,10 @@ const Step5Review = ({
     { label: 'Subdomain', value: data.subdomain ? `${data.subdomain}.opendoor.com` : '' },
     { label: 'Full Name', value: data.fullName },
     { label: 'Admin Email', value: data.adminEmail },
-    { label: 'Primary Admin Role', value: data.role },
+    {
+      label: 'Primary Admin Role',
+      value: data.roleLabel || (data.role ? '—' : ''),
+    },
     { label: 'Subscription Plan', value: data.subscriptionPlan?.toUpperCase() },
   ];
 

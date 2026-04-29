@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { RegistrationData } from './Step4Payment';
+import { isValidSignupEmail } from '@/lib/signupValidation';
+import { checkRegistrationEmail } from '@/lib/api';
 
 interface StepChurchInfoProps {
   data: RegistrationData;
@@ -35,6 +37,7 @@ const presetDenominations = [
 
 const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurchInfoProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [open, setOpen] = useState(false);
   const [denomTyped, setDenomTyped] = useState('');
 
@@ -55,7 +58,7 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
       'bg-[#666666] hover:bg-[#444444] text-white rounded-[10px] w-full sm:w-[236px] h-[44px] font-poppins font-semibold transition-all shadow-sm',
   };
 
-  const handleValidation = () => {
+  const handleValidation = async () => {
     const newErrors: Record<string, string> = {};
     const checks: { field: keyof RegistrationData | string; label: string }[] = [
       { field: 'churchName', label: 'Church name' },
@@ -75,9 +78,34 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
       }
     });
 
+    const ce = (data.churchEmail || '').trim();
+    if (ce && !isValidSignupEmail(ce)) {
+      newErrors.churchEmail = 'Enter a valid email address';
+    }
+
     setErrors(newErrors);
-    if (Object.keys(newErrors).length === 0) {
-      onNext();
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
+
+    setCheckingEmail(true);
+    try {
+      const remote = await checkRegistrationEmail(ce, 'church');
+      if (!remote.ok) {
+        setErrors({
+          churchEmail:
+            remote.message ||
+            'This email cannot be used. It may already be registered or the domain may be invalid.',
+        });
+        return;
+      }
+      await Promise.resolve(onNext());
+    } catch {
+      setErrors({
+        churchEmail: 'Could not verify email. Check your connection and try again.',
+      });
+    } finally {
+      setCheckingEmail(false);
     }
   };
 
@@ -336,8 +364,12 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
       </div>
 
       <div className={styles.actionWrapper}>
-        <Button onClick={handleValidation} className={styles.continueBtn} disabled={loading}>
-          {loading ? 'Saving...' : 'Continue'}
+        <Button
+          onClick={() => void handleValidation()}
+          className={styles.continueBtn}
+          disabled={loading || checkingEmail}
+        >
+          {checkingEmail ? 'Verifying email...' : loading ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>

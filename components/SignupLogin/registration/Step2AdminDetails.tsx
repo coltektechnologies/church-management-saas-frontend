@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { RegistrationData } from './Step4Payment';
 import { CountryCodeInput } from '@/components/SignupLogin/CountryCodeInput';
 import { ClientOnly } from '@/components/ClientOnly';
+import {
+  getRegistrationPositions,
+  checkRegistrationEmail,
+  type RegistrationPosition,
+} from '@/lib/api';
+import { isValidSignupEmail, isValidSignupPhone } from '@/lib/signupValidation';
 
 interface StepAdminDetailsProps {
   data: RegistrationData;
@@ -26,13 +32,6 @@ interface StepAdminDetailsProps {
   onBack: () => void;
   loading?: boolean;
 }
-
-const roles = [
-  { label: 'Administrator', value: 'Administrator' },
-  { label: 'Pastor', value: 'Pastor' },
-  { label: 'Secretary', value: 'Secretary' },
-  { label: 'Accountant', value: 'Accountant' },
-];
 
 const Step2AdminDetails = ({
   data,
@@ -45,7 +44,33 @@ const Step2AdminDetails = ({
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openRole, setOpenRole] = useState(false);
-  const [roleSearch, setRoleSearch] = useState('');
+  const [positions, setPositions] = useState<RegistrationPosition[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
+  const [checkingAdminEmail, setCheckingAdminEmail] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setRolesLoading(true);
+      try {
+        const rows = await getRegistrationPositions();
+        if (!cancelled) {
+          setPositions(rows);
+        }
+      } catch {
+        if (!cancelled) {
+          setPositions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setRolesLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const styles = {
     formWrapper: 'relative space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500',
@@ -58,7 +83,7 @@ const Step2AdminDetails = ({
     passwordToggle: 'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600',
   };
 
-  const handleValidation = () => {
+  const handleValidation = async () => {
     const requiredFields: (keyof RegistrationData)[] = [
       'firstName',
       'lastName',
@@ -77,6 +102,16 @@ const Step2AdminDetails = ({
       }
     });
 
+    const adminEmail = (data.adminEmail || '').trim();
+    if (adminEmail && !isValidSignupEmail(adminEmail)) {
+      newErrors.adminEmail = 'Enter a valid email address';
+    }
+
+    const phoneRaw = (data.phone || '').trim();
+    if (phoneRaw && !isValidSignupPhone(phoneRaw, data.country)) {
+      newErrors.phone = 'Enter a valid phone number for the selected country';
+    }
+
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
     if (data.password && !passwordRegex.test(data.password)) {
       newErrors.password = 'Must include: Uppercase, Lowercase, Number, and Symbol (@$!%*?&#)';
@@ -85,9 +120,38 @@ const Step2AdminDetails = ({
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    const rid = (data.role || '').trim();
+    if (!rolesLoading && positions.length > 0 && rid && !positions.some((p) => p.value === rid)) {
+      newErrors.role = 'Select a role from the list';
+    }
+    if (!rolesLoading && positions.length === 0) {
+      newErrors.role = 'Roles could not be loaded. Refresh the page or contact support.';
+    }
+
     setErrors(newErrors);
-    if (Object.keys(newErrors).length === 0) {
-      onNext();
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
+
+    const emailForCheck = (data.adminEmail || '').trim();
+    setCheckingAdminEmail(true);
+    try {
+      const remote = await checkRegistrationEmail(emailForCheck, 'admin');
+      if (!remote.ok) {
+        setErrors({
+          adminEmail:
+            remote.message ||
+            'This email cannot be used. It may already be registered or the domain may be invalid.',
+        });
+        return;
+      }
+      await Promise.resolve(onNext());
+    } catch {
+      setErrors({
+        adminEmail: 'Could not verify email. Check your connection and try again.',
+      });
+    } finally {
+      setCheckingAdminEmail(false);
     }
   };
 
@@ -121,6 +185,12 @@ const Step2AdminDetails = ({
           <Label className={styles.label}>
             Role<span className={styles.requiredAsterisk}>*</span>
           </Label>
+          {!rolesLoading && positions.length === 0 && (
+            <p className="text-[11px] text-amber-800 mb-1 leading-snug">
+              Could not load roles from the server. Ensure roles are seeded (`setup_initial_data`) and
+              try refreshing.
+            </p>
+          )}
           <ClientOnly
             fallback={
               <Input
@@ -134,41 +204,36 @@ const Step2AdminDetails = ({
             <Popover open={openRole} onOpenChange={setOpenRole}>
               <PopoverTrigger asChild>
                 <Button
+                  type="button"
                   variant="outline"
                   role="combobox"
                   aria-expanded={openRole}
+                  disabled={rolesLoading || positions.length === 0}
                   className={cn(styles.inputField, 'font-normal', errors.role && 'border-red-500')}
                 >
-                  {data.role || 'Select or type role...'}
+                  {rolesLoading
+                    ? 'Loading roles…'
+                    : positions.find((p) => p.value === data.role)?.label ||
+                      data.roleLabel ||
+                      'Select role…'}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                 <Command>
-                  <CommandInput
-                    placeholder="Search or type new role..."
-                    onValueChange={(val) => setRoleSearch(val)}
-                  />
+                  <CommandInput placeholder="Search roles..." />
                   <CommandList>
-                    <CommandEmpty className="p-2">
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-xs italic"
-                        onClick={() => {
-                          onChange('role', roleSearch);
-                          setOpenRole(false);
-                        }}
-                      >
-                        Use &quot;{roleSearch}&quot; as role
-                      </Button>
+                    <CommandEmpty className="p-2 text-xs text-muted-foreground">
+                      No matching role.
                     </CommandEmpty>
                     <CommandGroup>
-                      {roles.map((role) => (
+                      {positions.map((role) => (
                         <CommandItem
                           key={role.value}
-                          value={role.value}
-                          onSelect={(v) => {
-                            onChange('role', v);
+                          value={`${role.label} ${role.value}`}
+                          onSelect={() => {
+                            onChange('role', role.value);
+                            onChange('roleLabel', role.label);
                             setOpenRole(false);
                           }}
                         >
@@ -178,7 +243,14 @@ const Step2AdminDetails = ({
                               data.role === role.value ? 'opacity-100' : 'opacity-0'
                             )}
                           />
-                          {role.label}
+                          <span className="flex flex-col items-start gap-0">
+                            <span>{role.label}</span>
+                            {typeof role.level === 'number' && (
+                              <span className="text-[10px] font-normal text-muted-foreground">
+                                Level {role.level}
+                              </span>
+                            )}
+                          </span>
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -283,6 +355,7 @@ const Step2AdminDetails = ({
             <CountryCodeInput
               value={data.phone || ''}
               onChange={(val) => onChange('phone', val)}
+              defaultCountryIso={data.country || undefined}
               error={!!errors.phone}
               placeholder="000 000 0000"
             />
@@ -300,11 +373,11 @@ const Step2AdminDetails = ({
           Back
         </Button>
         <Button
-          onClick={handleValidation}
+          onClick={() => void handleValidation()}
           className="w-full sm:w-[236px] h-[44px] bg-[#666666] hover:bg-[#444444] text-white rounded-[10px] font-poppins font-semibold transition-all shadow-sm"
-          disabled={loading}
+          disabled={loading || checkingAdminEmail || rolesLoading || positions.length === 0}
         >
-          {loading ? 'Saving...' : 'Continue'}
+          {checkingAdminEmail ? 'Verifying email...' : loading ? 'Saving...' : 'Continue'}
         </Button>
       </div>
     </div>
