@@ -231,8 +231,7 @@ export async function checkRegistrationEmail(
   const data = (await res.json()) as Record<string, unknown>;
   const message = typeof data.message === 'string' ? data.message : undefined;
   const reason = typeof data.reason === 'string' ? data.reason : undefined;
-  const domain_checked =
-    typeof data.domain_checked === 'boolean' ? data.domain_checked : undefined;
+  const domain_checked = typeof data.domain_checked === 'boolean' ? data.domain_checked : undefined;
 
   if (res.status === 400) {
     return {
