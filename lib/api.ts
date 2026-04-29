@@ -193,6 +193,68 @@ export async function getRegistrationPlans(): Promise<RegistrationPlan[]> {
   return Array.isArray(data) ? data : [];
 }
 
+/** Primary admin roles for registration step 2 (matches backend ChurchRegistrationStep2Serializer.position). */
+export interface RegistrationPosition {
+  value: string;
+  label: string;
+  level?: number;
+}
+
+export async function getRegistrationPositions(): Promise<RegistrationPosition[]> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/auth/registration/positions/`);
+  if (!res.ok) {
+    throw new Error('Failed to load roles');
+  }
+  const data = (await res.json()) as RegistrationPosition[];
+  return Array.isArray(data) ? data : [];
+}
+
+/** Server checks format, DNS/MX domain (best-effort), and DB uniqueness for signup. */
+export interface RegistrationEmailCheckResult {
+  ok: boolean;
+  message?: string;
+  reason?: string;
+  domain_checked?: boolean;
+}
+
+export async function checkRegistrationEmail(
+  email: string,
+  scope: 'church' | 'admin'
+): Promise<RegistrationEmailCheckResult> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/auth/registration/validate-email/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.trim(), scope }),
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  const message = typeof data.message === 'string' ? data.message : undefined;
+  const reason = typeof data.reason === 'string' ? data.reason : undefined;
+  const domain_checked =
+    typeof data.domain_checked === 'boolean' ? data.domain_checked : undefined;
+
+  if (res.status === 400) {
+    return {
+      ok: false,
+      message: message || 'Email is required',
+      reason,
+      domain_checked,
+    };
+  }
+
+  if (data.ok === true) {
+    return { ok: true, domain_checked };
+  }
+
+  return {
+    ok: false,
+    message: message || 'This email cannot be used',
+    reason,
+    domain_checked,
+  };
+}
+
 /** Step 1: Church information. Returns session_id. */
 export async function registrationStep1(payload: {
   church_name: string;
@@ -230,7 +292,7 @@ export async function registrationStep2(
     last_name: string;
     admin_email: string;
     phone_number: string;
-    position: string;
+    role_id: string;
     password: string;
     confirm_password: string;
   }

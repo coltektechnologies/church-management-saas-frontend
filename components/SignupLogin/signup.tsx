@@ -51,6 +51,7 @@ const defaultFormData: RegistrationData = {
   lastName: '',
   adminEmail: '',
   role: '',
+  roleLabel: '',
   phone: '',
   password: '',
   confirmPassword: '',
@@ -73,24 +74,6 @@ function mapChurchSize(value: string): string {
     return 'MEDIUM';
   }
   return 'LARGE';
-}
-
-/** Map frontend role label to backend position (PASTOR, FIRST_ELDER, SENIOR_PASTOR, PRESIDING_ELDER) */
-function mapRoleToPosition(role: string): string {
-  const r = (role || '').toLowerCase();
-  if (r.includes('pastor') && !r.includes('senior')) {
-    return 'PASTOR';
-  }
-  if (r.includes('senior')) {
-    return 'SENIOR_PASTOR';
-  }
-  if (r.includes('administrator') || r.includes('presiding')) {
-    return 'PRESIDING_ELDER';
-  }
-  if (r.includes('secretary') || r.includes('accountant')) {
-    return 'FIRST_ELDER';
-  }
-  return 'PASTOR';
 }
 
 /** Map frontend billing to backend (MONTHLY | YEARLY) */
@@ -224,7 +207,7 @@ const Signup = () => {
         last_name: (d.lastName || '').trim(),
         admin_email: (d.adminEmail || '').trim().toLowerCase(),
         phone_number: (d.phone || '').trim().replace(/\s/g, ''),
-        position: mapRoleToPosition(d.role || ''),
+        role_id: (d.role || '').trim(),
         password: d.password || '',
         confirm_password: d.confirmPassword || '',
       });
