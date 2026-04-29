@@ -183,7 +183,10 @@ function matchDialPrefix(
   const sorted = [...countries].sort((a, b) => b.dial.length - a.dial.length);
   for (const c of sorted) {
     if (t.startsWith(c.dial)) {
-      const rest = t.slice(c.dial.length).trim().replace(/^[\s\-]+/, '');
+      const rest = t
+        .slice(c.dial.length)
+        .trim()
+        .replace(/^[\s\-]+/, '');
       return { code: c.code, local: rest };
     }
   }

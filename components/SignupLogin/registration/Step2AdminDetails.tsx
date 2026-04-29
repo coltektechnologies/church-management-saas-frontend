@@ -187,8 +187,8 @@ const Step2AdminDetails = ({
           </Label>
           {!rolesLoading && positions.length === 0 && (
             <p className="text-[11px] text-amber-800 mb-1 leading-snug">
-              Could not load roles from the server. Ensure roles are seeded (`setup_initial_data`) and
-              try refreshing.
+              Could not load roles from the server. Ensure roles are seeded (`setup_initial_data`)
+              and try refreshing.
             </p>
           )}
           <ClientOnly

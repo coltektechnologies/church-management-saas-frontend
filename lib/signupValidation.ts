@@ -16,10 +16,7 @@ function digitCount(value: string): number {
  * Validates phone using libphonenumber when step-1 country (ISO alpha-2) is set.
  * Falls back to backend-style minimum digit length when country is missing.
  */
-export function isValidSignupPhone(
-  phone: string,
-  countryIsoAlpha2: string | undefined
-): boolean {
+export function isValidSignupPhone(phone: string, countryIsoAlpha2: string | undefined): boolean {
   const trimmed = (phone || '').trim();
   if (!trimmed) {
     return false;
