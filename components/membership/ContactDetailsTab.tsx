@@ -27,7 +27,7 @@ export default function ContactDetailsTab() {
                 <span className="text-[13px] font-bold text-[#0A2E46]">{field.label}</span>
               </div>
               <div
-                className={`flex items-center px-4 py-2.5 text-[13px] text-[#0A2E46] font-medium min-h-[40px] rounded-md ${
+                className={`flex items-center px-4 py-2.5 text-[13px] text-[#0A2E46] font-medium min-h-10 rounded-md ${
                   field.outlined
                     ? 'border border-[#2FC4B2] bg-[#F4FDFB]'
                     : 'bg-[#F1F5F9] border border-transparent'
