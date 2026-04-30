@@ -23,7 +23,7 @@ export default function MembershipProfilePage() {
       />
 
       <ProfileSummaryCard />
-      
+
       <div>
         <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         {activeTab === 'personal' && <PersonalInfoTab />}

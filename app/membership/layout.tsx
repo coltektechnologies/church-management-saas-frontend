@@ -13,9 +13,7 @@ export default function MembershipLayout({ children }: { children: ReactNode }) 
           <div className="sticky top-0 h-screen z-20">
             <MembershipSidebar />
           </div>
-          <main className="flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] h-screen">
-            {children}
-          </main>
+          <main className="flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] h-screen">{children}</main>
         </div>
       </ChurchProfileProvider>
     </AuthProvider>
