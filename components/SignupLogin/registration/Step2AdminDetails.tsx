@@ -80,10 +80,7 @@ const Step2AdminDetails = ({
   const phoneTrimmed = (data.phone || '').trim();
   const phoneBlocked = Boolean(phoneTrimmed && phoneErr);
 
-  const passwordErr = useMemo(
-    () => getSignupPasswordError(data.password || ''),
-    [data.password]
-  );
+  const passwordErr = useMemo(() => getSignupPasswordError(data.password || ''), [data.password]);
   const confirmErr = useMemo(
     () => getSignupConfirmPasswordError(data.password || '', data.confirmPassword || ''),
     [data.password, data.confirmPassword]

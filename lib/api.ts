@@ -308,7 +308,11 @@ export async function verifyAllRegistrationEmails(payload: {
   const admin = (payload.adminEmail || '').trim();
 
   if (!church) {
-    return { ok: false, message: 'Church email is missing. Go back to step 1.', field: 'churchEmail' };
+    return {
+      ok: false,
+      message: 'Church email is missing. Go back to step 1.',
+      field: 'churchEmail',
+    };
   }
   if (!admin) {
     return { ok: false, message: 'Admin email is required.', field: 'adminEmail' };

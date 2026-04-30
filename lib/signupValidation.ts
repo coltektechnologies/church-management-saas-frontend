@@ -31,11 +31,7 @@ export function getSignupPhoneError(
   const primary = parsePhoneNumberFromString(trimmed, iso);
   const international = parsePhoneNumberFromString(trimmed);
 
-  const candidate = primary?.isValid()
-    ? primary
-    : international?.isValid()
-      ? international
-      : null;
+  const candidate = primary?.isValid() ? primary : international?.isValid() ? international : null;
 
   if (!candidate) {
     return `Enter a valid phone number for ${iso} (correct length and digits for that country).`;
@@ -93,7 +89,10 @@ export function getSignupPasswordError(password: string): string | null {
   return null;
 }
 
-export function getSignupConfirmPasswordError(password: string, confirmPassword: string): string | null {
+export function getSignupConfirmPasswordError(
+  password: string,
+  confirmPassword: string
+): string | null {
   const c = (confirmPassword ?? '').trim();
   if (!c) {
     return null;

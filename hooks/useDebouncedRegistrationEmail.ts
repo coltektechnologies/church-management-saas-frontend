@@ -14,7 +14,10 @@ function normalizeEmail(value: string): string {
  * Calls `/auth/registration/validate-email/` after typing pauses + on blur.
  * Continue stays disabled until the server returns OK for the **current** email (deliverability + uniqueness).
  */
-export function useDebouncedRegistrationEmail(value: string | undefined, scope: 'church' | 'admin') {
+export function useDebouncedRegistrationEmail(
+  value: string | undefined,
+  scope: 'church' | 'admin'
+) {
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   /** Normalized email that last received `ok: true` from API */
