@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useDebouncedRegistrationEmail } from '@/hooks/useDebouncedRegistrationEmail';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -18,12 +19,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { RegistrationData } from './Step4Payment';
 import { CountryCodeInput } from '@/components/SignupLogin/CountryCodeInput';
 import { ClientOnly } from '@/components/ClientOnly';
+import { getRegistrationPositions, type RegistrationPosition } from '@/lib/api';
 import {
-  getRegistrationPositions,
-  checkRegistrationEmail,
-  type RegistrationPosition,
-} from '@/lib/api';
-import { isValidSignupEmail, isValidSignupPhone } from '@/lib/signupValidation';
+  getSignupConfirmPasswordError,
+  getSignupPasswordError,
+  getSignupPhoneError,
+  isValidSignupEmail,
+} from '@/lib/signupValidation';
 
 interface StepAdminDetailsProps {
   data: RegistrationData;
@@ -40,14 +42,13 @@ const Step2AdminDetails = ({
   onBack,
   loading = false,
 }: StepAdminDetailsProps) => {
+  const adminEmailLive = useDebouncedRegistrationEmail(data.adminEmail, 'admin');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openRole, setOpenRole] = useState(false);
   const [positions, setPositions] = useState<RegistrationPosition[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
-  const [checkingAdminEmail, setCheckingAdminEmail] = useState(false);
-
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -71,6 +72,23 @@ const Step2AdminDetails = ({
       cancelled = true;
     };
   }, []);
+
+  const phoneErr = useMemo(
+    () => getSignupPhoneError(data.phone || '', data.country),
+    [data.phone, data.country]
+  );
+  const phoneTrimmed = (data.phone || '').trim();
+  const phoneBlocked = Boolean(phoneTrimmed && phoneErr);
+
+  const passwordErr = useMemo(
+    () => getSignupPasswordError(data.password || ''),
+    [data.password]
+  );
+  const confirmErr = useMemo(
+    () => getSignupConfirmPasswordError(data.password || '', data.confirmPassword || ''),
+    [data.password, data.confirmPassword]
+  );
+  const passwordGateBlocked = Boolean(passwordErr) || Boolean(confirmErr);
 
   const styles = {
     formWrapper: 'relative space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500',
@@ -106,18 +124,23 @@ const Step2AdminDetails = ({
     if (adminEmail && !isValidSignupEmail(adminEmail)) {
       newErrors.adminEmail = 'Enter a valid email address';
     }
+    if (adminEmailLive.remoteError) {
+      newErrors.adminEmail = adminEmailLive.remoteError;
+    }
 
     const phoneRaw = (data.phone || '').trim();
-    if (phoneRaw && !isValidSignupPhone(phoneRaw, data.country)) {
-      newErrors.phone = 'Enter a valid phone number for the selected country';
+    const phoneValidationMsg = getSignupPhoneError(data.phone || '', data.country);
+    if (phoneRaw && phoneValidationMsg) {
+      newErrors.phone = phoneValidationMsg;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
-    if (data.password && !passwordRegex.test(data.password)) {
-      newErrors.password = 'Must include: Uppercase, Lowercase, Number, and Symbol (@$!%*?&#)';
+    const pwMsg = getSignupPasswordError(data.password || '');
+    if (data.password && pwMsg) {
+      newErrors.password = pwMsg;
     }
-    if (data.password !== data.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+    const cfMsg = getSignupConfirmPasswordError(data.password || '', data.confirmPassword || '');
+    if ((data.confirmPassword || '').trim() && cfMsg) {
+      newErrors.confirmPassword = cfMsg;
     }
 
     const rid = (data.role || '').trim();
@@ -133,26 +156,7 @@ const Step2AdminDetails = ({
       return;
     }
 
-    const emailForCheck = (data.adminEmail || '').trim();
-    setCheckingAdminEmail(true);
-    try {
-      const remote = await checkRegistrationEmail(emailForCheck, 'admin');
-      if (!remote.ok) {
-        setErrors({
-          adminEmail:
-            remote.message ||
-            'This email cannot be used. It may already be registered or the domain may be invalid.',
-        });
-        return;
-      }
-      await Promise.resolve(onNext());
-    } catch {
-      setErrors({
-        adminEmail: 'Could not verify email. Check your connection and try again.',
-      });
-    } finally {
-      setCheckingAdminEmail(false);
-    }
+    await Promise.resolve(onNext());
   };
 
   return (
@@ -288,10 +292,27 @@ const Step2AdminDetails = ({
             type="email"
             placeholder="Enter your email"
             value={data.adminEmail || ''}
-            onChange={(e) => onChange('adminEmail', e.target.value)}
-            className={cn(styles.inputField, errors.adminEmail && 'border-red-500')}
+            onChange={(e) => {
+              onChange('adminEmail', e.target.value);
+              setErrors((prev) => {
+                const next = { ...prev };
+                delete next.adminEmail;
+                return next;
+              });
+            }}
+            onBlur={() => adminEmailLive.flushVerify()}
+            aria-invalid={!!(errors.adminEmail || adminEmailLive.remoteError)}
+            className={cn(
+              styles.inputField,
+              (errors.adminEmail || adminEmailLive.remoteError) && 'border-red-500'
+            )}
           />
-          {errors.adminEmail && <p className={styles.errorText}>{errors.adminEmail}</p>}
+          {adminEmailLive.checking && (
+            <p className="text-[10px] mt-0.5 text-muted-foreground">Checking email…</p>
+          )}
+          {(errors.adminEmail || adminEmailLive.remoteError) && (
+            <p className={styles.errorText}>{errors.adminEmail || adminEmailLive.remoteError}</p>
+          )}
         </div>
 
         {/* Password — on mobile comes after email (order-4), on desktop col 2 row 2 */}
@@ -304,8 +325,19 @@ const Step2AdminDetails = ({
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter a strong password"
               value={data.password || ''}
-              onChange={(e) => onChange('password', e.target.value)}
-              className={cn(styles.inputField, errors.password && 'border-red-500')}
+              onChange={(e) => {
+                onChange('password', e.target.value);
+                setErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.password;
+                  return next;
+                });
+              }}
+              aria-invalid={!!(errors.password || passwordErr)}
+              className={cn(
+                styles.inputField,
+                (errors.password || passwordErr) && 'border-red-500'
+              )}
             />
             <button
               type="button"
@@ -315,9 +347,9 @@ const Step2AdminDetails = ({
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && (
+          {(errors.password || passwordErr) && (
             <p className={styles.errorText}>
-              <Info size={12} className="mt-0.5 shrink-0" /> {errors.password}
+              <Info size={12} className="mt-0.5 shrink-0" /> {errors.password || passwordErr}
             </p>
           )}
         </div>
@@ -332,8 +364,19 @@ const Step2AdminDetails = ({
               type={showConfirm ? 'text' : 'password'}
               placeholder="Re-enter your password"
               value={data.confirmPassword || ''}
-              onChange={(e) => onChange('confirmPassword', e.target.value)}
-              className={cn(styles.inputField, errors.confirmPassword && 'border-red-500')}
+              onChange={(e) => {
+                onChange('confirmPassword', e.target.value);
+                setErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.confirmPassword;
+                  return next;
+                });
+              }}
+              aria-invalid={!!(errors.confirmPassword || confirmErr)}
+              className={cn(
+                styles.inputField,
+                (errors.confirmPassword || confirmErr) && 'border-red-500'
+              )}
             />
             <button
               type="button"
@@ -343,7 +386,9 @@ const Step2AdminDetails = ({
               {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.confirmPassword && <p className={styles.errorText}>{errors.confirmPassword}</p>}
+          {(errors.confirmPassword || confirmErr) && (
+            <p className={styles.errorText}>{errors.confirmPassword || confirmErr}</p>
+          )}
         </div>
 
         {/* Phone — full width */}
@@ -354,13 +399,24 @@ const Step2AdminDetails = ({
           <div className="sm:w-1/2">
             <CountryCodeInput
               value={data.phone || ''}
-              onChange={(val) => onChange('phone', val)}
+              onChange={(val) => {
+                onChange('phone', val);
+                setErrors((prev) => {
+                  const next = { ...prev };
+                  delete next.phone;
+                  return next;
+                });
+              }}
               defaultCountryIso={data.country || undefined}
-              error={!!errors.phone}
+              error={!!(errors.phone || phoneErr)}
               placeholder="000 000 0000"
             />
           </div>
-          {errors.phone && <p className={styles.errorText}>{errors.phone}</p>}
+          {(errors.phone || phoneErr) && (
+            <p className={styles.errorText}>
+              <Info size={12} className="mt-0.5 shrink-0" /> {errors.phone || phoneErr}
+            </p>
+          )}
         </div>
       </div>
 
@@ -375,9 +431,18 @@ const Step2AdminDetails = ({
         <Button
           onClick={() => void handleValidation()}
           className="w-full sm:w-[236px] h-[44px] bg-[#666666] hover:bg-[#444444] text-white rounded-[10px] font-poppins font-semibold transition-all shadow-sm"
-          disabled={loading || checkingAdminEmail || rolesLoading || positions.length === 0}
+          disabled={
+            loading ||
+            rolesLoading ||
+            positions.length === 0 ||
+            adminEmailLive.checking ||
+            !!adminEmailLive.remoteError ||
+            !adminEmailLive.canProceedEmail ||
+            phoneBlocked ||
+            passwordGateBlocked
+          }
         >
-          {checkingAdminEmail ? 'Verifying email...' : loading ? 'Saving...' : 'Continue'}
+          {loading || adminEmailLive.checking ? 'Verifying & saving...' : 'Continue'}
         </Button>
       </div>
     </div>

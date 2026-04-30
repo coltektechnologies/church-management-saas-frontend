@@ -22,6 +22,8 @@ import {
   setRegistrationDraft,
   clearRegistrationDraft,
   getStoredRegistrationSessionId,
+  verifyChurchEmailForRegistration,
+  verifyAllRegistrationEmails,
 } from '@/lib/api';
 import { clearClientAuth } from '@/lib/churchSessionBrowser';
 import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
@@ -162,12 +164,22 @@ const Signup = () => {
 
   const handleStep1Next = async () => {
     const d = formData;
+    const churchEmail = (d.churchEmail || '').trim().toLowerCase();
+    const gate = await verifyChurchEmailForRegistration(churchEmail);
+    if (!gate.ok) {
+      toast({
+        title: 'Email cannot be used',
+        description: gate.message,
+        variant: 'destructive',
+      });
+      return;
+    }
     const regionCity = (d.regionCity || '').trim() || 'N/A';
     setLoading(true);
     try {
       const { session_id } = await registrationStep1({
         church_name: (d.churchName || '').trim(),
-        church_email: (d.churchEmail || '').trim().toLowerCase(),
+        church_email: churchEmail,
         subdomain: (d.subdomain || '').trim().toLowerCase(),
         country: (d.country || '').trim(),
         region: regionCity,
@@ -200,6 +212,18 @@ const Signup = () => {
       return;
     }
     const d = formData;
+    const emailsGate = await verifyAllRegistrationEmails({
+      churchEmail: d.churchEmail || '',
+      adminEmail: d.adminEmail || '',
+    });
+    if (!emailsGate.ok) {
+      toast({
+        title: emailsGate.field === 'churchEmail' ? 'Church email' : 'Admin email',
+        description: emailsGate.message,
+        variant: 'destructive',
+      });
+      return;
+    }
     setLoading(true);
     try {
       const { session_id } = await registrationStep2(sessionId, {
@@ -235,6 +259,18 @@ const Signup = () => {
       return;
     }
     const d = formData;
+    const emailsGate = await verifyAllRegistrationEmails({
+      churchEmail: d.churchEmail || '',
+      adminEmail: d.adminEmail || '',
+    });
+    if (!emailsGate.ok) {
+      toast({
+        title: emailsGate.field === 'churchEmail' ? 'Church email' : 'Admin email',
+        description: emailsGate.message,
+        variant: 'destructive',
+      });
+      return;
+    }
     setLoading(true);
     try {
       const { session_id } = await registrationStep3(sessionId, {
@@ -261,6 +297,19 @@ const Signup = () => {
       toast({
         title: 'Error',
         description: 'Session expired. Please start from step 1.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const d = formData;
+    const emailsGate = await verifyAllRegistrationEmails({
+      churchEmail: d.churchEmail || '',
+      adminEmail: d.adminEmail || '',
+    });
+    if (!emailsGate.ok) {
+      toast({
+        title: emailsGate.field === 'churchEmail' ? 'Church email' : 'Admin email',
+        description: emailsGate.message,
         variant: 'destructive',
       });
       return;

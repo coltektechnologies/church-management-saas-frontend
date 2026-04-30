@@ -180,3 +180,25 @@ export function resolvePostLoginPath(
   }
   return defaultHomePathForUser(user);
 }
+
+/**
+ * Same as {@link resolvePostLoginPath}, then if the sync role map sends the user to `/start`,
+ * check `GET /departments/my-portal/` (Member + department head / elder in charge). JWT roles
+ * often omit "Department Head" until sync — without this probe, department leads land on `/start`.
+ */
+export async function resolvePostLoginDestinationWithDepartmentProbe(
+  next: string | null | undefined,
+  user: PostLoginUser | null | undefined
+): Promise<string> {
+  const dest = resolvePostLoginPath(next, user);
+  if (dest === START_HUB_PATH) {
+    try {
+      if (await canAccessDepartmentPortalViaApi()) {
+        return '/departments';
+      }
+    } catch {
+      /* keep START_HUB_PATH */
+    }
+  }
+  return dest;
+}

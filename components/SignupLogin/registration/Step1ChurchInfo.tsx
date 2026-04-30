@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useDebouncedRegistrationEmail } from '@/hooks/useDebouncedRegistrationEmail';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ const presetDenominations = [
 const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurchInfoProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [checkingEmail, setCheckingEmail] = useState(false);
+  const churchEmailLive = useDebouncedRegistrationEmail(data.churchEmail, 'church');
   const [open, setOpen] = useState(false);
   const [denomTyped, setDenomTyped] = useState('');
 
@@ -82,6 +84,9 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
     if (ce && !isValidSignupEmail(ce)) {
       newErrors.churchEmail = 'Enter a valid email address';
     }
+    if (churchEmailLive.remoteError) {
+      newErrors.churchEmail = churchEmailLive.remoteError;
+    }
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
@@ -115,6 +120,8 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
     : presetDenominations;
 
   const isCustomValue = data.denomination && !presetDenominations.includes(data.denomination);
+
+  const churchEmailTrimmed = (data.churchEmail || '').trim();
 
   return (
     <div className={styles.formWrapper}>
@@ -166,10 +173,33 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
             type="email"
             placeholder="church@example.com"
             value={data.churchEmail || ''}
-            onChange={(e) => onChange('churchEmail', e.target.value)}
-            className={`${styles.inputField} ${errors.churchEmail ? 'border-red-500' : ''}`}
+            onChange={(e) => {
+              onChange('churchEmail', e.target.value);
+              setErrors((prev) => {
+                const next = { ...prev };
+                delete next.churchEmail;
+                return next;
+              });
+            }}
+            onBlur={() => churchEmailLive.flushVerify()}
+            aria-invalid={!!(errors.churchEmail || churchEmailLive.remoteError)}
+            className={`${styles.inputField} ${errors.churchEmail || churchEmailLive.remoteError ? 'border-red-500' : ''}`}
           />
-          {errors.churchEmail && <p className={styles.errorText}>{errors.churchEmail}</p>}
+          {churchEmailLive.checking && (
+            <p className="text-[10px] mt-0.5 text-muted-foreground">Checking email…</p>
+          )}
+          {!churchEmailLive.checking &&
+            churchEmailTrimmed &&
+            isValidSignupEmail(churchEmailTrimmed) &&
+            !churchEmailLive.canProceedEmail &&
+            !churchEmailLive.remoteError && (
+              <p className="text-[10px] mt-0.5 text-amber-800">
+                Verifying with the server… Continue unlocks only after this passes.
+              </p>
+            )}
+          {(errors.churchEmail || churchEmailLive.remoteError) && (
+            <p className={styles.errorText}>{errors.churchEmail || churchEmailLive.remoteError}</p>
+          )}
         </div>
 
         {/* Region/City */}
@@ -367,9 +397,19 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
         <Button
           onClick={() => void handleValidation()}
           className={styles.continueBtn}
-          disabled={loading || checkingEmail}
+          disabled={
+            loading ||
+            checkingEmail ||
+            churchEmailLive.checking ||
+            !!churchEmailLive.remoteError ||
+            !churchEmailLive.canProceedEmail
+          }
         >
-          {checkingEmail ? 'Verifying email...' : loading ? 'Saving...' : 'Continue'}
+          {checkingEmail || churchEmailLive.checking
+            ? 'Verifying email...'
+            : loading
+              ? 'Saving...'
+              : 'Continue'}
         </Button>
       </div>
     </div>

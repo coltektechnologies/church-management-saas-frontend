@@ -1,4 +1,5 @@
 import { messageFromApiErrorJson } from '@/lib/apiMessages';
+import { isValidSignupEmail } from '@/lib/signupValidation';
 
 /**
  * API base URL for the church-management backend.
@@ -228,10 +229,22 @@ export async function checkRegistrationEmail(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.trim(), scope }),
   });
-  const data = (await res.json()) as Record<string, unknown>;
+
+  let data: Record<string, unknown> = {};
+  try {
+    const text = await res.text();
+    if (text) {
+      data = JSON.parse(text) as Record<string, unknown>;
+    }
+  } catch {
+    throw new Error('Could not read email verification response from server.');
+  }
+
   const message = typeof data.message === 'string' ? data.message : undefined;
   const reason = typeof data.reason === 'string' ? data.reason : undefined;
   const domain_checked = typeof data.domain_checked === 'boolean' ? data.domain_checked : undefined;
+  const okRaw = data.ok;
+  const ok = okRaw === true || okRaw === 'true';
 
   if (res.status === 400) {
     return {
@@ -242,7 +255,7 @@ export async function checkRegistrationEmail(
     };
   }
 
-  if (data.ok === true) {
+  if (ok) {
     return { ok: true, domain_checked };
   }
 
@@ -252,6 +265,92 @@ export async function checkRegistrationEmail(
     reason,
     domain_checked,
   };
+}
+
+/** Format + server validation (DNS / uniqueness) for church email only — use before step 1 API. */
+export async function verifyChurchEmailForRegistration(
+  churchEmail: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const church = (churchEmail || '').trim();
+  if (!church) {
+    return { ok: false, message: 'Church email is required.' };
+  }
+  if (!isValidSignupEmail(church)) {
+    return { ok: false, message: 'Enter a valid church email address.' };
+  }
+  const churchCheck = await checkRegistrationEmail(church, 'church');
+  if (!churchCheck.ok) {
+    return {
+      ok: false,
+      message:
+        churchCheck.message ||
+        'This church email cannot be used. It may already be registered or the domain may be invalid.',
+    };
+  }
+  return { ok: true };
+}
+
+export type RegistrationEmailGateFailure = {
+  ok: false;
+  message: string;
+  field: 'churchEmail' | 'adminEmail';
+};
+
+/**
+ * Validates both church and admin emails (format + server: DB uniqueness, domain checks)
+ * before advancing past steps where both addresses are known.
+ */
+export async function verifyAllRegistrationEmails(payload: {
+  churchEmail: string;
+  adminEmail: string;
+}): Promise<{ ok: true } | RegistrationEmailGateFailure> {
+  const church = (payload.churchEmail || '').trim();
+  const admin = (payload.adminEmail || '').trim();
+
+  if (!church) {
+    return { ok: false, message: 'Church email is missing. Go back to step 1.', field: 'churchEmail' };
+  }
+  if (!admin) {
+    return { ok: false, message: 'Admin email is required.', field: 'adminEmail' };
+  }
+  if (!isValidSignupEmail(church)) {
+    return {
+      ok: false,
+      message: 'Enter a valid church email address.',
+      field: 'churchEmail',
+    };
+  }
+  if (!isValidSignupEmail(admin)) {
+    return {
+      ok: false,
+      message: 'Enter a valid admin email address.',
+      field: 'adminEmail',
+    };
+  }
+
+  const churchCheck = await checkRegistrationEmail(church, 'church');
+  if (!churchCheck.ok) {
+    return {
+      ok: false,
+      message:
+        churchCheck.message ||
+        'This church email cannot be used. It may already be registered or the domain may be invalid.',
+      field: 'churchEmail',
+    };
+  }
+
+  const adminCheck = await checkRegistrationEmail(admin, 'admin');
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      message:
+        adminCheck.message ||
+        'This admin email cannot be used. It may already be registered or the domain may be invalid.',
+      field: 'adminEmail',
+    };
+  }
+
+  return { ok: true };
 }
 
 /** Step 1: Church information. Returns session_id. */

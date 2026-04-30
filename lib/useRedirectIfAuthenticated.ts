@@ -3,7 +3,10 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { setChurchSessionCookie } from '@/lib/churchSessionBrowser';
-import { resolvePostLoginPath, type PostLoginUser } from '@/lib/postLoginRedirect';
+import {
+  resolvePostLoginDestinationWithDepartmentProbe,
+  type PostLoginUser,
+} from '@/lib/postLoginRedirect';
 import { isAccessTokenExpired } from '@/lib/jwtExpiry';
 
 /**
@@ -34,6 +37,15 @@ export function useRedirectIfAuthenticated(): void {
     } catch {
       /* ignore */
     }
-    router.replace(resolvePostLoginPath(next, storedUser));
+    let cancelled = false;
+    void (async () => {
+      const dest = await resolvePostLoginDestinationWithDepartmentProbe(next, storedUser);
+      if (!cancelled) {
+        router.replace(dest);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [router, next]);
 }

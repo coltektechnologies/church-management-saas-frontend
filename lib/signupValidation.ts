@@ -8,31 +8,102 @@ export function isValidSignupEmail(value: string): boolean {
   return emailSchema.safeParse(value).success;
 }
 
-function digitCount(value: string): number {
-  return (value.match(/\d/g) || []).length;
-}
-
 /**
- * Validates phone using libphonenumber when step-1 country (ISO alpha-2) is set.
- * Falls back to backend-style minimum digit length when country is missing.
+ * Returns `null` if the phone is acceptable for the church country (ISO alpha-2 from step 1).
+ * Uses libphonenumber for national/international parsing; parsed country must match church country.
  */
-export function isValidSignupPhone(phone: string, countryIsoAlpha2: string | undefined): boolean {
+export function getSignupPhoneError(
+  phone: string,
+  churchCountryIsoAlpha2: string | undefined
+): string | null {
   const trimmed = (phone || '').trim();
   if (!trimmed) {
-    return false;
+    return null;
   }
-  if (!countryIsoAlpha2?.trim()) {
-    return digitCount(trimmed) >= 10;
+
+  const isoRaw = churchCountryIsoAlpha2?.trim();
+  if (!isoRaw) {
+    return 'Your church country (step 1) is required — go back and select it to validate this number.';
   }
-  try {
-    const iso = countryIsoAlpha2.trim().toUpperCase() as CountryCode;
-    const withRegion = parsePhoneNumberFromString(trimmed, iso);
-    if (withRegion?.isValid()) {
-      return true;
-    }
-    const any = parsePhoneNumberFromString(trimmed);
-    return any?.isValid() ?? false;
-  } catch {
-    return digitCount(trimmed) >= 10;
+
+  const iso = isoRaw.toUpperCase() as CountryCode;
+
+  const primary = parsePhoneNumberFromString(trimmed, iso);
+  const international = parsePhoneNumberFromString(trimmed);
+
+  const candidate = primary?.isValid()
+    ? primary
+    : international?.isValid()
+      ? international
+      : null;
+
+  if (!candidate) {
+    return `Enter a valid phone number for ${iso} (correct length and digits for that country).`;
   }
+
+  if (candidate.country && candidate.country !== iso) {
+    return `Dial code must match your church country (${iso}). Open the flag dropdown next to the number or update country in step 1.`;
+  }
+
+  return null;
+}
+
+export function isValidSignupPhone(phone: string, countryIsoAlpha2: string | undefined): boolean {
+  return getSignupPhoneError(phone, countryIsoAlpha2) === null;
+}
+
+/** Same rule as admin signup in Step2 (matches backend expectations). */
+const SIGNUP_PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+
+/**
+ * Live validation for password field: returns `null` if empty or valid.
+ */
+export function getSignupPasswordError(password: string): string | null {
+  const p = password ?? '';
+  if (!p) {
+    return null;
+  }
+
+  if (p.length < 8) {
+    return 'Password must be at least 8 characters.';
+  }
+
+  if (!/^[A-Za-z\d@$!%*?&#]+$/.test(p)) {
+    return 'Use only letters, numbers, and these symbols: @$!%*?&#';
+  }
+
+  const missing: string[] = [];
+  if (!/[a-z]/.test(p)) {
+    missing.push('a lowercase letter');
+  }
+  if (!/[A-Z]/.test(p)) {
+    missing.push('an uppercase letter');
+  }
+  if (!/\d/.test(p)) {
+    missing.push('a number');
+  }
+  if (!/[@$!%*?&#]/.test(p)) {
+    missing.push('a symbol (@$!%*?&#)');
+  }
+  if (missing.length > 0) {
+    return `Add ${missing.join(', ')}.`;
+  }
+
+  return null;
+}
+
+export function getSignupConfirmPasswordError(password: string, confirmPassword: string): string | null {
+  const c = (confirmPassword ?? '').trim();
+  if (!c) {
+    return null;
+  }
+  if ((password ?? '') !== confirmPassword) {
+    return 'Passwords do not match';
+  }
+  return null;
+}
+
+export function isSignupPasswordValid(password: string): boolean {
+  return SIGNUP_PASSWORD_REGEX.test(password ?? '');
 }
