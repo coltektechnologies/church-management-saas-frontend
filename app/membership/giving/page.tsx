@@ -137,7 +137,7 @@ export default function MembershipGivingPage() {
   }, [activeFilter]);
 
   return (
-    <div className="w-full bg-background flex-1 p-4 sm:p-6 lg:px-8 lg:py-6 space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
+    <div className="w-full max-w-6xl mx-auto py-8 px-4 space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex-1">
@@ -169,7 +169,7 @@ export default function MembershipGivingPage() {
           return (
             <Card
               key={idx}
-              className="p-5 border-transparent shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex items-center gap-4 hover:shadow-md transition-shadow relative overflow-hidden"
+              className="p-5 bg-white border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow relative overflow-hidden rounded-xl"
             >
               <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#2FC4B2]" />
               <div className="bg-[#0A2E46]/5 p-3 rounded-full">
@@ -189,7 +189,7 @@ export default function MembershipGivingPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
         {/* Left Column: Giving History */}
         <div className="lg:col-span-2 space-y-4">
-          <Card className="border-transparent shadow-sm rounded-xl overflow-hidden flex flex-col h-full">
+          <Card className="bg-white border border-gray-100 shadow-sm rounded-xl overflow-hidden flex flex-col h-full">
             <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <History className="w-5 h-5 text-[#0A2E46]" />
@@ -270,7 +270,7 @@ export default function MembershipGivingPage() {
 
         {/* Right Column: Pledges */}
         <div className="space-y-6">
-          <Card className="border-transparent shadow-sm rounded-xl p-5">
+          <Card className="bg-white border border-gray-100 shadow-sm rounded-xl p-5">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-[#0A2E46]" />

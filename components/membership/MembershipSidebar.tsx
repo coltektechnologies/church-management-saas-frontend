@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 import ChangePasswordModal from '@/components/membership/ChangePasswordModal';
 
 const mainNavItems = [
-  { title: 'My Profile', path: '/membership', icon: User },
+  { title: 'My Profile', path: '/membership/profile', icon: User },
   { title: 'Dashboard', path: '/membership/dashboard', icon: LayoutDashboard },
   { title: 'Announcements', path: '/membership/announcements', icon: Megaphone },
   { title: 'Events', path: '/membership/events', icon: CalendarDays },
@@ -31,7 +31,7 @@ export default function MembershipSidebar() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const isActive = (path: string) =>
-    path === '/membership' ? pathname === '/membership' : pathname.startsWith(path);
+    pathname === path || pathname.startsWith(`${path}/`);
 
   return (
     <aside

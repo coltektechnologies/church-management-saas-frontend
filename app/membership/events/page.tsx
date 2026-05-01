@@ -108,12 +108,12 @@ function activityStatusBadgeClass(phase: ActivityDisplayStatus): string {
   const base = 'border-none font-medium px-3.5 py-0.5 text-[12px] rounded-full pointer-events-none';
   switch (phase) {
     case 'Past':
-      return cn(base, 'bg-slate-500/15 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300');
+      return cn(base, 'bg-slate-200 text-slate-800');
     case 'Ongoing':
-      return cn(base, 'bg-amber-500/18 text-amber-900 dark:bg-amber-400/15 dark:text-amber-300');
+      return cn(base, 'bg-amber-200 text-amber-950');
     case 'Upcoming':
     default:
-      return cn(base, 'bg-sky-500/15 text-sky-800 dark:bg-sky-400/15 dark:text-sky-300');
+      return cn(base, 'bg-sky-200 text-sky-950');
   }
 }
 
@@ -146,7 +146,7 @@ export default function MembershipEventsPage() {
   }, [activeTab]);
 
   return (
-    <div className="w-full bg-background flex-1 p-4 sm:p-6 lg:px-8 lg:py-6 space-y-5 max-w-6xl mx-auto animate-in fade-in duration-500">
+    <div className="w-full max-w-6xl mx-auto py-8 px-4 space-y-5 animate-in fade-in duration-500">
       {/* Header */}
       <MembershipTopbar
         title="My Department Events"
@@ -168,8 +168,8 @@ export default function MembershipEventsPage() {
             }}
             className={`rounded-[8px] px-5 py-1.5 h-9 transition-all duration-200 whitespace-nowrap text-[14px] ${
               activeTab === tab
-                ? 'bg-muted-foreground/30 text-secondary-foreground hover:bg-secondary/90 font-medium shadow-sm'
-                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground font-medium'
+                ? 'bg-white text-[#0A2E46] border border-slate-200 shadow-sm font-medium'
+                : 'text-slate-600 hover:bg-white/80 hover:text-[#0A2E46] font-medium'
             }`}
           >
             {tab}
@@ -177,7 +177,7 @@ export default function MembershipEventsPage() {
         ))}
       </div>
 
-      <Separator className="bg-foreground/20" />
+      <Separator className="bg-slate-200" />
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
@@ -187,18 +187,18 @@ export default function MembershipEventsPage() {
       ) : (
         <div className="flex flex-col gap-3.5 pt-1 pb-10">
           {filteredEvents.length === 0 && (
-            <div className="rounded-xl border border-dashed border-muted-foreground/25 bg-muted/20 px-6 py-12 text-center space-y-2">
-              <p className="text-muted-foreground text-sm">No events in this view yet.</p>
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center space-y-2 shadow-sm">
+              <p className="text-slate-600 text-sm">No events in this view yet.</p>
             </div>
           )}
 
           {filteredEvents.map((activity) => (
             <Card
               key={activity.id}
-              className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-muted-foreground/5 border-transparent shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.06)] hover:bg-muted-foreground/40 transition-all duration-300 rounded-xl"
+              className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-white border border-slate-200/90 shadow-[0_2px_10px_-4px_rgba(15,23,42,0.08)] hover:shadow-[0_6px_16px_-6px_rgba(15,23,42,0.12)] transition-all duration-300 rounded-xl"
             >
               <div className="flex flex-col gap-2.5">
-                <h3 className="text-[17px] font-bold text-foreground tracking-tight">
+                <h3 className="text-[17px] font-bold text-[#0A2E46] tracking-tight">
                   {activity.title}
                 </h3>
                 <div className="flex flex-col items-start text-[13px] font-medium text-slate-600 dark:text-slate-400 gap-1.5">

@@ -16,6 +16,10 @@ import { getSafeInternalPath } from '@/lib/safeReturnPath';
  * Optional local preview for /secretary without cookie: set NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true
  * in .env.local, then restart dev (see `skipSecretaryAuth` below).
  * Never enable that in production.
+ *
+ * Membership `/membership`: in `next dev`, `/membership` is appended to public prefixes so you can
+ * preview UI without `church_session`. Production/`next start` keeps it gated unless you set
+ * NEXT_PUBLIC_SKIP_MEMBERSHIP_AUTH=true (see skipMembershipAuth below).
  */
 const CHURCH_SESSION_COOKIE = 'church_session';
 const CHURCH_SESSION_COOKIE_VALUE = '1';
@@ -30,7 +34,7 @@ const PUBLIC_EXACT = new Set([
 ]);
 
 /** Prefixes: path === prefix or path starts with prefix + '/' */
-const PUBLIC_PREFIXES = [
+const PUBLIC_PREFIXES_BASE = [
   '/login',
   '/signup',
   '/features',
@@ -42,6 +46,12 @@ const PUBLIC_PREFIXES = [
   '/treasury',
   '/admin',
   '/departments',
+] as const;
+
+/** In development only, allow `/membership` without session cookie (local UI testing). */
+const PUBLIC_PREFIXES: string[] = [
+  ...PUBLIC_PREFIXES_BASE,
+  ...(process.env.NODE_ENV === 'development' ? ['/membership'] : []),
 ];
 
 /** Where to send users who already have a session cookie but hit login/signup. */

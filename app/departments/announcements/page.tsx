@@ -92,7 +92,7 @@ export default function AnnouncementsPage() {
   const showEmpty = !isLoading && !isError && announcements.length === 0;
 
   return (
-    <div className="w-full bg-background flex-1 p-4 sm:p-6 lg:px-8 lg:py-6 space-y-5 max-w-6xl mx-auto animate-in fade-in duration-500">
+    <div className="w-full max-w-6xl mx-auto py-8 px-4 space-y-5 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1 mb-1">
         <div className="flex items-center gap-2.5 text-info">
@@ -107,7 +107,7 @@ export default function AnnouncementsPage() {
         </Button>
       </div>
 
-      <Separator className="bg-foreground/20 mt-5" />
+      <Separator className="bg-slate-200 mt-5" />
 
       {/* Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -118,8 +118,8 @@ export default function AnnouncementsPage() {
             onClick={() => setActiveTab(tab)}
             className={`rounded-[8px] px-5 py-1.5 h-9 transition-all duration-200 whitespace-nowrap text-[14px] ${
               activeTab === tab
-                ? 'bg-muted-foreground/30 text-secondary-foreground hover:bg-secondary/90 font-medium shadow-sm'
-                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground font-medium'
+                ? 'bg-white text-[#0A2E46] border border-slate-200 shadow-sm font-medium'
+                : 'text-slate-600 hover:bg-white/80 hover:text-[#0A2E46] font-medium'
             }`}
           >
             {tab}
@@ -156,8 +156,8 @@ export default function AnnouncementsPage() {
           )}
 
           {showEmpty && (
-            <div className="rounded-xl border border-dashed border-muted-foreground/25 bg-muted/20 px-6 py-12 text-center space-y-2">
-              <p className="text-muted-foreground text-sm">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center space-y-2 shadow-sm">
+              <p className="text-slate-600 text-sm">
                 No announcements found for this filter yet.
               </p>
               <Button variant="secondary" size="sm" onClick={handleCreateAnnouncement}>
@@ -169,10 +169,10 @@ export default function AnnouncementsPage() {
           {announcements.map((announcement) => (
             <Card
               key={announcement.id}
-              className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-muted-foreground/5 border-transparent shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_-4px_rgba(0,0,0,0.06)] hover:bg-muted-foreground/40 transition-all duration-300 rounded-xl"
+              className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-white border border-slate-200/90 shadow-[0_2px_10px_-4px_rgba(15,23,42,0.08)] hover:shadow-[0_6px_16px_-6px_rgba(15,23,42,0.12)] transition-all duration-300 rounded-xl"
             >
               <div className="flex flex-col gap-2.5">
-                <h3 className="text-[17px] font-bold text-foreground tracking-tight">
+                <h3 className="text-[17px] font-bold text-[#0A2E46] tracking-tight">
                   {announcement.title}
                 </h3>
                 <div className="flex flex-col items-start text-[13px] font-medium text-slate-600 dark:text-slate-400">
