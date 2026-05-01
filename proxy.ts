@@ -4,11 +4,14 @@ import type { NextRequest } from 'next/server';
 import { getSafeInternalPath } from '@/lib/safeReturnPath';
 
 /**
- * Next.js 16+: edge guard before App Router. Cookie must match login (see `churchSessionBrowser.ts`).
+ * Next.js 16+: runs before App Router. Cookie must match login (see `churchSessionBrowser.ts`).
  *
  * Public (no session cookie): marketing + auth + registration only.
  * Everything else requires `church_session=1` (set on successful login / token storage).
+ * Typed URLs and bookmarks cannot bypass this — only `localStorage` JWT is not visible here.
  * With a session cookie, `/` and `/features` redirect to `/dashboard` (role-based → /admin, /start, etc.).
+ *
+ * Same-origin `/api/*` is never redirected to `/login` so dev rewrites to Django return JSON, not HTML.
  *
  * Optional local preview for /secretary without cookie: set NEXT_PUBLIC_SKIP_SECRETARY_AUTH=true
  * in .env.local, then restart dev (see `skipSecretaryAuth` below).
@@ -27,7 +30,15 @@ const PUBLIC_EXACT = new Set([
 ]);
 
 /** Prefixes: path === prefix or path starts with prefix + '/' */
-const PUBLIC_PREFIXES = ['/login', '/signup', '/features', '/developers', '/contact', '/pricing'];
+const PUBLIC_PREFIXES = [
+  '/login',
+  '/signup',
+  '/features',
+  '/developers',
+  '/contact',
+  '/pricing',
+  '/QuickSetupPage',
+];
 
 /** Where to send users who already have a session cookie but hit login/signup. */
 const LOGGED_IN_AUTH_REDIRECT = '/dashboard';
@@ -80,6 +91,11 @@ function isNextOrStaticAsset(pathname: string): boolean {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  /** Dev proxy / optional same-origin API — must not respond with HTML login redirect */
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
 
   const sessionOk =
     request.cookies.get(CHURCH_SESSION_COOKIE)?.value === CHURCH_SESSION_COOKIE_VALUE;

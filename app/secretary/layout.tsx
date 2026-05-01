@@ -13,6 +13,7 @@ import SecretarySidebar from '@/components/secretary/SecretarySidebar';
 import SecretaryTopbar from '@/components/secretary/SecretaryTopbar';
 import { useSecretaryProfile } from '@/components/secretary/contexts/SecretaryProfileContext';
 import { RequireAuth } from '@/components/auth/RequireAuth';
+import { RequireSecretaryPortal } from '@/components/auth/RequireSecretaryPortal';
 
 /*
  * Optional local preview without login:
@@ -78,10 +79,12 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
     </AuthProvider>
   );
 
-  // // When preview is enabled: uncomment skipAuth above and these two lines:
-  // if (skipAuth) {
-  //   return tree;
-  // }
-  return <RequireAuth>{tree}</RequireAuth>;
-  // return tree;
+  if (skipAuth) {
+    return tree;
+  }
+  return (
+    <RequireAuth>
+      <RequireSecretaryPortal>{tree}</RequireSecretaryPortal>
+    </RequireAuth>
+  );
 }

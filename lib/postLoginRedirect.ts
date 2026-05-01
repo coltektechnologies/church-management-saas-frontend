@@ -1,3 +1,4 @@
+import type { DepartmentMyPortalEmpty } from '@/lib/departmentsApi';
 import { getSafeReturnPath } from '@/lib/safeReturnPath';
 
 /** When the user has no dedicated portal, send them here instead of `/admin`. */
@@ -71,14 +72,66 @@ export function isDepartmentPortalRoleName(raw: string | undefined | null): bool
  * `Member.system_user_id` + department head / elder-in-charge assignment — not JWT `UserRole`
  * rows. Call this when role-based routing would otherwise send the user to `/start`.
  */
-export async function canAccessDepartmentPortalViaApi(): Promise<boolean> {
+export type DepartmentPortalProbe =
+  | { ok: true }
+  | {
+      ok: false;
+      kind: 'api_unreachable' | 'no_assignment' | 'forbidden' | 'unknown';
+      detail?: string;
+    };
+
+/**
+ * Distinguishes “API failed / wrong URL / CORS” from “user has no head/elder assignment”
+ * so `/start` can show accurate guidance.
+ */
+export async function probeDepartmentPortalAccess(): Promise<DepartmentPortalProbe> {
   try {
-    const { fetchDepartmentMyPortal } = await import('@/lib/departmentsApi');
-    await fetchDepartmentMyPortal();
-    return true;
-  } catch {
-    return false;
+    const { fetchDepartmentMyPortal, isDepartmentMyPortalSuccess } = await import(
+      '@/lib/departmentsApi'
+    );
+    const data = await fetchDepartmentMyPortal();
+    if (isDepartmentMyPortalSuccess(data)) {
+      return { ok: true };
+    }
+    const empty = data as DepartmentMyPortalEmpty;
+    return {
+      ok: false,
+      kind: 'no_assignment',
+      detail: empty.detail ?? empty.reason ?? 'no portal',
+    };
+  } catch (e) {
+    const raw = e instanceof Error ? e.message : String(e);
+    const msg = raw.toLowerCase();
+    if (
+      raw.includes('NEXT_PUBLIC_API_URL') ||
+      msg.includes('failed to fetch') ||
+      msg.includes('networkerror') ||
+      msg.includes('load failed') ||
+      msg.includes('network request failed') ||
+      (msg.includes('fetch') && msg.includes('aborted'))
+    ) {
+      return { ok: false, kind: 'api_unreachable', detail: raw };
+    }
+    if (msg.includes('403') || msg.includes('church context')) {
+      return { ok: false, kind: 'forbidden', detail: raw };
+    }
+    if (
+      msg.includes('404') ||
+      msg.includes('not linked') ||
+      msg.includes('not assigned') ||
+      msg.includes('no church member') ||
+      msg.includes('department head or elder') ||
+      msg.includes('not department head')
+    ) {
+      return { ok: false, kind: 'no_assignment', detail: raw };
+    }
+    return { ok: false, kind: 'unknown', detail: raw };
   }
+}
+
+export async function canAccessDepartmentPortalViaApi(): Promise<boolean> {
+  const p = await probeDepartmentPortalAccess();
+  return p.ok === true;
 }
 
 /** True if the signed-in user has at least one department-portal role (any level). */
@@ -114,6 +167,18 @@ export function userHasTreasuryPortalAccess(user: PostLoginUser | null | undefin
   }
   const roles = Array.isArray(user.roles) ? user.roles : [];
   return roles.some((r) => isTreasurerRoleName(r.name) || isTreasuryTeamRoleName(r.name));
+}
+
+/** `/secretary` app — secretary roles or platform admin (same rule as {@link defaultHomePathForUser}). */
+export function userHasSecretaryPortalAccess(user: PostLoginUser | null | undefined): boolean {
+  if (!user) {
+    return false;
+  }
+  if (user.is_platform_admin) {
+    return true;
+  }
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  return roles.some((r) => isSecretaryRoleName(r.name));
 }
 
 /**

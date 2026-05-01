@@ -6,7 +6,7 @@ import type { DepartmentProfile } from '@/components/departments/contexts/Depart
 import { THEME_COLOR_HEX, type ThemeColor } from '@/constants/departments';
 import {
   type DepartmentDetailResponse,
-  type DepartmentMyPortalResponse,
+  type DepartmentMyPortalSuccess,
   parseThemeColor,
 } from '@/lib/departmentsApi';
 
@@ -17,7 +17,7 @@ function memberFullName(v: Record<string, unknown>): string {
   return parts.join(' ').trim();
 }
 
-function portalRoleLabel(role: DepartmentMyPortalResponse['portal_role']): string {
+function portalRoleLabel(role: DepartmentMyPortalSuccess['portal_role']): string {
   return role === 'elder_in_charge' ? 'Elder in charge' : 'Department Head';
 }
 
@@ -38,7 +38,7 @@ export function mapDepartmentDetailToProfilePatch(
 }
 
 export function mapMyPortalToProfilePatch(
-  data: DepartmentMyPortalResponse
+  data: DepartmentMyPortalSuccess
 ): Partial<DepartmentProfile> {
   const dept = data.department;
   const v = data.viewer_member ?? {};
