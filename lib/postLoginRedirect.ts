@@ -1,4 +1,3 @@
-import type { DepartmentMyPortalEmpty } from '@/lib/departmentsApi';
 import { getSafeReturnPath } from '@/lib/safeReturnPath';
 
 /** When the user has no dedicated portal, send them here instead of `/admin`. */
@@ -93,45 +92,27 @@ export async function probeDepartmentPortalAccess(): Promise<DepartmentPortalPro
     if (isDepartmentMyPortalSuccess(data)) {
       return { ok: true };
     }
-    const empty = data as DepartmentMyPortalEmpty;
-    return {
-      ok: false,
-      kind: 'no_assignment',
-      detail: empty.detail ?? empty.reason ?? 'no portal',
-    };
+    const detail = typeof data.detail === 'string' ? data.detail : undefined;
+    return { ok: false, kind: 'no_assignment', detail };
   } catch (e) {
-    const raw = e instanceof Error ? e.message : String(e);
-    const msg = raw.toLowerCase();
+    const msg = e instanceof Error ? e.message : String(e);
+    const lower = msg.toLowerCase();
     if (
-      raw.includes('NEXT_PUBLIC_API_URL') ||
-      msg.includes('failed to fetch') ||
-      msg.includes('networkerror') ||
-      msg.includes('load failed') ||
-      msg.includes('network request failed') ||
-      (msg.includes('fetch') && msg.includes('aborted'))
+      /\b403\b/.test(msg) ||
+      /\b401\b/.test(msg) ||
+      lower.includes('forbidden') ||
+      lower.includes('unauthorized')
     ) {
-      return { ok: false, kind: 'api_unreachable', detail: raw };
+      return { ok: false, kind: 'forbidden', detail: msg };
     }
-    if (msg.includes('403') || msg.includes('church context')) {
-      return { ok: false, kind: 'forbidden', detail: raw };
-    }
-    if (
-      msg.includes('404') ||
-      msg.includes('not linked') ||
-      msg.includes('not assigned') ||
-      msg.includes('no church member') ||
-      msg.includes('department head or elder') ||
-      msg.includes('not department head')
-    ) {
-      return { ok: false, kind: 'no_assignment', detail: raw };
-    }
-    return { ok: false, kind: 'unknown', detail: raw };
+    return { ok: false, kind: 'api_unreachable', detail: msg };
   }
 }
 
+/** Boolean helper for route guards — true when `GET /departments/my-portal/` returns a full portal row. */
 export async function canAccessDepartmentPortalViaApi(): Promise<boolean> {
-  const p = await probeDepartmentPortalAccess();
-  return p.ok === true;
+  const probe = await probeDepartmentPortalAccess();
+  return probe.ok;
 }
 
 /** True if the signed-in user has at least one department-portal role (any level). */
