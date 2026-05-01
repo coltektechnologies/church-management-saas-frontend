@@ -4,7 +4,7 @@
 
 import { getApiBaseUrl, getAccessToken } from '@/lib/api';
 import { messageFromApiErrorJson } from '@/lib/apiMessages';
-import { createUserRole } from '@/lib/rolesApi';
+import { createUserRole, deleteUserRoleAssignment, fetchUserRolesForUser } from '@/lib/rolesApi';
 import { updateUser } from '@/lib/settingsApi';
 import type {
   InviteStaffPayload,
@@ -178,4 +178,85 @@ export async function deleteStaffUser(userId: string): Promise<void> {
   }
   const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   throw new Error(messageFromApiErrorJson(data, 'Could not remove user.'));
+}
+
+export interface ChurchGroupMemberRow {
+  id: string;
+  user: string;
+}
+
+/** GET …/auth/church-groups/:groupId/members/ */
+export async function fetchChurchGroupMembers(groupId: string): Promise<ChurchGroupMemberRow[]> {
+  const data = await fetchAuthJson<unknown>(
+    `${getApiBaseUrl()}/auth/church-groups/${groupId}/members/`,
+    { method: 'GET' }
+  );
+  const rows = normalizeList(data) as Record<string, unknown>[];
+  return rows.map((r) => ({
+    id: String(r.id ?? ''),
+    user: String(r.user ?? ''),
+  }));
+}
+
+/** POST …/auth/church-groups/:groupId/members/ body `{ user_id }`. */
+export async function addUserToChurchGroup(groupId: string, userId: string): Promise<void> {
+  await fetchAuthJson<unknown>(`${getApiBaseUrl()}/auth/church-groups/${groupId}/members/`, {
+    method: 'POST',
+    body: JSON.stringify({ user_id: userId }),
+  });
+}
+
+/** DELETE …/auth/church-groups/:groupId/members/:membershipId/ */
+export async function removeUserFromChurchGroup(
+  groupId: string,
+  membershipId: string
+): Promise<void> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/auth/church-groups/${groupId}/members/${membershipId}/`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (res.status === 204 || res.ok) {
+    return;
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  throw new Error(messageFromApiErrorJson(data, 'Could not update church groups.'));
+}
+
+/**
+ * Replace active church-role assignments with a single role (matches invite flow).
+ * Pass `null` roleId to remove all assignments (unassigned).
+ */
+export async function replaceUserPrimaryRole(userId: string, roleId: string | null): Promise<void> {
+  const existing = await fetchUserRolesForUser(userId);
+  for (const ur of existing) {
+    await deleteUserRoleAssignment(ur.id);
+  }
+  if (roleId) {
+    await createUserRole(userId, roleId);
+  }
+}
+
+/** Add/remove group memberships so the set matches `nextIds`. */
+export async function syncUserChurchGroups(
+  userId: string,
+  previousIds: string[],
+  nextIds: string[]
+): Promise<void> {
+  const prev = new Set(previousIds);
+  const next = new Set(nextIds);
+  for (const gid of nextIds) {
+    if (!prev.has(gid)) {
+      await addUserToChurchGroup(gid, userId);
+    }
+  }
+  for (const gid of previousIds) {
+    if (!next.has(gid)) {
+      const members = await fetchChurchGroupMembers(gid);
+      const row = members.find((m) => m.user === userId);
+      if (row) {
+        await removeUserFromChurchGroup(gid, row.id);
+      }
+    }
+  }
 }

@@ -22,8 +22,10 @@ import {
   Ban,
   UserCheck,
   Loader2,
+  Pencil,
 } from 'lucide-react';
 import AddAdminModal from './AddAdminModal';
+import EditStaffModal from './EditStaffModal';
 import type { InviteStaffPayload } from './AddAdminModal';
 import {
   groupLabels,
@@ -66,6 +68,7 @@ export default function AdminManagementTab() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [churchGroupCatalog, setChurchGroupCatalog] = useState<ChurchGroupOption[]>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editStaff, setEditStaff] = useState<StaffMember | null>(null);
   const [query, setQuery] = useState('');
   const [listLoading, setListLoading] = useState(true);
   const [groupsLoading, setGroupsLoading] = useState(true);
@@ -323,7 +326,7 @@ export default function AdminManagementTab() {
                   <TableHead className="text-[10px] font-black uppercase text-slate-500">
                     Status
                   </TableHead>
-                  <TableHead className="text-[10px] font-black uppercase text-slate-500 text-right w-[120px]">
+                  <TableHead className="text-[10px] font-black uppercase text-slate-500 text-right min-w-[156px]">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -392,6 +395,16 @@ export default function AdminManagementTab() {
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 text-slate-500 hover:text-[#0B2A4A]"
+                          title="Edit user"
+                          onClick={() => setEditStaff(s)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-slate-500 hover:text-[#0B2A4A]"
                           title={s.status === 'active' ? 'Suspend' : 'Reactivate'}
                           onClick={() => void toggleSuspend(s.id)}
                         >
@@ -428,6 +441,17 @@ export default function AdminManagementTab() {
         groupsLoading={groupsLoading}
         onInvite={handleInvite}
       />
+
+      {editStaff ? (
+        <EditStaffModal
+          open
+          staff={editStaff}
+          onClose={() => setEditStaff(null)}
+          churchGroups={churchGroupCatalog}
+          groupsLoading={groupsLoading}
+          onSaved={loadStaff}
+        />
+      ) : null}
     </div>
   );
 }
