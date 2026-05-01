@@ -90,5 +90,5 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   // const skipAuth = process.env.NEXT_PUBLIC_SKIP_DASHBOARD_AUTH === 'true';
   // if (skipAuth) return tree;
 
-  return <RequireAuth>{tree}</RequireAuth>;
+  return <RequireAuth skip={true}>{tree}</RequireAuth>;
 }
