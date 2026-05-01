@@ -380,11 +380,36 @@ export async function fetchDepartmentDetail(id: string): Promise<DepartmentDetai
 
 export type DepartmentPortalRole = 'department_head' | 'elder_in_charge';
 
+export type DepartmentPortalEmptyReason = 'NO_MEMBER_LINK' | 'NO_PORTAL_ASSIGNMENT';
+
 /** Signed-in user’s department portal (primary head or elder in charge). */
-export interface DepartmentMyPortalResponse {
+export type DepartmentMyPortalSuccess = {
   portal_role: DepartmentPortalRole;
   department: DepartmentDetailResponse;
   viewer_member: Record<string, unknown>;
+  reason?: undefined;
+};
+
+/** Authenticated but no portal row (linked member / head / elder required). HTTP 200 from API. */
+export type DepartmentMyPortalEmpty = {
+  portal_role: null;
+  department: null;
+  viewer_member: null;
+  reason: DepartmentPortalEmptyReason;
+  detail?: string;
+};
+
+export type DepartmentMyPortalResponse = DepartmentMyPortalSuccess | DepartmentMyPortalEmpty;
+
+export function isDepartmentMyPortalSuccess(
+  r: DepartmentMyPortalResponse
+): r is DepartmentMyPortalSuccess {
+  return (
+    r.portal_role !== null &&
+    r.portal_role !== undefined &&
+    r.department !== null &&
+    r.department !== undefined
+  );
 }
 
 export async function fetchDepartmentMyPortal(): Promise<DepartmentMyPortalResponse> {

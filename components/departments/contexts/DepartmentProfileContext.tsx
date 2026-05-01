@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useDepartments } from '@/context/DepartmentsContext';
-import { fetchDepartmentMyPortal } from '@/lib/departmentsApi';
+import { fetchDepartmentMyPortal, isDepartmentMyPortalSuccess } from '@/lib/departmentsApi';
 import { mapMyPortalToProfilePatch } from '@/lib/mapDepartmentMyPortalProfile';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -238,6 +238,9 @@ export function DepartmentProfileProvider({ children }: { children: ReactNode })
       try {
         const data = await fetchDepartmentMyPortal();
         if (cancelled) {
+          return;
+        }
+        if (!isDepartmentMyPortalSuccess(data)) {
           return;
         }
         updateProfile(mapMyPortalToProfilePatch(data));

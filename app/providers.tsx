@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+import { SessionCookieSync } from '@/components/auth/SessionCookieSync';
 import { ChurchProvider } from '@/components/quicksetup/contexts/ChurchContext';
 import { DepartmentsProvider } from '@/context/DepartmentsContext';
 
@@ -25,6 +26,7 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <SessionCookieSync />
       <ChurchProvider>
         <DepartmentsProvider>
           {children}
