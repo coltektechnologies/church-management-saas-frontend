@@ -10,9 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { performLogout } from '@/lib/churchSessionBrowser';
 import {
   canAccessAdminShell,
-  canAccessDepartmentPortalViaApi,
   defaultHomePathForUser,
+  probeDepartmentPortalAccess,
   START_HUB_PATH,
+  type DepartmentPortalProbe,
   type PostLoginUser,
 } from '@/lib/postLoginRedirect';
 
@@ -35,6 +36,7 @@ function StartPageInner() {
   const router = useRouter();
   const [user] = useState<PostLoginUser | null>(() => readUser());
   const [departmentProbeDone, setDepartmentProbeDone] = useState(false);
+  const [portalProbe, setPortalProbe] = useState<DepartmentPortalProbe | null>(null);
 
   const home = useMemo(() => defaultHomePathForUser(user), [user]);
   const showAdmin = canAccessAdminShell(user);
@@ -51,10 +53,12 @@ function StartPageInner() {
     let cancelled = false;
     (async () => {
       try {
-        if (await canAccessDepartmentPortalViaApi()) {
-          if (!cancelled) {
-            router.replace('/departments');
-          }
+        const probe = await probeDepartmentPortalAccess();
+        if (!cancelled) {
+          setPortalProbe(probe);
+        }
+        if (probe.ok && !cancelled) {
+          router.replace('/departments');
           return;
         }
       } finally {
@@ -105,12 +109,26 @@ function StartPageInner() {
                 Open the church administration area to manage members, settings, and reports — or
                 sign out when you&apos;re done.
               </>
+            ) : portalProbe && !portalProbe.ok && portalProbe.kind === 'api_unreachable' ? (
+              <>
+                The app could not reach the church API from your browser (wrong URL, offline server,
+                or CORS). Vercel&apos;s <code className="text-xs">NEXT_PUBLIC_API_URL</code> only
+                applies to deployed builds; for <strong>localhost:3000</strong> set{' '}
+                <code className="text-xs">.env.local</code> to your API, e.g.{' '}
+                <code className="text-xs break-all">
+                  NEXT_PUBLIC_API_URL=https://church-management-saas-backend.onrender.com/api
+                </code>
+                , then restart <code className="text-xs">npm run dev</code>.
+              </>
+            ) : portalProbe && !portalProbe.ok && portalProbe.kind === 'forbidden' ? (
+              <>Your account could not load a church context. Contact support if this persists.</>
             ) : (
               <>
                 No dedicated portal is linked to this login yet (for example secretary, treasury,
                 department head, or elder in charge). If you should manage a department, ask your
-                administrator to link your member profile to this account and assign head or elder
-                in charge.
+                administrator to link your <strong>member profile</strong> to this login and assign
+                you as <strong>primary department head</strong> or <strong>elder in charge</strong>{' '}
+                (the API checks that — not only a generic role name).
               </>
             )}
           </p>
