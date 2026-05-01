@@ -77,6 +77,34 @@ export async function fetchUserRolesForRole(roleId: string): Promise<UserRoleRow
   return normalizeList<UserRoleRow>(data).filter((ur) => ur.is_active !== false);
 }
 
+/** GET …/auth/user-roles/?user_id= — assignments for one user (church-scoped on server). */
+export async function fetchUserRolesForUser(userId: string): Promise<UserRoleRow[]> {
+  const base = getApiBaseUrl();
+  const q = new URLSearchParams({ user_id: userId });
+  const data = await fetchAuth<unknown>(`${base}/auth/user-roles/?${q}`, {
+    method: 'GET',
+  });
+  return normalizeList<UserRoleRow>(data).filter((ur) => ur.is_active !== false);
+}
+
+/** DELETE …/auth/user-roles/:id/ — remove an assignment. */
+export async function deleteUserRoleAssignment(userRoleId: string): Promise<void> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/auth/user-roles/${userRoleId}/`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (res.status === 204 || res.ok) {
+    return;
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  const msg =
+    (typeof data?.detail === 'string' ? data.detail : null) ||
+    (typeof data?.error === 'string' ? data.error : null) ||
+    `Request failed: ${res.status}`;
+  throw new Error(msg);
+}
+
 /** POST …/auth/user-roles/ — assign a role within the signed-in user's church. */
 export async function createUserRole(userId: string, roleId: string): Promise<UserRoleRow> {
   const base = getApiBaseUrl();
