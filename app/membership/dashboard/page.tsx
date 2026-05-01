@@ -224,9 +224,7 @@ export default function MembershipDashboard() {
                 >
                   <action.icon className="w-5 h-5" />
                 </div>
-                <span className="text-[14px] font-medium text-[#0A2E46]">
-                  {action.label}
-                </span>
+                <span className="text-[14px] font-medium text-[#0A2E46]">{action.label}</span>
               </div>
             </Link>
           ))}
@@ -351,15 +349,11 @@ export default function MembershipDashboard() {
                         <HeartHandshake className="w-4 h-4 text-amber-800" />
                       </div>
                       <div>
-                        <p className="text-[14px] font-medium text-[#0A2E46]">
-                          {giving.type}
-                        </p>
+                        <p className="text-[14px] font-medium text-[#0A2E46]">{giving.type}</p>
                         <p className="text-[11px] text-slate-600">{giving.date}</p>
                       </div>
                     </div>
-                    <span className="text-[14px] font-bold text-[#0A2E46]">
-                      {giving.amount}
-                    </span>
+                    <span className="text-[14px] font-bold text-[#0A2E46]">{giving.amount}</span>
                   </div>
                 ))}
               </div>

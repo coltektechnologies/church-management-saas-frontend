@@ -8,8 +8,7 @@ import MembershipSidebar from '@/components/membership/MembershipSidebar';
 
 /** Local `next dev`: skip JWT gate so you can preview membership pages without logging in. */
 const skipAuth =
-  process.env.NEXT_PUBLIC_SKIP_MEMBERSHIP_AUTH === 'true' ||
-  process.env.NODE_ENV === 'development';
+  process.env.NEXT_PUBLIC_SKIP_MEMBERSHIP_AUTH === 'true' || process.env.NODE_ENV === 'development';
 
 export default function MembershipLayout({ children }: { children: ReactNode }) {
   const tree = (

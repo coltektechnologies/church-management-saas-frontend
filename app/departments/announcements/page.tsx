@@ -157,9 +157,7 @@ export default function AnnouncementsPage() {
 
           {showEmpty && (
             <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center space-y-2 shadow-sm">
-              <p className="text-slate-600 text-sm">
-                No announcements found for this filter yet.
-              </p>
+              <p className="text-slate-600 text-sm">No announcements found for this filter yet.</p>
               <Button variant="secondary" size="sm" onClick={handleCreateAnnouncement}>
                 Create your first announcement
               </Button>

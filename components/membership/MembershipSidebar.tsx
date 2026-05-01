@@ -30,8 +30,7 @@ export default function MembershipSidebar() {
   const router = useRouter();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  const isActive = (path: string) =>
-    pathname === path || pathname.startsWith(`${path}/`);
+  const isActive = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
 
   return (
     <aside

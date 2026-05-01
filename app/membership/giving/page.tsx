@@ -130,9 +130,15 @@ export default function MembershipGivingPage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
 
   const filteredHistory = useMemo(() => {
-    if (activeFilter === 'All') {return GIVING_HISTORY;}
-    if (activeFilter === 'Tithe') {return GIVING_HISTORY.filter((h) => h.type === 'Tithe');}
-    if (activeFilter === 'Offering') {return GIVING_HISTORY.filter((h) => h.type === 'Offering');}
+    if (activeFilter === 'All') {
+      return GIVING_HISTORY;
+    }
+    if (activeFilter === 'Tithe') {
+      return GIVING_HISTORY.filter((h) => h.type === 'Tithe');
+    }
+    if (activeFilter === 'Offering') {
+      return GIVING_HISTORY.filter((h) => h.type === 'Offering');
+    }
     return GIVING_HISTORY.filter((h) => h.type !== 'Tithe' && h.type !== 'Offering');
   }, [activeFilter]);
 
