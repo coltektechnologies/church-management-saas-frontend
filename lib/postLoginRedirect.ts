@@ -85,9 +85,8 @@ export type DepartmentPortalProbe =
  */
 export async function probeDepartmentPortalAccess(): Promise<DepartmentPortalProbe> {
   try {
-    const { fetchDepartmentMyPortal, isDepartmentMyPortalSuccess } = await import(
-      '@/lib/departmentsApi'
-    );
+    const { fetchDepartmentMyPortal, isDepartmentMyPortalSuccess } =
+      await import('@/lib/departmentsApi');
     const data = await fetchDepartmentMyPortal();
     if (isDepartmentMyPortalSuccess(data)) {
       return { ok: true };
