@@ -3,10 +3,13 @@
 import { ReactNode } from 'react';
 import { AuthProvider } from '@/context/AuthContext';
 import { ChurchProfileProvider } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { RequireAuth } from '@/components/auth/RequireAuth';
 import MembershipSidebar from '@/components/membership/MembershipSidebar';
 
+const skipAuth = process.env.NEXT_PUBLIC_SKIP_MEMBERSHIP_AUTH === 'true';
+
 export default function MembershipLayout({ children }: { children: ReactNode }) {
-  return (
+  const tree = (
     <AuthProvider defaultRole="admin">
       <ChurchProfileProvider>
         <div className="flex min-h-screen bg-[#F8FAFC]">
@@ -18,4 +21,9 @@ export default function MembershipLayout({ children }: { children: ReactNode }) 
       </ChurchProfileProvider>
     </AuthProvider>
   );
+
+  if (skipAuth) {
+    return tree;
+  }
+  return <RequireAuth>{tree}</RequireAuth>;
 }
