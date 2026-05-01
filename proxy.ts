@@ -37,7 +37,7 @@ const PUBLIC_PREFIXES = [
   '/secretary',
   '/treasury',
   '/admin',
-  '/department',
+  '/departments',
   '/membership',
 ];
 

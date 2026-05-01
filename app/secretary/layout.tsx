@@ -82,6 +82,6 @@ export default function SecretaryLayout({ children }: { children: ReactNode }) {
   // if (skipAuth) {
   //   return tree;
   // }
-  return <RequireAuth>{tree}</RequireAuth>;
+  return <RequireAuth skip>{tree}</RequireAuth>;
   // return tree;
 }
