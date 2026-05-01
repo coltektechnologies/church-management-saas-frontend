@@ -244,6 +244,7 @@ export async function syncUserChurchGroups(
   nextIds: string[]
 ): Promise<void> {
   const prev = new Set(previousIds);
+  const next = new Set(nextIds);
   for (const gid of nextIds) {
     if (!prev.has(gid)) {
       await addUserToChurchGroup(gid, userId);
