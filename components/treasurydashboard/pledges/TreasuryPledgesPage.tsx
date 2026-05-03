@@ -62,12 +62,23 @@ export default function TreasuryPledgesPage() {
     return p;
   }, [statusFilter, yearInput]);
 
-  const { data = [], isLoading, isError, error, refetch, isFetching } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
     queryKey: ['treasury', 'church-pledges', queryParams],
     queryFn: () => getTreasuryChurchPledges(queryParams),
   });
 
-  const loadError = isError ? (error instanceof Error ? error.message : 'Could not load pledges.') : null;
+  const loadError = isError
+    ? error instanceof Error
+      ? error.message
+      : 'Could not load pledges.'
+    : null;
 
   return (
     <div className="p-4 md:p-8 max-w-[1400px] mx-auto space-y-6">
@@ -79,8 +90,8 @@ export default function TreasuryPledgesPage() {
           <div>
             <h1 className="text-xl font-bold text-[#0A2E46]">Member pledges</h1>
             <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-              Pledges submitted by members from My Giving. Link receipts when recording income to update
-              progress.
+              Pledges submitted by members from My Giving. Link receipts when recording income to
+              update progress.
             </p>
           </div>
         </div>
@@ -178,7 +189,10 @@ export default function TreasuryPledgesPage() {
                     <td className="px-4 py-3 align-top text-center">
                       <Badge className={statusBadgeClass(row.status)}>{row.status}</Badge>
                     </td>
-                    <td className="px-4 py-3 align-top text-muted-foreground max-w-[220px] truncate" title={row.notes}>
+                    <td
+                      className="px-4 py-3 align-top text-muted-foreground max-w-[220px] truncate"
+                      title={row.notes}
+                    >
                       {row.notes?.trim() || '—'}
                     </td>
                   </tr>

@@ -48,7 +48,9 @@ const NOTIFY = [
 ];
 
 function isoDateToInput(iso: string | null | undefined): string {
-  if (!iso) {return '';}
+  if (!iso) {
+    return '';
+  }
   const d = String(iso).slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : '';
 }
@@ -73,12 +75,7 @@ type Props = {
   onSaved: (m: MemberDetail) => void;
 };
 
-export default function MemberProfileEditDialog({
-  open,
-  onOpenChange,
-  member,
-  onSaved,
-}: Props) {
+export default function MemberProfileEditDialog({ open, onOpenChange, member, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,7 +97,9 @@ export default function MemberProfileEditDialog({
   const [emergency_contact_phone, setEmergencyPhone] = useState('');
 
   useEffect(() => {
-    if (!open || !member) {return;}
+    if (!open || !member) {
+      return;
+    }
     setFirstName(member.first_name ?? '');
     setMiddleName(member.middle_name ?? '');
     setLastName(member.last_name ?? '');
@@ -122,7 +121,9 @@ export default function MemberProfileEditDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!member) {return;}
+    if (!member) {
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -279,11 +280,7 @@ export default function MemberProfileEditDialog({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="m-emp">Employer</Label>
-                <Input
-                  id="m-emp"
-                  value={employer}
-                  onChange={(e) => setEmployer(e.target.value)}
-                />
+                <Input id="m-emp" value={employer} onChange={(e) => setEmployer(e.target.value)} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="m-bap">Baptism</Label>
