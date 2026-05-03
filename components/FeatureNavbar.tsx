@@ -24,7 +24,10 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link href={ROUTES.home} className="font-semibold text-lg tracking-wide shrink-0">
+        <Link
+          href={ROUTES.home}
+          className="font-semibold text-lg tracking-wide shrink-0 cursor-pointer"
+        >
           <Image
             src={logo}
             alt="The Open Door Logo"
@@ -41,7 +44,7 @@ export default function Navbar() {
             <Link
               key={label}
               href={href}
-              className="opacity-90 hover:opacity-100 transition-opacity"
+              className="cursor-pointer opacity-90 hover:opacity-100 transition-opacity"
             >
               {label}
             </Link>
@@ -50,13 +53,13 @@ export default function Navbar() {
 
         {/* Desktop Buttons */}
         <div className="hidden md:flex gap-3 items-center">
-          <Link href="/login">
-            <button className="px-4 py-2 text-sm rounded-full border border-white/40 hover:bg-white/10 transition">
+          <Link href="/login" className="cursor-pointer">
+            <button className="cursor-pointer px-4 py-2 text-sm rounded-full border border-white/40 hover:bg-white/10 transition">
               Login
             </button>
           </Link>
-          <Link href="/signup">
-            <button className="px-5 py-2.5 bg-white text-[#1C3D72] rounded-full text-sm font-semibold hover:bg-gray-100 transition">
+          <Link href="/signup" className="cursor-pointer">
+            <button className="cursor-pointer px-5 py-2.5 bg-white text-[#1C3D72] rounded-full text-sm font-semibold hover:bg-gray-100 transition">
               Get Started
             </button>
           </Link>
@@ -64,15 +67,15 @@ export default function Navbar() {
 
         {/* Mobile: Login + Hamburger */}
         <div className="flex md:hidden items-center gap-2">
-          <Link href="/login">
-            <button className="px-3 py-1.5 text-xs rounded-full border border-white/40 hover:bg-white/10 transition">
+          <Link href="/login" className="cursor-pointer">
+            <button className="cursor-pointer px-3 py-1.5 text-xs rounded-full border border-white/40 hover:bg-white/10 transition">
               Login
             </button>
           </Link>
           <button
             onClick={() => setMenuOpen((prev) => !prev)}
             aria-label="Toggle menu"
-            className="p-2 rounded-md hover:bg-white/10 transition"
+            className="cursor-pointer p-2 rounded-md hover:bg-white/10 transition"
           >
             {menuOpen ? (
               <svg
@@ -112,13 +115,13 @@ export default function Navbar() {
               key={label}
               href={href}
               onClick={() => setMenuOpen(false)}
-              className="text-sm font-medium opacity-90 hover:opacity-100 transition-opacity border-b border-white/10 pb-3 last:border-0 last:pb-0"
+              className="cursor-pointer text-sm font-medium opacity-90 hover:opacity-100 transition-opacity border-b border-white/10 pb-3 last:border-0 last:pb-0"
             >
               {label}
             </Link>
           ))}
-          <Link href="/signup" onClick={() => setMenuOpen(false)}>
-            <button className="w-full mt-1 px-5 py-2.5 bg-white text-[#1C3D72] rounded-full text-sm font-semibold hover:bg-gray-100 transition">
+          <Link href="/signup" onClick={() => setMenuOpen(false)} className="cursor-pointer">
+            <button className="cursor-pointer w-full mt-1 px-5 py-2.5 bg-white text-[#1C3D72] rounded-full text-sm font-semibold hover:bg-gray-100 transition">
               Get Started
             </button>
           </Link>

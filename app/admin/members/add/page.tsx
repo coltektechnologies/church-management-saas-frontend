@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { createMember, CreateMemberPayload, getMemberStats } from '@/lib/api';
+import { sanitizePersonNameInput } from '@/lib/signupValidation';
 import { fetchDepartmentsList, type DepartmentListRow } from '@/lib/departmentsApi';
 import { toast } from 'sonner';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
@@ -231,7 +232,11 @@ export default function AddMemberPage() {
   };
 
   const update = (key: keyof typeof form, value: string | boolean | string[]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    let next = value;
+    if ((key === 'first_name' || key === 'last_name') && typeof value === 'string') {
+      next = sanitizePersonNameInput(value);
+    }
+    setForm((prev) => ({ ...prev, [key]: next }));
     setError('');
   };
 

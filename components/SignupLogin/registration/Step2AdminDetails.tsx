@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useDebouncedRegistrationEmail } from '@/hooks/useDebouncedRegistrationEmail';
+import { useDebouncedSignupPhone } from '@/hooks/useDebouncedSignupPhone';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -19,12 +20,17 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import type { RegistrationData } from './Step4Payment';
 import { CountryCodeInput } from '@/components/SignupLogin/CountryCodeInput';
 import { ClientOnly } from '@/components/ClientOnly';
-import { getRegistrationPositions, type RegistrationPosition } from '@/lib/api';
+import {
+  checkRegistrationEmail,
+  getRegistrationPositions,
+  type RegistrationPosition,
+} from '@/lib/api';
 import {
   getSignupConfirmPasswordError,
   getSignupPasswordError,
   getSignupPhoneError,
   isValidSignupEmail,
+  sanitizePersonNameInput,
 } from '@/lib/signupValidation';
 
 interface StepAdminDetailsProps {
@@ -43,6 +49,8 @@ const Step2AdminDetails = ({
   loading = false,
 }: StepAdminDetailsProps) => {
   const adminEmailLive = useDebouncedRegistrationEmail(data.adminEmail, 'admin');
+  const phoneLive = useDebouncedSignupPhone(data.phone, data.country);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,19 +81,15 @@ const Step2AdminDetails = ({
     };
   }, []);
 
-  const phoneErr = useMemo(
-    () => getSignupPhoneError(data.phone || '', data.country),
-    [data.phone, data.country]
-  );
-  const phoneTrimmed = (data.phone || '').trim();
-  const phoneBlocked = Boolean(phoneTrimmed && phoneErr);
-
   const passwordErr = useMemo(() => getSignupPasswordError(data.password || ''), [data.password]);
   const confirmErr = useMemo(
     () => getSignupConfirmPasswordError(data.password || '', data.confirmPassword || ''),
     [data.password, data.confirmPassword]
   );
   const passwordGateBlocked = Boolean(passwordErr) || Boolean(confirmErr);
+
+  const adminEmailTrimmed = (data.adminEmail || '').trim();
+  const phoneTrimmed = (data.phone || '').trim();
 
   const styles = {
     formWrapper: 'relative space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500',
@@ -153,7 +157,25 @@ const Step2AdminDetails = ({
       return;
     }
 
-    await Promise.resolve(onNext());
+    setCheckingEmail(true);
+    try {
+      const remote = await checkRegistrationEmail(adminEmail, 'admin');
+      if (!remote.ok) {
+        setErrors({
+          adminEmail:
+            remote.message ||
+            'This email cannot be used. It may already be registered or the domain may be invalid.',
+        });
+        return;
+      }
+      await Promise.resolve(onNext());
+    } catch {
+      setErrors({
+        adminEmail: 'Could not verify email. Check your connection and try again.',
+      });
+    } finally {
+      setCheckingEmail(false);
+    }
   };
 
   return (
@@ -175,7 +197,7 @@ const Step2AdminDetails = ({
           <Input
             placeholder="Enter first name"
             value={data.firstName || ''}
-            onChange={(e) => onChange('firstName', e.target.value)}
+            onChange={(e) => onChange('firstName', sanitizePersonNameInput(e.target.value))}
             className={cn(styles.inputField, errors.firstName && 'border-red-500')}
           />
           {errors.firstName && <p className={styles.errorText}>{errors.firstName}</p>}
@@ -271,7 +293,7 @@ const Step2AdminDetails = ({
           <Input
             placeholder="Enter last name"
             value={data.lastName || ''}
-            onChange={(e) => onChange('lastName', e.target.value)}
+            onChange={(e) => onChange('lastName', sanitizePersonNameInput(e.target.value))}
             className={cn(styles.inputField, errors.lastName && 'border-red-500')}
           />
           {errors.lastName && <p className={styles.errorText}>{errors.lastName}</p>}
@@ -307,6 +329,15 @@ const Step2AdminDetails = ({
           {adminEmailLive.checking && (
             <p className="text-[10px] mt-0.5 text-muted-foreground">Checking email…</p>
           )}
+          {!adminEmailLive.checking &&
+            adminEmailTrimmed &&
+            isValidSignupEmail(adminEmailTrimmed) &&
+            !adminEmailLive.canProceedEmail &&
+            !adminEmailLive.remoteError && (
+              <p className="text-[10px] mt-0.5 text-amber-800">
+                Verifying with the server… Continue unlocks only after this passes.
+              </p>
+            )}
           {(errors.adminEmail || adminEmailLive.remoteError) && (
             <p className={styles.errorText}>{errors.adminEmail || adminEmailLive.remoteError}</p>
           )}
@@ -404,14 +435,18 @@ const Step2AdminDetails = ({
                   return next;
                 });
               }}
+              onBlur={() => phoneLive.flushVerify()}
               defaultCountryIso={data.country || undefined}
-              error={!!(errors.phone || phoneErr)}
+              error={!!(errors.phone || phoneLive.remoteError)}
               placeholder="000 000 0000"
             />
           </div>
-          {(errors.phone || phoneErr) && (
+          {phoneLive.checking && phoneTrimmed && (
+            <p className="text-[10px] mt-0.5 text-muted-foreground">Checking phone number…</p>
+          )}
+          {(errors.phone || phoneLive.remoteError) && (
             <p className={styles.errorText}>
-              <Info size={12} className="mt-0.5 shrink-0" /> {errors.phone || phoneErr}
+              <Info size={12} className="mt-0.5 shrink-0" /> {errors.phone || phoneLive.remoteError}
             </p>
           )}
         </div>
@@ -430,16 +465,25 @@ const Step2AdminDetails = ({
           className="w-full sm:w-[236px] h-[44px] bg-[#666666] hover:bg-[#444444] text-white rounded-[10px] font-poppins font-semibold transition-all shadow-sm"
           disabled={
             loading ||
+            checkingEmail ||
             rolesLoading ||
             positions.length === 0 ||
             adminEmailLive.checking ||
             !!adminEmailLive.remoteError ||
             !adminEmailLive.canProceedEmail ||
-            phoneBlocked ||
+            phoneLive.checking ||
+            !!phoneLive.remoteError ||
+            !phoneLive.canProceedPhone ||
             passwordGateBlocked
           }
         >
-          {loading || adminEmailLive.checking ? 'Verifying & saving...' : 'Continue'}
+          {checkingEmail || adminEmailLive.checking
+            ? 'Verifying email...'
+            : phoneLive.checking && phoneTrimmed
+              ? 'Checking phone number...'
+              : loading
+                ? 'Saving...'
+                : 'Continue'}
         </Button>
       </div>
     </div>

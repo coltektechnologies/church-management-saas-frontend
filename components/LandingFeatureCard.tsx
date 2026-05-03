@@ -16,7 +16,7 @@ interface LandingFeatureCardProps {
 const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCardProps) => {
   return (
     <div
-      className="feature-card-wrapper transition-all duration-300 hover:translate-y-[-5px] w-full mx-auto"
+      className="feature-card-wrapper isolate cursor-pointer transition-[transform,box-shadow] duration-300 hover:-translate-y-[5px] w-full mx-auto"
       style={{
         maxWidth: '379px',
         minHeight: '391px',

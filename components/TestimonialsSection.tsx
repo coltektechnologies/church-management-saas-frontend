@@ -59,8 +59,8 @@ const TestimonialsSection = () => {
           </div>
 
           {/* CENTER COLUMN: Video Showcase */}
-          <div className="video-container relative bg-[#00223A] rounded-[40px] flex flex-col items-center justify-center p-8 min-h-[450px] lg:min-h-[600px] group cursor-pointer overflow-hidden shadow-2xl order-1 lg:order-2">
-            <div className="relative z-10 w-24 h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm transition-transform group-hover:scale-110">
+          <div className="video-container relative bg-[#00223A] rounded-[40px] flex flex-col items-center justify-center p-8 min-h-[450px] lg:min-h-[600px] group/testimonials cursor-pointer overflow-hidden shadow-2xl order-1 lg:order-2">
+            <div className="relative z-10 w-24 h-24 rounded-full bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm transition-transform group-hover/testimonials:scale-110">
               <Play className="fill-white text-white h-10 w-10 ml-1" />
             </div>
 

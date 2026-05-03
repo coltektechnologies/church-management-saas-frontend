@@ -55,7 +55,7 @@ const LandingFeatureSection = () => {
           {/* Navigation Link to Detailed Features Page */}
           <Link
             href="/features"
-            className="features-cta-link group transition-all duration-300 hover:scale-105"
+            className="features-cta-link group/features-cta cursor-pointer transition-all duration-300 hover:scale-105"
             style={{
               width: '100%',
               maxWidth: '287px',
@@ -79,7 +79,7 @@ const LandingFeatureSection = () => {
             >
               See all Features
             </span>
-            <ChevronRight className="h-5 w-5 text-[#020202] transition-transform group-hover:translate-x-1" />
+            <ChevronRight className="h-5 w-5 text-[#020202] transition-transform group-hover/features-cta:translate-x-1" />
           </Link>
         </div>
 

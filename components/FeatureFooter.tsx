@@ -37,7 +37,7 @@ export default function FeatureFooter() {
         {/* BOTTOM ROW */}
         <div className="flex justify-between text-xs text-white/80">
           <span>Established in 2026</span>
-          <Link href={ROUTES.privacy} className="hover:underline">
+          <Link href={ROUTES.privacy} className="cursor-pointer hover:underline">
             Privacy Policy
           </Link>
         </div>
@@ -52,6 +52,7 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
     <Link
       href={href}
       className="
+        cursor-pointer
         px-4
         py-2
         rounded-lg

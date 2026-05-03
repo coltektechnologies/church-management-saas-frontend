@@ -9,7 +9,7 @@ import { ROUTES } from '@/lib/routes';
 export const metadata: Metadata = {
   title: 'Pricing | Church Management',
   description:
-    'Simple plans for every ministry—Free, Basic, Premium, and Enterprise. Monthly or yearly billing in cedis. Start your 14-day trial.',
+    'Simple plans for every ministry Free, Basic, Premium, and Enterprise. Monthly or yearly billing in cedis. Start your 14-day trial.',
 };
 
 export default function PricingPage() {
