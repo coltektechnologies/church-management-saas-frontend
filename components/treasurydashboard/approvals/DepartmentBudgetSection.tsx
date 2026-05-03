@@ -5,18 +5,6 @@
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import type { DepartmentBudget } from './approvalsData';
 
-function autoText(hex: string): string {
-  const h = hex.replace('#', '');
-  const r = parseInt(h.substring(0, 2), 16) || 0;
-  const g = parseInt(h.substring(2, 4), 16) || 0;
-  const b = parseInt(h.substring(4, 6), 16) || 0;
-  const lin = (c: number) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179 ? '#0B2A4A' : '#FFFFFF';
-}
-
 type Props = { budgets: DepartmentBudget[] };
 
 // Gradient: #09A30C (green, 0%) → #F56666 (red, 100%) — exactly as shown in design image
@@ -31,15 +19,9 @@ export default function DepartmentBudgetSection({ budgets }: Props) {
   const primaryColor = isDark
     ? profile.darkPrimaryColor || '#1A3F6B'
     : profile.primaryColor || '#0B2A4A';
-  const accentColor = isDark
-    ? profile.darkAccentColor || '#2FC4B2'
-    : profile.accentColor || '#2FC4B2';
   const bgColor = isDark
     ? profile.darkBackgroundColor || '#0A1628'
     : profile.backgroundColor || '#F5F7FA';
-  const sidebarColor = isDark
-    ? profile.darkSidebarColor || '#0D1F36'
-    : profile.sidebarColor || '#FFFFFF';
 
   const outerBorderCol = isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB';
   const cardBorderCol = isDark ? 'rgba(255,255,255,0.06)' : '#E5E7EB';

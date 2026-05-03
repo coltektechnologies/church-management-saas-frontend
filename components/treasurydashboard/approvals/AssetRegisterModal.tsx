@@ -2,7 +2,7 @@
 
 // /components/treasurydashboard/approvals/AssetRegisterModal.tsx
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Package, Plus, CheckCircle, ChevronRight } from 'lucide-react';
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import { DUMMY_ASSETS, type Asset } from './approvalsData';

@@ -8,18 +8,6 @@ import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/Trea
 import type { ExpenseRequest } from './approvalsData';
 import ViewRequestModal from './ViewRequestModal';
 
-function autoText(hex: string): string {
-  const h = hex.replace('#', '');
-  const r = parseInt(h.substring(0, 2), 16) || 0;
-  const g = parseInt(h.substring(2, 4), 16) || 0;
-  const b = parseInt(h.substring(4, 6), 16) || 0;
-  const lin = (c: number) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-  };
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.179 ? '#0B2A4A' : '#FFFFFF';
-}
-
 type Props = {
   requests: ExpenseRequest[];
   onApprove: (id: string) => void;

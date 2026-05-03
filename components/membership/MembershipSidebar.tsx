@@ -95,7 +95,7 @@ export default function MembershipSidebar() {
     }
     setMounted(true);
     void loadSidebarContext();
-  }, [loadSidebarContext, profile.churchName, profile.logoUrl]);
+  }, [loadSidebarContext, profile]);
 
   return (
     <aside

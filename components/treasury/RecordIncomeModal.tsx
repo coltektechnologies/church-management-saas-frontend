@@ -53,7 +53,7 @@ export function RecordIncomeModal({ open, onOpenChange }: RecordIncomeModalProps
   });
 
   const onSubmit = (data: FormValues) => {
-    console.log('Record Income Data:', data);
+    console.info('Record Income Data:', data);
     // Add logic to save & print receipt
     onOpenChange(false);
     form.reset();
