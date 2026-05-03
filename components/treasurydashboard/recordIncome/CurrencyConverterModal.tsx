@@ -64,7 +64,6 @@ export default function CurrencyConverterModal({
   const targetSymbol = getCurrencySymbol(targetCurrency);
 
   const inputStyle: React.CSSProperties = {
-    fontFamily: "'OV Soge', sans-serif",
     fontSize: '12px',
     fontWeight: 500,
     color: textColor,
@@ -139,7 +138,6 @@ export default function CurrencyConverterModal({
           style={{
             fontSize: '11px',
             color: `${textColor}60`,
-            fontFamily: "'OV Soge',sans-serif",
             marginBottom: '14px',
             lineHeight: 1.5,
           }}
@@ -154,7 +152,6 @@ export default function CurrencyConverterModal({
               fontSize: '10px',
               fontWeight: 700,
               color: `${textColor}60`,
-              fontFamily: "'OV Soge',sans-serif",
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
               marginBottom: '8px',
@@ -170,7 +167,6 @@ export default function CurrencyConverterModal({
                     fontSize: '12px',
                     fontWeight: 600,
                     color: textColor,
-                    fontFamily: "'OV Soge',sans-serif",
                     width: '40px',
                   }}
                 >
@@ -190,7 +186,6 @@ export default function CurrencyConverterModal({
                   style={{
                     fontSize: '11px',
                     color: `${textColor}50`,
-                    fontFamily: "'OV Soge',sans-serif",
                   }}
                 >
                   per USD
@@ -217,7 +212,6 @@ export default function CurrencyConverterModal({
                 style={{
                   fontSize: '12px',
                   color: `${textColor}70`,
-                  fontFamily: "'OV Soge',sans-serif",
                 }}
               >
                 {cur} total
@@ -244,7 +238,6 @@ export default function CurrencyConverterModal({
               fontSize: '10px',
               fontWeight: 700,
               color: `${textColor}60`,
-              fontFamily: "'OV Soge',sans-serif",
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
               marginBottom: '6px',
@@ -256,7 +249,6 @@ export default function CurrencyConverterModal({
             value={targetCurrency}
             onChange={(e) => setTargetCurrency(e.target.value)}
             style={{
-              fontFamily: "'OV Soge', sans-serif",
               fontSize: '12px',
               fontWeight: 500,
               color: textColor,
@@ -291,7 +283,6 @@ export default function CurrencyConverterModal({
               fontSize: '10px',
               fontWeight: 700,
               color: accentColor,
-              fontFamily: "'OV Soge',sans-serif",
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
               marginBottom: '4px',
@@ -317,7 +308,6 @@ export default function CurrencyConverterModal({
             style={{
               fontSize: '9px',
               color: `${textColor}50`,
-              fontFamily: "'OV Soge',sans-serif",
               marginTop: '4px',
             }}
           >
@@ -334,7 +324,6 @@ export default function CurrencyConverterModal({
             marginTop: '14px',
             backgroundColor: accentColor,
             color: '#fff',
-            fontFamily: "'OV Soge',sans-serif",
             fontWeight: 700,
             fontSize: '13px',
             border: 'none',

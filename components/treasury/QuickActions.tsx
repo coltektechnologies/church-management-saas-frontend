@@ -71,20 +71,22 @@ const actions: ActionDef[] = [
   {
     label: 'Member Contribution',
     icon: PlusCircle,
-    color: 'bg-white hover:bg-muted text-foreground border border-border',
+    color:
+      'bg-[var(--admin-surface)] hover:bg-muted text-foreground border border-[var(--admin-border)] dark:hover:bg-white/10',
     handler: 'onMemberContribution',
   },
   {
     label: 'Asset Register',
     icon: ClipboardList,
-    color: 'bg-white hover:bg-muted text-foreground border border-border [&>svg]:text-emerald-500',
+    color:
+      'bg-[var(--admin-surface)] hover:bg-muted text-foreground border border-[var(--admin-border)] dark:hover:bg-white/10 [&>svg]:text-emerald-500 dark:[&>svg]:text-emerald-400',
     handler: 'onAssetRegister',
   },
   {
     label: 'Financial Statement',
     icon: BarChart3,
     color:
-      'bg-emerald-50/50 hover:bg-emerald-50 text-emerald-600 border border-emerald-200 mt-2 sm:mt-0 lg:ml-auto w-full sm:w-auto',
+      'bg-emerald-50/50 hover:bg-emerald-50 dark:bg-emerald-950/35 dark:hover:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 mt-2 sm:mt-0 lg:ml-auto w-full sm:w-auto',
     handler: 'onFinancialStatement',
   },
 ];

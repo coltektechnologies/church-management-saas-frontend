@@ -15,6 +15,7 @@ import {
   Settings,
   Loader2,
 } from 'lucide-react';
+import { getAccessToken } from '@/lib/api';
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
@@ -86,7 +87,8 @@ const NotificationTab = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getNotificationPreferences().then((data) => {
+    const hadToken = Boolean(getAccessToken());
+    void getNotificationPreferences().then((data) => {
       if (data) {
         const next: Record<string, boolean> = {
           ...Object.fromEntries(PREFS.map((p) => [p.key, true])),
@@ -100,6 +102,10 @@ const NotificationTab = () => {
           });
         });
         setPrefs(next);
+      } else if (hadToken) {
+        toast.error('Could not load notification preferences', {
+          description: 'Check your connection and try again.',
+        });
       }
       setLoading(false);
     });
@@ -131,16 +137,16 @@ const NotificationTab = () => {
   };
 
   return (
-    <div className="bg-white rounded-[24px] border border-slate-100 p-8 space-y-8 max-w-2xl animate-in fade-in duration-500">
+    <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] p-8 space-y-8 max-w-2xl animate-in fade-in duration-500 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
       <div className="flex items-center gap-3">
         <div className="p-2 bg-primary/10 rounded-lg text-primary">
           <BellRing size={20} />
         </div>
         <div>
-          <h3 className="text-lg font-black text-[#0B2A4A] tracking-tight">
+          <h3 className="text-lg font-black text-foreground tracking-tight">
             Notification Settings
           </h3>
-          <p className="text-xs text-slate-400 font-medium">
+          <p className="text-xs text-muted-foreground font-medium">
             Configure how and when you want to be alerted.
           </p>
         </div>
@@ -152,17 +158,19 @@ const NotificationTab = () => {
           return (
             <div key={p.key} className="flex items-start justify-between gap-4 group">
               <div className="flex gap-4">
-                <div className="mt-1 p-2 bg-slate-50 rounded-xl group-hover:bg-slate-100 transition-colors">
-                  <Icon size={18} className="text-slate-500" />
+                <div className="mt-1 p-2 bg-muted/50 dark:bg-white/5 rounded-xl group-hover:bg-muted dark:group-hover:bg-white/10 transition-colors">
+                  <Icon size={18} className="text-muted-foreground" />
                 </div>
                 <div>
                   <Label
                     htmlFor={p.key}
-                    className="text-sm font-bold text-[#0B2A4A] cursor-pointer"
+                    className="text-sm font-bold text-foreground cursor-pointer"
                   >
                     {p.label}
                   </Label>
-                  <p className="text-xs text-slate-400 leading-relaxed max-w-[350px]">{p.desc}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed max-w-[350px]">
+                    {p.desc}
+                  </p>
                 </div>
               </div>
               <Switch
@@ -176,11 +184,11 @@ const NotificationTab = () => {
         })}
       </div>
 
-      <div className="pt-4 border-t border-slate-50">
+      <div className="pt-4 border-t border-slate-50 dark:border-white/10">
         <Button
           onClick={handleSave}
           disabled={loading || saving}
-          className="bg-[#0B2A4A] hover:bg-[#081e36] text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95 disabled:opacity-70"
+          className="bg-[#0B2A4A] hover:bg-[#081e36] dark:bg-[var(--primary-brand)] dark:hover:opacity-90 text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-[#0B2A4A]/20 transition-all active:scale-95 disabled:opacity-70"
         >
           {saving ? (
             <>

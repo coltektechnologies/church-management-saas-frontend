@@ -146,7 +146,7 @@ const ChurchProfileTab = () => {
   };
 
   return (
-    <div className="bg-white rounded-[24px] border border-slate-100 p-8 space-y-8 max-w-3xl animate-in fade-in duration-500">
+    <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] p-8 space-y-8 max-w-3xl animate-in fade-in duration-500 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
       <div>
         <h3 className="text-lg font-black text-[#0B2A4A]">Church Profile</h3>
         <p className="text-xs text-slate-400 font-medium">
@@ -161,7 +161,7 @@ const ChurchProfileTab = () => {
           Brand Identity
         </Label>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-          <div className="relative w-20 h-20 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="relative w-20 h-20 bg-[var(--admin-surface)] rounded-xl shadow-sm border border-[var(--admin-border)] flex items-center justify-center overflow-hidden shrink-0">
             {displayLogoSrc ? (
               <Image src={displayLogoSrc} alt="Logo" fill className="object-contain" unoptimized />
             ) : (
@@ -169,7 +169,7 @@ const ChurchProfileTab = () => {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <label className="bg-white px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-50 transition-all shadow-sm">
+            <label className="bg-[var(--admin-surface)] px-4 py-2 border border-[var(--admin-border)] rounded-xl text-xs font-bold cursor-pointer hover:bg-muted/50 dark:hover:bg-white/5 transition-all shadow-sm">
               Upload Logo
               <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
             </label>

@@ -325,7 +325,7 @@ export default function DeptSystemPreferencesTab() {
   });
 
   // Font state — initialised from saved profile
-  const [fontFamily, setFontFamilyState] = useState(profile.fontFamily || 'Inter');
+  const [fontFamily, setFontFamilyState] = useState(profile.fontFamily || 'Poppins');
   const [fontSize, setFontSizeState] = useState(profile.fontSize || '14');
 
   useEffect(() => {
@@ -344,9 +344,9 @@ export default function DeptSystemPreferencesTab() {
       return;
     }
     syncedRef.current = true;
-    setFontFamilyState(profile.fontFamily || 'Inter');
+    setFontFamilyState(profile.fontFamily || 'Poppins');
     setFontSizeState(profile.fontSize || '14');
-    applyFontToRoot(profile.fontFamily || 'Inter', profile.fontSize || '14');
+    applyFontToRoot(profile.fontFamily || 'Poppins', profile.fontSize || '14');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady]);
 
@@ -364,11 +364,11 @@ export default function DeptSystemPreferencesTab() {
   }, [fontFamily, fontSize, updateProfile]);
 
   const handleResetFont = () => {
-    setFontFamilyState('Inter');
+    setFontFamilyState('Poppins');
     setFontSizeState('14');
-    applyFontToRoot('Inter', '14');
-    updateProfile({ fontFamily: 'Inter', fontSize: '14' });
-    toast.info('Font reset to Inter 14px.');
+    applyFontToRoot('Poppins', '14');
+    updateProfile({ fontFamily: 'Poppins', fontSize: '14' });
+    toast.info('Font reset to Poppins 14px.');
   };
 
   return (

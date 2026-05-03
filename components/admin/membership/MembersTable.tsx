@@ -44,18 +44,23 @@ import { useMembersPortal } from '@/components/admin/membership/MembersPortalCon
 type MemberRow = FilterableMemberRow;
 
 const roleStyles: Record<string, string> = {
-  Admin: 'bg-red-100 text-red-800',
-  'Core Admin': 'bg-teal-100 text-teal-800',
-  Member: 'bg-blue-100 text-blue-800',
-  'Department Head': 'bg-amber-100 text-amber-800',
+  Admin: 'bg-red-100 text-red-800 dark:bg-red-950/45 dark:text-red-300',
+  'Core Admin': 'bg-teal-100 text-teal-800 dark:bg-teal-950/45 dark:text-teal-300',
+  Member: 'bg-blue-100 text-blue-800 dark:bg-blue-950/45 dark:text-blue-300',
+  'Department Head': 'bg-amber-100 text-amber-800 dark:bg-amber-950/45 dark:text-amber-300',
 };
 
 const statusStyles: Record<string, string> = {
-  ACTIVE: 'border-green-500 text-green-600 bg-white',
-  INACTIVE: 'border-gray-400 text-gray-600 bg-gray-50',
-  PENDING: 'border-amber-500 text-amber-600 bg-white',
-  TRANSFER: 'border-blue-500 text-blue-600 bg-white',
-  NEW_CONVERT: 'border-teal-500 text-teal-600 bg-white',
+  ACTIVE:
+    'border-green-500 text-green-700 bg-white dark:bg-[var(--admin-surface,#112240)] dark:text-green-400',
+  INACTIVE:
+    'border-slate-300 text-slate-600 bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:bg-white/5',
+  PENDING:
+    'border-amber-500 text-amber-700 bg-white dark:bg-[var(--admin-surface,#112240)] dark:text-amber-400',
+  TRANSFER:
+    'border-blue-500 text-blue-700 bg-white dark:bg-[var(--admin-surface,#112240)] dark:text-blue-400',
+  NEW_CONVERT:
+    'border-teal-500 text-teal-700 bg-white dark:bg-[var(--admin-surface,#112240)] dark:text-teal-400',
 };
 
 function formatDepartmentCell(names: string[] | undefined): string {
@@ -298,7 +303,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-gray-500 hover:text-gray-700"
+          className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-white"
           title="View"
         >
           <Eye className="h-4 w-4" />
@@ -308,7 +313,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-gray-500 hover:text-gray-700"
+          className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-white"
           title="Edit"
         >
           <Pencil className="h-4 w-4" />
@@ -317,7 +322,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-gray-500 hover:text-gray-700"
+        className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-white"
         title="Send Message"
         onClick={() => handleSendMessage(member.id)}
       >
@@ -326,7 +331,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50"
+        className="h-8 w-8 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-slate-400 dark:hover:text-red-400 dark:hover:bg-red-950/40"
         title="Delete"
         onClick={(e) => handleDeleteClick(member.id, e)}
         disabled={deleteBusy}
@@ -340,8 +345,8 @@ export default function MembersTable({ filters }: MembersTableProps) {
     <div className="space-y-4 w-full min-w-0">
       {/* Dynamic action bar when members are selected */}
       {selectedCount > 0 && (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white shadow-sm w-full">
-          <span className="text-sm font-medium text-gray-700">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 w-full">
+          <span className="text-sm font-medium text-[color:var(--admin-text)]">
             {selectedCount} member{selectedCount !== 1 ? 's' : ''} selected
           </span>
           <div className="flex w-full sm:w-auto flex-wrap items-center gap-2">
@@ -399,7 +404,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 flex-1 sm:flex-none text-red-600 border-red-200 hover:bg-red-50"
+              className="h-8 gap-1.5 flex-1 sm:flex-none text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/60 dark:hover:bg-red-950/40 dark:text-red-400"
               onClick={handleBulkDelete}
             >
               <UserMinus className="h-4 w-4" />
@@ -408,7 +413,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1.5 flex-1 sm:flex-none text-gray-600 hover:text-gray-800"
+              className="h-8 gap-1.5 flex-1 sm:flex-none text-gray-600 hover:text-gray-800 dark:text-slate-400 dark:hover:text-white dark:border-[var(--admin-border)]"
               onClick={clearSelection}
             >
               <X className="h-4 w-4" />
@@ -418,12 +423,9 @@ export default function MembersTable({ filters }: MembersTableProps) {
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden w-full min-w-0">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 py-4 border-b border-gray-100 bg-white">
-          <h3
-            className="text-lg font-bold shrink-0"
-            style={{ color: 'var(--color-primary, #0B2A4A)' }}
-          >
+      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 overflow-hidden w-full min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 py-4 border-b border-[var(--admin-border)] bg-[var(--admin-surface)]">
+          <h3 className="text-lg font-bold shrink-0 text-slate-900 dark:text-white">
             All Members
           </h3>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:ml-auto">
@@ -431,7 +433,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 rounded-md border-gray-200 text-gray-500"
+              className="h-8 w-8 p-0 rounded-md border-[var(--admin-border)] text-gray-500 dark:text-slate-400 dark:hover:bg-white/10"
               title="Grid view"
             >
               <LayoutGrid className="h-4 w-4" />
@@ -440,7 +442,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 rounded-md border-[#0B2A4A] bg-[#0B2A4A] text-white hover:bg-[#0A2540] hover:text-white"
+              className="h-8 w-8 p-0 rounded-md border-[var(--color-primary,var(--primary-brand,#0B2A4A))] bg-[var(--color-primary,var(--primary-brand,#0B2A4A))] text-white hover:opacity-90 hover:text-white"
               title="List view"
             >
               <LayoutList className="h-4 w-4" />
@@ -449,7 +451,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 rounded-md border-gray-200 text-xs"
+              className="h-8 rounded-md border-[var(--admin-border)] text-xs text-[color:var(--admin-text)] dark:hover:bg-white/10"
             >
               CSV
             </Button>
@@ -457,7 +459,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 rounded-md border-gray-200 text-xs"
+              className="h-8 rounded-md border-[var(--admin-border)] text-xs text-[color:var(--admin-text)] dark:hover:bg-white/10"
             >
               PDF
             </Button>
@@ -465,7 +467,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 rounded-md border-gray-200 text-xs"
+              className="h-8 rounded-md border-[var(--admin-border)] text-xs text-[color:var(--admin-text)] dark:hover:bg-white/10"
             >
               Excel
             </Button>
@@ -475,16 +477,16 @@ export default function MembersTable({ filters }: MembersTableProps) {
         {/* Narrow screens: stacked cards */}
         <div className="md:hidden space-y-3 w-full min-w-0 px-4 pb-4 pt-2">
           {loading ? (
-            <div className="rounded-lg border border-gray-100 bg-[#F6F8FA] py-12 text-center text-gray-500 text-sm">
+            <div className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] py-12 text-center text-[color:var(--admin-text-muted)] text-sm">
               Loading members...
             </div>
           ) : paginated.length === 0 ? (
-            <div className="rounded-lg border border-gray-100 bg-[#F6F8FA] py-12 text-center text-gray-500 text-sm">
+            <div className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] py-12 text-center text-[color:var(--admin-text-muted)] text-sm">
               No members found
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-[#F6F8FA] px-3 py-2">
+              <div className="flex items-center gap-2 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2">
                 <input
                   type="checkbox"
                   className="h-5 w-5 min-w-5 shrink-0 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
@@ -497,12 +499,12 @@ export default function MembersTable({ filters }: MembersTableProps) {
                   onChange={toggleAll}
                   aria-label="Select all members on this page"
                 />
-                <span className="text-sm text-gray-700">Select all on this page</span>
+                <span className="text-sm text-[color:var(--admin-text)]">Select all on this page</span>
               </div>
               {paginated.map((member) => (
                 <div
                   key={member.id}
-                  className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-3 min-w-0"
+                  className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-sm dark:shadow-none space-y-3 min-w-0"
                 >
                   <div className="flex items-start gap-3 min-w-0">
                     <input
@@ -512,45 +514,53 @@ export default function MembersTable({ filters }: MembersTableProps) {
                       onChange={() => toggleMember(member.id)}
                       aria-label={`Select ${member.name}`}
                     />
-                    <Avatar className="h-10 w-10 shrink-0 bg-green-100">
-                      <AvatarFallback className="bg-green-100 text-green-700 text-sm">
+                    <Avatar className="h-10 w-10 shrink-0 bg-green-100 dark:bg-green-950/50">
+                      <AvatarFallback className="bg-green-100 text-green-700 text-sm dark:bg-green-950/50 dark:text-green-300">
                         {getInitials(member.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 break-words">{member.name}</p>
-                      <p className="text-xs text-gray-500 font-mono">{member.memberId}</p>
+                      <p className="font-medium text-[color:var(--admin-text)] break-words">{member.name}</p>
+                      <p className="text-xs text-[color:var(--admin-text-muted)] font-mono">{member.memberId}</p>
                     </div>
                     <span
                       className={`shrink-0 inline-flex px-2 py-1 rounded-full text-xs font-medium border ${
-                        statusStyles[member.status] || 'border-gray-300 text-gray-600'
+                        statusStyles[member.status] ||
+                        'border-gray-300 text-gray-600 dark:border-slate-600 dark:text-slate-400'
                       }`}
                     >
                       {member.status?.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <dl className="grid grid-cols-1 gap-2 text-sm border-t border-gray-100 pt-3">
+                  <dl className="grid grid-cols-1 gap-2 text-sm border-t border-[var(--admin-border)] pt-3">
                     <div>
-                      <dt className="text-gray-500 text-xs uppercase tracking-wide">Phone</dt>
-                      <dd className="text-gray-900 break-all">{member.phone}</dd>
+                      <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
+                        Phone
+                      </dt>
+                      <dd className="text-[color:var(--admin-text)] break-all">{member.phone}</dd>
                     </div>
                     <div>
-                      <dt className="text-gray-500 text-xs uppercase tracking-wide">Email</dt>
-                      <dd className="text-gray-900 break-all">{member.email}</dd>
+                      <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
+                        Email
+                      </dt>
+                      <dd className="text-[color:var(--admin-text)] break-all">{member.email}</dd>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-2">
                       <div>
-                        <dt className="text-gray-500 text-xs uppercase tracking-wide">
+                        <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
                           Department
                         </dt>
-                        <dd className="text-gray-800 break-words">{member.department}</dd>
+                        <dd className="text-[color:var(--admin-text)] break-words">{member.department}</dd>
                       </div>
                       <div>
-                        <dt className="text-gray-500 text-xs uppercase tracking-wide">Role</dt>
+                        <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
+                          Role
+                        </dt>
                         <dd>
                           <span
                             className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
-                              roleStyles[member.role] || 'bg-gray-100 text-gray-800'
+                              roleStyles[member.role] ||
+                              'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-slate-200'
                             }`}
                           >
                             {member.role}
@@ -558,10 +568,10 @@ export default function MembersTable({ filters }: MembersTableProps) {
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-gray-500 text-xs uppercase tracking-wide">
+                        <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
                           Member since
                         </dt>
-                        <dd className="text-gray-700">
+                        <dd className="text-[color:var(--admin-text)]">
                           {member.memberSince
                             ? format(new Date(member.memberSince), 'MMM d, yyyy')
                             : '—'}
@@ -569,7 +579,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
                       </div>
                     </div>
                   </dl>
-                  <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-gray-100">
+                  <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-[var(--admin-border)]">
                     {renderRowActions(member, true)}
                   </div>
                 </div>
@@ -593,7 +603,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
             </colgroup>
             <TableHeader>
               <TableRow
-                className="border-gray-200 hover:bg-transparent [&>th]:h-14 [&>th]:px-3 [&>th]:text-xs [&>th]:font-semibold [&>th]:uppercase [&>th]:tracking-wide [&>th]:text-gray-500"
+                className="border-[var(--admin-border)] hover:bg-transparent [&>th]:h-14 [&>th]:px-3 [&>th]:text-xs [&>th]:font-semibold [&>th]:uppercase [&>th]:tracking-wide [&>th]:text-[color:var(--admin-text-muted)]"
                 style={{ background: 'var(--admin-bg, #F6F8FA)' }}
               >
                 <TableHead className="w-12 align-middle">
@@ -609,13 +619,15 @@ export default function MembersTable({ filters }: MembersTableProps) {
                     onChange={toggleAll}
                   />
                 </TableHead>
-                <TableHead className="text-gray-600">Member</TableHead>
-                <TableHead className="text-gray-600">Contact</TableHead>
-                <TableHead className="text-gray-600">Department</TableHead>
-                <TableHead className="text-gray-600">Role</TableHead>
-                <TableHead className="text-gray-600">Status</TableHead>
-                <TableHead className="text-gray-600 whitespace-nowrap">Member Since</TableHead>
-                <TableHead className="text-gray-600 text-center whitespace-nowrap w-[11.5rem] min-w-[11.5rem] max-w-[11.5rem]">
+                <TableHead className="text-[color:var(--admin-text-muted)]">Member</TableHead>
+                <TableHead className="text-[color:var(--admin-text-muted)]">Contact</TableHead>
+                <TableHead className="text-[color:var(--admin-text-muted)]">Department</TableHead>
+                <TableHead className="text-[color:var(--admin-text-muted)]">Role</TableHead>
+                <TableHead className="text-[color:var(--admin-text-muted)]">Status</TableHead>
+                <TableHead className="text-[color:var(--admin-text-muted)] whitespace-nowrap">
+                  Member Since
+                </TableHead>
+                <TableHead className="text-[color:var(--admin-text-muted)] text-center whitespace-nowrap w-[11.5rem] min-w-[11.5rem] max-w-[11.5rem]">
                   Action
                 </TableHead>
               </TableRow>
@@ -623,13 +635,13 @@ export default function MembersTable({ filters }: MembersTableProps) {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-gray-500">
+                  <TableCell colSpan={8} className="py-12 text-center text-[color:var(--admin-text-muted)]">
                     Loading members...
                   </TableCell>
                 </TableRow>
               ) : paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-gray-500">
+                  <TableCell colSpan={8} className="py-12 text-center text-[color:var(--admin-text-muted)]">
                     No members found
                   </TableCell>
                 </TableRow>
@@ -637,8 +649,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
                 paginated.map((member) => (
                   <TableRow
                     key={member.id}
-                    className="border-gray-200 hover:bg-gray-50/80"
-                    style={{ borderBottom: '1px solid #e5e7eb' }}
+                    className="border-[var(--admin-border)] transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.04]"
                   >
                     <TableCell className="align-middle px-3 py-3">
                       <input
@@ -650,19 +661,19 @@ export default function MembersTable({ filters }: MembersTableProps) {
                     </TableCell>
                     <TableCell className="align-middle px-3 py-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <Avatar className="h-10 w-10 shrink-0 bg-green-100">
-                          <AvatarFallback className="bg-green-100 text-green-700 text-sm">
+                        <Avatar className="h-10 w-10 shrink-0 bg-green-100 dark:bg-green-950/50">
+                          <AvatarFallback className="bg-green-100 text-green-700 text-sm dark:bg-green-950/50 dark:text-green-300">
                             {getInitials(member.name)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
                           <p
-                            className="font-semibold text-gray-900 truncate text-sm"
+                            className="font-semibold text-[color:var(--admin-text)] truncate text-sm"
                             title={member.name}
                           >
                             {member.name}
                           </p>
-                          <p className="text-xs text-gray-500 truncate font-mono">
+                          <p className="text-xs text-[color:var(--admin-text-muted)] truncate font-mono">
                             {member.memberId}
                           </p>
                         </div>
@@ -670,22 +681,23 @@ export default function MembersTable({ filters }: MembersTableProps) {
                     </TableCell>
                     <TableCell className="align-middle px-3 py-3 whitespace-normal">
                       <div className="min-w-0 space-y-0.5">
-                        <p className="text-sm font-medium text-gray-900 break-all leading-snug">
+                        <p className="text-sm font-medium text-[color:var(--admin-text)] break-all leading-snug">
                           {member.phone}
                         </p>
-                        <p className="text-xs text-gray-500 break-all leading-snug">
+                        <p className="text-xs text-[color:var(--admin-text-muted)] break-all leading-snug">
                           {member.email}
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell className="align-middle px-3 py-3 text-sm text-gray-700 whitespace-normal">
+                    <TableCell className="align-middle px-3 py-3 text-sm text-[color:var(--admin-text)] whitespace-normal">
                       <span className="line-clamp-3">{member.department}</span>
                     </TableCell>
                     <TableCell className="align-middle px-3 py-3">
                       <span
                         className={cn(
                           'inline-flex px-2.5 py-1 rounded-md text-xs font-medium whitespace-normal text-center',
-                          roleStyles[member.role] || 'bg-gray-100 text-gray-800'
+                          roleStyles[member.role] ||
+                          'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-slate-200'
                         )}
                       >
                         {member.role}
@@ -694,13 +706,14 @@ export default function MembersTable({ filters }: MembersTableProps) {
                     <TableCell className="align-middle px-3 py-3">
                       <span
                         className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
-                          statusStyles[member.status] || 'border-gray-300 text-gray-600'
+                          statusStyles[member.status] ||
+                          'border-gray-300 text-gray-600 dark:border-slate-600 dark:text-slate-400'
                         }`}
                       >
                         {member.status?.replace(/_/g, ' ')}
                       </span>
                     </TableCell>
-                    <TableCell className="text-gray-600 text-sm whitespace-nowrap align-middle px-3 py-3">
+                    <TableCell className="text-[color:var(--admin-text-muted)] text-sm whitespace-nowrap align-middle px-3 py-3">
                       {member.memberSince
                         ? format(new Date(member.memberSince), 'MMM d, yyyy')
                         : '—'}
@@ -715,24 +728,24 @@ export default function MembersTable({ filters }: MembersTableProps) {
           </Table>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 py-4 border-t border-gray-100 bg-white">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 py-4 border-t border-[var(--admin-border)] bg-[var(--admin-surface)]">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 rounded-lg border-gray-200"
+              className="h-9 w-9 rounded-lg border-[var(--admin-border)] text-[color:var(--admin-text)] dark:hover:bg-white/10"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm text-gray-600 tabular-nums">
+            <span className="text-sm text-[color:var(--admin-text-muted)] tabular-nums">
               Page {page} of {totalPages}
             </span>
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 rounded-lg border-gray-200"
+              className="h-9 w-9 rounded-lg border-[var(--admin-border)] text-[color:var(--admin-text)] dark:hover:bg-white/10"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
@@ -740,11 +753,11 @@ export default function MembersTable({ filters }: MembersTableProps) {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Show</span>
+            <span className="text-sm text-[color:var(--admin-text-muted)]">Show</span>
             <select
               value={perPage}
               onChange={(e) => setPerPage(Number(e.target.value))}
-              className="h-9 min-w-[4.5rem] rounded-md border border-gray-300 bg-white px-3 text-sm"
+              className="h-9 min-w-[4.5rem] rounded-md border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 text-sm text-[color:var(--admin-text)]"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>

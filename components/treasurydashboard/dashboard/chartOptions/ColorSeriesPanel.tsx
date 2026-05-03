@@ -55,7 +55,6 @@ export default function ColorSeriesPanel({
     color: `${textColor}50`,
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
-    fontFamily: "'OV Soge', sans-serif",
     marginBottom: 10,
   };
 
@@ -160,7 +159,6 @@ function ColorSwatch({
             fontSize: 10,
             fontWeight: 600,
             color: textColor,
-            fontFamily: "'OV Soge', sans-serif",
           }}
         >
           {label}
@@ -230,7 +228,6 @@ function ColorSwatch({
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
-                fontFamily: "'OV Soge', sans-serif",
               }}
             >
               Custom
@@ -270,7 +267,6 @@ function ColorSwatch({
                 cursor: 'pointer',
                 padding: '3px 6px',
                 borderRadius: 5,
-                fontFamily: "'OV Soge', sans-serif",
               }}
             >
               <RotateCcw size={9} /> Reset

@@ -28,7 +28,7 @@ const SystemPreferencesTab = () => {
   };
 
   return (
-    <div className="bg-white rounded-[24px] border border-slate-100 p-8 space-y-8 max-w-2xl animate-in fade-in duration-500">
+    <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] p-8 space-y-8 max-w-2xl animate-in fade-in duration-500 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -105,7 +105,7 @@ const SystemPreferencesTab = () => {
       <div className="space-y-4 pt-4 border-t border-slate-50">
         <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-2xl group transition-all">
           <div className="flex gap-4">
-            <div className="p-2 bg-white rounded-xl shadow-sm text-slate-400 group-hover:text-[#0B2A4A] transition-colors">
+            <div className="p-2 bg-muted/50 dark:bg-white/5 rounded-xl shadow-sm text-muted-foreground group-hover:text-[color:var(--primary-brand)] transition-colors border border-[var(--admin-border)]">
               <Moon size={18} />
             </div>
             <div>
@@ -122,7 +122,7 @@ const SystemPreferencesTab = () => {
 
         <div className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-2xl group transition-all">
           <div className="flex gap-4">
-            <div className="p-2 bg-white rounded-xl shadow-sm text-slate-400 group-hover:text-[#0B2A4A] transition-colors">
+            <div className="p-2 bg-muted/50 dark:bg-white/5 rounded-xl shadow-sm text-muted-foreground group-hover:text-[color:var(--primary-brand)] transition-colors border border-[var(--admin-border)]">
               <HardDriveDownload size={18} />
             </div>
             <div>

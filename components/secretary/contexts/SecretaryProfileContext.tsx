@@ -70,7 +70,7 @@ const DEFAULT: SecretaryProfile = {
   language: 'en',
   currency: 'GHS',
   dateFormat: 'DD/MM/YYYY',
-  fontFamily: 'Inter',
+  fontFamily: 'Poppins',
   fontSize: '14',
   autoBackup: false,
   reminderEmail: '', // defaults to empty — user sets in System Preferences or event dialog

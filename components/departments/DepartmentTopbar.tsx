@@ -172,7 +172,6 @@ function HelpPopover({
           </div>
           <span
             style={{
-              fontFamily: "'OV Soge', sans-serif",
               fontWeight: 700,
               fontSize: '13px',
               color: textColor,
@@ -215,7 +214,6 @@ function HelpPopover({
               <div className="flex-1 min-w-0">
                 <p
                   style={{
-                    fontFamily: "'OV Soge', sans-serif",
                     fontWeight: 600,
                     fontSize: '12px',
                     color: textColor,
@@ -226,7 +224,6 @@ function HelpPopover({
                 </p>
                 <p
                   style={{
-                    fontFamily: "'OV Soge', sans-serif",
                     fontWeight: 400,
                     fontSize: '10px',
                     color: `${textColor}60`,
@@ -245,7 +242,6 @@ function HelpPopover({
       <div className="px-4 py-2.5" style={{ borderTop: `1px solid ${textColor}10` }}>
         <p
           style={{
-            fontFamily: "'OV Soge', sans-serif",
             fontWeight: 400,
             fontSize: '10px',
             color: `${textColor}50`,
@@ -365,7 +361,6 @@ export default function DepartmentTopbar() {
               <h1
                 className="overflow-hidden text-ellipsis truncate text-xs sm:text-sm md:text-base lg:text-lg font-black"
                 style={{
-                  fontFamily: "'OV Soge', sans-serif",
                   color: textColor,
                   lineHeight: '1.2',
                   maxWidth: '100%',

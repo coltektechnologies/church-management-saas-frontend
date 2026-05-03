@@ -160,7 +160,7 @@ export default function SystemPreferencesTab() {
       {/* ── Typography section — FontSettings component handles everything ── */}
       <div className="pt-4 border-t border-border">
         <FontSettings
-          initialFamily={profile.fontFamily || 'Inter'}
+          initialFamily={profile.fontFamily || 'Poppins'}
           initialSize={profile.fontSize || '14'}
           accentColor={accentColor}
           onSave={(family, size) => updateProfile({ fontFamily: family, fontSize: size })}

@@ -157,7 +157,7 @@ export default function AddAdminModal({
         }
       }}
     >
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto rounded-[28px] border border-slate-100 shadow-2xl p-6 sm:p-8 gap-0">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto rounded-[28px] bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] shadow-2xl p-6 sm:p-8 gap-0">
         <DialogHeader className="text-left space-y-1 pb-2">
           <DialogTitle className="text-2xl font-black text-[#0B2A4A]">
             Invite staff user
@@ -178,7 +178,7 @@ export default function AddAdminModal({
                   First name <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  className={`h-11 rounded-xl bg-slate-50 border-slate-100 ${errors.first_name ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.first_name ? 'ring-2 ring-red-400' : ''}`}
                   value={form.first_name}
                   onChange={(ev) => setField('first_name', ev.target.value)}
                   placeholder="Kwame"
@@ -192,7 +192,7 @@ export default function AddAdminModal({
                   Last name <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  className={`h-11 rounded-xl bg-slate-50 border-slate-100 ${errors.last_name ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.last_name ? 'ring-2 ring-red-400' : ''}`}
                   value={form.last_name}
                   onChange={(ev) => setField('last_name', ev.target.value)}
                   placeholder="Mensah"
@@ -205,7 +205,7 @@ export default function AddAdminModal({
                 </Label>
                 <Input
                   type="email"
-                  className={`h-11 rounded-xl bg-slate-50 border-slate-100 ${errors.email ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.email ? 'ring-2 ring-red-400' : ''}`}
                   value={form.email}
                   onChange={(ev) => setField('email', ev.target.value)}
                   placeholder="staff@yourchurch.org"
@@ -217,7 +217,7 @@ export default function AddAdminModal({
                   Phone
                 </Label>
                 <Input
-                  className="h-11 rounded-xl bg-slate-50 border-slate-100"
+                  className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]"
                   value={form.phone}
                   onChange={(ev) => setField('phone', ev.target.value)}
                   placeholder="+233 …"
@@ -228,7 +228,7 @@ export default function AddAdminModal({
                   Username
                 </Label>
                 <Input
-                  className="h-11 rounded-xl bg-slate-50 border-slate-100"
+                  className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]"
                   value={form.username}
                   onChange={(ev) => setField('username', ev.target.value)}
                   placeholder="Leave blank to auto-generate"
@@ -248,7 +248,7 @@ export default function AddAdminModal({
                   Role
                 </Label>
                 <Select value={form.role_name} onValueChange={(v) => setField('role_name', v)}>
-                  <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100">
+                  <SelectTrigger className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl max-h-[280px]">
@@ -273,7 +273,7 @@ export default function AddAdminModal({
                     )
                   }
                 >
-                  <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100">
+                  <SelectTrigger className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -283,7 +283,7 @@ export default function AddAdminModal({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3">
+              <div className="flex items-center justify-between rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/10 px-4 py-3">
                 <div>
                   <p className="text-sm font-bold text-[#0B2A4A]">Send credentials</p>
                   <p className="text-[10px] text-slate-500">Maps to send_credentials</p>
@@ -293,7 +293,7 @@ export default function AddAdminModal({
                   onCheckedChange={(c) => setField('send_credentials', c)}
                 />
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3 sm:col-span-2">
+              <div className="flex items-center justify-between rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/10 px-4 py-3 sm:col-span-2">
                 <div>
                   <p className="text-sm font-bold text-[#0B2A4A]">Active account</p>
                   <p className="text-[10px] text-slate-500">Maps to is_active</p>
@@ -312,15 +312,15 @@ export default function AddAdminModal({
             </Label>
             <p className="text-xs text-slate-500 -mt-1 mb-2">
               Open the dropdown to choose one or more groups. They are sent as{' '}
-              <code className="text-[10px] bg-slate-100 px-1 rounded">church_groups</code> when the
+              <code className="text-[10px] bg-muted dark:bg-white/10 px-1 rounded">church_groups</code> when the
               user is created.
             </p>
             {groupsLoading ? (
               <p className="text-sm text-slate-500 py-3">Loading groups…</p>
             ) : churchGroups.length === 0 ? (
-              <p className="text-sm text-slate-500 py-3 rounded-xl border border-slate-100 bg-slate-50/50 px-4">
+              <p className="text-sm text-muted-foreground py-3 rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.06] px-4">
                 No church groups yet. Run{' '}
-                <code className="text-[10px] bg-slate-100 px-1 rounded">setup_initial_data</code> on
+                <code className="text-[10px] bg-muted dark:bg-white/10 px-1 rounded">setup_initial_data</code> on
                 the backend or create groups in church settings.
               </p>
             ) : (
@@ -330,7 +330,7 @@ export default function AddAdminModal({
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full h-11 rounded-xl border-slate-100 bg-slate-50 font-medium text-left justify-between text-[#0B2A4A] hover:bg-slate-100/80"
+                      className="w-full h-11 rounded-xl border-[var(--admin-border)] bg-muted/40 dark:bg-white/5 font-medium text-left justify-between text-[#0B2A4A] hover:bg-muted dark:bg-white/10/80"
                     >
                       <span className="truncate">
                         {form.church_groups.length === 0
@@ -341,18 +341,18 @@ export default function AddAdminModal({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="p-0 rounded-xl border-slate-100 shadow-lg w-[min(calc(100vw-2rem),28rem)]"
+                    className="p-0 rounded-xl border-[var(--admin-border)] shadow-lg w-[min(calc(100vw-2rem),28rem)]"
                     align="start"
                     sideOffset={6}
                   >
-                    <div className="border-b border-slate-100 px-3 py-2 text-[10px] font-black uppercase text-slate-400">
+                    <div className="border-b border-[var(--admin-border)] px-3 py-2 text-[10px] font-black uppercase text-slate-400">
                       {churchGroups.length} group{churchGroups.length === 1 ? '' : 's'} available
                     </div>
                     <div className="max-h-[min(50vh,320px)] overflow-y-auto p-2 space-y-0.5">
                       {churchGroups.map((g) => (
                         <label
                           key={g.id}
-                          className="flex items-start gap-3 rounded-lg px-2 py-2.5 cursor-pointer hover:bg-slate-50"
+                          className="flex items-start gap-3 rounded-lg px-2 py-2.5 cursor-pointer hover:bg-muted/40 dark:bg-white/5"
                         >
                           <Checkbox
                             checked={form.church_groups.includes(g.id)}
@@ -380,7 +380,7 @@ export default function AddAdminModal({
                         <Badge
                           key={id}
                           variant="secondary"
-                          className="pl-2.5 pr-1 py-1 gap-1 text-[11px] font-semibold bg-slate-100 text-slate-800"
+                          className="pl-2.5 pr-1 py-1 gap-1 text-[11px] font-semibold bg-muted dark:bg-white/10 text-slate-800"
                         >
                           <span className="max-w-[200px] truncate">{g?.name ?? 'Group'}</span>
                           <button
@@ -416,7 +416,7 @@ export default function AddAdminModal({
                 </Label>
                 <Input
                   type="date"
-                  className="h-11 rounded-xl bg-slate-50 border-slate-100"
+                  className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]"
                   value={form.date_of_birth}
                   onChange={(ev) => setField('date_of_birth', ev.target.value)}
                 />
@@ -427,7 +427,7 @@ export default function AddAdminModal({
                   value={form.gender || '__none__'}
                   onValueChange={(v) => setField('gender', v === '__none__' ? '' : v)}
                 >
-                  <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100">
+                  <SelectTrigger className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -441,7 +441,7 @@ export default function AddAdminModal({
               <div className="space-y-2 sm:col-span-2">
                 <Label className="text-[10px] font-black uppercase text-slate-400">Address</Label>
                 <Textarea
-                  className="rounded-xl bg-slate-50 border-slate-100 min-h-[80px] resize-none"
+                  className="rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] min-h-[80px] resize-none"
                   value={form.address}
                   onChange={(ev) => setField('address', ev.target.value)}
                   placeholder="Residential address (optional)"
@@ -464,7 +464,7 @@ export default function AddAdminModal({
                 <Label className="text-[10px] font-black uppercase text-slate-400">Password</Label>
                 <Input
                   type="password"
-                  className={`h-11 rounded-xl bg-slate-50 border-slate-100 ${errors.password ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.password ? 'ring-2 ring-red-400' : ''}`}
                   value={form.password}
                   onChange={(ev) => setField('password', ev.target.value)}
                   placeholder="Min 8 characters"
@@ -476,7 +476,7 @@ export default function AddAdminModal({
                 <Label className="text-[10px] font-black uppercase text-slate-400">Confirm</Label>
                 <Input
                   type="password"
-                  className={`h-11 rounded-xl bg-slate-50 border-slate-100 ${errors.password_confirm ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.password_confirm ? 'ring-2 ring-red-400' : ''}`}
                   value={form.password_confirm}
                   onChange={(ev) => setField('password_confirm', ev.target.value)}
                   placeholder="Repeat password"

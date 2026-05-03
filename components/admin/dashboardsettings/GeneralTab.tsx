@@ -67,7 +67,7 @@ const GeneralTab = () => {
                 type="text"
                 value={church.churchName || ''}
                 onChange={(e) => handleChange('churchName', e.target.value)}
-                className="w-full bg-white border border-slate-100 rounded-2xl py-3.5 px-4 text-sm font-bold text-[#0B2A4A] focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl py-3.5 px-4 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all outline-none dark:[color-scheme:dark]"
               />
             </div>
 
@@ -79,7 +79,7 @@ const GeneralTab = () => {
                 type="text"
                 value={church.adminName || ''}
                 onChange={(e) => handleChange('adminName', e.target.value)}
-                className="w-full bg-white border border-slate-100 rounded-2xl py-3.5 px-4 text-sm font-bold text-[#0B2A4A] focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl py-3.5 px-4 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all outline-none dark:[color-scheme:dark]"
               />
             </div>
 
@@ -91,7 +91,7 @@ const GeneralTab = () => {
                 type="email"
                 value={church.email || ''}
                 onChange={(e) => handleChange('email', e.target.value)}
-                className="w-full bg-white border border-slate-100 rounded-2xl py-3.5 px-4 text-sm font-bold text-[#0B2A4A] focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl py-3.5 px-4 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all outline-none dark:[color-scheme:dark]"
               />
             </div>
 
@@ -103,7 +103,7 @@ const GeneralTab = () => {
                 type="text"
                 value={church.website || ''}
                 onChange={(e) => handleChange('website', e.target.value)}
-                className="w-full bg-white border border-slate-100 rounded-2xl py-3.5 px-4 text-sm font-bold text-[#0B2A4A] focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl py-3.5 px-4 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all outline-none dark:[color-scheme:dark]"
               />
             </div>
           </div>
@@ -116,7 +116,7 @@ const GeneralTab = () => {
               rows={4}
               value={church.mission || ''}
               onChange={(e) => handleChange('mission', e.target.value)}
-              className="w-full bg-white border border-slate-100 rounded-2xl py-3.5 px-4 text-sm font-bold text-[#0B2A4A] focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none"
+              className="w-full bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl py-3.5 px-4 text-sm font-bold text-foreground focus:ring-2 focus:ring-primary/20 transition-all outline-none resize-none dark:[color-scheme:dark]"
             />
           </div>
         </div>

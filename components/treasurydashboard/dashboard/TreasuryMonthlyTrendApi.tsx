@@ -87,7 +87,6 @@ function selectStyle(
     backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : cardBg,
     color: textColor,
     fontSize: 12,
-    fontFamily: "'OV Soge', sans-serif",
     minWidth: 0,
     cursor: 'pointer',
   };
@@ -108,7 +107,6 @@ function modeBtnStyle(
     color: active ? '#FFFFFF' : textColor,
     fontSize: 12,
     fontWeight: 700,
-    fontFamily: "'OV Soge', sans-serif",
     cursor: 'pointer',
   };
 }
@@ -185,7 +183,6 @@ export default function TreasuryMonthlyTrendApi() {
   const axisStyle = {
     fontSize: 10,
     fill: `${textColor}60`,
-    fontFamily: "'OV Soge', sans-serif",
   };
 
   const title =
@@ -380,7 +377,6 @@ export default function TreasuryMonthlyTrendApi() {
       <div style={{ marginBottom: 16 }}>
         <h3
           style={{
-            fontFamily: "'OV Soge', sans-serif",
             fontWeight: 700,
             fontSize: 18,
             color: textColor,
@@ -417,7 +413,6 @@ export default function TreasuryMonthlyTrendApi() {
             justifyContent: 'center',
             color: `${textColor}55`,
             fontSize: 13,
-            fontFamily: "'OV Soge', sans-serif",
           }}
         >
           No tithe and offering data for this selection yet.

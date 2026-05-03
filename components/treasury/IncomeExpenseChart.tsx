@@ -19,13 +19,16 @@ interface IncomeExpenseChartProps {
   isLoading: boolean;
 }
 
+const panel =
+  'bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10';
+
 export function IncomeExpenseChart({ data, isLoading }: IncomeExpenseChartProps) {
   if (isLoading || !data) {
-    return <div className="h-[300px] w-full rounded-xl bg-muted animate-pulse" />;
+    return <div className={`h-[300px] w-full rounded-xl ${panel} animate-pulse opacity-80`} />;
   }
 
   return (
-    <div className="bg-card border rounded-xl p-5">
+    <div className={`${panel} p-5`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
           📊 Income vs Expenses Trend
@@ -43,23 +46,33 @@ export function IncomeExpenseChart({ data, isLoading }: IncomeExpenseChartProps)
               <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-          <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="var(--color-muted-foreground)" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--admin-border)" />
+          <XAxis
+            dataKey="month"
+            tick={{ fontSize: 12, fill: 'var(--admin-text-muted)' }}
+            stroke="var(--admin-border)"
+          />
           <YAxis
-            tick={{ fontSize: 11 }}
-            stroke="var(--color-muted-foreground)"
+            tick={{ fontSize: 11, fill: 'var(--admin-text-muted)' }}
+            stroke="var(--admin-border)"
             tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'var(--color-card)',
-              borderColor: 'var(--color-border)',
+              backgroundColor: 'var(--admin-surface)',
+              borderColor: 'var(--admin-border)',
               borderRadius: 8,
               fontSize: 13,
+              color: 'var(--admin-text)',
             }}
             formatter={(value) => formatCurrency(value as number)}
           />
-          <Legend verticalAlign="top" height={36} iconType="circle" />
+          <Legend
+            verticalAlign="top"
+            height={36}
+            iconType="circle"
+            wrapperStyle={{ color: 'var(--admin-text)' }}
+          />
           <Area
             type="monotone"
             dataKey="income"

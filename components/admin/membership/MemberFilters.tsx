@@ -48,7 +48,7 @@ export default function MemberFilters({
 
   return (
     <div
-      className="w-full rounded-xl border p-4 shadow-sm"
+      className="w-full rounded-xl border p-4 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/5"
       style={{
         borderColor: 'var(--admin-border, rgba(0,0,0,0.07))',
         background: 'var(--admin-surface, #FFFFFF)',
@@ -64,7 +64,7 @@ export default function MemberFilters({
             placeholder="Search member..."
             value={filters.search}
             onChange={(e) => update('search', e.target.value)}
-            className="pl-9 h-9 rounded-md text-sm placeholder:text-gray-400"
+            className="pl-9 h-9 rounded-md text-sm placeholder:text-gray-400 dark:placeholder:text-slate-500 bg-[var(--admin-surface,#fff)] text-[color:var(--admin-text,#2B2B2C)] border-[var(--admin-border,#D9DADC)]"
             style={{
               borderColor: 'var(--admin-border, #D9DADC)',
               background: 'var(--admin-surface, #fff)',
@@ -133,7 +133,6 @@ export default function MemberFilters({
               gap: 13,
               background: 'var(--color-primary, #0B2A4A)',
               color: '#FFFFFF',
-              fontFamily: 'OV Soge, sans-serif',
               fontWeight: 600,
               fontSize: '12px',
               lineHeight: '100%',

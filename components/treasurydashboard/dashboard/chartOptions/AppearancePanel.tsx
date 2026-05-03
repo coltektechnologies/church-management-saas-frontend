@@ -27,7 +27,6 @@ function pill(active: boolean, accent: string, border: string, text: string): Re
     borderRadius: 6,
     cursor: 'pointer',
     fontSize: 10,
-    fontFamily: "'OV Soge',sans-serif",
     fontWeight: active ? 700 : 500,
     border: `1px solid ${active ? accent : border}`,
     backgroundColor: active ? `${accent}18` : 'transparent',
@@ -57,7 +56,6 @@ export default function AppearancePanel({
     color: `${textColor}50`,
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
-    fontFamily: "'OV Soge', sans-serif",
     marginBottom: 10,
   };
 
@@ -107,7 +105,6 @@ export default function AppearancePanel({
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
-              fontFamily: "'OV Soge', sans-serif",
             }}
           >
             Legend:

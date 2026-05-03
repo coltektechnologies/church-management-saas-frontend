@@ -13,8 +13,7 @@ import { toast } from 'sonner';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 import {
   parseEmergencyContactFromNotes,
-  stripEmergencyContactBlockFromNotes,
-} from '@/lib/memberNotesDisplay';
+  stripEmergencyContactBlockFromNotes} from '@/lib/memberNotesDisplay';
 
 const TITLES = [
   { value: '', label: 'Select title' },
@@ -146,8 +145,7 @@ const emptyForm: FormState = {
   emergency_contact_relationship: '',
   notes: '',
   notification_preference: 'EMAIL',
-  is_active: true,
-};
+  is_active: true};
 
 function sliceDate(v: string | null | undefined): string {
   if (!v) {
@@ -189,8 +187,7 @@ function memberToForm(m: MemberDetail): FormState {
     emergency_contact_relationship: m.emergency_contact_relationship || '',
     notes: m.notes || '',
     notification_preference: m.notification_preference || 'EMAIL',
-    is_active: m.is_active !== false,
-  };
+    is_active: m.is_active !== false};
 }
 
 function buildUpdatePayload(form: FormState): Record<string, unknown> {
@@ -223,16 +220,13 @@ function buildUpdatePayload(form: FormState): Record<string, unknown> {
       address: form.address.trim(),
       city: form.city.trim() || null,
       region,
-      country: form.country.trim() || null,
-    },
-  };
+      country: form.country.trim() || null}};
 }
 
 function CardSection({
   title,
   icon: Icon,
-  children,
-}: {
+  children}: {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
@@ -274,8 +268,7 @@ export default function MemberEditPage() {
   const {
     membersBasePath,
     memberProfilePresentation = 'default',
-    hideMemberLifecycleControls,
-  } = useMembersPortal();
+    hideMemberLifecycleControls} = useMembersPortal();
   const isDept = memberProfilePresentation === 'department';
   const params = useParams();
   const id = params.id as string;
@@ -401,7 +394,6 @@ export default function MemberEditPage() {
           </Link>
           <h1
             className={`text-2xl font-bold ${isDept ? 'text-stone-900 font-semibold tracking-tight' : 'text-[var(--admin-text)]'}`}
-            style={{ fontFamily: 'OV Soge, sans-serif' }}
           >
             {isDept ? 'Update member details' : 'Edit Member'}
           </h1>

@@ -248,7 +248,6 @@ export default function SecretaryTopbar() {
           <span
             className="hidden lg:block leading-tight"
             style={{
-              fontFamily: "'OV Soge', sans-serif",
               fontWeight: 800,
               fontSize: '12px',
               color: textColor,

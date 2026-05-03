@@ -79,7 +79,7 @@ const MyProfileTab = () => {
   };
 
   return (
-    <div className="bg-white rounded-[24px] border border-slate-100 p-8 space-y-8 max-w-2xl animate-in fade-in duration-500">
+    <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] p-8 space-y-8 max-w-2xl animate-in fade-in duration-500 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
       <div>
         <h3 className="text-lg font-black text-[#0B2A4A]">My Profile</h3>
         <p className="text-xs text-slate-400 font-medium">

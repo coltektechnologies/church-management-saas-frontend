@@ -11,6 +11,9 @@ interface BreakdownChartsProps {
   isLoading: boolean;
 }
 
+const panel =
+  'bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10';
+
 function DonutChart({
   title,
   _totalLabel,
@@ -25,11 +28,11 @@ function DonutChart({
   const total = data?.reduce((sum, d) => sum + d.value, 0) ?? 0;
 
   if (isLoading || !data) {
-    return <div className="h-64 rounded-xl bg-muted animate-pulse" />;
+    return <div className={`h-64 rounded-xl ${panel} animate-pulse opacity-80`} />;
   }
 
   return (
-    <div className="bg-card border rounded-xl p-5">
+    <div className={`${panel} p-5`}>
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         <span className="text-sm font-bold text-foreground">{formatCurrency(total)}</span>
@@ -56,10 +59,11 @@ function DonutChart({
               <Tooltip
                 formatter={(value) => formatCurrency(value as number)}
                 contentStyle={{
-                  backgroundColor: 'var(--color-card)',
-                  borderColor: 'var(--color-border)',
+                  backgroundColor: 'var(--admin-surface)',
+                  borderColor: 'var(--admin-border)',
                   borderRadius: 8,
                   fontSize: 12,
+                  color: 'var(--admin-text)',
                 }}
               />
             </PieChart>

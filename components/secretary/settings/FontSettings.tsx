@@ -94,7 +94,7 @@ export function useApplyFont() {
       return;
     }
     injectGoogleFonts();
-    applyFontToRoot(profile.fontFamily || 'Inter', profile.fontSize || '14');
+    applyFontToRoot(profile.fontFamily || 'Poppins', profile.fontSize || '14');
   }, [isReady, profile.fontFamily, profile.fontSize]);
 }
 
@@ -297,7 +297,7 @@ interface FontSettingsProps {
 
 export function FontSettings({
   onSave,
-  initialFamily = 'Inter',
+  initialFamily = 'Poppins',
   initialSize = '14',
   accentColor = '#2FC4B2',
 }: FontSettingsProps) {
@@ -319,10 +319,10 @@ export function FontSettings({
   }, [family, size, onSave]);
 
   const handleReset = () => {
-    setFamily('Inter');
+    setFamily('Poppins');
     setSize('14');
-    applyFontToRoot('Inter', '14');
-    onSave('Inter', '14');
+    applyFontToRoot('Poppins', '14');
+    onSave('Poppins', '14');
   };
 
   return (

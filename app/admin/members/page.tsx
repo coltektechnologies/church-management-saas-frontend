@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Home, Users, UserCheck, UserX, UserPlus } from 'lucide-react';
 import StatsCard from '@/components/admin/membership/StatsCard';
@@ -9,7 +9,16 @@ import TithingOfferingsChart from '@/components/admin/membership/TithingOffering
 import MemberFilters from '@/components/admin/membership/MemberFilters';
 import MembersTable from '@/components/admin/membership/MembersTable';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
-import { getMemberStats, getTitheOfferingStats } from '@/lib/api';
+import {
+  getMemberStats,
+  getTitheOfferingStats,
+  titheOfferingRequestForRange,
+  titheStatsToChartSeries,
+  titheTrendChartTitle,
+  titheTrendRangeOptions,
+  type TitheOfferingStats,
+  type TitheTrendRangeKey,
+} from '@/lib/api';
 import { DEFAULT_MEMBER_FILTERS, type MemberFilterState } from '@/lib/memberFilters';
 
 function formatChange(pct: number): string {
@@ -35,51 +44,44 @@ export default function MembershipDashboardPage() {
     new_members_change_percent: 0,
   });
 
-  const [titheStats, setTitheStats] = useState({
-    monthly_trend: [] as { month: string; tithe: number; offering: number }[],
+  const [titheStats, setTitheStats] = useState<TitheOfferingStats>(() => ({
+    monthly_trend: [],
+    yearly_trend: [],
     this_month: {
       tithe_total: '0',
       offering_total: '0',
-      tithe_by_week: [] as { name: string; value: number }[],
-      offering_by_week: [] as { name: string; value: number }[],
+      tithe_by_week: [],
+      offering_by_week: [],
     },
-  });
+  }));
+
+  const [trendRange, setTrendRange] = useState<TitheTrendRangeKey>('r1');
+
+  const trendChartData = useMemo(() => titheStatsToChartSeries(titheStats), [titheStats]);
+  const trendChartTitle = useMemo(() => titheTrendChartTitle(titheStats), [titheStats]);
+  const trendRangeOptions = useMemo(() => titheTrendRangeOptions(), []);
 
   const [filters, setFilters] = useState<MemberFilterState>(DEFAULT_MEMBER_FILTERS);
 
   useEffect(() => {
     getMemberStats().then(setStats);
-    getTitheOfferingStats(9).then(setTitheStats);
   }, []);
+
+  useEffect(() => {
+    getTitheOfferingStats(titheOfferingRequestForRange(trendRange)).then(setTitheStats);
+  }, [trendRange]);
 
   return (
     <div className="w-full min-w-0 space-y-8">
       {/* Header & Breadcrumb */}
       <div>
         <h1
-          style={{
-            fontFamily: 'OV Soge, sans-serif',
-            fontWeight: 600,
-            fontSize: '24px',
-            lineHeight: '100%',
-            letterSpacing: 0,
-            color: 'var(--admin-text, #000000)',
-          }}
+          className="font-semibold text-2xl leading-none tracking-normal text-[color:var(--admin-text,#1A202C)]"
         >
           Membership Dashboard
         </h1>
-        <nav
-          className="flex items-center gap-2 mt-2"
-          style={{
-            fontFamily: 'OV Soge, sans-serif',
-            fontWeight: 400,
-            fontSize: '16px',
-            lineHeight: '100%',
-            letterSpacing: 0,
-            color: 'var(--admin-text-muted, #666666)',
-          }}
-        >
-          <Link href={appHomeHref} className="flex items-center gap-1 hover:opacity-80">
+        <nav className="flex items-center gap-2 mt-2 font-normal text-base leading-none text-[color:var(--admin-text-muted,rgba(0,0,0,0.45))]">
+          <Link href={appHomeHref} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
             <Home className="h-4 w-4" />
             {appHomeLabel}
           </Link>
@@ -128,7 +130,13 @@ export default function MembershipDashboardPage() {
       {/* Charts — full width row, same line as stats cards; wrap on small screens */}
       <div className="flex flex-wrap gap-4 w-full min-w-0">
         <div className="flex-1 min-w-[280px] min-h-[281px]">
-          <MonthlyTrendChart data={titheStats.monthly_trend} />
+          <MonthlyTrendChart
+            data={trendChartData}
+            title={trendChartTitle}
+            rangeValue={trendRange}
+            rangeOptions={trendRangeOptions}
+            onRangeChange={setTrendRange}
+          />
         </div>
         <div className="flex-1 min-w-[280px] min-h-[281px]">
           <TithingOfferingsChart

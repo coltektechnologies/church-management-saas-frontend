@@ -8,8 +8,7 @@ import { useState } from 'react';
 import { Check, Search, X, EyeOff } from 'lucide-react';
 import {
   getAllOptionsIncludingHidden,
-  type DropdownOption,
-} from '@/components/treasurydashboard/recordIncome/dropdownOptions';
+  type DropdownOption} from '@/components/treasurydashboard/recordIncome/dropdownOptions';
 
 export const PALETTE = [
   '#2FC4B2',
@@ -45,8 +44,7 @@ export default function CompareSeriesPanel({
   textColor,
   accentColor,
   borderColor,
-  isDark = false,
-}: CompareSeriesPanelProps) {
+  isDark = false}: CompareSeriesPanelProps) {
   const [query, setQuery] = useState('');
   const allTypes: DropdownOption[] = getAllOptionsIncludingHidden('income_types');
   const visibleValues = new Set(liveTypes.map((t) => t.value));
@@ -63,9 +61,7 @@ export default function CompareSeriesPanel({
     fontWeight: 800,
     color: `${textColor}50`,
     textTransform: 'uppercase',
-    letterSpacing: '0.08em',
-    fontFamily: "'OV Soge', sans-serif",
-  };
+    letterSpacing: '0.08em'};
 
   return (
     <div>
@@ -77,13 +73,12 @@ export default function CompareSeriesPanel({
           justifyContent: 'space-between',
           marginBottom: 10,
           gap: 8,
-          flexWrap: 'wrap',
-        }}
+          flexWrap: 'wrap'}}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={sectionLabel}>Income Series</div>
           <span
-            style={{ fontSize: 9, color: `${textColor}40`, fontFamily: "'OV Soge', sans-serif" }}
+            style={{ fontSize: 9, color: `${textColor}40` }}
           >
             {selectedTypes.length} of {allTypes.filter((t) => !t.isHidden).length} active selected
           </span>
@@ -93,9 +88,7 @@ export default function CompareSeriesPanel({
             style={{
               fontSize: 9,
               color: accentColor,
-              fontFamily: "'OV Soge', sans-serif",
-              fontWeight: 700,
-            }}
+              fontWeight: 700}}
           >
             {selectedTypes.length} selected
           </span>
@@ -112,8 +105,7 @@ export default function CompareSeriesPanel({
             top: '50%',
             transform: 'translateY(-50%)',
             color: `${textColor}45`,
-            pointerEvents: 'none',
-          }}
+            pointerEvents: 'none'}}
         />
         <input
           type="text"
@@ -124,14 +116,12 @@ export default function CompareSeriesPanel({
             width: '100%',
             padding: '7px 32px 7px 28px',
             fontSize: 11,
-            fontFamily: "'OV Soge', sans-serif",
             color: textColor,
             caretColor: accentColor,
             backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.04)',
             border: `1px solid ${borderColor}`,
             borderRadius: 7,
-            outline: 'none',
-          }}
+            outline: 'none'}}
         />
         {query && (
           <button
@@ -147,8 +137,7 @@ export default function CompareSeriesPanel({
               cursor: 'pointer',
               color: `${textColor}50`,
               display: 'flex',
-              padding: 2,
-            }}
+              padding: 2}}
           >
             <X size={11} />
           </button>
@@ -158,7 +147,7 @@ export default function CompareSeriesPanel({
       {/* Type pills */}
       {displayed.length === 0 ? (
         <span
-          style={{ fontSize: 11, color: `${textColor}40`, fontFamily: "'OV Soge', sans-serif" }}
+          style={{ fontSize: 11, color: `${textColor}40` }}
         >
           No types match your search.
         </span>
@@ -189,7 +178,6 @@ export default function CompareSeriesPanel({
                   cursor: 'pointer',
                   fontSize: 11,
                   fontWeight: active ? 700 : 500,
-                  fontFamily: "'OV Soge', sans-serif",
                   border: `1px ${isHidden ? 'dashed' : 'solid'} ${active ? col : isHidden ? `${textColor}30` : borderColor}`,
                   backgroundColor: active
                     ? `${col}1A`
@@ -198,8 +186,7 @@ export default function CompareSeriesPanel({
                       : 'transparent',
                   color: active ? col : isHidden ? `${textColor}45` : `${textColor}65`,
                   transition: 'all 0.12s',
-                  opacity: isHidden && !active ? 0.7 : 1,
-                }}
+                  opacity: isHidden && !active ? 0.7 : 1}}
               >
                 {/* Colour dot */}
                 <span
@@ -209,8 +196,7 @@ export default function CompareSeriesPanel({
                     borderRadius: '50%',
                     backgroundColor: isHidden && !active ? `${textColor}30` : col,
                     flexShrink: 0,
-                    display: 'inline-block',
-                  }}
+                    display: 'inline-block'}}
                 />
 
                 {t.label}
@@ -229,8 +215,7 @@ export default function CompareSeriesPanel({
                       backgroundColor: `${textColor}10`,
                       color: `${textColor}45`,
                       textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                    }}
+                      letterSpacing: '0.05em'}}
                   >
                     <EyeOff size={7} /> hidden
                   </span>
@@ -249,10 +234,8 @@ export default function CompareSeriesPanel({
           style={{
             fontSize: 9,
             color: `${textColor}35`,
-            fontFamily: "'OV Soge', sans-serif",
             marginTop: 8,
-            lineHeight: 1.4,
-          }}
+            lineHeight: 1.4}}
         >
           <EyeOff size={8} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />
           Dashed-border types are hidden from the income form but can still be charted.

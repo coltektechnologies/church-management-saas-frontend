@@ -140,7 +140,6 @@ export default function TreasurySidebar() {
         {!collapsed && (
           <span
             style={{
-              fontFamily: "'OV Soge', sans-serif",
               fontSize: '10px',
               fontWeight: 600,
               color: `${sidebarText}55`,
@@ -183,7 +182,6 @@ export default function TreasurySidebar() {
             >
               <p
                 style={{
-                  fontFamily: "'OV Soge', sans-serif",
                   fontWeight: 600,
                   fontSize: '11px',
                   color: '#000',
@@ -197,7 +195,6 @@ export default function TreasurySidebar() {
               </p>
               <p
                 style={{
-                  fontFamily: "'OV Soge', sans-serif",
                   fontWeight: 500,
                   fontSize: '10px',
                   color: '#000',
@@ -245,7 +242,6 @@ export default function TreasurySidebar() {
                 {!collapsed && (
                   <span
                     style={{
-                      fontFamily: "'OV Soge', sans-serif",
                       fontWeight: 600,
                       fontSize: '13px',
                       color: active ? primaryText : sidebarText,
@@ -332,7 +328,6 @@ export default function TreasurySidebar() {
               <div className="flex-1 min-w-0">
                 <p
                   style={{
-                    fontFamily: "'OV Soge', sans-serif",
                     fontWeight: 600,
                     fontSize: '13px',
                     color: sidebarText,
@@ -346,7 +341,6 @@ export default function TreasurySidebar() {
                 </p>
                 <p
                   style={{
-                    fontFamily: "'OV Soge', sans-serif",
                     fontWeight: 300,
                     fontSize: '11px',
                     color: `${sidebarText}80`,
@@ -365,7 +359,6 @@ export default function TreasurySidebar() {
           <div className="px-5 pt-3 pb-2">
             <p
               style={{
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 400,
                 fontSize: '10px',
                 color: `${sidebarText}60`,
@@ -404,7 +397,6 @@ export default function TreasurySidebar() {
             {!collapsed && (
               <span
                 style={{
-                  fontFamily: "'OV Soge', sans-serif",
                   fontWeight: 600,
                   fontSize: '13px',
                   color: '#DC2626',

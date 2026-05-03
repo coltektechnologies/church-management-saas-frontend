@@ -258,7 +258,7 @@ export default function EditStaffModal({
         }
       }}
     >
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto rounded-[28px] border border-slate-100 shadow-2xl p-6 sm:p-8 gap-0">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto rounded-[28px] bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] shadow-2xl p-6 sm:p-8 gap-0">
         <DialogHeader className="text-left space-y-1 pb-2">
           <DialogTitle className="text-2xl font-black text-[#0B2A4A]">Edit staff user</DialogTitle>
           <DialogDescription className="text-sm text-slate-500 font-medium">
@@ -277,7 +277,7 @@ export default function EditStaffModal({
                   First name <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  className={`h-11 rounded-xl bg-slate-50 border-slate-100 ${errors.first_name ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.first_name ? 'ring-2 ring-red-400' : ''}`}
                   value={form.first_name}
                   onChange={(ev) => setField('first_name', ev.target.value)}
                 />
@@ -290,7 +290,7 @@ export default function EditStaffModal({
                   Last name <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  className={`h-11 rounded-xl bg-slate-50 border-slate-100 ${errors.last_name ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.last_name ? 'ring-2 ring-red-400' : ''}`}
                   value={form.last_name}
                   onChange={(ev) => setField('last_name', ev.target.value)}
                 />
@@ -303,7 +303,7 @@ export default function EditStaffModal({
                 <Input
                   type="email"
                   readOnly
-                  className="h-11 rounded-xl bg-slate-100 border-slate-100 text-slate-600"
+                  className="h-11 rounded-xl bg-muted dark:bg-white/10 border-[var(--admin-border)] text-slate-600"
                   value={form.email}
                 />
               </div>
@@ -312,7 +312,7 @@ export default function EditStaffModal({
                   Phone
                 </Label>
                 <Input
-                  className="h-11 rounded-xl bg-slate-50 border-slate-100"
+                  className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]"
                   value={form.phone}
                   onChange={(ev) => setField('phone', ev.target.value)}
                 />
@@ -323,7 +323,7 @@ export default function EditStaffModal({
                 </Label>
                 <Input
                   readOnly
-                  className="h-11 rounded-xl bg-slate-100 border-slate-100 text-slate-600"
+                  className="h-11 rounded-xl bg-muted dark:bg-white/10 border-[var(--admin-border)] text-slate-600"
                   value={form.username}
                   placeholder="—"
                 />
@@ -340,7 +340,7 @@ export default function EditStaffModal({
                   Role
                 </Label>
                 <Select value={form.role_name} onValueChange={(v) => setField('role_name', v)}>
-                  <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100">
+                  <SelectTrigger className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl max-h-[280px]">
@@ -352,7 +352,7 @@ export default function EditStaffModal({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3 sm:col-span-2">
+              <div className="flex items-center justify-between rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/10 px-4 py-3 sm:col-span-2">
                 <div>
                   <p className="text-sm font-bold text-[#0B2A4A]">Active account</p>
                   <p className="text-[10px] text-slate-500">Maps to is_active</p>
@@ -372,7 +372,7 @@ export default function EditStaffModal({
             {groupsLoading ? (
               <p className="text-sm text-slate-500 py-3">Loading groups…</p>
             ) : churchGroups.length === 0 ? (
-              <p className="text-sm text-slate-500 py-3 rounded-xl border border-slate-100 bg-slate-50/50 px-4">
+              <p className="text-sm text-muted-foreground py-3 rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.06] px-4">
                 No church groups available.
               </p>
             ) : (
@@ -382,7 +382,7 @@ export default function EditStaffModal({
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full h-11 rounded-xl border-slate-100 bg-slate-50 font-medium text-left justify-between text-[#0B2A4A] hover:bg-slate-100/80"
+                      className="w-full h-11 rounded-xl border-[var(--admin-border)] bg-muted/40 dark:bg-white/5 font-medium text-left justify-between text-[#0B2A4A] hover:bg-muted dark:bg-white/10/80"
                     >
                       <span className="truncate">
                         {form.church_groups.length === 0
@@ -393,7 +393,7 @@ export default function EditStaffModal({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="p-0 rounded-xl border-slate-100 shadow-lg w-[min(calc(100vw-2rem),28rem)]"
+                    className="p-0 rounded-xl border-[var(--admin-border)] shadow-lg w-[min(calc(100vw-2rem),28rem)]"
                     align="start"
                     sideOffset={6}
                   >
@@ -401,7 +401,7 @@ export default function EditStaffModal({
                       {churchGroups.map((g) => (
                         <label
                           key={g.id}
-                          className="flex items-start gap-3 rounded-lg px-2 py-2.5 cursor-pointer hover:bg-slate-50"
+                          className="flex items-start gap-3 rounded-lg px-2 py-2.5 cursor-pointer hover:bg-muted/40 dark:bg-white/5"
                         >
                           <Checkbox
                             checked={form.church_groups.includes(g.id)}
@@ -429,7 +429,7 @@ export default function EditStaffModal({
                         <Badge
                           key={id}
                           variant="secondary"
-                          className="pl-2.5 pr-1 py-1 gap-1 text-[11px] font-semibold bg-slate-100 text-slate-800"
+                          className="pl-2.5 pr-1 py-1 gap-1 text-[11px] font-semibold bg-muted dark:bg-white/10 text-slate-800"
                         >
                           <span className="max-w-[200px] truncate">{g?.name ?? 'Group'}</span>
                           <button
@@ -468,7 +468,7 @@ export default function EditStaffModal({
                 </Label>
                 <Input
                   type="date"
-                  className="h-11 rounded-xl bg-slate-50 border-slate-100"
+                  className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]"
                   value={form.date_of_birth}
                   onChange={(ev) => setField('date_of_birth', ev.target.value)}
                   disabled={detailLoading}
@@ -480,7 +480,7 @@ export default function EditStaffModal({
                   value={form.gender || '__none__'}
                   onValueChange={(v) => setField('gender', v === '__none__' ? '' : v)}
                 >
-                  <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100">
+                  <SelectTrigger className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -494,7 +494,7 @@ export default function EditStaffModal({
               <div className="space-y-2 sm:col-span-2">
                 <Label className="text-[10px] font-black uppercase text-slate-400">Address</Label>
                 <Textarea
-                  className="rounded-xl bg-slate-50 border-slate-100 min-h-[80px] resize-none"
+                  className="rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] min-h-[80px] resize-none"
                   value={form.address}
                   onChange={(ev) => setField('address', ev.target.value)}
                   disabled={detailLoading}

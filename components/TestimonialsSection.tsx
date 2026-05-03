@@ -1,7 +1,7 @@
 /**
  * TestimonialsSection Component
  * Layout: 3-column on desktop, stacks on mobile.
- * Fonts: OV Soge (Heading), Poppins (Content)
+ * Fonts: Poppins (heading + content)
  */
 
 import { Play } from 'lucide-react';
@@ -13,27 +13,23 @@ const testimonials = [
       'The analytics dashboard has made tracking our growth trends incredibly simple and data-driven.',
     author: 'Pastor Samuel Mensah',
     role: 'Lead Pastor - SDA',
-    rating: 5,
-  },
+    rating: 5},
   {
     quote:
       'Recording tithes and expenses is now fully automated. Our financial reporting is finally error-free.',
     author: 'Sister Elena Rodriguez',
     role: 'Church Treasurer - SDA',
-    rating: 5,
-  },
+    rating: 5},
   {
     quote: 'Our member directory updates are now instant. Outreach has never been this organized.',
     author: 'Michael Chen',
     role: 'General Secretary - SDA',
-    rating: 4,
-  },
+    rating: 4},
   {
     quote: 'The department hub allows us to manage our budget and events without any overlaps.',
     author: 'David Okoro',
     role: 'Youth Director - SDA',
-    rating: 5,
-  },
+    rating: 5},
 ];
 
 const TestimonialsSection = () => {
@@ -44,7 +40,6 @@ const TestimonialsSection = () => {
         <div className="testimonials-header text-center mb-16">
           <h2
             className="text-4xl md:text-6xl font-bold text-[#00223A] tracking-tight"
-            style={{ fontFamily: 'OV Soge, sans-serif' }}
           >
             Trusted by Congregations Everywhere.
           </h2>

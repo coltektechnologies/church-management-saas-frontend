@@ -4,7 +4,11 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'sonner';
 
-const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '700'] });
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-poppins',
+});
 
 export const metadata: Metadata = {
   title: 'Church Management SAAS',
@@ -13,8 +17,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={poppins.className}>
+    <html lang="en" className={poppins.variable}>
+      <body className={`${poppins.className} font-sans antialiased`}>
         <Providers>{children}</Providers>
         <Toaster position="top-right" richColors />
       </body>

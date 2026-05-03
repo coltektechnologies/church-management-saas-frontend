@@ -116,7 +116,6 @@ export default function MembersTableHeader({
       <div className="flex items-center gap-2.5">
         <h2
           style={{
-            fontFamily: "'OV Soge', sans-serif",
             fontWeight: 700,
             fontSize: '15px',
             color: textColor,

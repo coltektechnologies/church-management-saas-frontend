@@ -132,7 +132,7 @@ const AdvancedColorPicker = ({
               onChange(e.target.value);
             }
           }}
-          className="flex-1 min-w-0 font-mono text-xs py-2 px-3 rounded-md border border-slate-200 bg-white dark:bg-white/5 dark:border-white/10 dark:text-white"
+          className="flex-1 min-w-0 font-mono text-xs py-2 px-3 rounded-md border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground dark:[color-scheme:dark]"
         />
         <div
           className="shrink-0 px-2 py-1 rounded-md text-[9px] font-black border"
@@ -472,10 +472,10 @@ export default function ColorThemeSettings() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 p-2 md:p-0">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-[#253347] p-6 rounded-2xl border border-slate-100 dark:border-white/10 shadow-sm gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[var(--admin-surface)] p-6 rounded-2xl border border-[var(--admin-border)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#0B2A4A] dark:text-white">Dashboard Appearance</h2>
-          <p className="text-slate-500 dark:text-white/40 text-sm">
+          <h2 className="text-xl font-bold text-foreground">Dashboard Appearance</h2>
+          <p className="text-muted-foreground text-sm">
             Customise colours for the entire platform. Preview updates live.
           </p>
         </div>
@@ -500,7 +500,7 @@ export default function ColorThemeSettings() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* ── Left: colour pickers + mode toggle ── */}
-        <div className="lg:col-span-4 space-y-6 bg-white dark:bg-[#253347] p-6 rounded-2xl border border-slate-100 dark:border-white/10 h-fit">
+        <div className="lg:col-span-4 space-y-6 bg-[var(--admin-surface)] p-6 rounded-2xl border border-[var(--admin-border)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 h-fit">
           <AdvancedColorPicker
             label="Primary Colour"
             value={colors.primary}
@@ -522,13 +522,13 @@ export default function ColorThemeSettings() {
             onChange={(v) => setColors((c) => ({ ...c, bg: v }))}
           />
 
-          <div className="pt-3 border-t border-slate-100 dark:border-white/10">
+          <div className="pt-3 border-t border-[var(--admin-border)]">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30 mb-3">
               Interface Mode
             </p>
             <button
               onClick={toggleDarkMode}
-              className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-muted/40 dark:bg-white/5 hover:bg-muted/60 dark:hover:bg-white/10 transition-colors border border-transparent hover:border-[var(--admin-border)]"
             >
               <div className="flex items-center gap-2">
                 {isDark ? (
@@ -561,7 +561,7 @@ export default function ColorThemeSettings() {
         </div>
 
         {/* ── Right: live preview ── */}
-        <div className="lg:col-span-8 bg-white dark:bg-[#253347] p-6 rounded-2xl border border-slate-100 dark:border-white/10">
+        <div className="lg:col-span-8 bg-[var(--admin-surface)] p-6 rounded-2xl border border-[var(--admin-border)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-xs font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest">

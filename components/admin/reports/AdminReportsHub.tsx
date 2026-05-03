@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
 import {
   ArrowDownCircle,
   Building2,
@@ -412,6 +412,8 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [showRawPreview, setShowRawPreview] = useState(false);
 
+  const previewSectionRef = useRef<HTMLElement | null>(null);
+
   const [downloadState, setDownloadState] = useState<{
     key: string;
     format: ReportExportFormat;
@@ -438,6 +440,22 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
     }
     void loadScheduled();
   }, [loadScheduled, variant]);
+
+  /** When a preview opens or finishes loading, scroll it into view (below long report lists). */
+  useEffect(() => {
+    const visible =
+      !!(previewKey || previewLoading || previewJson || previewError);
+    if (!visible) {
+      return;
+    }
+    const id = window.requestAnimationFrame(() => {
+      previewSectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [previewKey, previewLoading, previewJson, previewError, previewData]);
 
   const buildParams = useCallback(
     (item: ReportItem): ReportQueryParams => {
@@ -863,7 +881,9 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
       {/* Preview panel */}
       {(previewKey || previewLoading || previewJson || previewError) && (
         <section
-          className="rounded-2xl border overflow-hidden shadow-sm"
+          ref={previewSectionRef}
+          id="report-preview-panel"
+          className="rounded-2xl border overflow-hidden shadow-sm scroll-mt-24 md:scroll-mt-28"
           style={{
             backgroundColor: 'var(--admin-surface)',
             borderColor: 'var(--admin-border)',

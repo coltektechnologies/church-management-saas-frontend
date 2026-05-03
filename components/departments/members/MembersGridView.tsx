@@ -134,7 +134,6 @@ export default function MembersGridView({
                 ) : (
                   <span
                     style={{
-                      fontFamily: "'OV Soge', sans-serif",
                       fontWeight: 700,
                       fontSize: '16px',
                       color: '#FFFFFF',
@@ -146,7 +145,6 @@ export default function MembersGridView({
               </div>
               <p
                 style={{
-                  fontFamily: "'OV Soge', sans-serif",
                   fontWeight: 700,
                   fontSize: '13px',
                   color: textColor,

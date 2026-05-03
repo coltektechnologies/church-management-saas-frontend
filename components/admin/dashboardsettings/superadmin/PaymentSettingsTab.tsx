@@ -22,7 +22,7 @@ const PaymentSettingsTab = () => {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6 space-y-6 max-w-2xl">
+    <div className="bg-[var(--admin-surface)] rounded-xl border border-[var(--admin-border)] p-6 space-y-6 max-w-2xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
       <h3 className="text-base font-semibold text-foreground">Payment Settings</h3>
 
       <div className="space-y-1.5">

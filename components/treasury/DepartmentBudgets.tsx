@@ -9,6 +9,9 @@ interface DepartmentBudgetsProps {
   isLoading: boolean;
 }
 
+const panel =
+  'bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10';
+
 export function DepartmentBudgets({ data, isLoading }: DepartmentBudgetsProps) {
   if (isLoading || !data) {
     return (
@@ -21,7 +24,7 @@ export function DepartmentBudgets({ data, isLoading }: DepartmentBudgetsProps) {
   }
 
   return (
-    <div className="bg-card border rounded-xl p-5">
+    <div className={`${panel} p-5`}>
       <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
         🏢 Department Budget Overview
       </h3>
@@ -32,7 +35,7 @@ export function DepartmentBudgets({ data, isLoading }: DepartmentBudgetsProps) {
           return (
             <div
               key={dept.id}
-              className="min-w-[180px] max-w-[200px] shrink-0 border rounded-xl p-4 hover:shadow-md transition-shadow bg-background"
+              className="min-w-[180px] max-w-[200px] shrink-0 border border-[var(--admin-border)] rounded-xl p-4 hover:shadow-md transition-shadow bg-muted/20 dark:bg-white/[0.04]"
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="size-3 rounded-full" style={{ backgroundColor: dept.color }} />
@@ -40,7 +43,7 @@ export function DepartmentBudgets({ data, isLoading }: DepartmentBudgetsProps) {
               </div>
 
               {/* Progress bar */}
-              <div className="h-[6px] bg-muted/50 rounded-full overflow-hidden mb-3">
+              <div className="h-[6px] bg-muted/50 dark:bg-white/10 rounded-full overflow-hidden mb-3">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${utilPercent}%`, backgroundColor: dept.color }}
@@ -56,7 +59,7 @@ export function DepartmentBudgets({ data, isLoading }: DepartmentBudgetsProps) {
                   <span className="text-muted-foreground">Utilized</span>
                   <span className="font-medium">{formatCurrency(dept.utilized)}</span>
                 </div>
-                <p className="text-[10px] text-[#10b981] font-medium pt-1">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium pt-1">
                   {utilPercent}% utilized
                 </p>
               </div>

@@ -75,7 +75,7 @@ const DEFAULT: TreasuryProfile = {
   language: 'en',
   currency: 'GHS',
   dateFormat: 'DD/MM/YYYY',
-  fontFamily: 'Inter',
+  fontFamily: 'Poppins',
   fontSize: '14',
   autoBackup: false,
   reminderEmail: '',

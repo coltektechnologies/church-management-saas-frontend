@@ -20,8 +20,7 @@ import {
   ArrowLeft,
   Camera,
   Globe,
-  MapPin,
-} from 'lucide-react';
+  MapPin} from 'lucide-react';
 
 export default function YourProfilePage() {
   const { profile, updateProfile, isReady } = useChurchProfile();
@@ -35,8 +34,7 @@ export default function YourProfilePage() {
     avatarUrl: profile.avatarUrl as string | null,
     bio: '',
     location: '',
-    website: '',
-  });
+    website: ''});
 
   const [saving, setSaving] = useState(false);
 
@@ -67,12 +65,10 @@ export default function YourProfilePage() {
       adminEmail: form.adminEmail,
       adminRole: form.adminRole,
       adminPhone: form.adminPhone,
-      avatarUrl: form.avatarUrl,
-    });
+      avatarUrl: form.avatarUrl});
     setSaving(false);
     toast.success('Profile saved', {
-      description: 'Your info is now live in the sidebar and top bar.',
-    });
+      description: 'Your info is now live in the sidebar and top bar.'});
   };
 
   // Member since — derived from localStorage creation (approximate with today if not set)
@@ -83,20 +79,18 @@ export default function YourProfilePage() {
       {/* Back link */}
       <Link
         href="/admin/settings/superadmin"
-        className="inline-flex items-center gap-2 text-[13px] font-semibold text-gray-400 hover:text-[#0B2A4A] dark:hover:text-white transition-colors"
-        style={{ fontFamily: 'Inter, sans-serif' }}
+        className="inline-flex items-center gap-2 text-[13px] font-semibold text-muted-foreground hover:text-[color:var(--primary-brand)] dark:hover:text-white transition-colors"
       >
         <ArrowLeft size={15} /> Back to Settings
       </Link>
 
       {/* ── Profile hero card (GitHub-style) ── */}
-      <div className="bg-white dark:bg-[#112240] rounded-[24px] border border-slate-100 dark:border-white/10 overflow-hidden">
+      <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] overflow-hidden shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
         {/* Banner */}
         <div
           className="h-28 w-full relative"
           style={{
-            background: `linear-gradient(135deg, ${pc} 0%, ${profile.accentColor || '#2FC4B2'} 100%)`,
-          }}
+            background: `linear-gradient(135deg, ${pc} 0%, ${profile.accentColor || '#2FC4B2'} 100%)`}}
         />
 
         {/* Avatar overlapping banner */}
@@ -104,7 +98,7 @@ export default function YourProfilePage() {
           <div className="flex items-end justify-between -mt-12 mb-4">
             <div className="relative">
               {isReady && form.avatarUrl ? (
-                <div className="relative w-24 h-24 rounded-full border-4 border-white dark:border-[#112240] shadow-xl overflow-hidden">
+                <div className="relative w-24 h-24 rounded-full border-4 border-white dark:border-[var(--admin-surface)] shadow-xl overflow-hidden">
                   <Image
                     src={form.avatarUrl}
                     alt={form.adminName}
@@ -115,7 +109,7 @@ export default function YourProfilePage() {
                 </div>
               ) : (
                 <div
-                  className="w-24 h-24 rounded-full border-4 border-white dark:border-[#112240] shadow-xl flex items-center justify-center text-white text-2xl font-black select-none"
+                  className="w-24 h-24 rounded-full border-4 border-white dark:border-[var(--admin-surface)] shadow-xl flex items-center justify-center text-white text-2xl font-black select-none"
                   style={{ backgroundColor: pc }}
                 >
                   {initials || <User size={32} />}
@@ -160,13 +154,11 @@ export default function YourProfilePage() {
           <div className="space-y-1 mb-6">
             <h2
               className="text-2xl font-black text-[#0B2A4A] dark:text-white"
-              style={{ fontFamily: 'OV Soge, sans-serif' }}
             >
               {form.adminName || 'Your Name'}
             </h2>
             <p
               className="text-gray-400 dark:text-white/50 text-[13px]"
-              style={{ fontFamily: 'Inter, sans-serif' }}
             >
               {form.adminRole}
             </p>
@@ -196,7 +188,7 @@ export default function YourProfilePage() {
           </div>
 
           {/* Stats row */}
-          <div className="flex gap-6 pb-4 border-b border-slate-100 dark:border-white/10 mb-6">
+          <div className="flex gap-6 pb-4 border-b border-[var(--admin-border)] mb-6">
             {[
               { label: 'Church', value: profile.churchName || '—' },
               {
@@ -206,20 +198,17 @@ export default function YourProfilePage() {
                     ? 'Active'
                     : profile.subscriptionStatus === 'trial'
                       ? 'Trial'
-                      : 'Inactive',
-              },
+                      : 'Inactive'},
               { label: 'Role', value: form.adminRole || 'Admin' },
             ].map((s) => (
               <div key={s.label}>
                 <p
                   className="text-[13px] font-bold text-[#0B2A4A] dark:text-white truncate"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
                 >
                   {s.value}
                 </p>
                 <p
                   className="text-[11px] text-gray-400"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
                 >
                   {s.label}
                 </p>
@@ -312,7 +301,7 @@ export default function YourProfilePage() {
             >
               {saving ? 'Saving...' : 'Save Profile'}
             </Button>
-            <p className="text-[11px] text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <p className="text-[11px] text-gray-400">
               Changes appear live in the sidebar and top bar.
             </p>
           </div>

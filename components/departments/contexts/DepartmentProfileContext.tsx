@@ -104,7 +104,7 @@ const DEFAULT: DepartmentProfile = {
   language: 'en',
   currency: 'GHS',
   dateFormat: 'DD/MM/YYYY',
-  fontFamily: 'Inter',
+  fontFamily: 'Poppins',
   fontSize: '14',
   autoBackup: false,
 };
@@ -152,7 +152,7 @@ const applyGlobalStyles = (p: DepartmentProfile) => {
     scoped.style.setProperty('--dept-main-bg', isDark ? p.darkBackgroundColor : p.backgroundColor);
     scoped.style.setProperty(
       '--dept-font-family',
-      `'${p.fontFamily || 'Inter'}', system-ui, sans-serif`
+      `'${p.fontFamily || 'Poppins'}', system-ui, sans-serif`
     );
     scoped.style.setProperty('--dept-font-size', `${p.fontSize || '14'}px`);
     scoped.classList.toggle('dark', isDark);

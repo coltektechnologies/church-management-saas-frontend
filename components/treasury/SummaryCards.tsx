@@ -9,12 +9,16 @@ interface SummaryCardsProps {
   isLoading: boolean;
 }
 
+/** Surfaces use admin shell tokens so cards match /admin/members and dark mode. */
+const cardSurface =
+  'bg-[var(--admin-surface)] border border-[var(--admin-border)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10';
+
 const cards = [
   {
     key: 'totalIncome',
     label: 'Total income (MTs)',
     icon: Wallet,
-    bg: 'bg-white border-l-4 border-l-[#10b981] shadow-sm',
+    bg: `${cardSurface} border-l-4 border-l-[#10b981]`,
     iconBg: 'bg-[#10b981]',
     textColor: 'text-foreground',
     changeKey: 'incomeChangePercent' as const,
@@ -24,7 +28,7 @@ const cards = [
     key: 'netBalance',
     label: 'Net Balance',
     icon: Wallet,
-    bg: 'bg-white border-l-4 border-l-[#3b82f6] shadow-sm',
+    bg: `${cardSurface} border-l-4 border-l-[#3b82f6]`,
     iconBg: 'bg-[#3b82f6]',
     textColor: 'text-foreground',
     changeKey: 'incomeChangePercent' as const,
@@ -34,7 +38,7 @@ const cards = [
     key: 'totalExpenses',
     label: 'Total Expense (MTs)',
     icon: Wallet,
-    bg: 'bg-white border-l-4 border-l-[#ef4444] shadow-sm',
+    bg: `${cardSurface} border-l-4 border-l-[#ef4444]`,
     iconBg: 'bg-[#ef4444]',
     textColor: 'text-foreground',
     changeKey: 'expenseChangePercent' as const,
@@ -44,7 +48,7 @@ const cards = [
     key: 'totalIncomeAllTime',
     label: 'Total income (MTs)',
     icon: Wallet,
-    bg: 'bg-white border-l-4 border-l-[#f59e0b] shadow-sm',
+    bg: `${cardSurface} border-l-4 border-l-[#f59e0b]`,
     iconBg: 'bg-[#f59e0b]',
     textColor: 'text-foreground',
     changeKey: 'totalIncomeAllTimeChangePercent' as const,
@@ -98,8 +102,8 @@ export function SummaryCards({ data, isLoading }: SummaryCardsProps) {
                   <span
                     className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-bold ${
                       changePercent >= 0
-                        ? 'bg-[#10b981]/15 text-[#10b981]'
-                        : 'bg-[#ef4444]/15 text-[#ef4444]'
+                        ? 'bg-[#10b981]/15 text-[#10b981] dark:bg-emerald-950/50 dark:text-emerald-400'
+                        : 'bg-[#ef4444]/15 text-[#ef4444] dark:bg-red-950/40 dark:text-red-400'
                     }`}
                   >
                     {changePercent > 0 ? '+' : ''}

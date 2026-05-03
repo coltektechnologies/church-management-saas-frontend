@@ -52,23 +52,25 @@ export default function OverviewTab({ department, departmentMembers }: Props) {
       </div>
 
       <div>
-        <h4 className="text-gray-500 mb-2">Department Description</h4>
-        <p className="text-lg text-gray-800">
+        <h4 className="text-muted-foreground mb-2">Department Description</h4>
+        <p className="text-lg text-foreground">
           {department.description || 'No description provided.'}
         </p>
       </div>
 
-      <div className="flex justify-between items-center bg-blue-50 border border-blue-200 p-6 rounded-xl">
+      <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-950/35 border border-blue-200 dark:border-blue-800 p-6 rounded-xl">
         <div>
-          <p className="text-sm text-gray-500">Annual Budget</p>
-          <p className="font-semibold text-lg">GHS {department.annualBudget.toLocaleString()}</p>
-          <p className="text-sm text-gray-400">{budgetPercentage.toFixed(0)}% used</p>
+          <p className="text-sm text-muted-foreground">Annual Budget</p>
+          <p className="font-semibold text-lg text-foreground">
+            GHS {department.annualBudget.toLocaleString()}
+          </p>
+          <p className="text-sm text-muted-foreground">{budgetPercentage.toFixed(0)}% used</p>
         </div>
 
         {can('canAssignBudget') && (
           <Link
             href={`/departments/${department.id}/budget/new`}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+            className="bg-blue-600 dark:bg-blue-500 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-400"
           >
             Assign Budget
           </Link>
@@ -95,10 +97,12 @@ function InfoCard({
   isStatus?: boolean;
 }) {
   return (
-    <div className="bg-gray-50 p-6 rounded-xl">
-      <p className="text-gray-500">{title}</p>
-      <div className="mt-2 text-lg font-medium flex items-center gap-2">
-        {isStatus && <span className="w-3 h-3 rounded-full bg-green-600"></span>}
+    <div className="bg-muted/30 dark:bg-white/[0.04] border border-[var(--admin-border)] p-6 rounded-xl">
+      <p className="text-muted-foreground">{title}</p>
+      <div className="mt-2 text-lg font-medium flex items-center gap-2 text-foreground">
+        {isStatus && (
+          <span className="w-3 h-3 rounded-full bg-green-600 dark:bg-emerald-400 shrink-0" />
+        )}
         {value}
       </div>
     </div>
@@ -107,9 +111,9 @@ function InfoCard({
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="bg-gray-50 p-6 rounded-xl text-center">
-      <p className="text-gray-500">{label}</p>
-      <p className="text-2xl font-bold mt-2">{value}</p>
+    <div className="bg-muted/30 dark:bg-white/[0.04] border border-[var(--admin-border)] p-6 rounded-xl text-center">
+      <p className="text-muted-foreground">{label}</p>
+      <p className="text-2xl font-bold mt-2 text-foreground">{value}</p>
     </div>
   );
 }

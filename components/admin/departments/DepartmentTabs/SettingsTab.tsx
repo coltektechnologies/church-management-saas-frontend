@@ -387,15 +387,15 @@ export default function SettingsTab({
     <div className="space-y-10">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold">Department Settings</h3>
+          <h3 className="text-xl font-semibold text-foreground">Department Settings</h3>
           {!canEdit && (
-            <p className="text-sm text-gray-400 mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               You have read-only access to these settings.
             </p>
           )}
         </div>
         {saveSuccess && (
-          <p className="text-sm text-green-600 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg">
+          <p className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 px-3 py-1.5 rounded-lg">
             ✓ Settings saved successfully
           </p>
         )}
@@ -403,10 +403,10 @@ export default function SettingsTab({
 
       {/* Leadership — API-backed department head & elder in charge */}
       {canLeadership && (
-        <div className="border border-gray-200 rounded-xl p-6 space-y-4 bg-slate-50/80">
+        <div className="border border-[var(--admin-border)] rounded-xl p-6 space-y-4 bg-muted/30 dark:bg-white/[0.04]">
           <div>
-            <h4 className="text-lg font-semibold text-gray-900">Leadership</h4>
-            <p className="text-sm text-gray-600 mt-1">
+            <h4 className="text-lg font-semibold text-foreground">Leadership</h4>
+            <p className="text-sm text-muted-foreground mt-1">
               Pick a <strong>church role</strong> (e.g. Department Head, Assistant Head, Elder in
               charge) to list members who have that role and portal access, or show all members.
             </p>
@@ -415,14 +415,14 @@ export default function SettingsTab({
             <button
               type="button"
               onClick={openHeadDialog}
-              className="bg-[#0B2A4A] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition"
+              className="bg-[#0B2A4A] dark:bg-[color:var(--primary-brand)] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition"
             >
               {department.headDisplayName ? 'Change department head' : 'Assign department head'}
             </button>
             <button
               type="button"
               onClick={openAsstDialog}
-              className="bg-white border border-gray-300 text-gray-800 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+              className="bg-[var(--admin-surface)] border border-[var(--admin-border)] text-foreground px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-muted/60 dark:hover:bg-white/5 transition"
             >
               {department.assistantHeadDisplayName
                 ? 'Change assistant head'
@@ -431,28 +431,28 @@ export default function SettingsTab({
             <button
               type="button"
               onClick={openElderDialog}
-              className="bg-white border border-gray-300 text-gray-800 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+              className="bg-[var(--admin-surface)] border border-[var(--admin-border)] text-foreground px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-muted/60 dark:hover:bg-white/5 transition"
             >
               {department.elderInChargeDisplayName
                 ? 'Change elder in charge'
                 : 'Assign elder in charge'}
             </button>
           </div>
-          <div className="text-sm text-gray-700 space-y-1">
+          <div className="text-sm text-foreground space-y-1">
             <p>
-              <span className="text-gray-500">Department head:</span>{' '}
+              <span className="text-muted-foreground">Department head:</span>{' '}
               <span className="font-medium">
                 {department.headDisplayName?.trim() || 'Not assigned'}
               </span>
             </p>
             <p>
-              <span className="text-gray-500">Assistant head:</span>{' '}
+              <span className="text-muted-foreground">Assistant head:</span>{' '}
               <span className="font-medium">
                 {department.assistantHeadDisplayName?.trim() || 'Not assigned'}
               </span>
             </p>
             <p>
-              <span className="text-gray-500">Elder in charge:</span>{' '}
+              <span className="text-muted-foreground">Elder in charge:</span>{' '}
               <span className="font-medium">
                 {department.elderInChargeDisplayName?.trim() || 'Not assigned'}
               </span>
@@ -463,75 +463,75 @@ export default function SettingsTab({
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Auto-approval Threshold */}
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Auto-approval Threshold</p>
+        <div className="bg-muted/30 dark:bg-white/[0.04] border border-[var(--admin-border)] rounded-xl p-5">
+          <p className="text-sm text-muted-foreground">Auto-approval Threshold</p>
           {isEditing ? (
             <input
               type="number"
               value={threshold}
               onChange={(e) => setThreshold(Number(e.target.value))}
-              className="border rounded-lg px-3 py-1.5 w-32 mt-1 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-1.5 w-32 mt-1 focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/70 outline-none"
             />
           ) : (
-            <p className="text-lg font-semibold mt-1">GHS {settings.autoApprovalThreshold}</p>
+            <p className="text-lg font-semibold mt-1 text-foreground">GHS {settings.autoApprovalThreshold}</p>
           )}
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             Expense requests below this amount are automatically approved.
           </p>
         </div>
 
         {/* Requires Elder Approval */}
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Requires Elder Approval</p>
+        <div className="bg-muted/30 dark:bg-white/[0.04] border border-[var(--admin-border)] rounded-xl p-5">
+          <p className="text-sm text-muted-foreground">Requires Elder Approval</p>
           {isEditing ? (
             <select
               value={requiresElderApproval ? 'yes' : 'no'}
               onChange={(e) => setRequiresElderApproval(e.target.value === 'yes')}
-              className="border rounded-lg px-3 py-1.5 mt-1 w-full focus:ring-2 focus:ring-blue-500 outline-none"
+              className="border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-1.5 mt-1 w-full focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/70 outline-none dark:[color-scheme:dark]"
             >
               <option value="yes">Yes</option>
               <option value="no">No</option>
             </select>
           ) : (
-            <p className="text-lg font-semibold mt-1">
+            <p className="text-lg font-semibold mt-1 text-foreground">
               {settings.requiresElderApproval ? 'Yes' : 'No'}
             </p>
           )}
         </div>
 
         {/* Weekly Summary */}
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Weekly Summary</p>
+        <div className="bg-muted/30 dark:bg-white/[0.04] border border-[var(--admin-border)] rounded-xl p-5">
+          <p className="text-sm text-muted-foreground">Weekly Summary</p>
           {isEditing ? (
             <select
               value={weeklySummary ? 'enabled' : 'disabled'}
               onChange={(e) => setWeeklySummary(e.target.value === 'enabled')}
-              className="border rounded-lg px-3 py-1.5 mt-1 w-full focus:ring-2 focus:ring-blue-500 outline-none"
+              className="border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-1.5 mt-1 w-full focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/70 outline-none dark:[color-scheme:dark]"
             >
               <option value="enabled">Enabled</option>
               <option value="disabled">Disabled</option>
             </select>
           ) : (
-            <p className="text-lg font-semibold mt-1">
+            <p className="text-lg font-semibold mt-1 text-foreground">
               {settings.weeklySummary ? 'Enabled' : 'Disabled'}
             </p>
           )}
         </div>
 
         {/* Can Submit Announcements */}
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Can Submit Announcements</p>
+        <div className="bg-muted/30 dark:bg-white/[0.04] border border-[var(--admin-border)] rounded-xl p-5">
+          <p className="text-sm text-muted-foreground">Can Submit Announcements</p>
           {isEditing ? (
             <select
               value={canSubmitAnnouncements ? 'yes' : 'no'}
               onChange={(e) => setCanSubmitAnnouncements(e.target.value === 'yes')}
-              className="border rounded-lg px-3 py-1.5 mt-1 w-full focus:ring-2 focus:ring-blue-500 outline-none"
+              className="border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-1.5 mt-1 w-full focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/70 outline-none dark:[color-scheme:dark]"
             >
               <option value="yes">Yes</option>
               <option value="no">No</option>
             </select>
           ) : (
-            <p className="text-lg font-semibold mt-1">
+            <p className="text-lg font-semibold mt-1 text-foreground">
               {settings.canSubmitAnnouncements ? 'Yes' : 'No'}
             </p>
           )}
@@ -546,14 +546,14 @@ export default function SettingsTab({
               <button
                 type="button"
                 onClick={handleSave}
-                className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
+                className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-700 dark:hover:bg-blue-400 transition"
               >
                 Save Settings
               </button>
               <button
                 type="button"
                 onClick={handleCancelEdit}
-                className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-200 transition"
+                className="bg-muted text-foreground px-6 py-3 rounded-xl hover:bg-muted/80 transition"
               >
                 Cancel
               </button>
@@ -563,14 +563,14 @@ export default function SettingsTab({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
-                className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition"
+                className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-3 rounded-xl hover:bg-blue-700 dark:hover:bg-blue-400 transition"
               >
                 Edit Settings
               </button>
               <button
                 type="button"
                 onClick={() => setShowArchiveConfirm(true)}
-                className="bg-gray-200 text-gray-800 px-6 py-3 rounded-xl hover:bg-gray-300 transition"
+                className="bg-muted/80 text-foreground px-6 py-3 rounded-xl hover:bg-muted transition"
               >
                 Archive Department
               </button>
@@ -588,24 +588,24 @@ export default function SettingsTab({
             aria-label="Close"
             onClick={() => !leadershipBusy && setShowHeadDialog(false)}
           />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h4 className="text-lg font-semibold text-gray-900">Assign department head</h4>
-            <p className="text-sm text-gray-600">
+          <div className="relative bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h4 className="text-lg font-semibold text-foreground">Assign department head</h4>
+            <p className="text-sm text-muted-foreground">
               Choose a church role to list members who have that role in the portal, or show all
               members. Only members linked to a user account appear when filtering by role.
             </p>
             {rolesLoadError && (
-              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <p className="text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-lg px-3 py-2">
                 {rolesLoadError}
               </p>
             )}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600">Church role</label>
+              <label className="text-xs font-medium text-muted-foreground">Church role</label>
               <select
                 value={headRoleFilter}
                 disabled={headShowAllMembers || leadershipBusy}
                 onChange={(e) => setHeadRoleFilter(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-2.5 text-sm disabled:bg-muted disabled:text-muted-foreground dark:[color-scheme:dark]"
               >
                 <option value="">— Select role —</option>
                 {rolesCatalog.map((r) => (
@@ -615,37 +615,37 @@ export default function SettingsTab({
                 ))}
               </select>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={headShowAllMembers}
                 disabled={leadershipBusy}
                 onChange={(e) => setHeadShowAllMembers(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-[var(--admin-border)]"
               />
               Show all members
             </label>
             {!headShowAllMembers && headRoleFilter && headUsersLoading && (
-              <p className="text-xs text-gray-500">Loading members for this role…</p>
+              <p className="text-xs text-muted-foreground">Loading members for this role…</p>
             )}
             {!headShowAllMembers &&
               headRoleFilter &&
               !headUsersLoading &&
               headUserIds.size === 0 && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   No users with this role, or none linked to a member record. Try &quot;Show all
                   members&quot; or another role.
                 </p>
               )}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600">Member</label>
+              <label className="text-xs font-medium text-muted-foreground">Member</label>
               <select
                 value={pickHeadId}
                 disabled={
                   leadershipBusy || (!headShowAllMembers && !headRoleFilter) || headUsersLoading
                 }
                 onChange={(e) => setPickHeadId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-2.5 text-sm disabled:bg-muted disabled:text-muted-foreground dark:[color-scheme:dark]"
               >
                 <option value="">Select member…</option>
                 {headSelectOptions.map((m) => (
@@ -656,17 +656,19 @@ export default function SettingsTab({
               </select>
             </div>
             {!headShowAllMembers && !headRoleFilter && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Select a role above or turn on Show all members.
               </p>
             )}
-            {leadershipError && <p className="text-sm text-red-600">{leadershipError}</p>}
+            {leadershipError && (
+              <p className="text-sm text-red-600 dark:text-red-400">{leadershipError}</p>
+            )}
             <div className="flex gap-2 justify-end pt-2">
               <button
                 type="button"
                 disabled={leadershipBusy}
                 onClick={() => setShowHeadDialog(false)}
-                className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm border border-[var(--admin-border)] rounded-lg hover:bg-muted/50 dark:hover:bg-white/5"
               >
                 Cancel
               </button>
@@ -674,7 +676,7 @@ export default function SettingsTab({
                 type="button"
                 disabled={leadershipBusy}
                 onClick={() => void saveHead()}
-                className="px-4 py-2 text-sm bg-[#0B2A4A] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+                className="px-4 py-2 text-sm bg-[#0B2A4A] dark:bg-[color:var(--primary-brand)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
               >
                 {leadershipBusy ? 'Saving…' : 'Save'}
               </button>
@@ -692,24 +694,24 @@ export default function SettingsTab({
             aria-label="Close"
             onClick={() => !leadershipBusy && setShowAsstDialog(false)}
           />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h4 className="text-lg font-semibold text-gray-900">Assistant department head</h4>
-            <p className="text-sm text-gray-600">
+          <div className="relative bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h4 className="text-lg font-semibold text-foreground">Assistant department head</h4>
+            <p className="text-sm text-muted-foreground">
               Same picker as department head: filter by church role or show all members. The primary
               head cannot be selected as assistant.
             </p>
             {rolesLoadError && (
-              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <p className="text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-lg px-3 py-2">
                 {rolesLoadError}
               </p>
             )}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600">Church role</label>
+              <label className="text-xs font-medium text-muted-foreground">Church role</label>
               <select
                 value={asstRoleFilter}
                 disabled={asstShowAllMembers || leadershipBusy}
                 onChange={(e) => setAsstRoleFilter(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-2.5 text-sm disabled:bg-muted disabled:text-muted-foreground dark:[color-scheme:dark]"
               >
                 <option value="">— Select role —</option>
                 {rolesCatalog.map((r) => (
@@ -719,37 +721,37 @@ export default function SettingsTab({
                 ))}
               </select>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={asstShowAllMembers}
                 disabled={leadershipBusy}
                 onChange={(e) => setAsstShowAllMembers(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-[var(--admin-border)]"
               />
               Show all members
             </label>
             {!asstShowAllMembers && asstRoleFilter && asstUsersLoading && (
-              <p className="text-xs text-gray-500">Loading members for this role…</p>
+              <p className="text-xs text-muted-foreground">Loading members for this role…</p>
             )}
             {!asstShowAllMembers &&
               asstRoleFilter &&
               !asstUsersLoading &&
               asstUserIds.size === 0 && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   No users with this role, or none linked to a member record. Try &quot;Show all
                   members&quot; or another role.
                 </p>
               )}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600">Member</label>
+              <label className="text-xs font-medium text-muted-foreground">Member</label>
               <select
                 value={pickAsstId}
                 disabled={
                   leadershipBusy || (!asstShowAllMembers && !asstRoleFilter) || asstUsersLoading
                 }
                 onChange={(e) => setPickAsstId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-2.5 text-sm disabled:bg-muted disabled:text-muted-foreground dark:[color-scheme:dark]"
               >
                 <option value="">— None —</option>
                 {asstSelectOptions.map((m) => (
@@ -760,18 +762,20 @@ export default function SettingsTab({
               </select>
             </div>
             {!asstShowAllMembers && !asstRoleFilter && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Select a role above or turn on Show all members.
               </p>
             )}
-            {leadershipError && <p className="text-sm text-red-600">{leadershipError}</p>}
+            {leadershipError && (
+              <p className="text-sm text-red-600 dark:text-red-400">{leadershipError}</p>
+            )}
             <div className="flex flex-wrap gap-2 justify-end pt-2">
               {department.assistantHeadMemberId && (
                 <button
                   type="button"
                   disabled={leadershipBusy}
                   onClick={() => void saveAsst(true)}
-                  className="px-4 py-2 text-sm text-red-700 border border-red-200 rounded-lg hover:bg-red-50"
+                  className="px-4 py-2 text-sm text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40"
                 >
                   Remove assistant head
                 </button>
@@ -780,7 +784,7 @@ export default function SettingsTab({
                 type="button"
                 disabled={leadershipBusy}
                 onClick={() => setShowAsstDialog(false)}
-                className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm border border-[var(--admin-border)] rounded-lg hover:bg-muted/50 dark:hover:bg-white/5"
               >
                 Cancel
               </button>
@@ -788,7 +792,7 @@ export default function SettingsTab({
                 type="button"
                 disabled={leadershipBusy}
                 onClick={() => void saveAsst(false)}
-                className="px-4 py-2 text-sm bg-[#0B2A4A] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+                className="px-4 py-2 text-sm bg-[#0B2A4A] dark:bg-[color:var(--primary-brand)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
               >
                 {leadershipBusy ? 'Saving…' : 'Save'}
               </button>
@@ -806,24 +810,24 @@ export default function SettingsTab({
             aria-label="Close"
             onClick={() => !leadershipBusy && setShowElderDialog(false)}
           />
-          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h4 className="text-lg font-semibold text-gray-900">Elder in charge</h4>
-            <p className="text-sm text-gray-600">
+          <div className="relative bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h4 className="text-lg font-semibold text-foreground">Elder in charge</h4>
+            <p className="text-sm text-muted-foreground">
               Oversight elder for this department. Filter by church role (e.g. Elder in charge) or
               show all members.
             </p>
             {rolesLoadError && (
-              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <p className="text-sm text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-lg px-3 py-2">
                 {rolesLoadError}
               </p>
             )}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600">Church role</label>
+              <label className="text-xs font-medium text-muted-foreground">Church role</label>
               <select
                 value={elderRoleFilter}
                 disabled={elderShowAllMembers || leadershipBusy}
                 onChange={(e) => setElderRoleFilter(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-2.5 text-sm disabled:bg-muted disabled:text-muted-foreground dark:[color-scheme:dark]"
               >
                 <option value="">— Select role —</option>
                 {rolesCatalog.map((r) => (
@@ -833,37 +837,37 @@ export default function SettingsTab({
                 ))}
               </select>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={elderShowAllMembers}
                 disabled={leadershipBusy}
                 onChange={(e) => setElderShowAllMembers(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-[var(--admin-border)]"
               />
               Show all members
             </label>
             {!elderShowAllMembers && elderRoleFilter && elderUsersLoading && (
-              <p className="text-xs text-gray-500">Loading members for this role…</p>
+              <p className="text-xs text-muted-foreground">Loading members for this role…</p>
             )}
             {!elderShowAllMembers &&
               elderRoleFilter &&
               !elderUsersLoading &&
               elderUserIds.size === 0 && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   No users with this role, or none linked to a member record. Try &quot;Show all
                   members&quot; or another role.
                 </p>
               )}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-600">Member</label>
+              <label className="text-xs font-medium text-muted-foreground">Member</label>
               <select
                 value={pickElderId}
                 disabled={
                   leadershipBusy || (!elderShowAllMembers && !elderRoleFilter) || elderUsersLoading
                 }
                 onChange={(e) => setPickElderId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-2.5 text-sm disabled:bg-muted disabled:text-muted-foreground dark:[color-scheme:dark]"
               >
                 <option value="">— None —</option>
                 {elderSelectOptions.map((m) => (
@@ -874,18 +878,20 @@ export default function SettingsTab({
               </select>
             </div>
             {!elderShowAllMembers && !elderRoleFilter && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Select a role above or turn on Show all members.
               </p>
             )}
-            {leadershipError && <p className="text-sm text-red-600">{leadershipError}</p>}
+            {leadershipError && (
+              <p className="text-sm text-red-600 dark:text-red-400">{leadershipError}</p>
+            )}
             <div className="flex flex-wrap gap-2 justify-end pt-2">
               {department.elderInChargeMemberId && (
                 <button
                   type="button"
                   disabled={leadershipBusy}
                   onClick={() => void saveElder(true)}
-                  className="px-4 py-2 text-sm text-red-700 border border-red-200 rounded-lg hover:bg-red-50"
+                  className="px-4 py-2 text-sm text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40"
                 >
                   Remove elder
                 </button>
@@ -894,7 +900,7 @@ export default function SettingsTab({
                 type="button"
                 disabled={leadershipBusy}
                 onClick={() => setShowElderDialog(false)}
-                className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-sm border border-[var(--admin-border)] rounded-lg hover:bg-muted/50 dark:hover:bg-white/5"
               >
                 Cancel
               </button>
@@ -902,7 +908,7 @@ export default function SettingsTab({
                 type="button"
                 disabled={leadershipBusy}
                 onClick={() => void saveElder(false)}
-                className="px-4 py-2 text-sm bg-[#0B2A4A] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+                className="px-4 py-2 text-sm bg-[#0B2A4A] dark:bg-[color:var(--primary-brand)] text-white rounded-lg hover:opacity-90 disabled:opacity-50"
               >
                 {leadershipBusy ? 'Saving…' : 'Save'}
               </button>
@@ -918,9 +924,9 @@ export default function SettingsTab({
             className="absolute inset-0 bg-black/40"
             onClick={() => setShowArchiveConfirm(false)}
           />
-          <div className="relative bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full space-y-4">
-            <h4 className="text-lg font-semibold text-gray-900">Archive Department?</h4>
-            <p className="text-sm text-gray-600">
+          <div className="relative bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] rounded-2xl p-8 shadow-2xl max-w-sm w-full space-y-4">
+            <h4 className="text-lg font-semibold text-foreground">Archive Department?</h4>
+            <p className="text-sm text-muted-foreground">
               This will mark <span className="font-medium">{department.name}</span> as inactive.
               Members and data will be preserved but the department won&apos;t appear as active.
             </p>
@@ -928,14 +934,14 @@ export default function SettingsTab({
               <button
                 type="button"
                 onClick={() => setShowArchiveConfirm(false)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+                className="flex-1 px-4 py-2.5 border border-[var(--admin-border)] rounded-lg text-sm font-medium hover:bg-muted/50 dark:hover:bg-white/5 transition"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleArchive}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition"
+                className="flex-1 px-4 py-2.5 bg-red-600 dark:bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-700 dark:hover:bg-red-400 transition"
               >
                 Yes, Archive
               </button>

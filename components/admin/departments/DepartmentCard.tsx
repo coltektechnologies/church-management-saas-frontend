@@ -24,7 +24,8 @@ export default function DepartmentCard({ department, onViewDetails, onEdit }: De
   return (
     <div
       className={`
-        bg-white rounded-2xl border border-gray-200 overflow-hidden min-h-[360px] flex flex-col transition-all duration-300
+        bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] overflow-hidden min-h-[360px] flex flex-col transition-all duration-300
+        dark:shadow-none dark:ring-1 dark:ring-white/10
         ${isActive ? 'hover:shadow-xl hover:-translate-y-1' : 'opacity-70'}
       `}
     >
@@ -32,7 +33,7 @@ export default function DepartmentCard({ department, onViewDetails, onEdit }: De
       <div className={`${themeClass} px-6 pt-8 pb-6 text-white relative`}>
         <span
           className={`absolute top-3 right-4 text-xs font-semibold px-3 py-1 rounded-full ${
-            isActive ? 'bg-green-500' : 'bg-gray-600'
+            isActive ? 'bg-green-500 dark:bg-green-600' : 'bg-black/40 dark:bg-white/25'
           }`}
         >
           {isActive ? 'Active' : 'Inactive'}
@@ -64,39 +65,39 @@ export default function DepartmentCard({ department, onViewDetails, onEdit }: De
 
       {/* Body */}
       <div className="flex-1 px-6 py-6 flex flex-col justify-between space-y-6">
-        <div className="flex justify-between text-gray-800">
+        <div className="flex justify-between text-foreground">
           <div>
             <p className="font-semibold text-lg">{department.members}</p>
-            <p className="text-sm text-gray-500">Members</p>
+            <p className="text-sm text-muted-foreground">Members</p>
           </div>
           <div>
             <p className="font-semibold text-lg">{department.activities}</p>
-            <p className="text-sm text-gray-500">Activities</p>
+            <p className="text-sm text-muted-foreground">Activities</p>
           </div>
           <div>
             <p className="font-semibold text-lg">{budgetPercentage.toFixed(0)}%</p>
-            <p className="text-sm text-gray-500">Budget Used</p>
+            <p className="text-sm text-muted-foreground">Budget Used</p>
           </div>
         </div>
 
-        <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
+        <div className="w-full bg-muted dark:bg-white/15 h-2.5 rounded-full overflow-hidden">
           <div className={`${themeClass} h-2.5`} style={{ width: `${budgetPercentage}%` }} />
         </div>
 
-        <p className="text-base text-gray-600 leading-relaxed">{department.description}</p>
+        <p className="text-base text-muted-foreground leading-relaxed">{department.description}</p>
 
         <div className="flex gap-4 pt-2">
           {isActive ? (
             <button
               onClick={() => onViewDetails(department)}
-              className="flex-1 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-lg bg-blue-600 dark:bg-blue-500 text-white text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-400 transition flex items-center justify-center gap-2"
             >
               <Eye size={16} /> View Details
             </button>
           ) : (
             <button
               disabled
-              className="flex-1 py-3 rounded-lg bg-gray-400 text-white text-sm font-medium cursor-not-allowed"
+              className="flex-1 py-3 rounded-lg bg-muted text-muted-foreground text-sm font-medium cursor-not-allowed"
             >
               Inactive
             </button>
@@ -105,7 +106,7 @@ export default function DepartmentCard({ department, onViewDetails, onEdit }: De
           {can('canEditDepartment') && (
             <button
               onClick={() => onEdit(department)}
-              className="flex-1 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
+              className="flex-1 py-3 rounded-lg border border-[var(--admin-border)] text-foreground text-sm font-medium hover:bg-muted/60 dark:hover:bg-white/5 transition"
             >
               Edit
             </button>

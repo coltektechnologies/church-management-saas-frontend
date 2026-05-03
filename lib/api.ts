@@ -1015,6 +1015,78 @@ export interface TitheOfferingStats {
   };
 }
 
+/** Single series for Recharts: month labels (rolling/calendar) or year labels (yearly view). */
+export type TitheTrendChartPoint = { period: string; tithe: number; offering: number };
+
+export function titheStatsToChartSeries(stats: TitheOfferingStats): TitheTrendChartPoint[] {
+  if (stats.yearly_trend.length > 0) {
+    return stats.yearly_trend.map((r) => ({
+      period: r.year,
+      tithe: r.tithe,
+      offering: r.offering,
+    }));
+  }
+  return stats.monthly_trend.map((r) => ({
+    period: r.month,
+    tithe: r.tithe,
+    offering: r.offering,
+  }));
+}
+
+export function titheTrendChartTitle(stats: TitheOfferingStats): string {
+  if (stats.view === 'yearly' && stats.yearly_from != null && stats.yearly_to != null) {
+    return `Tithes vs offerings by year (${stats.yearly_from}–${stats.yearly_to})`;
+  }
+  if (stats.view === 'calendar_month' && stats.calendar_year != null) {
+    return `Tithes vs offerings (${stats.calendar_year})`;
+  }
+  if (
+    stats.view === 'rolling' &&
+    stats.monthly_trend.length === 1 &&
+    stats.yearly_trend.length === 0
+  ) {
+    return 'Tithes vs offerings (this month)';
+  }
+  return 'Monthly trend of tithes vs offerings';
+}
+
+export type TitheTrendRangeKey = 'r1' | 'r3' | 'r6' | 'r9' | 'r12' | 'calendar' | 'y5';
+
+export function titheOfferingRequestForRange(key: TitheTrendRangeKey): TitheOfferingStatsRequest {
+  const y = new Date().getFullYear();
+  switch (key) {
+    case 'r1':
+      return { periodMonths: 1 };
+    case 'r3':
+      return { periodMonths: 3 };
+    case 'r6':
+      return { periodMonths: 6 };
+    case 'r9':
+      return { periodMonths: 9 };
+    case 'r12':
+      return { periodMonths: 12 };
+    case 'calendar':
+      return { calendarYear: y };
+    case 'y5':
+      return { yearlyFrom: y - 4, yearlyTo: y };
+    default:
+      return { periodMonths: 9 };
+  }
+}
+
+export function titheTrendRangeOptions(): { value: TitheTrendRangeKey; label: string }[] {
+  const y = new Date().getFullYear();
+  return [
+    { value: 'r1', label: 'This month' },
+    { value: 'r3', label: 'Last 3 months' },
+    { value: 'r6', label: 'Last 6 months' },
+    { value: 'r9', label: 'Last 9 months' },
+    { value: 'r12', label: 'Last 12 months' },
+    { value: 'calendar', label: `This calendar year (${y})` },
+    { value: 'y5', label: `Last 5 years (${y - 4}–${y})` },
+  ];
+}
+
 function emptyTitheOfferingStats(): TitheOfferingStats {
   const w = [
     { name: 'W1', value: 0 },

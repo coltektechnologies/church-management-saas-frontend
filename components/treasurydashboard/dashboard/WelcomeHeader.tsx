@@ -71,7 +71,6 @@ export default function WelcomeHeader() {
         <p
           suppressHydrationWarning
           style={{
-            fontFamily: "'OV Soge', sans-serif",
             fontSize: 13,
             color: `${textColor}60`,
             margin: '4px 0 0',

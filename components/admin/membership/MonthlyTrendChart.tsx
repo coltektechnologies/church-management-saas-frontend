@@ -10,15 +10,22 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import type { TitheTrendChartPoint, TitheTrendRangeKey } from '@/lib/api';
 
 interface MonthlyTrendChartProps {
-  data?: { month: string; tithe: number; offering: number }[];
-  period?: string;
+  data?: TitheTrendChartPoint[];
+  title: string;
+  rangeValue: TitheTrendRangeKey;
+  rangeOptions: { value: TitheTrendRangeKey; label: string }[];
+  onRangeChange: (value: TitheTrendRangeKey) => void;
 }
 
 export default function MonthlyTrendChart({
   data = [],
-  period = 'This Month',
+  title,
+  rangeValue,
+  rangeOptions,
+  onRangeChange,
 }: MonthlyTrendChartProps) {
   return (
     <div
@@ -35,22 +42,32 @@ export default function MonthlyTrendChart({
       }}
     >
       <div
-        className="flex items-center justify-between shrink-0"
+        className="flex items-center justify-between gap-2 shrink-0 min-w-0"
         style={{ paddingTop: 0, paddingBottom: 4 }}
       >
-        <h3 className="text-sm font-bold" style={{ color: 'var(--admin-text, #111827)' }}>
-          Monthly trend of tithes vs offerings
+        <h3
+          className="text-sm font-bold min-w-0 truncate pr-2"
+          style={{ color: 'var(--admin-text, #111827)' }}
+          title={title}
+        >
+          {title}
         </h3>
         <select
-          className="text-sm font-medium rounded-none px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          className="text-sm font-medium rounded-none px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shrink-0 max-w-[min(100%,11rem)]"
           style={{
             color: 'var(--admin-text, #374151)',
             border: '1px solid var(--admin-border, #d1d5db)',
             background: 'var(--admin-surface, #fff)',
           }}
-          defaultValue={period}
+          value={rangeValue}
+          onChange={(e) => onRangeChange(e.target.value as TitheTrendRangeKey)}
+          aria-label="Trend period"
         >
-          <option>This Month</option>
+          {rangeOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
         </select>
       </div>
       <div
@@ -60,12 +77,12 @@ export default function MonthlyTrendChart({
       <div className="flex-1 min-h-[248px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={data.length ? data : [{ month: '-', tithe: 0, offering: 0 }]}
+            data={data.length ? data : [{ period: '-', tithe: 0, offering: 0 }]}
             margin={{ top: 2, right: 5, left: 0, bottom: 2 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--admin-border, #e5e7eb)" />
             <XAxis
-              dataKey="month"
+              dataKey="period"
               tick={{ fontSize: 12, fill: 'var(--admin-text-muted, #6b7280)' }}
               axisLine={{ stroke: 'var(--admin-border, #e5e7eb)' }}
             />
@@ -74,8 +91,19 @@ export default function MonthlyTrendChart({
               axisLine={{ stroke: 'var(--admin-border, #e5e7eb)' }}
               tickFormatter={(v) => String(v)}
             />
-            <Tooltip />
-            <Legend verticalAlign="top" align="right" wrapperStyle={{ paddingBottom: 8 }} />
+            <Tooltip
+              contentStyle={{
+                background: 'var(--admin-surface, #fff)',
+                border: '1px solid var(--admin-border, #e5e7eb)',
+                borderRadius: 8,
+                color: 'var(--admin-text, #111827)',
+              }}
+            />
+            <Legend
+              verticalAlign="top"
+              align="right"
+              wrapperStyle={{ paddingBottom: 8, color: 'var(--admin-text-muted, #6b7280)' }}
+            />
             <Line
               type="monotone"
               dataKey="tithe"

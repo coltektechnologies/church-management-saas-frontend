@@ -190,7 +190,6 @@ export default function IncomeAllocationsPage() {
               fontWeight: 600,
               color: textColor,
               textDecoration: 'none',
-              fontFamily: "'OV Soge', sans-serif",
             }}
           >
             <ArrowLeft size={16} style={{ color: accentColor }} />
@@ -215,7 +214,6 @@ export default function IncomeAllocationsPage() {
             <div>
               <h1
                 style={{
-                  fontFamily: "'OV Soge', sans-serif",
                   fontWeight: 800,
                   fontSize: 17,
                   margin: 0,
@@ -230,7 +228,6 @@ export default function IncomeAllocationsPage() {
                   fontSize: 12,
                   fontWeight: 500,
                   color: muted,
-                  fontFamily: "'OV Soge', sans-serif",
                 }}
               >
                 Demarcation of remitted income ({CURRENCY}) based on your recorded categories
@@ -264,7 +261,6 @@ export default function IncomeAllocationsPage() {
             boxShadow: isDark
               ? '0 1px 0 rgba(255,255,255,0.04)'
               : '0 2px 12px rgba(15, 40, 70, 0.04)',
-            fontFamily: "'OV Soge', sans-serif",
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -332,7 +328,6 @@ export default function IncomeAllocationsPage() {
               background: isDark ? 'rgba(239, 68, 68, 0.12)' : '#FEF2F2',
               color: isDark ? '#FECACA' : '#991B1B',
               fontSize: 13,
-              fontFamily: "'OV Soge', sans-serif",
             }}
           >
             Could not load income for this range. Check your connection and try again.
@@ -355,7 +350,6 @@ export default function IncomeAllocationsPage() {
               color: '#FFFFFF',
               position: 'relative',
               overflow: 'hidden',
-              fontFamily: "'OV Soge', sans-serif",
               boxShadow: `0 8px 28px ${primaryColor}44`,
             }}
           >
@@ -391,7 +385,6 @@ export default function IncomeAllocationsPage() {
               color: 'rgba(255,255,255,0.98)',
               position: 'relative',
               overflow: 'hidden',
-              fontFamily: "'OV Soge', sans-serif",
               boxShadow: `0 8px 28px ${accentColor}55`,
             }}
           >
@@ -425,7 +418,6 @@ export default function IncomeAllocationsPage() {
             border: `1px solid ${borderColor}`,
             borderRadius: 16,
             padding: '20px 22px',
-            fontFamily: "'OV Soge', sans-serif",
           }}
         >
           <p style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 700, color: textColor }}>
@@ -499,7 +491,6 @@ export default function IncomeAllocationsPage() {
         <div>
           <h2
             style={{
-              fontFamily: "'OV Soge', sans-serif",
               fontSize: 14,
               fontWeight: 800,
               letterSpacing: '0.06em',
@@ -528,7 +519,6 @@ export default function IncomeAllocationsPage() {
                     borderRadius: 14,
                     padding: '18px 18px 16px',
                     position: 'relative',
-                    fontFamily: "'OV Soge', sans-serif",
                   }}
                 >
                   <div
@@ -614,7 +604,6 @@ export default function IncomeAllocationsPage() {
             border: `1px solid ${borderColor}`,
             borderRadius: 16,
             overflow: 'hidden',
-            fontFamily: "'OV Soge', sans-serif",
           }}
         >
           <div

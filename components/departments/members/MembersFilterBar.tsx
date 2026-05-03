@@ -453,7 +453,6 @@ export default function MembersFilterBar({ values, onChange, onAddMember }: Memb
           placeholder="Search member........"
           className="w-full pl-9 pr-8 py-2 focus:outline-none"
           style={{
-            fontFamily: "'OV Soge', 'Inter', sans-serif",
             fontWeight: 200,
             fontSize: '13px',
             color: textColor,
@@ -542,7 +541,6 @@ export default function MembersFilterBar({ values, onChange, onAddMember }: Memb
         <span
           className="hidden sm:inline"
           style={{
-            fontFamily: "'OV Soge', 'Inter', sans-serif",
             fontWeight: 600,
             fontSize: '13px',
             color: '#FFFFFF',

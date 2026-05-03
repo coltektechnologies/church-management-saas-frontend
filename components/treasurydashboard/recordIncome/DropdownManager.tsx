@@ -171,7 +171,6 @@ function OptionRow({
             style={{
               width: '100%',
               fontSize: '12px',
-              fontFamily: "'OV Soge',sans-serif",
               fontWeight: 600,
               color: textColor,
               backgroundColor: `${accentColor}10`,
@@ -185,7 +184,6 @@ function OptionRow({
         ) : (
           <span
             style={{
-              fontFamily: "'OV Soge',sans-serif",
               fontWeight: 600,
               fontSize: '12px',
               color: option.isHidden ? `${textColor}50` : textColor,
@@ -464,7 +462,6 @@ function SectionPanel({
             style={{
               fontSize: '10px',
               color: `${textColor}50`,
-              fontFamily: "'OV Soge',sans-serif",
             }}
           >
             {visibleCount} visible
@@ -476,7 +473,6 @@ function SectionPanel({
           <span
             style={{
               fontSize: '10px',
-              fontFamily: "'OV Soge',sans-serif",
               fontWeight: 600,
               color: `${textColor}40`,
             }}
@@ -492,7 +488,6 @@ function SectionPanel({
           {options.length === 0 ? (
             <p
               style={{
-                fontFamily: "'OV Soge',sans-serif",
                 fontSize: '12px',
                 color: `${textColor}50`,
                 textAlign: 'center',
@@ -530,7 +525,6 @@ function SectionPanel({
             >
               <p
                 style={{
-                  fontFamily: "'OV Soge',sans-serif",
                   fontSize: '11px',
                   fontWeight: 700,
                   color: accentColor,
@@ -562,7 +556,6 @@ function SectionPanel({
                   style={{
                     flex: 1,
                     fontSize: '12px',
-                    fontFamily: "'OV Soge',sans-serif",
                     fontWeight: 500,
                     color: textColor,
                     caretColor: accentColor,
@@ -580,7 +573,6 @@ function SectionPanel({
                     padding: '8px 14px',
                     borderRadius: '7px',
                     fontSize: '12px',
-                    fontFamily: "'OV Soge',sans-serif",
                     fontWeight: 700,
                     backgroundColor: accentColor,
                     color: '#fff',
@@ -600,7 +592,6 @@ function SectionPanel({
                     padding: '8px 12px',
                     borderRadius: '7px',
                     fontSize: '12px',
-                    fontFamily: "'OV Soge',sans-serif",
                     fontWeight: 600,
                     backgroundColor: '#FEE2E2',
                     color: '#DC2626',
@@ -616,7 +607,6 @@ function SectionPanel({
                   style={{
                     fontSize: '11px',
                     color: '#DC2626',
-                    fontFamily: "'OV Soge',sans-serif",
                     marginTop: '6px',
                   }}
                 >
@@ -638,7 +628,6 @@ function SectionPanel({
                   padding: '7px 14px',
                   borderRadius: '8px',
                   fontSize: '11px',
-                  fontFamily: "'OV Soge',sans-serif",
                   fontWeight: 700,
                   backgroundColor: `${accentColor}15`,
                   color: accentColor,
@@ -658,7 +647,6 @@ function SectionPanel({
                   padding: '7px 12px',
                   borderRadius: '8px',
                   fontSize: '11px',
-                  fontFamily: "'OV Soge',sans-serif",
                   fontWeight: 600,
                   backgroundColor: `${textColor}08`,
                   color: `${textColor}60`,
@@ -725,7 +713,6 @@ export default function DropdownManager({
           </h3>
           <p
             style={{
-              fontFamily: "'OV Soge',sans-serif",
               fontSize: '11px',
               color: `${textColor}60`,
               margin: 0,
@@ -761,7 +748,6 @@ export default function DropdownManager({
               alignItems: 'center',
               gap: '5px',
               fontSize: '10px',
-              fontFamily: "'OV Soge',sans-serif",
               color: `${textColor}70`,
             }}
           >

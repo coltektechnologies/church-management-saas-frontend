@@ -247,7 +247,6 @@ export default function TreasuryTopbar() {
           <div className="hidden lg:flex flex-col leading-tight">
             <span
               style={{
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 800,
                 fontSize: '12px',
                 color: textColor,

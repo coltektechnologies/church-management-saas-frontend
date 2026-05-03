@@ -188,7 +188,7 @@ export default function AdminManagementTab() {
   };
 
   return (
-    <div className="bg-white rounded-[24px] border border-slate-100 p-6 sm:p-8 space-y-6">
+    <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] p-6 sm:p-8 space-y-6 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h3 className="text-lg font-black text-[#0B2A4A]">Admin management</h3>
@@ -212,19 +212,19 @@ export default function AdminManagementTab() {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+        <div className="rounded-2xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.04] px-4 py-3">
           <p className="text-[10px] font-black uppercase text-slate-400">Total</p>
           <p className="text-xl font-black text-[#0B2A4A]">{stats.total}</p>
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+        <div className="rounded-2xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.04] px-4 py-3">
           <p className="text-[10px] font-black uppercase text-slate-400">Active</p>
           <p className="text-xl font-black text-emerald-600">{stats.active}</p>
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+        <div className="rounded-2xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.04] px-4 py-3">
           <p className="text-[10px] font-black uppercase text-slate-400">Suspended</p>
           <p className="text-xl font-black text-slate-500">{stats.suspended}</p>
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+        <div className="rounded-2xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.04] px-4 py-3">
           <p className="text-[10px] font-black uppercase text-slate-400">Team (excl. you)</p>
           <p className="text-xl font-black text-[#0B2A4A]">{teamOnly.length}</p>
         </div>
@@ -283,18 +283,18 @@ export default function AdminManagementTab() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search name, email, role, group…"
-              className="pl-9 h-10 rounded-xl bg-slate-50 border-slate-100"
+              className="pl-9 h-10 rounded-xl bg-[var(--admin-surface)] border-[var(--admin-border)]"
             />
           </div>
         </div>
 
         {listLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 rounded-[24px] border border-slate-100 bg-slate-50/40 gap-3">
+          <div className="flex flex-col items-center justify-center py-20 rounded-[24px] border border-[var(--admin-border)] bg-muted/30 dark:bg-white/[0.03] gap-3">
             <Loader2 className="h-8 w-8 text-[#2FC4B2] animate-spin" />
             <p className="text-sm text-slate-600 font-medium">Loading team…</p>
           </div>
         ) : teamOnly.length === 0 ? (
-          <div className="text-center py-16 bg-slate-50/50 rounded-[24px] border-2 border-dashed border-slate-100">
+          <div className="text-center py-16 bg-muted/30 dark:bg-white/[0.03] rounded-[24px] border-2 border-dashed border-[var(--admin-border)]">
             <Users className="mx-auto text-slate-200 mb-4" size={40} />
             <p className="text-slate-600 font-bold">No additional staff yet</p>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
@@ -303,11 +303,11 @@ export default function AdminManagementTab() {
             </p>
           </div>
         ) : filteredTeam.length === 0 ? (
-          <div className="text-center py-12 rounded-2xl border border-slate-100 bg-slate-50/30 text-sm text-slate-500">
+          <div className="text-center py-12 rounded-2xl border border-[var(--admin-border)] bg-muted/20 dark:bg-white/[0.03] text-sm text-muted-foreground">
             No matches for &quot;{query}&quot;.
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-slate-100">
+          <div className="overflow-x-auto rounded-2xl border border-[var(--admin-border)]">
             <Table>
               <TableHeader className="bg-slate-50/80">
                 <TableRow>

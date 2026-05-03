@@ -149,6 +149,11 @@ export async function fetchAnnouncementsList(params?: {
   status?: string;
   /** Department portal: only announcements created by the current user (backend `mine_only`). */
   mine_only?: boolean;
+  /**
+   * Secretariat pipeline (pending / approved / published) plus items authored by users with
+   * `secretariat.create_announcement` for this church (backend `secretariat_feed`).
+   */
+  secretariat_feed?: boolean;
 }): Promise<AnnouncementListItemApi[]> {
   const q = new URLSearchParams();
   q.set('page_size', String(params?.page_size ?? 100));
@@ -164,6 +169,9 @@ export async function fetchAnnouncementsList(params?: {
   if (params?.mine_only) {
     q.set('mine_only', 'true');
   }
+  if (params?.secretariat_feed) {
+    q.set('secretariat_feed', 'true');
+  }
   const url = `${announcementsBase()}/?${q.toString()}`;
   const data = await fetchAuth<unknown>(url, { method: 'GET' });
   return normalizeList<AnnouncementListItemApi>(data);
@@ -177,6 +185,7 @@ export async function fetchAnnouncementsListAllPages(options?: {
   search?: string;
   status?: string;
   mine_only?: boolean;
+  secretariat_feed?: boolean;
   page_size?: number;
   maxPages?: number;
 }): Promise<AnnouncementListItemApi[]> {
@@ -191,6 +200,7 @@ export async function fetchAnnouncementsListAllPages(options?: {
       search: options?.search?.trim() || undefined,
       status: options?.status,
       mine_only: options?.mine_only,
+      secretariat_feed: options?.secretariat_feed,
     });
     if (chunk.length === 0) {
       break;

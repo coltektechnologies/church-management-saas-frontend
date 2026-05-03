@@ -11,8 +11,7 @@ import {
   Crown,
   CreditCard,
   AlertCircle,
-  Calendar,
-} from 'lucide-react';
+  Calendar} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { PRICING_PLANS } from '@/components/PricingSection';
@@ -22,8 +21,7 @@ const PLAN_META: Record<string, { icon: typeof Zap; color: string }> = {
   free: { icon: Zap, color: '#6B7280' },
   basic: { icon: TrendingUp, color: '#2FC4B2' },
   premium: { icon: TrendingUp, color: '#0B2A4A' },
-  enterprise: { icon: Crown, color: '#F59E0B' },
-};
+  enterprise: { icon: Crown, color: '#F59E0B' }};
 
 export default function BillingPage() {
   const { profile, updateProfile } = useChurchProfile();
@@ -50,8 +48,7 @@ export default function BillingPage() {
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
       <Link
         href="/admin/settings/superadmin"
-        className="inline-flex items-center gap-2 text-[13px] font-semibold text-gray-400 hover:text-[#0B2A4A] dark:hover:text-white transition-colors"
-        style={{ fontFamily: 'Inter, sans-serif' }}
+        className="inline-flex items-center gap-2 text-[13px] font-semibold text-muted-foreground hover:text-[color:var(--primary-brand)] dark:hover:text-white transition-colors"
       >
         <ArrowLeft size={15} /> Back to Settings
       </Link>
@@ -59,11 +56,10 @@ export default function BillingPage() {
       <div>
         <h2
           className="text-2xl font-black text-[#0B2A4A] dark:text-white"
-          style={{ fontFamily: 'OV Soge, sans-serif' }}
         >
           Billing &amp; Plans
         </h2>
-        <p className="text-sm text-gray-400 mt-1" style={{ fontFamily: 'Inter, sans-serif' }}>
+        <p className="text-sm text-muted-foreground mt-1">
           Manage your subscription. Your current plan is highlighted.
         </p>
       </div>
@@ -82,20 +78,17 @@ export default function BillingPage() {
           </div>
           <div>
             <p
-              className="text-[11px] font-black uppercase tracking-widest text-gray-400"
-              style={{ fontFamily: 'Inter, sans-serif' }}
+              className="text-[11px] font-black uppercase tracking-widest text-muted-foreground"
             >
               Current plan
             </p>
             <p
               className="text-lg font-black text-[#0B2A4A] dark:text-white capitalize"
-              style={{ fontFamily: 'OV Soge, sans-serif' }}
             >
               {PRICING_PLANS.find((p) => p.id === currentPlanId)?.title || 'Start Free'}
             </p>
             <p
-              className="text-[12px] text-gray-400 flex items-center gap-1.5"
-              style={{ fontFamily: 'Inter, sans-serif' }}
+              className="text-[12px] text-muted-foreground flex items-center gap-1.5"
             >
               <Calendar size={12} />
               {currentPlanId === 'free' ? 'Trial — upgrade to keep access' : 'Active subscription'}
@@ -107,7 +100,6 @@ export default function BillingPage() {
             <AlertCircle size={15} className="text-amber-500 shrink-0" />
             <p
               className="text-[12px] text-amber-700 dark:text-amber-400 font-semibold"
-              style={{ fontFamily: 'Inter, sans-serif' }}
             >
               Free trial — upgrade before it expires
             </p>
@@ -118,18 +110,16 @@ export default function BillingPage() {
       {/* Billing toggle */}
       <div className="flex items-center gap-3">
         <p
-          className="text-[13px] font-semibold text-gray-500 dark:text-white/50"
-          style={{ fontFamily: 'Inter, sans-serif' }}
+          className="text-[13px] font-semibold text-muted-foreground"
         >
           Billing:
         </p>
-        <div className="flex bg-slate-100 dark:bg-white/10 rounded-xl p-1 gap-1">
+        <div className="flex bg-muted/80 dark:bg-white/10 rounded-xl p-1 gap-1">
           {(['monthly', 'annual'] as const).map((b) => (
             <button
               key={b}
               onClick={() => setBilling(b)}
-              className={`px-4 py-1.5 rounded-lg text-[12px] font-bold capitalize transition-all ${billing === b ? 'bg-white dark:bg-[#112240] text-[#0B2A4A] dark:text-white shadow' : 'text-gray-400'}`}
-              style={{ fontFamily: 'Inter, sans-serif' }}
+              className={`px-4 py-1.5 rounded-lg text-[12px] font-bold capitalize transition-all ${billing === b ? 'bg-white dark:bg-[var(--admin-surface)] text-[#0B2A4A] dark:text-white shadow dark:ring-1 dark:ring-white/10' : 'text-muted-foreground'}`}
             >
               {b}{' '}
               {b === 'annual' && (
@@ -153,16 +143,15 @@ export default function BillingPage() {
           return (
             <div
               key={plan.id}
-              className={`relative flex flex-col rounded-2xl border-2 overflow-hidden transition-all duration-300 ${
+              className={`relative flex flex-col rounded-2xl border-2 overflow-hidden transition-all duration-300 bg-[var(--admin-surface)] ${
                 isCurrent
                   ? 'border-[#2FC4B2] shadow-xl shadow-[#2FC4B2]/10'
-                  : 'border-slate-100 dark:border-white/10 hover:border-[#2FC4B2]/40'
+                  : 'border-[var(--admin-border)] hover:border-[#2FC4B2]/40 dark:ring-1 dark:ring-white/10'
               }`}
               style={{
                 background: isCurrent
                   ? `linear-gradient(135deg, ${pc} 0%, ${pc}EE 100%)`
-                  : undefined,
-              }}
+                  : undefined}}
             >
               {isCurrent && (
                 <div
@@ -182,7 +171,6 @@ export default function BillingPage() {
                 </div>
                 <h3
                   className={`text-[16px] font-black mb-1 ${isCurrent ? 'text-white' : 'text-[#0B2A4A] dark:text-white'}`}
-                  style={{ fontFamily: 'OV Soge, sans-serif' }}
                 >
                   {plan.title}
                 </h3>
@@ -190,7 +178,6 @@ export default function BillingPage() {
                   {plan.monthlyPrice === '0' ? (
                     <span
                       className={`text-2xl font-black ${isCurrent ? 'text-white' : 'text-[#0B2A4A] dark:text-white'}`}
-                      style={{ fontFamily: 'Inter, sans-serif' }}
                     >
                       Free
                     </span>
@@ -203,7 +190,6 @@ export default function BillingPage() {
                       </span>
                       <span
                         className={`text-2xl font-black ${isCurrent ? 'text-white' : 'text-[#0B2A4A] dark:text-white'}`}
-                        style={{ fontFamily: 'Inter, sans-serif' }}
                       >
                         {price}
                       </span>
@@ -223,9 +209,7 @@ export default function BillingPage() {
                       key={f}
                       className="flex items-center gap-2 text-[12px]"
                       style={{
-                        fontFamily: 'Inter, sans-serif',
-                        color: isCurrent ? 'rgba(255,255,255,0.85)' : undefined,
-                      }}
+                        color: isCurrent ? 'rgba(255,255,255,0.85)' : undefined}}
                     >
                       <Check
                         size={12}
@@ -249,8 +233,7 @@ export default function BillingPage() {
                       : plan.monthlyPrice === '0'
                         ? '#F1F5F9'
                         : pc,
-                    color: isCurrent ? '#fff' : plan.monthlyPrice === '0' ? '#94A3B8' : '#fff',
-                  }}
+                    color: isCurrent ? '#fff' : plan.monthlyPrice === '0' ? '#94A3B8' : '#fff'}}
                 >
                   {loading === plan.id
                     ? 'Updating...'
@@ -265,23 +248,21 @@ export default function BillingPage() {
       </div>
 
       {/* Payment method strip */}
-      <div className="bg-white dark:bg-[#112240] rounded-2xl border border-slate-100 dark:border-white/10 p-6">
+      <div className="bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] p-6 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
         <h3
           className="text-[15px] font-black text-[#0B2A4A] dark:text-white mb-4"
-          style={{ fontFamily: 'OV Soge, sans-serif' }}
         >
           Payment Method
         </h3>
-        <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-dashed border-slate-200 dark:border-white/10">
-          <CreditCard size={24} className="text-gray-300" />
+        <div className="flex items-center gap-4 p-4 bg-muted/40 dark:bg-white/[0.04] rounded-xl border border-dashed border-[var(--admin-border)]">
+          <CreditCard size={24} className="text-muted-foreground/50" />
           <div>
             <p
               className="text-[13px] font-bold text-[#0B2A4A] dark:text-white"
-              style={{ fontFamily: 'Inter, sans-serif' }}
             >
               No payment method added
             </p>
-            <p className="text-[11px] text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
+            <p className="text-[11px] text-muted-foreground">
               Add a mobile money or card to activate your plan
             </p>
           </div>

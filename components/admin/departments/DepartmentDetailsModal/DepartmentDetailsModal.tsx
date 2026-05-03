@@ -93,7 +93,7 @@ export default function DepartmentDetailsModal({
       />
 
       <div
-        className={`relative bg-white w-full h-full md:h-auto md:w-[95%] md:max-w-6xl rounded-none md:rounded-2xl overflow-hidden shadow-2xl ${isClosing ? 'modal-content-out' : 'modal-content-in'}`}
+        className={`relative bg-[var(--admin-surface)] text-foreground w-full h-full md:h-auto md:w-[95%] md:max-w-6xl rounded-none md:rounded-2xl overflow-hidden shadow-2xl border border-[var(--admin-border)] dark:ring-1 dark:ring-white/10 ${isClosing ? 'modal-content-out' : 'modal-content-in'}`}
       >
         <div className={`${themeClass} px-8 pt-10 pb-8 text-white relative`}>
           <h2 className="text-3xl font-bold">{department.name}</h2>
@@ -107,7 +107,7 @@ export default function DepartmentDetailsModal({
           </button>
         </div>
 
-        <div className="flex gap-10 px-8 border-b border-gray-200">
+        <div className="flex gap-10 px-8 border-b border-[var(--admin-border)] bg-[var(--admin-surface)]">
           {allTabs.map(({ key, label }) => (
             <button
               type="button"
@@ -115,8 +115,8 @@ export default function DepartmentDetailsModal({
               onClick={() => setActiveTab(key)}
               className={`py-4 capitalize transition-all duration-200 cursor-pointer ${
                 activeTab === key
-                  ? 'border-b-2 border-green-600 text-black font-medium'
-                  : 'text-gray-500 hover:text-black hover:border-b-2 hover:border-gray-300'
+                  ? 'border-b-2 border-green-600 dark:border-emerald-400 text-foreground font-medium'
+                  : 'text-muted-foreground hover:text-foreground hover:border-b-2 hover:border-[var(--admin-border)]'
               }`}
             >
               {label}

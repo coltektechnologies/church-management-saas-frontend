@@ -13,8 +13,7 @@ import {
   actionIcon,
   actionColor,
   type ActivityEntry,
-  type ActivityCategory,
-} from './activityHistory';
+  type ActivityCategory} from './activityHistory';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface ActivityHistoryPanelProps {
@@ -34,8 +33,7 @@ function groupByDate(entries: ActivityEntry[]): { date: string; items: ActivityE
       weekday: 'long',
       day: 'numeric',
       month: 'long',
-      year: 'numeric',
-    });
+      year: 'numeric'});
     if (!map.has(dateKey)) {
       map.set(dateKey, []);
     }
@@ -52,23 +50,20 @@ const CATEGORY_LABELS: Record<ActivityCategory, string> = {
   dropdown: 'Dropdowns',
   export: 'Exports',
   filter: 'Filters',
-  settings: 'Settings',
-};
+  settings: 'Settings'};
 
 const CATEGORY_COLORS: Record<ActivityCategory, string> = {
   income: '#15803D',
   dropdown: '#D97706',
   export: '#7C3AED',
   filter: '#0891B2',
-  settings: '#475569',
-};
+  settings: '#475569'};
 
 // ── Entry row ─────────────────────────────────────────────────────────────────
 function EntryRow({
   entry,
   textColor,
-  borderColor,
-}: {
+  borderColor}: {
   entry: ActivityEntry;
   textColor: string;
   borderColor: string;
@@ -83,8 +78,7 @@ function EntryRow({
         display: 'flex',
         gap: '12px',
         paddingBottom: '16px',
-        position: 'relative',
-      }}
+        position: 'relative'}}
     >
       {/* Timeline dot */}
       <div
@@ -101,8 +95,7 @@ function EntryRow({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '13px',
-            flexShrink: 0,
-          }}
+            flexShrink: 0}}
         >
           {actionIcon(entry.action)}
         </div>
@@ -112,8 +105,7 @@ function EntryRow({
             flex: 1,
             backgroundColor: `${borderColor}`,
             marginTop: '4px',
-            minHeight: '8px',
-          }}
+            minHeight: '8px'}}
         />
       </div>
 
@@ -124,19 +116,16 @@ function EntryRow({
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
-            gap: '8px',
-          }}
+            gap: '8px'}}
         >
           <div style={{ flex: 1 }}>
             <p
               style={{
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 600,
                 fontSize: '12px',
                 color: textColor,
                 lineHeight: 1.4,
-                margin: 0,
-              }}
+                margin: 0}}
             >
               {entry.summary}
             </p>
@@ -146,8 +135,7 @@ function EntryRow({
                 alignItems: 'center',
                 gap: '8px',
                 marginTop: '3px',
-                flexWrap: 'wrap',
-              }}
+                flexWrap: 'wrap'}}
             >
               <span
                 style={{
@@ -155,9 +143,7 @@ function EntryRow({
                   alignItems: 'center',
                   gap: '3px',
                   fontSize: '10px',
-                  color: `${textColor}60`,
-                  fontFamily: "'OV Soge',sans-serif",
-                }}
+                  color: `${textColor}60`}}
               >
                 <Clock size={9} />
                 {formatTimestamp(entry.timestamp)}
@@ -165,9 +151,7 @@ function EntryRow({
               <span
                 style={{
                   fontSize: '10px',
-                  color: `${textColor}50`,
-                  fontFamily: "'OV Soge',sans-serif",
-                }}
+                  color: `${textColor}50`}}
               >
                 by <strong style={{ color: `${textColor}80` }}>{entry.actor}</strong>
               </span>
@@ -180,8 +164,7 @@ function EntryRow({
                   backgroundColor: `${CATEGORY_COLORS[entry.category]}18`,
                   color: CATEGORY_COLORS[entry.category],
                   textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
+                  letterSpacing: '0.05em'}}
               >
                 {CATEGORY_LABELS[entry.category]}
               </span>
@@ -202,8 +185,7 @@ function EntryRow({
                   backgroundColor: `${textColor}10`,
                   border: 'none',
                   cursor: 'pointer',
-                  color: `${textColor}60`,
-                }}
+                  color: `${textColor}60`}}
               >
                 {expanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               </button>
@@ -221,10 +203,8 @@ function EntryRow({
               border: `1px solid ${borderColor}`,
               fontSize: '11px',
               color: `${textColor}70`,
-              fontFamily: "'OV Soge',sans-serif",
               fontStyle: 'italic',
-              lineHeight: 1.5,
-            }}
+              lineHeight: 1.5}}
           >
             {entry.detail}
           </div>
@@ -241,8 +221,7 @@ export default function ActivityHistoryPanel({
   cardBg = '#FFFFFF',
   borderColor = '#DFDADA',
   primaryColor = '#0B2A4A',
-  isDark = false,
-}: ActivityHistoryPanelProps) {
+  isDark = false}: ActivityHistoryPanelProps) {
   const [entries, setEntries] = useState<ActivityEntry[]>(() => loadHistory());
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<ActivityCategory | ''>('');
@@ -284,7 +263,6 @@ export default function ActivityHistoryPanel({
   };
 
   const inputStyle: React.CSSProperties = {
-    fontFamily: "'OV Soge', sans-serif",
     fontSize: '11px',
     fontWeight: 500,
     color: textColor,
@@ -293,22 +271,19 @@ export default function ActivityHistoryPanel({
     border: `1px solid ${borderColor}`,
     borderRadius: '8px',
     outline: 'none',
-    padding: '8px 12px',
-  };
+    padding: '8px 12px'};
 
   const pillStyle = (active: boolean): React.CSSProperties => ({
     padding: '4px 10px',
     borderRadius: '20px',
     fontSize: '11px',
-    fontFamily: "'OV Soge',sans-serif",
     fontWeight: 700,
     border: `1px solid ${active ? accentColor : borderColor}`,
     backgroundColor: active ? `${accentColor}18` : 'transparent',
     color: active ? accentColor : `${textColor}60`,
     cursor: 'pointer',
     transition: 'all 0.15s',
-    whiteSpace: 'nowrap' as const,
-  });
+    whiteSpace: 'nowrap' as const});
 
   return (
     <div
@@ -317,8 +292,7 @@ export default function ActivityHistoryPanel({
         border: `1px solid ${borderColor}`,
         borderRadius: '10px',
         padding: '20px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-      }}
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'}}
     >
       {/* Header */}
       <div
@@ -328,8 +302,7 @@ export default function ActivityHistoryPanel({
           justifyContent: 'space-between',
           marginBottom: '16px',
           flexWrap: 'wrap',
-          gap: '8px',
-        }}
+          gap: '8px'}}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
@@ -340,8 +313,7 @@ export default function ActivityHistoryPanel({
               backgroundColor: `${primaryColor}15`,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-            }}
+              justifyContent: 'center'}}
           >
             <History size={16} style={{ color: primaryColor }} />
           </div>
@@ -352,18 +324,15 @@ export default function ActivityHistoryPanel({
                 fontWeight: 600,
                 fontSize: '14px',
                 color: textColor,
-                margin: 0,
-              }}
+                margin: 0}}
             >
               Activity History
             </h3>
             <p
               style={{
-                fontFamily: "'OV Soge',sans-serif",
                 fontSize: '11px',
                 color: `${textColor}60`,
-                margin: 0,
-              }}
+                margin: 0}}
             >
               {entries.length} event{entries.length !== 1 ? 's' : ''} recorded
               {filtered.length !== entries.length && (
@@ -387,8 +356,7 @@ export default function ActivityHistoryPanel({
               left: '10px',
               top: '50%',
               transform: 'translateY(-50%)',
-              color: `${textColor}50`,
-            }}
+              color: `${textColor}50`}}
           />
           <input
             type="text"
@@ -409,8 +377,7 @@ export default function ActivityHistoryPanel({
                 border: 'none',
                 cursor: 'pointer',
                 color: `${textColor}50`,
-                display: 'flex',
-              }}
+                display: 'flex'}}
             >
               <X size={11} />
             </button>
@@ -425,8 +392,7 @@ export default function ActivityHistoryPanel({
           flexWrap: 'wrap',
           gap: '6px',
           marginBottom: '16px',
-          alignItems: 'center',
-        }}
+          alignItems: 'center'}}
       >
         <Filter size={11} style={{ color: `${textColor}40` }} />
         <button onClick={() => setFilterCategory('')} style={pillStyle(!filterCategory)}>
@@ -449,16 +415,14 @@ export default function ActivityHistoryPanel({
       {entries.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 20px', color: `${textColor}40` }}>
           <History size={36} style={{ margin: '0 auto 10px', opacity: 0.4 }} />
-          <p style={{ fontFamily: "'OV Soge',sans-serif", fontSize: '13px' }}>
+          <p style={{ fontSize: '13px' }}>
             No activity recorded yet.
           </p>
           <p
             style={{
-              fontFamily: "'OV Soge',sans-serif",
               fontSize: '11px',
               marginTop: '4px',
-              opacity: 0.7,
-            }}
+              opacity: 0.7}}
           >
             Activity appears here as you record income, manage dropdowns, and more.
           </p>
@@ -466,7 +430,7 @@ export default function ActivityHistoryPanel({
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px 20px', color: `${textColor}40` }}>
           <Search size={28} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-          <p style={{ fontFamily: "'OV Soge',sans-serif", fontSize: '13px' }}>
+          <p style={{ fontSize: '13px' }}>
             No activity matches your filters.
           </p>
         </div>
@@ -483,12 +447,10 @@ export default function ActivityHistoryPanel({
                   style={{
                     fontSize: '10px',
                     fontWeight: 700,
-                    fontFamily: "'OV Soge',sans-serif",
                     color: `${textColor}55`,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
-                    whiteSpace: 'nowrap',
-                  }}
+                    whiteSpace: 'nowrap'}}
                 >
                   {group.date}
                 </span>
@@ -521,8 +483,7 @@ export default function ActivityHistoryPanel({
             justifyContent: 'center',
             padding: '16px',
             backgroundColor: 'rgba(0,0,0,0.55)',
-            backdropFilter: 'blur(4px)',
-          }}
+            backdropFilter: 'blur(4px)'}}
         >
           <div
             style={{
@@ -532,8 +493,7 @@ export default function ActivityHistoryPanel({
               padding: '24px',
               maxWidth: '360px',
               width: '100%',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-            }}
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)'}}
           >
             <h4
               style={{
@@ -541,19 +501,16 @@ export default function ActivityHistoryPanel({
                 fontWeight: 700,
                 fontSize: '15px',
                 color: textColor,
-                margin: '0 0 8px',
-              }}
+                margin: '0 0 8px'}}
             >
               Clear All Activity?
             </h4>
             <p
               style={{
-                fontFamily: "'OV Soge',sans-serif",
                 fontSize: '12px',
                 color: `${textColor}70`,
                 margin: '0 0 16px',
-                lineHeight: 1.6,
-              }}
+                lineHeight: 1.6}}
             >
               This will permanently delete all {entries.length} activity entries. This cannot be
               undone.
@@ -566,13 +523,11 @@ export default function ActivityHistoryPanel({
                   height: '40px',
                   borderRadius: '8px',
                   fontSize: '13px',
-                  fontFamily: "'OV Soge',sans-serif",
                   fontWeight: 600,
                   backgroundColor: `${textColor}12`,
                   color: textColor,
                   border: 'none',
-                  cursor: 'pointer',
-                }}
+                  cursor: 'pointer'}}
               >
                 Cancel
               </button>

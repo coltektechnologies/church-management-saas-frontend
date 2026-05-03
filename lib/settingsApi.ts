@@ -163,6 +163,7 @@ export interface UserApiResponse {
   church?: string;
   church_name?: string;
   full_name?: string;
+  mfa_enabled?: boolean;
   [key: string]: unknown;
 }
 
@@ -319,21 +320,50 @@ export async function updateNotificationPreferences(
   });
 }
 
-/** Change password */
+/** Flatten DRF validation payloads into a single message for toasts. */
+function flattenDrfErrorPayload(data: Record<string, unknown>): string {
+  if (typeof data.detail === 'string') {
+    return data.detail;
+  }
+  const parts: string[] = [];
+  for (const val of Object.values(data)) {
+    if (typeof val === 'string') {
+      parts.push(val);
+    } else if (Array.isArray(val)) {
+      parts.push(...val.map((x) => String(x)));
+    } else if (val && typeof val === 'object') {
+      for (const inner of Object.values(val as Record<string, unknown>)) {
+        if (Array.isArray(inner)) {
+          parts.push(...inner.map((x) => String(x)));
+        } else if (typeof inner === 'string') {
+          parts.push(inner);
+        }
+      }
+    }
+  }
+  return parts.filter(Boolean).join(' · ') || 'Request failed';
+}
+
+/** POST /api/auth/change-password/ — uses {@link ChangePasswordSerializer} on the backend. */
 export async function changePassword(
   oldPassword: string,
   newPassword: string,
   newPasswordConfirm: string
 ): Promise<void> {
   const base = getApiBaseUrl();
-  await fetchAuth<unknown>(`${base}/auth/change-password/`, {
+  const res = await fetch(`${base}/auth/change-password/`, {
     method: 'POST',
+    headers: getAuthHeaders(),
     body: JSON.stringify({
       old_password: oldPassword,
       new_password: newPassword,
       new_password_confirm: newPasswordConfirm,
     }),
   });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(flattenDrfErrorPayload(data));
+  }
 }
 
 /** Church defaults for theme */

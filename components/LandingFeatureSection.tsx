@@ -1,7 +1,7 @@
 /**
  * LandingFeatureSection Component
  * * Purpose: Main container for the features grid on the landing page.
- * Fonts: OV Soge (Heading), Poppins (CTA Link)
+ * Fonts: Poppins (heading + CTA)
  * Responsive: Uses a CSS grid that adjusts columns for mobile (1), tablet (2), and desktop (3).
  */
 
@@ -14,18 +14,15 @@ const FEATURE_DATA = [
   {
     icon: Users,
     title: 'Member Management',
-    description: 'Securely manage member profiles, attendance, and growth analytics in one place.',
-  },
+    description: 'Securely manage member profiles, attendance, and growth analytics in one place.'},
   {
     icon: Wallet,
     title: 'Financial Tracking',
-    description: 'Automate tithe recording, track expenses and generate instant financial reports.',
-  },
+    description: 'Automate tithe recording, track expenses and generate instant financial reports.'},
   {
     icon: MessageSquare,
     title: 'Automated Communications',
-    description: 'Reach your congregation instantly via automated SMS and email notifications.',
-  },
+    description: 'Reach your congregation instantly via automated SMS and email notifications.'},
 ];
 
 const LandingFeatureSection = () => {
@@ -40,14 +37,12 @@ const LandingFeatureSection = () => {
           <h2
             className="main-section-title"
             style={{
-              fontFamily: 'OV Soge, sans-serif',
               fontWeight: 700,
               fontSize: 'clamp(32px, 5vw, 40px)', // Scales smoothly between 32px and 40px
               lineHeight: '100%',
               letterSpacing: '0.03em',
               color: '#00223A',
-              maxWidth: '530px',
-            }}
+              maxWidth: '530px'}}
           >
             All-in-One Ministry Tools
           </h2>
@@ -66,16 +61,14 @@ const LandingFeatureSection = () => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              textDecoration: 'none',
-            }}
+              textDecoration: 'none'}}
           >
             <span
               className="cta-text text-[#020202]"
               style={{
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: 500,
-                fontSize: '20px',
-              }}
+                fontSize: '20px'}}
             >
               See all Features
             </span>

@@ -8,8 +8,7 @@ import {
   Megaphone,
   PersonStanding,
   RefreshCw,
-  AlertCircle,
-} from 'lucide-react';
+  AlertCircle} from 'lucide-react';
 
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
@@ -44,8 +43,7 @@ export default function DashboardPage() {
     averageAttendance,
     apiLoading,
     apiError,
-    refetchDashboard,
-  } = useAppData();
+    refetchDashboard} = useAppData();
 
   const mounted = useIsMounted();
 
@@ -60,8 +58,7 @@ export default function DashboardPage() {
     border: dark ? '1px solid rgba(255,255,255,0.08)' : 'none',
     boxShadow: dark ? '0px 1px 6px 0px rgba(0,0,0,0.4)' : '0px 1px 4px 0px #2FC4B2',
     borderRadius: '5px',
-    overflow: 'hidden',
-  };
+    overflow: 'hidden'};
 
   const summaryLead = "Here's what's happening with your church today.";
   const summaryBody = (() => {
@@ -113,16 +110,10 @@ export default function DashboardPage() {
 
       {/* Welcome row — light layout aligned with /admin reference (no gradient hero) */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
-        <h1
-          className="text-2xl sm:text-[1.75rem] font-black tracking-tight text-[#0B2A4A] dark:text-white shrink-0"
-          style={{ fontFamily: 'OV Soge, sans-serif' }}
-        >
+        <h1 className="text-2xl sm:text-[1.75rem] font-black tracking-tight text-[#0B2A4A] dark:text-white shrink-0">
           Welcome back, {adminName}! 👋
         </h1>
-        <p
-          className="text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400 lg:max-w-xl lg:text-right"
-          style={{ fontFamily: 'OV Soge, sans-serif' }}
-        >
+        <p className="text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400 lg:max-w-xl lg:text-right">
           {summaryLead}
           {summaryBody}
         </p>
@@ -135,8 +126,7 @@ export default function DashboardPage() {
             weekday: 'short',
             month: 'short',
             day: 'numeric',
-            year: 'numeric',
-          })}
+            year: 'numeric'})}
         </span>
       </div>
 

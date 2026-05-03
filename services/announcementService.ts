@@ -12,6 +12,7 @@ import { isMockAnnouncementsEnabled } from '@/lib/featureFlags';
 import {
   fetchAnnouncementCategories,
   fetchAnnouncementsList,
+  fetchAnnouncementsListAllPages,
   fetchAnnouncementDetail,
   createAnnouncementApi,
   patchAnnouncementApi,
@@ -36,6 +37,10 @@ export interface AnnouncementListFilters {
   sortOrder?: 'asc' | 'desc';
   /** Department portal: list only announcements authored by the signed-in user. */
   mineOnly?: boolean;
+  /**
+   * `/admin/secretary`: backend narrows to secretariat pipeline + secretariat-authored items.
+   */
+  secretariatFeed?: boolean;
 }
 
 export interface CreateAnnouncementPayload {
@@ -123,11 +128,19 @@ class AnnouncementService {
 
   async fetchAnnouncements(filters: AnnouncementListFilters): Promise<Announcement[]> {
     if (shouldUseLiveApi()) {
-      const rows = await fetchAnnouncementsList({
-        page_size: 100,
-        search: filters.search || undefined,
-        mine_only: filters.mineOnly === true ? true : undefined,
-      });
+      const rows =
+        filters.secretariatFeed === true
+          ? await fetchAnnouncementsListAllPages({
+              page_size: 80,
+              maxPages: 25,
+              search: filters.search?.trim() || undefined,
+              secretariat_feed: true,
+            })
+          : await fetchAnnouncementsList({
+              page_size: 100,
+              search: filters.search || undefined,
+              mine_only: filters.mineOnly === true ? true : undefined,
+            });
       // List API has no body; leave content empty so cards do not show an internal placeholder string.
       let mapped = rows.map((r) => mapListItemToAnnouncement(r, ''));
 

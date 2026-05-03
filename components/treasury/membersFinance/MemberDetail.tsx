@@ -53,13 +53,11 @@ function EmptyState() {
       </div>
       <p
         className="text-lg font-semibold text-slate-500 dark:text-slate-300"
-        style={{ fontFamily: "'OV Soge', sans-serif" }}
       >
         Select a member to view
       </p>
       <p
         className="text-lg font-semibold text-slate-500 dark:text-slate-300"
-        style={{ fontFamily: "'OV Soge', sans-serif" }}
       >
         contribution details
       </p>
@@ -73,8 +71,7 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
   const {
     data: pledgeRows = [],
     isLoading: pledgesLoading,
-    isError: pledgesError,
-  } = useQuery({
+    isError: pledgesError} = useQuery({
     queryKey: ['treasury', 'member-pledges-panel', mid ?? ''],
     queryFn: () => {
       if (!mid) {
@@ -82,8 +79,7 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
       }
       return getTreasuryMemberPledges(mid, { includeAllStatuses: true });
     },
-    enabled: Boolean(mid),
-  });
+    enabled: Boolean(mid)});
 
   if (!member) {
     return (
@@ -107,7 +103,6 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
             <div className="min-w-0">
               <p
                 className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate"
-                style={{ fontFamily: "'OV Soge', sans-serif" }}
               >
                 {displayName}
               </p>
@@ -135,7 +130,6 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
             <Target className="w-4 h-4 text-teal-600 dark:text-teal-400" />
             <h3
               className="text-base font-bold text-slate-900 dark:text-slate-100"
-              style={{ fontFamily: "'OV Soge', sans-serif" }}
             >
               Pledges
             </h3>
@@ -190,7 +184,6 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
         <div className="px-6 pb-6 flex-1 pt-5">
           <h3
             className="text-base font-bold text-slate-900 dark:text-slate-100 mb-4"
-            style={{ fontFamily: "'OV Soge', sans-serif" }}
           >
             Recent Transactions
           </h3>

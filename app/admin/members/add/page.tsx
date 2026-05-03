@@ -17,8 +17,7 @@ import {
   GraduationCap,
   FileText,
   Lock,
-  Shield,
-} from 'lucide-react';
+  Shield} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -116,8 +115,7 @@ const emptyForm = {
   interested_departments: [] as string[],
   admin_notes: '',
   send_credentials_via_sms: false,
-  send_credentials_via_email: false,
-};
+  send_credentials_via_email: false};
 
 type TouchedKeys = keyof Pick<
   typeof emptyForm,
@@ -194,8 +192,7 @@ export default function AddMemberPage() {
     total_members: 0,
     new_members_this_month: 0,
     pending_approvals: 0,
-    active_members: 0,
-  });
+    active_members: 0});
   const [departments, setDepartments] = useState<DepartmentListRow[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
@@ -330,8 +327,7 @@ export default function AddMemberPage() {
       emergency_contact: {
         full_name: form.emergency_contact_full_name,
         relationship: form.emergency_contact_relationship,
-        phone_number: form.emergency_contact_phone,
-      },
+        phone_number: form.emergency_contact_phone},
       member_since: form.member_since,
       membership_status: form.membership_status as CreateMemberPayload['membership_status'],
       baptism_status: form.baptism_status as CreateMemberPayload['baptism_status'] | undefined,
@@ -339,8 +335,7 @@ export default function AddMemberPage() {
       interested_departments: form.interested_departments,
       admin_notes: form.admin_notes || undefined,
       send_credentials_via_email: form.send_credentials_via_email,
-      send_credentials_via_sms: form.send_credentials_via_sms,
-    };
+      send_credentials_via_sms: form.send_credentials_via_sms};
 
     setSubmitting(true);
     try {
@@ -367,8 +362,7 @@ export default function AddMemberPage() {
         extras.push(`Not sent: ${result.credentials_delivery_skipped_reason}`);
       }
       toast.success(result.message || 'Member created successfully', {
-        description: extras.length ? extras.join(' · ') : undefined,
-      });
+        description: extras.length ? extras.join(' · ') : undefined});
       router.push(membersBasePath);
       return;
     } catch (err) {
@@ -389,26 +383,22 @@ export default function AddMemberPage() {
         <div>
           <h1
             style={{
-              fontFamily: 'OV Soge, sans-serif',
               fontWeight: 600,
               fontSize: '24px',
               lineHeight: '100%',
               letterSpacing: 0,
-              color: '#0B2A4A',
-            }}
+              color: '#0B2A4A'}}
           >
             Add New Member
           </h1>
           <p
             className="mt-1"
             style={{
-              fontFamily: 'OV Soge, sans-serif',
               fontWeight: 400,
               fontSize: '12px',
               lineHeight: '100%',
               letterSpacing: 0,
-              color: '#666666',
-            }}
+              color: '#666666'}}
           >
             Administrative panel for member registration
           </p>
@@ -431,8 +421,7 @@ export default function AddMemberPage() {
           {
             label: 'Active this Month',
             value: stats.active_members.toLocaleString(),
-            highlight: true,
-          },
+            highlight: true},
         ].map((stat) => (
           <div
             key={stat.label}
@@ -440,8 +429,7 @@ export default function AddMemberPage() {
             style={{
               borderRadius: 15,
               borderLeft: '5px solid #0B2A4A',
-              background: '#F8FAFC',
-            }}
+              background: '#F8FAFC'}}
           >
             <p className="text-xs font-bold text-[#717171]">{stat.label}</p>
             <p
@@ -463,10 +451,9 @@ export default function AddMemberPage() {
             borderTopRightRadius: 8,
             padding: '16px 18px',
             background: '#0B2A4A',
-            marginBottom: 24,
-          }}
+            marginBottom: 24}}
         >
-          <h2 className="text-lg font-semibold" style={{ fontFamily: 'OV Soge, sans-serif' }}>
+          <h2 className="text-lg font-semibold">
             Member Registration Form
           </h2>
           <span className="inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full text-xs font-medium">
@@ -1024,7 +1011,6 @@ export default function AddMemberPage() {
               type="submit"
               disabled={submitting}
               className="bg-[#0B2A4A] hover:bg-[#0B2A4A]/90 text-white disabled:opacity-50"
-              style={{ fontFamily: 'OV Soge, sans-serif' }}
             >
               <User className="h-4 w-4 mr-2" />
               {submitting ? 'Adding...' : 'Add Member'}

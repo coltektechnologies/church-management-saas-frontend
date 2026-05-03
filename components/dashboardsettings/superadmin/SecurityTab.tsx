@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { ShieldCheck, Lock, Monitor, Smartphone, KeyRound } from 'lucide-react';
+import { ShieldCheck, Lock, KeyRound } from 'lucide-react';
 
 const SecurityTab = () => {
   const [currentPw, setCurrentPw] = useState('');
@@ -127,56 +127,8 @@ const SecurityTab = () => {
           className="data-[state=checked]:bg-[#2FC4B2]"
         />
       </div>
-
-      {/* Active Sessions */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Monitor size={16} className="text-slate-400" />
-          <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">
-            Active Sessions
-          </h4>
-        </div>
-
-        <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-all">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5 bg-green-50 text-green-600 rounded-xl">
-              <Monitor size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#0B2A4A]">Chrome on Windows 11</p>
-              <p className="text-[10px] text-slate-400 font-medium italic">
-                Current session • Accra, Ghana
-              </p>
-            </div>
-          </div>
-          <Badge>Active Now</Badge>
-        </div>
-
-        <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl opacity-60">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5 bg-slate-50 text-slate-400 rounded-xl">
-              <Smartphone size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#0B2A4A]">iPhone 15 Pro</p>
-              <p className="text-[10px] text-slate-400 font-medium uppercase">
-                Last active: 2 hours ago
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
-
-// Localized Badge component for consistency
-const Badge = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <span
-    className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#2FC4B2]/10 text-[#2FC4B2] border border-[#2FC4B2]/20 ${className}`}
-  >
-    {children}
-  </span>
-);
 
 export default SecurityTab;

@@ -83,7 +83,7 @@ const ServiceTimesTab = () => {
   };
 
   return (
-    <div className="bg-white rounded-[24px] border border-slate-100 p-8 space-y-8 max-w-3xl animate-in fade-in duration-500">
+    <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] p-8 space-y-8 max-w-3xl animate-in fade-in duration-500 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -121,7 +121,7 @@ const ServiceTimesTab = () => {
           {services.map((s) => (
             <div
               key={s.id}
-              className="group flex flex-col sm:flex-row gap-4 items-start sm:items-end bg-white border border-slate-100 p-5 rounded-2xl hover:shadow-md transition-all animate-in slide-in-from-top-2"
+              className="group flex flex-col sm:flex-row gap-4 items-start sm:items-end bg-muted/30 dark:bg-white/[0.04] border border-[var(--admin-border)] p-5 rounded-2xl hover:shadow-md dark:hover:ring-1 dark:hover:ring-white/10 transition-all animate-in slide-in-from-top-2"
             >
               <div className="flex-1 w-full space-y-2">
                 <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">

@@ -251,7 +251,6 @@ export default function RecordIncomePage() {
     gap: '6px',
     padding: '7px 14px',
     borderRadius: '8px',
-    fontFamily: "'OV Soge', sans-serif",
     fontWeight: 600,
     fontSize: '12px',
     cursor: 'pointer',
@@ -305,7 +304,6 @@ export default function RecordIncomePage() {
               gap: '8px',
               padding: '8px 16px',
               borderRadius: '8px',
-              fontFamily: "'OV Soge', sans-serif",
               fontWeight: 700,
               fontSize: '12px',
               cursor: formDisabled ? 'not-allowed' : 'pointer',
@@ -381,7 +379,6 @@ export default function RecordIncomePage() {
               border: `1px solid ${borderColor}`,
               backgroundColor: isDark ? 'rgba(239,68,68,0.12)' : '#FEF2F2',
               color: isDark ? '#FECACA' : '#991B1B',
-              fontFamily: "'OV Soge', sans-serif",
               fontSize: '12px',
             }}
           >
@@ -396,7 +393,6 @@ export default function RecordIncomePage() {
               borderRadius: '10px',
               border: `1px dashed ${borderColor}`,
               color: `${textColor}80`,
-              fontFamily: "'OV Soge', sans-serif",
               fontSize: '12px',
             }}
           >
@@ -414,7 +410,6 @@ export default function RecordIncomePage() {
               borderRadius: '10px',
               border: `1px dashed ${borderColor}`,
               color: `${textColor}80`,
-              fontFamily: "'OV Soge', sans-serif",
               fontSize: '12px',
             }}
           >
@@ -494,7 +489,6 @@ export default function RecordIncomePage() {
                 </h3>
                 <p
                   style={{
-                    fontFamily: "'OV Soge',sans-serif",
                     fontSize: '13px',
                     color: `${textColor}55`,
                     margin: 0,

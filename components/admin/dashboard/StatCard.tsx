@@ -62,7 +62,6 @@ const StatCard = ({
       <div className="flex items-center justify-between w-full">
         <p
           style={{
-            fontFamily: 'OV Soge, sans-serif',
             fontWeight: 500,
             fontSize: '14px',
             lineHeight: '100%',
@@ -85,7 +84,6 @@ const StatCard = ({
       {/* Value */}
       <p
         style={{
-          fontFamily: 'OV Soge, sans-serif',
           fontWeight: 600,
           fontSize: '22px',
           lineHeight: '1.2',
@@ -100,7 +98,6 @@ const StatCard = ({
       <div className="flex items-center justify-between mt-2">
         <span
           style={{
-            fontFamily: 'OV Soge, sans-serif',
             fontWeight: 400,
             fontSize: '11px',
             color: txtMuted,
@@ -111,7 +108,6 @@ const StatCard = ({
         <span
           className="group-hover:underline group-hover:text-slate-700 dark:group-hover:text-white/90"
           style={{
-            fontFamily: 'OV Soge, sans-serif',
             fontWeight: 500,
             fontSize: '11px',
             color: txtMuted,

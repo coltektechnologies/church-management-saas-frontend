@@ -130,7 +130,6 @@ function EditableField({
         style={{
           fontSize: '10px',
           color: `${textColor}60`,
-          fontFamily: "'OV Soge',sans-serif",
           fontWeight: 700,
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
@@ -152,7 +151,6 @@ function EditableField({
           style={{
             width: '100%',
             fontSize: '12px',
-            fontFamily: "'OV Soge',sans-serif",
             fontWeight: 600,
             color: textColor,
             backgroundColor: `${accentColor}12`,
@@ -168,7 +166,6 @@ function EditableField({
           style={{
             fontSize: '12px',
             color: textColor,
-            fontFamily: "'OV Soge',sans-serif",
             fontWeight: 600,
             padding: '2px 0',
             wordBreak: 'break-word',
@@ -308,7 +305,6 @@ function EntryCard({
               fontSize: '11px',
               fontWeight: 700,
               color: '#92400E',
-              fontFamily: "'OV Soge',sans-serif",
               flex: 1,
             }}
           >
@@ -322,7 +318,6 @@ function EntryCard({
               borderRadius: '6px',
               fontSize: '10px',
               fontWeight: 700,
-              fontFamily: "'OV Soge',sans-serif",
               backgroundColor: '#FDE68A',
               color: '#92400E',
               border: '1px solid #FCD34D',
@@ -367,7 +362,6 @@ function EntryCard({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span
                 style={{
-                  fontFamily: "'OV Soge',sans-serif",
                   fontWeight: 600,
                   fontSize: '13px',
                   color: tc,
@@ -415,7 +409,6 @@ function EntryCard({
                 fontSize: '11px',
                 marginTop: '2px',
                 color: `${tc}70`,
-                fontFamily: "'OV Soge',sans-serif",
               }}
             >
               {record.receiptNumber} · {record.date}
@@ -508,7 +501,6 @@ function EntryCard({
                 fontSize: '11px',
                 fontWeight: 700,
                 color: '#92400E',
-                fontFamily: "'OV Soge',sans-serif",
                 marginBottom: '12px',
               }}
             >
@@ -612,7 +604,6 @@ function EntryCard({
                   borderRadius: '8px',
                   fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: "'OV Soge',sans-serif",
                   backgroundColor: accentColor,
                   color: '#fff',
                   border: 'none',
@@ -632,7 +623,6 @@ function EntryCard({
                   borderRadius: '8px',
                   fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: "'OV Soge',sans-serif",
                   backgroundColor: '#FEE2E2',
                   color: '#B91C1C',
                   border: '1px solid #FECACA',
@@ -840,7 +830,6 @@ function CurrencyTotals({
                 fontSize: '9px',
                 color: accentColor,
                 fontWeight: 700,
-                fontFamily: "'OV Soge',sans-serif",
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
               }}
@@ -1024,7 +1013,6 @@ export default function IncomeEntryLog({
   }, [records, incomeTypeOpts]);
 
   const inputStyle: React.CSSProperties = {
-    fontFamily: "'OV Soge', sans-serif",
     fontSize: '11px',
     fontWeight: 500,
     color: textColor,
@@ -1043,7 +1031,6 @@ export default function IncomeEntryLog({
     padding: custom ? '4px 10px' : '5px 12px',
     borderRadius: '20px',
     fontSize: custom ? '10px' : '11px',
-    fontFamily: "'OV Soge',sans-serif",
     fontWeight: 700,
     border: `1px ${custom ? 'dashed' : 'solid'} ${active ? accentColor : borderColor}`,
     backgroundColor: active ? `${accentColor}18` : 'transparent',
@@ -1130,7 +1117,6 @@ export default function IncomeEntryLog({
                 padding: '8px 12px',
                 borderRadius: '8px',
                 fontSize: '11px',
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 600,
                 cursor: 'pointer',
                 border: `1px solid ${accentColor}50`,
@@ -1217,7 +1203,6 @@ export default function IncomeEntryLog({
             padding: '8px 12px',
             borderRadius: '8px',
             fontSize: '11px',
-            fontFamily: "'OV Soge',sans-serif",
             fontWeight: 600,
             cursor: 'pointer',
             border: `1px solid ${showFilter || filterFrom || filterTo ? accentColor : borderColor}`,
@@ -1250,7 +1235,6 @@ export default function IncomeEntryLog({
               padding: '8px 12px',
               borderRadius: '8px',
               fontSize: '11px',
-              fontFamily: "'OV Soge',sans-serif",
               fontWeight: 600,
               cursor: 'pointer',
               border: `1px solid ${borderColor}`,
@@ -1310,7 +1294,6 @@ export default function IncomeEntryLog({
                     textAlign: 'left',
                     padding: '10px 14px',
                     fontSize: '12px',
-                    fontFamily: "'OV Soge',sans-serif",
                     fontWeight: 500,
                     color: textColor,
                     backgroundColor: 'transparent',
@@ -1345,7 +1328,6 @@ export default function IncomeEntryLog({
               fontSize: '10px',
               fontWeight: 700,
               color: `${textColor}55`,
-              fontFamily: "'OV Soge',sans-serif",
               textTransform: 'uppercase',
               letterSpacing: '0.07em',
               marginBottom: '8px',
@@ -1375,7 +1357,6 @@ export default function IncomeEntryLog({
                   style={{
                     fontSize: '10px',
                     color: `${textColor}40`,
-                    fontFamily: "'OV Soge',sans-serif",
                     alignSelf: 'center',
                   }}
                 >
@@ -1421,7 +1402,6 @@ export default function IncomeEntryLog({
                 fontSize: '10px',
                 color: `${textColor}60`,
                 fontWeight: 700,
-                fontFamily: "'OV Soge',sans-serif",
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 marginBottom: '4px',
@@ -1442,7 +1422,6 @@ export default function IncomeEntryLog({
                 fontSize: '10px',
                 color: `${textColor}60`,
                 fontWeight: 700,
-                fontFamily: "'OV Soge',sans-serif",
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 marginBottom: '4px',
@@ -1467,7 +1446,6 @@ export default function IncomeEntryLog({
                 padding: '8px 12px',
                 borderRadius: '8px',
                 fontSize: '11px',
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 500,
                 cursor: 'pointer',
                 border: `1px solid ${borderColor}`,
@@ -1499,7 +1477,6 @@ export default function IncomeEntryLog({
             style={{
               fontSize: '10px',
               color: `${textColor}50`,
-              fontFamily: "'OV Soge',sans-serif",
               fontWeight: 600,
             }}
           >
@@ -1514,7 +1491,6 @@ export default function IncomeEntryLog({
                 padding: '3px 8px',
                 borderRadius: '20px',
                 fontSize: '10px',
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 600,
                 backgroundColor: `${accentColor}15`,
                 color: accentColor,
@@ -1545,7 +1521,6 @@ export default function IncomeEntryLog({
                 padding: '3px 8px',
                 borderRadius: '20px',
                 fontSize: '10px',
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 600,
                 backgroundColor: `${accentColor}15`,
                 color: accentColor,
@@ -1578,7 +1553,6 @@ export default function IncomeEntryLog({
                 padding: '3px 8px',
                 borderRadius: '20px',
                 fontSize: '10px',
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 600,
                 backgroundColor: `${accentColor}15`,
                 color: accentColor,
@@ -1609,7 +1583,6 @@ export default function IncomeEntryLog({
                 padding: '3px 8px',
                 borderRadius: '20px',
                 fontSize: '10px',
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 600,
                 backgroundColor: `${accentColor}15`,
                 color: accentColor,
@@ -1640,7 +1613,6 @@ export default function IncomeEntryLog({
             }}
             style={{
               fontSize: '10px',
-              fontFamily: "'OV Soge',sans-serif",
               fontWeight: 700,
               color: '#DC2626',
               backgroundColor: 'transparent',
@@ -1670,7 +1642,6 @@ export default function IncomeEntryLog({
             style={{
               fontSize: '13px',
               color: `${textColor}50`,
-              fontFamily: "'OV Soge',sans-serif",
             }}
           >
             No records yet — use Record Income to add your first entry.
@@ -1691,7 +1662,6 @@ export default function IncomeEntryLog({
             style={{
               fontSize: '13px',
               color: `${textColor}50`,
-              fontFamily: "'OV Soge',sans-serif",
             }}
           >
             No records match your filters
@@ -1706,7 +1676,6 @@ export default function IncomeEntryLog({
             style={{
               marginTop: '8px',
               fontSize: '11px',
-              fontFamily: "'OV Soge',sans-serif",
               fontWeight: 700,
               color: accentColor,
               backgroundColor: 'transparent',

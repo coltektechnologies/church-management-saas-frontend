@@ -73,7 +73,7 @@ export default function TreasuryPage() {
         <Button
           variant="ghost"
           onClick={() => router.push('/admin')}
-          className="text-foreground hover:text-foreground/80 hidden sm:flex font-medium text-sm"
+          className="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hidden sm:flex font-medium text-sm"
         >
           <ArrowLeft className="mr-2 size-4" /> Back to Dashboard
         </Button>
@@ -82,21 +82,22 @@ export default function TreasuryPage() {
       {/* ─── Header ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#083344] dark:text-gray-100 tracking-tight flex items-center gap-2">
-            <Landmark className="size-8 text-[#083344] dark:text-gray-100" /> Treasury Dashboard
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Landmark className="size-8 shrink-0 text-slate-800 dark:text-[color:var(--accent-brand)]" />{' '}
+            Treasury Dashboard
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm font-medium">
+          <p className="text-muted-foreground mt-1 text-sm font-medium max-w-xl">
             Financial overview and management for Seventh-day Adventist Church
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <Button className="bg-[#10b981] hover:bg-[#10b981]/90 text-white gap-2 cursor-pointer font-medium rounded-md px-6 shadow-sm">
+          <Button className="bg-emerald-600 hover:bg-emerald-600/90 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white gap-2 cursor-pointer font-medium rounded-md px-6 shadow-sm">
             <PlusCircle className="size-4" /> Generate Report
           </Button>
           <Button
             variant="default"
-            className="bg-[#082f49] hover:bg-[#082f49]/90 text-white gap-2 cursor-pointer font-medium rounded-md px-6 shadow-sm"
+            className="bg-[var(--primary-brand,#082f49)] hover:opacity-90 text-white gap-2 cursor-pointer font-medium rounded-md px-6 shadow-sm"
           >
             <PlusCircle className="size-4" /> Create Budget
           </Button>
@@ -105,15 +106,16 @@ export default function TreasuryPage() {
 
       {/* ─── Period Selector ─── */}
       <div className="flex flex-wrap items-center gap-2 transition-all duration-500 ">
-        <span className="text-sm font-bold text-foreground mr-1">Period:</span>
+        <span className="text-sm font-bold text-slate-800 dark:text-slate-200 mr-1">Period:</span>
         {PERIOD_OPTIONS.map((opt) => (
           <button
             key={opt.value}
+            type="button"
             onClick={() => setPeriod(opt.value)}
             className={`px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer ${
               period === opt.value
-                ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-sm'
-                : 'bg-background text-foreground border-border hover:border-foreground/30'
+                ? 'bg-blue-600 text-white border-blue-600 shadow-sm dark:bg-blue-500 dark:border-blue-500'
+                : 'bg-[var(--admin-surface)] text-foreground border-[var(--admin-border)] hover:border-[var(--admin-text-muted)] dark:hover:bg-white/5'
             }`}
           >
             {opt.label}
@@ -128,7 +130,7 @@ export default function TreasuryPage() {
             type="date"
             value={customFrom}
             onChange={(e) => setCustomFrom(e.target.value)}
-            className="px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer bg-background text-foreground border-border hover:border-foreground/30"
+            className="px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer bg-[var(--admin-surface)] text-foreground border-[var(--admin-border)] hover:border-[var(--admin-text-muted)] dark:[color-scheme:dark]"
           />
           <span className="text-muted-foreground">–</span>
           <input
@@ -136,7 +138,7 @@ export default function TreasuryPage() {
             type="date"
             value={customTo}
             onChange={(e) => setCustomTo(e.target.value)}
-            className="px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer bg-background text-foreground border-border hover:border-foreground/30"
+            className="px-5 py-1.5 rounded-md text-[13px] font-medium border transition-all cursor-pointer bg-[var(--admin-surface)] text-foreground border-[var(--admin-border)] hover:border-[var(--admin-text-muted)] dark:[color-scheme:dark]"
           />
         </div>
       </div>

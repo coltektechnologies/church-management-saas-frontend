@@ -1,10 +1,19 @@
-export default function NotificationsPage() {
+'use client';
+
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import NotificationTab from '@/components/admin/dashboardsettings/superadmin/NotificationTab';
+
+export default function SuperadminNotificationsSettingsPage() {
   return (
-    <div
-      className="flex items-center justify-center h-64 text-gray-400"
-      style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px' }}
-    >
-      Notifications — coming soon
+    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-500">
+      <Link
+        href="/admin/settings/superadmin"
+        className="inline-flex items-center gap-2 text-[13px] font-semibold text-muted-foreground hover:text-[color:var(--primary-brand)] dark:hover:text-white transition-colors"
+      >
+        <ArrowLeft size={15} /> Back to Settings
+      </Link>
+      <NotificationTab />
     </div>
   );
 }

@@ -88,7 +88,9 @@ const applyGlobalStyles = (p: ChurchProfile) => {
   root.style.setProperty('--accent-brand', p.accentColor);
   root.style.setProperty('--sidebar-bg', p.sidebarColor || p.primaryColor);
   root.style.setProperty('--main-bg', p.backgroundColor || '#F8FAFC');
-  root.classList.toggle('dark', p.theme === 'dark' || !!p.darkMode);
+  const isDark = p.theme === 'dark' || !!p.darkMode;
+  root.classList.toggle('dark', isDark);
+  root.style.colorScheme = isDark ? 'dark' : 'light';
 };
 
 const readStoredProfile = (): ChurchProfile => {

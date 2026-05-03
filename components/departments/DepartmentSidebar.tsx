@@ -128,7 +128,6 @@ export default function DepartmentSidebar() {
 
   // ── Shared style helpers ──────────────────────────────────────────────────
   const sectionLabelStyle: React.CSSProperties = {
-    fontFamily: "'OV Soge', sans-serif",
     fontWeight: 700,
     fontSize: '10px',
     color: `${sidebarText}60`,
@@ -137,7 +136,6 @@ export default function DepartmentSidebar() {
   };
 
   const navLabelStyle = (active: boolean): React.CSSProperties => ({
-    fontFamily: "'OV Soge', sans-serif",
     fontWeight: 600,
     fontSize: '13px',
     color: active ? primaryText : sidebarText,
@@ -146,7 +144,6 @@ export default function DepartmentSidebar() {
 
   // Quick-action items — same weight/color as regular nav labels
   const quickLabelStyle: React.CSSProperties = {
-    fontFamily: "'OV Soge', sans-serif",
     fontWeight: 600,
     fontSize: '13px',
     color: sidebarText,
@@ -204,7 +201,6 @@ export default function DepartmentSidebar() {
           <div className="flex flex-col min-w-0">
             <span
               style={{
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 700,
                 fontSize: '11px',
                 color: sidebarText,
@@ -220,7 +216,6 @@ export default function DepartmentSidebar() {
             {/* Department-type badge — reflects profile.departmentType live */}
             <span
               style={{
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 600,
                 fontSize: '9px',
                 color: '#FFFFFF',
@@ -238,7 +233,6 @@ export default function DepartmentSidebar() {
             {/* Department name badge */}
             <span
               style={{
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 600,
                 fontSize: '9px',
                 color: sidebarText,
@@ -267,7 +261,6 @@ export default function DepartmentSidebar() {
         {!collapsed && (
           <span
             style={{
-              fontFamily: "'OV Soge', sans-serif",
               fontSize: '10px',
               fontWeight: 600,
               color: `${sidebarText}55`,
@@ -544,7 +537,6 @@ export default function DepartmentSidebar() {
               <div className="flex-1 min-w-0">
                 <p
                   style={{
-                    fontFamily: "'OV Soge', sans-serif",
                     fontWeight: 500,
                     fontSize: '13px',
                     color: sidebarText,
@@ -562,7 +554,6 @@ export default function DepartmentSidebar() {
                 {/* Sub-label uses departmentType so it stays in sync */}
                 <p
                   style={{
-                    fontFamily: "'OV Soge', sans-serif",
                     fontWeight: 300,
                     fontSize: '11px',
                     color: `${sidebarText}80`,
@@ -599,7 +590,6 @@ export default function DepartmentSidebar() {
           <div className="px-5 pt-1 pb-1">
             <p
               style={{
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 400,
                 fontSize: '10px',
                 color: `${sidebarText}60`,
@@ -645,7 +635,6 @@ export default function DepartmentSidebar() {
             {!collapsed && (
               <span
                 style={{
-                  fontFamily: "'OV Soge', sans-serif",
                   fontWeight: 600,
                   fontSize: '13px',
                   color: '#DC2626',

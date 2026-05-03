@@ -27,15 +27,6 @@ import SystemPreferencesTab from './SystemPreferencesTab';
 import ColorThemeSettings from './ColorThemeSettings';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 
-// --- Contrast Utility for Readability ---
-const getContrastColor = (hex: string) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? '#0B2A4A' : '#F8FAFC';
-};
-
 const TABS = [
   { key: 'profile', label: 'My Profile', icon: User },
   { key: 'church', label: 'Church Profile', icon: Church },
@@ -70,10 +61,6 @@ const AccountSettingsContent = () => {
   const activeTabData = TABS.find((t) => t.key === activeTab) ?? TABS[0];
   const ActiveIcon = activeTabData.icon;
 
-  // Derive colors from context profile
-  const bgColor = profile.backgroundColor || '#F8FAFC';
-  const textColor = getContrastColor(bgColor);
-
   const tabRows = TABS.reduce<(typeof TABS)[]>((rows, tab, i) => {
     const rowIndex = Math.floor(i / 3);
     if (!rows[rowIndex]) {
@@ -97,10 +84,7 @@ const AccountSettingsContent = () => {
           Account Settings
         </h2>
         {/* Dynamic sub-text color based on current background */}
-        <p
-          className="text-sm font-medium mt-0.5 transition-colors duration-300"
-          style={{ color: textColor }}
-        >
+        <p className="text-sm font-medium mt-0.5 transition-colors duration-300 text-muted-foreground">
           Manage your personal and church-wide configurations.
         </p>
       </div>
@@ -109,25 +93,25 @@ const AccountSettingsContent = () => {
       <div className="sm:hidden">
         <button
           onClick={() => setMobileOpen((o) => !o)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-[10px] shadow-sm"
+          className="w-full flex items-center justify-between px-4 py-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[10px] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10"
           style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 500, fontSize: 16 }}
         >
-          <span className="flex items-center gap-2 text-black">
+          <span className="flex items-center gap-2 text-foreground">
             <ActiveIcon size={16} style={{ color: 'var(--primary-brand)' }} />
             {activeTabData.label}
           </span>
           <ChevronDown
             size={16}
-            className={`text-slate-400 transition-transform duration-200 ${mobileOpen ? 'rotate-180' : ''}`}
+            className={`text-muted-foreground transition-transform duration-200 ${mobileOpen ? 'rotate-180' : ''}`}
           />
         </button>
 
         {mobileOpen && (
-          <div className="mt-2 bg-white border border-slate-100 rounded-[10px] shadow-lg overflow-hidden">
+          <div className="mt-2 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[10px] shadow-lg overflow-hidden dark:ring-1 dark:ring-white/10">
             {tabRows.map((row, rowIdx) => (
               <div
                 key={rowIdx}
-                className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 last:border-b-0"
+                className="grid grid-cols-3 divide-x divide-[var(--admin-border)] border-b border-[var(--admin-border)] last:border-b-0"
               >
                 {row.map((t) => {
                   const Icon = t.icon;
@@ -139,15 +123,11 @@ const AccountSettingsContent = () => {
                         setActiveTab(t.key);
                         setMobileOpen(false);
                       }}
-                      className="flex flex-col items-center justify-center gap-1.5 py-4 px-2 transition-colors"
-                      style={{
-                        backgroundColor: isActive ? '#D9D9D9' : '#FFFFFF',
-                        fontFamily: "'Poppins', sans-serif",
-                        fontWeight: 500,
-                        fontSize: 11,
-                        color: '#000000',
-                        lineHeight: '100%',
-                      }}
+                      className={`flex flex-col items-center justify-center gap-1.5 py-4 px-2 transition-colors font-[Poppins] font-medium text-[11px] leading-none ${
+                        isActive
+                          ? 'bg-muted/80 dark:bg-white/12 text-foreground'
+                          : 'bg-[var(--admin-surface)] text-foreground/90 hover:bg-muted/40 dark:hover:bg-white/5'
+                      }`}
                     >
                       <Icon
                         size={18}
@@ -174,28 +154,17 @@ const AccountSettingsContent = () => {
                 <button
                   key={t.key}
                   onClick={() => setActiveTab(t.key)}
-                  className="flex items-center gap-3 w-full text-left transition-all"
-                  style={{
-                    width: 214,
-                    height: 40,
-                    paddingLeft: 16,
-                    paddingRight: 16,
-                    borderRadius: 10,
-                    backgroundColor: isActive ? '#D9D9D9' : 'transparent',
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: 500,
-                    fontSize: 16,
-                    color: textColor,
-                    lineHeight: '100%',
-                    letterSpacing: 0,
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
+                  type="button"
+                  className={`flex items-center gap-3 w-full text-left transition-all rounded-[10px] font-[Poppins] font-medium text-base leading-none border-none cursor-pointer w-[214px] h-10 pl-4 pr-4 ${
+                    isActive
+                      ? 'bg-muted/80 dark:bg-white/10 text-foreground'
+                      : 'bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50 dark:hover:bg-white/5'
+                  }`}
                 >
                   <Icon
                     size={15}
-                    className="shrink-0"
-                    style={{ color: isActive ? 'var(--primary-brand)' : textColor }}
+                    className={`shrink-0 ${isActive ? '' : 'text-muted-foreground'}`}
+                    style={isActive ? { color: 'var(--primary-brand)' } : undefined}
                   />
                   {t.label}
                 </button>

@@ -229,16 +229,19 @@ export default function DepartmentsPage() {
   return (
     <div className="space-y-10">
       <div className="space-y-6">
-        <Link href="/admin" className="text-sm text-gray-400 hover:text-gray-600 transition">
+        <Link
+          href="/admin"
+          className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition"
+        >
           ← Back to Dashboard
         </Link>
 
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 tracking-tight">
+            <h1 className="text-4xl md:text-5xl font-semibold text-slate-900 dark:text-white tracking-tight">
               Church Departments
             </h1>
-            <p className="mt-3 text-lg text-gray-600 max-w-2xl leading-relaxed">
+            <p className="mt-3 text-lg text-muted-foreground max-w-2xl leading-relaxed">
               Manage and coordinate all ministry departments in your church.
             </p>
           </div>
@@ -251,7 +254,7 @@ export default function DepartmentsPage() {
               setFormData(emptyDepartmentForm());
               setShowCreate(true);
             }}
-            className="bg-blue-600 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-blue-700 shadow-sm hover:shadow-lg transition-all duration-200"
+            className="bg-blue-600 dark:bg-blue-500 text-white px-8 py-4 rounded-2xl text-base font-semibold hover:bg-blue-700 dark:hover:bg-blue-400 shadow-sm hover:shadow-lg transition-all duration-200"
           >
             + Create Department
           </button>
@@ -259,12 +262,12 @@ export default function DepartmentsPage() {
       </div>
 
       {(error || loading) && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] px-4 py-3 text-sm text-foreground">
           {loading ? 'Loading departments…' : error}
           {error && (
             <button
               type="button"
-              className="ml-3 text-blue-600 underline"
+              className="ml-3 text-[color:var(--accent-brand)] underline"
               onClick={() => void refreshDepartments()}
             >
               Retry
@@ -274,19 +277,31 @@ export default function DepartmentsPage() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <SummaryCard title="Total Departments" value={totalDepartments} color="text-blue-600" />
-        <SummaryCard title="Active Departments" value={activeDepartments} color="text-green-600" />
+        <SummaryCard
+          title="Total Departments"
+          value={totalDepartments}
+          color="text-blue-600 dark:text-blue-400"
+        />
+        <SummaryCard
+          title="Active Departments"
+          value={activeDepartments}
+          color="text-green-600 dark:text-green-400"
+        />
         <SummaryCard
           title="Inactive Departments"
           value={inactiveDepartments}
-          color="text-red-600"
+          color="text-red-600 dark:text-red-400"
         />
         <SummaryCard
           title="Department Heads"
           value={totalDepartmentHeads}
-          color="text-purple-600"
+          color="text-purple-600 dark:text-purple-400"
         />
-        <SummaryCard title="Total Members" value={totalMembers} color="text-orange-600" />
+        <SummaryCard
+          title="Total Members"
+          value={totalMembers}
+          color="text-orange-600 dark:text-orange-400"
+        />
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -295,13 +310,13 @@ export default function DepartmentsPage() {
           placeholder="Search by name or code..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-80 focus:ring-2 focus:ring-blue-500 outline-none"
+          className="border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-4 py-2 w-full md:w-80 focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/80 outline-none placeholder:text-muted-foreground dark:[color-scheme:dark]"
         />
         <select
           title="Department type"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-          className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-48 focus:ring-2 focus:ring-blue-500 outline-none"
+          className="border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-4 py-2 w-full md:w-48 focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/80 outline-none dark:[color-scheme:dark]"
         >
           <option value="all">All Departments</option>
           <option value="active">Active</option>
@@ -310,10 +325,12 @@ export default function DepartmentsPage() {
       </div>
 
       {!loading && filteredDepartments.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-2xl p-16 text-center shadow-sm">
+        <div className="bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-2xl p-16 text-center shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
           <div className="text-5xl mb-6">🏛️</div>
-          <h3 className="text-2xl font-semibold text-gray-800 mb-3">No Departments Yet</h3>
-          <p className="text-gray-600 mb-8 max-w-md mx-auto">
+          <h3 className="text-2xl font-semibold text-slate-900 dark:text-white mb-3">
+            No Departments Yet
+          </h3>
+          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
             You haven&apos;t created any church departments yet. Start by creating your first
             department to begin managing ministries.
           </p>
@@ -325,7 +342,7 @@ export default function DepartmentsPage() {
               setFormData(emptyDepartmentForm());
               setShowCreate(true);
             }}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition"
+            className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 dark:hover:bg-blue-400 transition"
           >
             + Create First Department
           </button>

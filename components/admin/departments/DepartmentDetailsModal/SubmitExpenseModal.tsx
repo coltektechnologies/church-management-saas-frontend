@@ -122,33 +122,38 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleClose} />
 
-      <div className="relative bg-white w-full max-w-2xl max-h-[92vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] w-full max-w-2xl max-h-[92vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* ── SUCCESS SCREEN ── */}
         {step === 'success' && (
           <div className="flex flex-col items-center justify-center flex-1 p-12 text-center space-y-6">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle size={32} className="text-green-600" />
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-950/50 rounded-full flex items-center justify-center">
+              <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-gray-900">Request Submitted!</h2>
-              <p className="text-gray-500 max-w-sm">
+              <h2 className="text-2xl font-bold text-foreground">Request Submitted!</h2>
+              <p className="text-muted-foreground max-w-sm">
                 Your expense request has been submitted and is awaiting approval from the approval
                 chain.
               </p>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl px-8 py-6 space-y-1">
-              <p className="text-xs text-gray-400 uppercase tracking-widest">Reference Number</p>
-              <p className="text-3xl font-bold text-blue-600 tracking-wider font-mono">
+            <div className="bg-muted/40 dark:bg-white/[0.04] border border-[var(--admin-border)] rounded-2xl px-8 py-6 space-y-1">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest">
+                Reference Number
+              </p>
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 tracking-wider font-mono">
                 {submittedRef}
               </p>
-              <p className="text-xs text-gray-400">Keep this number for tracking your request</p>
+              <p className="text-xs text-muted-foreground">
+                Keep this number for tracking your request
+              </p>
             </div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Treasury will use this reference when recording this expense.
             </p>
             <button
+              type="button"
               onClick={handleClose}
-              className="px-8 py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition"
+              className="px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition"
             >
               Done
             </button>
@@ -159,16 +164,17 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
         {step === 'form' && (
           <>
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50 flex-shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.04] flex-shrink-0">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Expense Request Form</h2>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <h2 className="text-lg font-semibold text-foreground">Expense Request Form</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Fill in the details below to submit a new expense request
                 </p>
               </div>
               <button
+                type="button"
                 onClick={handleClose}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
               >
                 <X size={18} />
               </button>
@@ -200,7 +206,7 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
               {/* Name + title */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-foreground">
                     Your Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -208,11 +214,11 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                     placeholder="e.g. Pastor William Owusu"
                     value={submitterName}
                     onChange={(e) => setSubmitterName(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400"
+                    className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-muted-foreground dark:[color-scheme:dark]"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-foreground">
                     Expense Title <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -220,7 +226,7 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                     placeholder="e.g. Youth Camp Materials"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400"
+                    className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-muted-foreground dark:[color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -228,7 +234,7 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
               {/* Line items */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm font-medium text-foreground">
                     Items <span className="text-red-500">*</span>
                   </label>
                   <button
@@ -239,8 +245,8 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                   </button>
                 </div>
 
-                <div className="border border-gray-200 rounded-xl overflow-hidden">
-                  <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                <div className="border border-[var(--admin-border)] rounded-xl overflow-hidden">
+                  <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/40 dark:bg-white/[0.04] border-b border-[var(--admin-border)] text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     <div className="col-span-5">Item</div>
                     <div className="col-span-2 text-center">Qty</div>
                     <div className="col-span-3 text-center">Unit Cost</div>
@@ -248,7 +254,7 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                     <div className="col-span-1" />
                   </div>
 
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-[var(--admin-border)]">
                     {items.map((item) => (
                       <div
                         key={item.id}
@@ -260,7 +266,7 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                             placeholder="Item name"
                             value={item.name}
                             onChange={(e) => updateItem(item.id, 'name', e.target.value)}
-                            className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none placeholder:text-gray-400"
+                            className="w-full text-sm border border-[var(--admin-border)] bg-[var(--admin-surface)] rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none placeholder:text-muted-foreground dark:[color-scheme:dark]"
                           />
                         </div>
                         <div className="col-span-2">
@@ -271,7 +277,7 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                             onChange={(e) =>
                               updateItem(item.id, 'quantity', Number(e.target.value))
                             }
-                            className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full text-sm border border-[var(--admin-border)] bg-[var(--admin-surface)] rounded-lg px-2.5 py-1.5 text-center focus:ring-2 focus:ring-blue-500 outline-none dark:[color-scheme:dark]"
                           />
                         </div>
                         <div className="col-span-3">
@@ -282,17 +288,17 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                             onChange={(e) =>
                               updateItem(item.id, 'unitCost', Number(e.target.value))
                             }
-                            className="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full text-sm border border-[var(--admin-border)] bg-[var(--admin-surface)] rounded-lg px-2.5 py-1.5 text-center focus:ring-2 focus:ring-blue-500 outline-none dark:[color-scheme:dark]"
                           />
                         </div>
-                        <div className="col-span-1 text-right text-sm font-medium text-gray-700">
+                        <div className="col-span-1 text-right text-sm font-medium text-foreground">
                           {(item.quantity * item.unitCost).toLocaleString()}
                         </div>
                         <div className="col-span-1 flex justify-end">
                           <button
                             onClick={() => removeItem(item.id)}
                             disabled={items.length === 1}
-                            className="text-gray-300 hover:text-red-500 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="text-muted-foreground/40 hover:text-red-500 dark:hover:text-red-400 transition disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -301,9 +307,9 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between px-4 py-3 bg-blue-50 border-t border-blue-100">
-                    <span className="text-sm font-semibold text-gray-700">TOTAL REQUESTED</span>
-                    <span className="text-lg font-bold text-blue-600">
+                  <div className="flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-950/35 border-t border-blue-100 dark:border-blue-900">
+                    <span className="text-sm font-semibold text-foreground">TOTAL REQUESTED</span>
+                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       GHS {grandTotal.toLocaleString()}
                     </span>
                   </div>
@@ -312,7 +318,7 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
 
               {/* Justification */}
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700">
+                <label className="text-sm font-medium text-foreground">
                   Justification <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -320,22 +326,22 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                   placeholder="Explain why this expense is necessary..."
                   value={justification}
                   onChange={(e) => setJustification(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-gray-400"
+                  className="w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] rounded-lg px-3 py-2.5 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-muted-foreground dark:[color-scheme:dark]"
                 />
               </div>
 
               {/* Document upload */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Supporting Documents <span className="text-gray-400 font-normal">(optional)</span>
+                <label className="text-sm font-medium text-foreground">
+                  Supporting Documents <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="border-2 border-dashed border-gray-200 rounded-xl px-4 py-6 flex flex-col items-center gap-2 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition"
+                  className="border-2 border-dashed border-[var(--admin-border)] rounded-xl px-4 py-6 flex flex-col items-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/30 transition"
                 >
-                  <CloudUpload size={24} className="text-gray-400" strokeWidth={1.5} />
-                  <p className="text-sm text-gray-500">Click to upload files</p>
-                  <p className="text-xs text-gray-400">PDF, Word, Excel, Images</p>
+                  <CloudUpload size={24} className="text-muted-foreground" strokeWidth={1.5} />
+                  <p className="text-sm text-muted-foreground">Click to upload files</p>
+                  <p className="text-xs text-muted-foreground">PDF, Word, Excel, Images</p>
                   <input
                     ref={fileRef}
                     type="file"
@@ -349,15 +355,15 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                     {documents.map((file, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2"
+                        className="flex items-center justify-between bg-muted/40 dark:bg-white/[0.04] border border-[var(--admin-border)] rounded-lg px-3 py-2"
                       >
                         <div className="flex items-center gap-2">
                           <FileText size={14} className="text-blue-500" />
-                          <span className="text-sm text-gray-700">{file.name}</span>
+                          <span className="text-sm text-foreground">{file.name}</span>
                         </div>
                         <button
                           onClick={() => removeFile(i)}
-                          className="text-gray-400 hover:text-red-500 transition"
+                          className="text-muted-foreground hover:text-red-500 transition"
                         >
                           <X size={14} />
                         </button>
@@ -368,10 +374,10 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
               </div>
 
               {/* Approval chain */}
-              <div className="border border-gray-200 rounded-2xl p-5 space-y-4">
+              <div className="border border-[var(--admin-border)] rounded-2xl p-5 space-y-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Approval Chain</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <h3 className="text-sm font-semibold text-foreground">Approval Chain</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Your request will go through the following approval process
                   </p>
                 </div>
@@ -385,21 +391,21 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                           {person.initials}
                         </div>
                         <div className="text-center">
-                          <p className="text-xs font-medium text-gray-700 whitespace-nowrap">
+                          <p className="text-xs font-medium text-foreground whitespace-nowrap">
                             {person.name}
                           </p>
-                          <p className="text-[10px] text-gray-400 whitespace-nowrap">
+                          <p className="text-[10px] text-muted-foreground whitespace-nowrap">
                             {person.role}
                           </p>
                         </div>
                       </div>
                       {i < APPROVAL_CHAIN.length - 1 && (
-                        <ChevronRight size={16} className="text-gray-300 mb-4 flex-shrink-0" />
+                        <ChevronRight size={16} className="text-muted-foreground/40 mb-4 flex-shrink-0" />
                       )}
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                <p className="text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900 rounded-lg px-3 py-2">
                   ⚡ Requests at or below the auto-approval threshold (GHS{' '}
                   {department.settings.autoApprovalThreshold.toLocaleString()}) are approved
                   automatically.
@@ -408,23 +414,25 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
 
               {/* Error */}
               {error && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-4 py-3">
                   ⚠️ {error}
                 </p>
               )}
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 flex-shrink-0">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.04] flex-shrink-0">
               <button
+                type="button"
                 onClick={handleClose}
-                className="px-5 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-100 transition"
+                className="px-5 py-2.5 border border-[var(--admin-border)] rounded-xl text-sm font-medium text-foreground hover:bg-muted/60 dark:hover:bg-white/5 transition"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSubmit}
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition"
+                className="px-6 py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-400 transition"
               >
                 Submit Request
               </button>

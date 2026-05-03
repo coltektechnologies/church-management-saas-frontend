@@ -721,7 +721,6 @@ export default function AddMemberPage({
           <div>
             <h2
               style={{
-                fontFamily: "'OV Soge', 'Poppins', sans-serif",
                 fontWeight: 700,
                 fontSize: '16px',
                 color: '#FFFFFF',
@@ -746,7 +745,6 @@ export default function AddMemberPage({
             <span
               className="amp-lock-label"
               style={{
-                fontFamily: "'OV Soge', 'Poppins', sans-serif",
                 fontWeight: 400,
                 fontSize: '12px',
                 color: '#FFFFFF',

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 import {
   ArrowLeft,
@@ -11,44 +11,26 @@ import {
   EyeOff,
   CheckCircle2,
   AlertTriangle,
-  Monitor,
-  LogOut,
   Key,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
-const SESSIONS = [
-  {
-    id: 1,
-    device: 'Chrome on Windows',
-    location: 'Accra, Ghana',
-    time: 'Now — current session',
-    current: true,
-  },
-  {
-    id: 2,
-    device: 'Safari on iPhone',
-    location: 'Kumasi, Ghana',
-    time: '2 hours ago',
-    current: false,
-  },
-  {
-    id: 3,
-    device: 'Firefox on MacBook',
-    location: 'Accra, Ghana',
-    time: 'Yesterday at 4:32 PM',
-    current: false,
-  },
-];
+import {
+  changePassword,
+  getStoredUser,
+  getUser,
+  updateUser,
+} from '@/lib/settingsApi';
 
 export default function SecurityPage() {
   const { profile } = useChurchProfile();
   const pc = profile.primaryColor || '#0B2A4A';
 
   const [twoFA, setTwoFA] = useState(false);
+  const [mfaLoaded, setMfaLoaded] = useState(false);
+  const [mfaSaving, setMfaSaving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -59,6 +41,22 @@ export default function SecurityPage() {
     newPwd: '',
     confirm: '',
   });
+
+  useEffect(() => {
+    const u = getStoredUser();
+    if (!u?.id) {
+      setMfaLoaded(true);
+      return;
+    }
+    void getUser(u.id)
+      .then((data) => {
+        if (data && typeof data.mfa_enabled === 'boolean') {
+          setTwoFA(data.mfa_enabled);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setMfaLoaded(true));
+  }, []);
 
   const strength = (() => {
     const p = passwords.newPwd;
@@ -92,36 +90,52 @@ export default function SecurityPage() {
       return toast.error('Passwords do not match');
     }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    setPasswords({ current: '', newPwd: '', confirm: '' });
-    toast.success('Password updated successfully');
+    try {
+      await changePassword(passwords.current, passwords.newPwd, passwords.confirm);
+      setPasswords({ current: '', newPwd: '', confirm: '' });
+      toast.success('Password updated successfully');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update password');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const revokeSession = (_id: number) => {
-    toast.success('Session revoked', { description: 'That device has been signed out.' });
-  };
+  const handleToggleMfa = useCallback(async () => {
+    const u = getStoredUser();
+    if (!u?.id) {
+      toast.error('You must be signed in to change security settings');
+      return;
+    }
+    const next = !twoFA;
+    setMfaSaving(true);
+    try {
+      const updated = await updateUser(u.id, { mfa_enabled: next });
+      const enabled =
+        typeof updated.mfa_enabled === 'boolean' ? updated.mfa_enabled : next;
+      setTwoFA(enabled);
+      toast.success(
+        enabled ? 'Two-factor authentication enabled' : 'Two-factor authentication disabled'
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update 2FA');
+    } finally {
+      setMfaSaving(false);
+    }
+  }, [twoFA]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500">
       <Link
         href="/admin/settings/superadmin"
-        className="inline-flex items-center gap-2 text-[13px] font-semibold text-gray-400 hover:text-[#0B2A4A] dark:hover:text-white transition-colors"
-        style={{ fontFamily: 'Inter, sans-serif' }}
+        className="inline-flex items-center gap-2 text-[13px] font-semibold text-muted-foreground hover:text-[color:var(--primary-brand)] dark:hover:text-white transition-colors"
       >
         <ArrowLeft size={15} /> Back to Settings
       </Link>
 
       <div>
-        <h2
-          className="text-2xl font-black text-[#0B2A4A] dark:text-white"
-          style={{ fontFamily: 'OV Soge, sans-serif' }}
-        >
-          Security
-        </h2>
-        <p className="text-sm text-gray-400 mt-1" style={{ fontFamily: 'Inter, sans-serif' }}>
-          Keep your account and church data safe.
-        </p>
+        <h2 className="text-2xl font-black text-[#0B2A4A] dark:text-white">Security</h2>
+        <p className="text-sm text-muted-foreground mt-1">Keep your account and church data safe.</p>
       </div>
 
       {/* Security score */}
@@ -136,14 +150,11 @@ export default function SecurityPage() {
           <Shield size={26} />
         </div>
         <div className="flex-1">
-          <p
-            className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-1"
-            style={{ fontFamily: 'Inter, sans-serif' }}
-          >
+          <p className="text-[11px] font-black uppercase tracking-widest text-muted-foreground mb-1">
             Security score
           </p>
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-2 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-muted dark:bg-white/15 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
@@ -154,16 +165,13 @@ export default function SecurityPage() {
             </div>
             <span
               className="text-[12px] font-bold"
-              style={{ color: twoFA ? '#10B981' : '#F59E0B', fontFamily: 'Inter, sans-serif' }}
+              style={{ color: twoFA ? '#10B981' : '#F59E0B' }}
             >
               {twoFA ? 'Strong' : 'Moderate'}
             </span>
           </div>
           {!twoFA && (
-            <p
-              className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
               <AlertTriangle size={11} /> Enable 2FA to improve your score
             </p>
           )}
@@ -171,7 +179,7 @@ export default function SecurityPage() {
       </div>
 
       {/* Change password */}
-      <div className="bg-white dark:bg-[#112240] rounded-2xl border border-slate-100 dark:border-white/10 p-6 space-y-5">
+      <div className="bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] p-6 space-y-5 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
         <div className="flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center"
@@ -180,20 +188,14 @@ export default function SecurityPage() {
             <Key size={16} style={{ color: pc }} />
           </div>
           <div>
-            <h3
-              className="text-[15px] font-black text-[#0B2A4A] dark:text-white"
-              style={{ fontFamily: 'OV Soge, sans-serif' }}
-            >
+            <h3 className="text-[15px] font-black text-[#0B2A4A] dark:text-white">
               Change Password
             </h3>
-            <p className="text-[11px] text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
-              Use a strong, unique password
-            </p>
+            <p className="text-[11px] text-muted-foreground">Use a strong, unique password</p>
           </div>
         </div>
 
         <div className="space-y-4">
-          {/* Current password */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">
               Current Password
@@ -205,6 +207,7 @@ export default function SecurityPage() {
                 value={passwords.current}
                 placeholder="••••••••"
                 onChange={(e) => setPasswords((p) => ({ ...p, current: e.target.value }))}
+                autoComplete="current-password"
               />
               <button
                 type="button"
@@ -216,7 +219,6 @@ export default function SecurityPage() {
             </div>
           </div>
 
-          {/* New password */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">
               New Password
@@ -228,6 +230,7 @@ export default function SecurityPage() {
                 value={passwords.newPwd}
                 placeholder="••••••••"
                 onChange={(e) => setPasswords((p) => ({ ...p, newPwd: e.target.value }))}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -248,17 +251,13 @@ export default function SecurityPage() {
                     />
                   ))}
                 </div>
-                <span
-                  className="text-[11px] font-bold"
-                  style={{ color: strengthColor, fontFamily: 'Inter, sans-serif' }}
-                >
+                <span className="text-[11px] font-bold" style={{ color: strengthColor }}>
                   {strengthLabel}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Confirm */}
           <div className="space-y-2">
             <Label className="text-[10px] font-black uppercase text-slate-400 ml-1">
               Confirm New Password
@@ -270,6 +269,7 @@ export default function SecurityPage() {
                 value={passwords.confirm}
                 placeholder="••••••••"
                 onChange={(e) => setPasswords((p) => ({ ...p, confirm: e.target.value }))}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -280,20 +280,14 @@ export default function SecurityPage() {
               </button>
             </div>
             {passwords.confirm && passwords.newPwd !== passwords.confirm && (
-              <p
-                className="text-[11px] text-red-500 flex items-center gap-1"
-                style={{ fontFamily: 'Inter, sans-serif' }}
-              >
+              <p className="text-[11px] text-red-500 flex items-center gap-1">
                 <AlertTriangle size={11} /> Passwords don&apos;t match
               </p>
             )}
             {passwords.confirm &&
               passwords.newPwd === passwords.confirm &&
               passwords.confirm.length > 0 && (
-                <p
-                  className="text-[11px] text-green-500 flex items-center gap-1"
-                  style={{ fontFamily: 'Inter, sans-serif' }}
-                >
+                <p className="text-[11px] text-green-500 flex items-center gap-1">
                   <CheckCircle2 size={11} /> Passwords match
                 </p>
               )}
@@ -301,7 +295,8 @@ export default function SecurityPage() {
         </div>
 
         <Button
-          onClick={handleChangePassword}
+          type="button"
+          onClick={() => void handleChangePassword()}
           disabled={saving}
           className="h-11 px-8 rounded-xl font-bold text-[13px] transition-all active:scale-95"
           style={{ backgroundColor: pc }}
@@ -311,34 +306,32 @@ export default function SecurityPage() {
       </div>
 
       {/* 2FA */}
-      <div className="bg-white dark:bg-[#112240] rounded-2xl border border-slate-100 dark:border-white/10 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] p-6 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
               style={{ backgroundColor: `${pc}15` }}
             >
               <Smartphone size={16} style={{ color: pc }} />
             </div>
             <div>
-              <h3
-                className="text-[15px] font-black text-[#0B2A4A] dark:text-white"
-                style={{ fontFamily: 'OV Soge, sans-serif' }}
-              >
+              <h3 className="text-[15px] font-black text-[#0B2A4A] dark:text-white">
                 Two-Factor Authentication
               </h3>
-              <p className="text-[11px] text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
-                Require a code from your phone when signing in
+              <p className="text-[11px] text-muted-foreground">
+                Require a code from your phone when signing in (when enforced by your church policy)
               </p>
             </div>
           </div>
           <button
-            onClick={() => {
-              setTwoFA((v) => !v);
-              toast.success(twoFA ? '2FA disabled' : '2FA enabled');
-            }}
-            className={`relative w-12 h-6 rounded-full transition-colors duration-300`}
+            type="button"
+            disabled={!mfaLoaded || mfaSaving}
+            onClick={() => void handleToggleMfa()}
+            className={`relative w-12 h-6 rounded-full transition-colors duration-300 shrink-0 disabled:opacity-50`}
             style={{ backgroundColor: twoFA ? pc : '#E5E7EB' }}
+            aria-pressed={twoFA}
+            aria-label={twoFA ? 'Disable two-factor authentication' : 'Enable two-factor authentication'}
           >
             <span
               className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-300 ${twoFA ? 'left-[26px]' : 'left-0.5'}`}
@@ -348,89 +341,11 @@ export default function SecurityPage() {
         {twoFA && (
           <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl flex items-center gap-2">
             <CheckCircle2 size={15} className="text-green-500 shrink-0" />
-            <p
-              className="text-[12px] text-green-700 dark:text-green-400 font-semibold"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
-              2FA is active. Your account is well protected.
+            <p className="text-[12px] text-green-700 dark:text-green-400 font-semibold">
+              2FA is enabled on your account.
             </p>
           </div>
         )}
-      </div>
-
-      {/* Active sessions */}
-      <div className="bg-white dark:bg-[#112240] rounded-2xl border border-slate-100 dark:border-white/10 p-6 space-y-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: `${pc}15` }}
-          >
-            <Monitor size={16} style={{ color: pc }} />
-          </div>
-          <div>
-            <h3
-              className="text-[15px] font-black text-[#0B2A4A] dark:text-white"
-              style={{ fontFamily: 'OV Soge, sans-serif' }}
-            >
-              Active Sessions
-            </h3>
-            <p className="text-[11px] text-gray-400" style={{ fontFamily: 'Inter, sans-serif' }}>
-              Devices currently signed in to your account
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {SESSIONS.map((s) => (
-            <div
-              key={s.id}
-              className={`flex items-center justify-between gap-3 p-3 rounded-xl ${
-                s.current
-                  ? 'bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10'
-                  : ''
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Monitor size={16} className="text-gray-400 shrink-0" />
-                <div>
-                  <p
-                    className="text-[13px] font-semibold text-[#0B2A4A] dark:text-white"
-                    style={{ fontFamily: 'Inter, sans-serif' }}
-                  >
-                    {s.device}
-                    {s.current && (
-                      <span className="ml-2 text-[10px] font-black text-green-500 uppercase">
-                        Current
-                      </span>
-                    )}
-                  </p>
-                  <p
-                    className="text-[11px] text-gray-400"
-                    style={{ fontFamily: 'Inter, sans-serif' }}
-                  >
-                    {s.location} · {s.time}
-                  </p>
-                </div>
-              </div>
-              {!s.current && (
-                <button
-                  onClick={() => revokeSession(s.id)}
-                  className="flex items-center gap-1 text-[11px] font-bold text-red-500 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
-                >
-                  <LogOut size={12} /> Revoke
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <button
-          onClick={() => toast.success('All other sessions signed out')}
-          className="text-[12px] font-bold text-red-500 hover:underline flex items-center gap-1.5"
-          style={{ fontFamily: 'Inter, sans-serif' }}
-        >
-          <LogOut size={13} /> Sign out all other sessions
-        </button>
       </div>
     </div>
   );

@@ -9,6 +9,9 @@ interface Props {
   onCreate: (activity: Activity) => void;
 }
 
+const inputCls =
+  'w-full border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/70 dark:[color-scheme:dark]';
+
 export default function ScheduleActivityModal({ isOpen, onClose, onCreate }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -39,36 +42,44 @@ export default function ScheduleActivityModal({ isOpen, onClose, onCreate }: Pro
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md space-y-4">
+      <div className="bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] p-6 rounded-lg w-full max-w-md space-y-4 shadow-xl">
         <h3 className="text-lg font-semibold">Schedule Activity</h3>
 
         <input
           placeholder="Activity Title"
-          className="w-full border p-2 rounded"
+          className={inputCls}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
 
         <textarea
           placeholder="Description"
-          className="w-full border p-2 rounded"
+          className={`${inputCls} min-h-[80px]`}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
 
         <input
           type="datetime-local"
-          className="w-full border p-2 rounded"
+          className={inputCls}
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
 
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-3 py-2 bg-gray-200 rounded">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-2 bg-muted hover:bg-muted/80 rounded-lg text-foreground"
+          >
             Cancel
           </button>
 
-          <button onClick={handleSubmit} className="px-3 py-2 bg-blue-600 text-white rounded">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="px-3 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-400"
+          >
             Create
           </button>
         </div>

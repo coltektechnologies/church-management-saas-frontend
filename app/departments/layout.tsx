@@ -56,7 +56,7 @@ function DepartmentShell({ children }: { children: ReactNode }) {
       className="flex h-screen overflow-hidden bg-[var(--dept-main-bg,#F5F7FA)]"
       style={
         {
-          fontFamily: 'var(--dept-font-family, Inter, system-ui, sans-serif)',
+          fontFamily: 'var(--dept-font-family, Poppins, system-ui, sans-serif)',
           fontSize: 'var(--dept-font-size, 14px)',
         } as React.CSSProperties
       }

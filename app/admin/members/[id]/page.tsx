@@ -12,8 +12,7 @@ import {
   Calendar,
   Briefcase,
   Church,
-  Shield,
-} from 'lucide-react';
+  Shield} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { getMember, deleteMember, type MemberDetail } from '@/lib/api';
@@ -22,8 +21,7 @@ import { DeleteMemberDialog } from '@/components/admin/membership/DeleteMemberDi
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 import {
   resolveEmergencyContact,
-  stripEmergencyContactBlockFromNotes,
-} from '@/lib/memberNotesDisplay';
+  stripEmergencyContactBlockFromNotes} from '@/lib/memberNotesDisplay';
 
 const STATUS_STYLE: Record<string, string> = {
   ACTIVE: 'border-green-500 text-green-600 bg-white',
@@ -31,14 +29,12 @@ const STATUS_STYLE: Record<string, string> = {
   PENDING: 'border-amber-500 text-amber-600 bg-white',
   TRANSFER: 'border-blue-500 text-blue-600 bg-white',
   NEW_CONVERT: 'border-teal-500 text-teal-600 bg-white',
-  VISITOR: 'border-purple-500 text-purple-600 bg-white',
-};
+  VISITOR: 'border-purple-500 text-purple-600 bg-white'};
 
 function DetailRow({
   label,
   value,
-  icon: Icon,
-}: {
+  icon: Icon}: {
   label: string;
   value: string | undefined | null;
   icon?: React.ComponentType<{ className?: string }>;
@@ -74,8 +70,7 @@ function DetailRow({
 function Section({
   title,
   icon: Icon,
-  children,
-}: {
+  children}: {
   title: string;
   icon?: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
@@ -108,8 +103,7 @@ export default function MemberDetailPage() {
   const {
     membersBasePath,
     memberProfilePresentation = 'default',
-    hideRemoveFromChurchDirectory,
-  } = useMembersPortal();
+    hideRemoveFromChurchDirectory} = useMembersPortal();
   const isDept = memberProfilePresentation === 'department';
   const params = useParams();
   const id = params.id as string;
@@ -209,7 +203,7 @@ export default function MemberDetailPage() {
             <ArrowLeft className="h-4 w-4" />
             {isDept ? 'Back to department members' : 'Back to Members'}
           </Link>
-          <h1 className={titleClass} style={{ fontFamily: 'OV Soge, sans-serif' }}>
+          <h1 className={titleClass}>
             {isDept ? 'Member profile' : 'Member Details'}
           </h1>
           {isDept ? (

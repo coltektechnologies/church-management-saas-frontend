@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import type { ExpenseRequest } from '@/services/treasuryService';
 import { formatCurrency } from '@/services/treasuryService';
 
+const panel =
+  'bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-xl shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10';
+
 interface PendingExpenseRequestsProps {
   data?: ExpenseRequest[];
   isLoading: boolean;
@@ -35,7 +38,7 @@ export function PendingExpenseRequests({
   }
 
   return (
-    <div className="bg-card border rounded-xl p-5">
+    <div className={`${panel} p-5`}>
       <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
         ⏳ Pending Expense Requests
       </h3>
@@ -44,12 +47,14 @@ export function PendingExpenseRequests({
         {data.map((req) => (
           <div
             key={req.id}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-[var(--admin-border)] hover:bg-muted/30 dark:hover:bg-white/[0.04] transition-colors"
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-semibold text-foreground">{req.title}</p>
-                <span className="text-red-500 font-bold text-sm">{formatCurrency(req.amount)}</span>
+                <span className="text-red-500 dark:text-red-400 font-bold text-sm">
+                  {formatCurrency(req.amount)}
+                </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {req.department} · Requested by {req.requestedBy} ·{' '}
@@ -74,7 +79,7 @@ export function PendingExpenseRequests({
               <Button
                 size="sm"
                 disabled={isApproving || isRejecting}
-                className="h-7 px-3 text-[11px] font-medium bg-[#9ca3af] hover:bg-[#9ca3af]/90 text-white cursor-pointer rounded disabled:opacity-60"
+                className="h-7 px-3 text-[11px] font-medium bg-slate-500 hover:bg-slate-500/90 dark:bg-slate-600 dark:hover:bg-slate-600/90 text-white cursor-pointer rounded disabled:opacity-60"
                 onClick={() => onView?.(req.id)}
               >
                 View

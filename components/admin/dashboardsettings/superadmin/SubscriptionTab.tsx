@@ -55,7 +55,7 @@ const SubscriptionTab = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-[24px] border border-slate-100 p-8 max-w-2xl animate-in fade-in duration-500">
+      <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 p-8 max-w-2xl animate-in fade-in duration-500">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
             <CreditCard size={20} />
@@ -67,7 +67,7 @@ const SubscriptionTab = () => {
   }
 
   return (
-    <div className="bg-white rounded-[24px] border border-slate-100 p-8 space-y-8 max-w-2xl animate-in fade-in duration-500">
+    <div className="bg-[var(--admin-surface)] rounded-[24px] border border-[var(--admin-border)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 p-8 space-y-8 max-w-2xl animate-in fade-in duration-500">
       <div className="flex items-center gap-3">
         <div className="p-2 bg-primary/10 rounded-lg text-primary">
           <CreditCard size={20} />

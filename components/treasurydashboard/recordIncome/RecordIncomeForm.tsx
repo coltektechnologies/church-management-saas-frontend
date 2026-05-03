@@ -51,7 +51,6 @@ function lettersOnly(v: string) {
 // ── Style factories ───────────────────────────────────────────────────────────
 function fieldLabel(textColor: string): React.CSSProperties {
   return {
-    fontFamily: "'OV Soge', sans-serif",
     fontWeight: 500,
     fontSize: 'clamp(11px, 1.2vw, 13px)',
     color: textColor,
@@ -67,7 +66,6 @@ function inputBase(
   isDark?: boolean
 ): React.CSSProperties {
   return {
-    fontFamily: "'OV Soge', sans-serif",
     fontWeight: 500,
     fontSize: 'clamp(11px, 1.2vw, 12px)',
     color: textColor,
@@ -230,7 +228,6 @@ function SearchableDropdown({
                     width: '100%',
                     padding: '7px 10px 7px 28px',
                     fontSize: '11px',
-                    fontFamily: "'OV Soge', sans-serif",
                     backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.15)' : borderColor}`,
                     borderRadius: '6px',
@@ -250,7 +247,6 @@ function SearchableDropdown({
                   fontSize: '11px',
                   color: `${textColor}50`,
                   textAlign: 'center',
-                  fontFamily: "'OV Soge', sans-serif",
                 }}
               >
                 No results
@@ -270,7 +266,6 @@ function SearchableDropdown({
                     textAlign: 'left',
                     padding: '10px 14px',
                     fontSize: 'clamp(11px, 1.2vw, 12px)',
-                    fontFamily: "'OV Soge', sans-serif",
                     fontWeight: value === opt.value ? 600 : 400,
                     color: value === opt.value ? accentColor : textColor,
                     backgroundColor: value === opt.value ? `${accentColor}15` : 'transparent',
@@ -345,7 +340,6 @@ function NotificationPicker({
               padding: '7px 14px',
               borderRadius: '20px',
               fontSize: 'clamp(11px, 1.1vw, 12px)',
-              fontFamily: "'OV Soge', sans-serif",
               fontWeight: 500,
               border: `1px solid ${active ? accentColor : borderColor}`,
               backgroundColor: active ? `${accentColor}18` : 'transparent',
@@ -394,7 +388,6 @@ function Field({
           style={{
             fontSize: '11px',
             color: '#FF0D0D',
-            fontFamily: "'OV Soge', sans-serif",
             margin: 0,
           }}
         >
@@ -515,7 +508,6 @@ function CancelConfirmDialog({
             </h3>
             <p
               style={{
-                fontFamily: "'OV Soge',sans-serif",
                 fontSize: '12px',
                 color: `${textColor}70`,
                 margin: 0,
@@ -532,7 +524,6 @@ function CancelConfirmDialog({
                 flex: 1,
                 height: '44px',
                 borderRadius: '8px',
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 600,
                 fontSize: '13px',
                 backgroundColor: `${textColor}12`,
@@ -549,7 +540,6 @@ function CancelConfirmDialog({
                 flex: 1,
                 height: '44px',
                 borderRadius: '8px',
-                fontFamily: "'OV Soge',sans-serif",
                 fontWeight: 600,
                 fontSize: '13px',
                 backgroundColor: '#DC2626',
@@ -928,7 +918,6 @@ export default function RecordIncomeForm({
             </h2>
             <p
               style={{
-                fontFamily: "'OV Soge', sans-serif",
                 fontSize: '11px',
                 color: `${textColor}55`,
                 margin: '2px 0 0',
@@ -1012,7 +1001,6 @@ export default function RecordIncomeForm({
                 style={{
                   fontSize: '10px',
                   color: `${textColor}40`,
-                  fontFamily: "'OV Soge',sans-serif",
                   margin: 0,
                 }}
               >
@@ -1120,7 +1108,6 @@ export default function RecordIncomeForm({
                       style={{
                         fontSize: '12px',
                         color: textColor,
-                        fontFamily: "'OV Soge', sans-serif",
                         fontWeight: 500,
                       }}
                     >
@@ -1170,7 +1157,6 @@ export default function RecordIncomeForm({
                       fontSize: '12px',
                       color: textColor,
                       caretColor: textColor,
-                      fontFamily: "'OV Soge', sans-serif",
                       minWidth: 0,
                     }}
                   />
@@ -1214,7 +1200,6 @@ export default function RecordIncomeForm({
                         fontSize: '11px',
                         color: `${textColor}50`,
                         textAlign: 'center',
-                        fontFamily: "'OV Soge', sans-serif",
                       }}
                     >
                       No members found
@@ -1261,7 +1246,6 @@ export default function RecordIncomeForm({
                               fontSize: '12px',
                               fontWeight: 600,
                               color: memberId === m.id ? accentColor : textColor,
-                              fontFamily: "'OV Soge', sans-serif",
                             }}
                           >
                             {m.name}
@@ -1270,7 +1254,6 @@ export default function RecordIncomeForm({
                             style={{
                               fontSize: '10px',
                               color: `${textColor}50`,
-                              fontFamily: "'OV Soge', sans-serif",
                             }}
                           >
                             {m.memberId} · {m.phone}
@@ -1311,7 +1294,6 @@ export default function RecordIncomeForm({
                   margin: '8px 0 0',
                   fontSize: '11px',
                   color: `${textColor}55`,
-                  fontFamily: "'OV Soge', sans-serif",
                 }}
               >
                 Members create pledges in My Giving. Linking a receipt counts toward their pledge
@@ -1341,7 +1323,6 @@ export default function RecordIncomeForm({
                 margin: '8px 0 0',
                 fontSize: '11px',
                 color: `${textColor}55`,
-                fontFamily: "'OV Soge', sans-serif",
               }}
             >
               Required only if no member is selected. If you pick a member, this name is ignored for
@@ -1373,7 +1354,6 @@ export default function RecordIncomeForm({
                     fontSize: '13px',
                     fontWeight: 700,
                     color: `${textColor}75`,
-                    fontFamily: "'OV Soge', sans-serif",
                     pointerEvents: 'none',
                     zIndex: 1,
                   }}
@@ -1428,7 +1408,6 @@ export default function RecordIncomeForm({
                     padding: '8px 14px',
                     borderRadius: '8px',
                     fontSize: 'clamp(11px, 1.2vw, 12px)',
-                    fontFamily: "'OV Soge', sans-serif",
                     fontWeight: 500,
                     border: `1px solid ${paymentMethod === pm.value ? accentColor : borderColor}`,
                     backgroundColor:
@@ -1611,7 +1590,6 @@ export default function RecordIncomeForm({
                 flexShrink: 0,
                 height: '48px',
                 borderRadius: '10px',
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 600,
                 fontSize: '13px',
                 backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : `${textColor}09`,
@@ -1632,7 +1610,6 @@ export default function RecordIncomeForm({
                 minWidth: '120px',
                 height: '48px',
                 borderRadius: '10px',
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 700,
                 fontSize: '13px',
                 backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
@@ -1660,7 +1637,6 @@ export default function RecordIncomeForm({
                 minWidth: '140px',
                 height: '48px',
                 borderRadius: '10px',
-                fontFamily: "'OV Soge', sans-serif",
                 fontWeight: 700,
                 fontSize: '13px',
                 backgroundColor: accentColor,

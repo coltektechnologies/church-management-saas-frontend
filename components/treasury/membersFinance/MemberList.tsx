@@ -20,8 +20,7 @@ export default function MemberList({
   onSelect,
   pageSize = 7,
   isLoading = false,
-  loadError = null,
-}: Props) {
+  loadError = null}: Props) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
@@ -55,7 +54,6 @@ export default function MemberList({
         />
         <h2
           className="text-base font-bold text-slate-900 dark:text-slate-100"
-          style={{ fontFamily: "'OV Soge', sans-serif" }}
         >
           Member Contributions
         </h2>
