@@ -6,9 +6,8 @@ import { ChurchProfileProvider } from '@/components/admin/dashboard/contexts/Chu
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import MembershipSidebar from '@/components/membership/MembershipSidebar';
 
-/** Local `next dev`: skip JWT gate so you can preview membership pages without logging in. */
-const skipAuth =
-  process.env.NEXT_PUBLIC_SKIP_MEMBERSHIP_AUTH === 'true' || process.env.NODE_ENV === 'development';
+/** Optional local preview without login — never enable in production. */
+const skipAuth = process.env.NEXT_PUBLIC_SKIP_MEMBERSHIP_AUTH === 'true';
 
 export default function MembershipLayout({ children }: { children: ReactNode }) {
   const tree = (

@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { invalidateTreasuryCachesExceptTreasuryForms } from '@/hooks/useTreasury';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -393,7 +394,7 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
     };
     try {
       const created = await submitTreasuryExpenseRecord(payload);
-      queryClient.invalidateQueries({ queryKey: ['treasury'] });
+      invalidateTreasuryCachesExceptTreasuryForms(queryClient);
       queryClient.invalidateQueries({ queryKey: ['treasury', 'expense-requests'] });
       queryClient.invalidateQueries({
         queryKey: ['treasury', 'expense-requests', 'expenses-page'],

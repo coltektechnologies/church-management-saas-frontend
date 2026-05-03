@@ -105,7 +105,7 @@ export function mapIncomeRecordToApiPayload(record: IncomeRecord): Record<string
   const hasMember = memberId.length > 0;
   const contributor = (record.memberName ?? '').trim();
 
-  return {
+  const payload: Record<string, unknown> = {
     transaction_date: iso,
     category_id: record.incomeType,
     service_type: 'WALK_IN',
@@ -120,6 +120,10 @@ export function mapIncomeRecordToApiPayload(record: IncomeRecord): Record<string
     notes: notesParts.join(' | '),
     amount_in_words: '',
   };
+  if (hasMember && record.pledgeId?.trim()) {
+    payload.pledge = record.pledgeId.trim();
+  }
+  return payload;
 }
 
 export interface CreatedIncomeTransaction {

@@ -131,6 +131,8 @@ export interface MemberDepartmentRow {
 export interface DepartmentActivityRow {
   id: string;
   department: string;
+  /** From `DepartmentActivitySerializer.department_name` when present. */
+  department_name?: string;
   title: string;
   description?: string | null;
   status: string;

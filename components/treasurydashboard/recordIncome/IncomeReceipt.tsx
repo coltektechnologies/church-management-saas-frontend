@@ -11,6 +11,8 @@ export interface IncomeRecord {
   incomeTypeDetail?: string;
   memberId: string;
   memberName: string;
+  /** When set, treasury POST links this payment to the member's pledge. */
+  pledgeId?: string;
   amount: number;
   currency: string;
   paymentMethod: string;

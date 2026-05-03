@@ -696,6 +696,66 @@ export async function createIncomeTransaction(body: Record<string, unknown>): Pr
   });
 }
 
+/** Active pledges for a member when recording income (treasury). GET .../treasury/member-pledges/?member=uuid */
+export interface TreasuryMemberPledgeRow {
+  id: string;
+  pledge_year: number;
+  title: string;
+  target_amount: string;
+  amount_fulfilled: string;
+  status: string;
+  label: string;
+}
+
+export async function getTreasuryMemberPledges(
+  memberId: string,
+  options?: { includeAllStatuses?: boolean }
+): Promise<TreasuryMemberPledgeRow[]> {
+  const base = getApiBaseUrl();
+  const sp = new URLSearchParams({ member: memberId });
+  if (options?.includeAllStatuses) {
+    sp.set('all', '1');
+  }
+  const raw = await fetchAuth<unknown>(`${base}/treasury/member-pledges/?${sp.toString()}`);
+  return normalizeListResponse<TreasuryMemberPledgeRow>(raw);
+}
+
+/** All pledges for the church (treasury). GET /api/treasury/pledges/ */
+export interface TreasuryChurchPledgeRow {
+  id: string;
+  member_id: string;
+  member_name: string;
+  pledge_year: number;
+  title: string;
+  target_amount: string;
+  amount_fulfilled: string;
+  amount_remaining: string;
+  status: string;
+  notes: string;
+  fulfilled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getTreasuryChurchPledges(params?: {
+  status?: 'ACTIVE' | 'FULFILLED' | 'CANCELLED' | 'ALL';
+  pledge_year?: number;
+}): Promise<TreasuryChurchPledgeRow[]> {
+  const base = getApiBaseUrl();
+  const sp = new URLSearchParams();
+  if (params?.status && params.status !== 'ALL') {
+    sp.set('status', params.status);
+  }
+  if (params?.pledge_year !== undefined && Number.isFinite(params.pledge_year)) {
+    sp.set('pledge_year', String(params.pledge_year));
+  }
+  const q = sp.toString();
+  /** Django routes use a trailing slash; without it GET returns 404 (no redirect). */
+  const url = q ? `${base}/treasury/pledges/?${q}` : `${base}/treasury/pledges/`;
+  const raw = await fetchAuth<unknown>(url);
+  return normalizeListResponse<TreasuryChurchPledgeRow>(raw);
+}
+
 /** POST /api/treasury/expense-transactions/ */
 export async function createExpenseTransaction(body: Record<string, unknown>): Promise<unknown> {
   const base = getApiBaseUrl();

@@ -144,6 +144,7 @@ export async function fetchAnnouncementCategories(): Promise<AnnouncementCategor
 
 export async function fetchAnnouncementsList(params?: {
   page_size?: number;
+  page?: number;
   search?: string;
   status?: string;
   /** Department portal: only announcements created by the current user (backend `mine_only`). */
@@ -151,6 +152,9 @@ export async function fetchAnnouncementsList(params?: {
 }): Promise<AnnouncementListItemApi[]> {
   const q = new URLSearchParams();
   q.set('page_size', String(params?.page_size ?? 100));
+  if (params?.page && params.page > 1) {
+    q.set('page', String(params.page));
+  }
   if (params?.search) {
     q.set('search', params.search);
   }
@@ -163,6 +167,40 @@ export async function fetchAnnouncementsList(params?: {
   const url = `${announcementsBase()}/?${q.toString()}`;
   const data = await fetchAuth<unknown>(url, { method: 'GET' });
   return normalizeList<AnnouncementListItemApi>(data);
+}
+
+/**
+ * Walk DRF pages until a short page or `maxPages` (default 50 × page_size rows).
+ * Omit `mine_only` for the member/church-wide published feed (plus the caller’s own non-published rows per backend rules).
+ */
+export async function fetchAnnouncementsListAllPages(options?: {
+  search?: string;
+  status?: string;
+  mine_only?: boolean;
+  page_size?: number;
+  maxPages?: number;
+}): Promise<AnnouncementListItemApi[]> {
+  /** Default matches DRF `PAGE_SIZE` when the client `page_size` query is ignored. */
+  const pageSize = Math.min(Math.max(options?.page_size ?? 50, 1), 200);
+  const maxPages = Math.min(Math.max(options?.maxPages ?? 60, 1), 200);
+  const all: AnnouncementListItemApi[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const chunk = await fetchAnnouncementsList({
+      page_size: pageSize,
+      page: page > 1 ? page : undefined,
+      search: options?.search?.trim() || undefined,
+      status: options?.status,
+      mine_only: options?.mine_only,
+    });
+    if (chunk.length === 0) {
+      break;
+    }
+    all.push(...chunk);
+    if (chunk.length < pageSize) {
+      break;
+    }
+  }
+  return all;
 }
 
 export async function fetchAnnouncementDetail(id: string): Promise<AnnouncementDetailApi> {

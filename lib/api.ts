@@ -649,6 +649,9 @@ export interface MemberLocationDetail {
 }
 
 export interface MemberDetail extends Omit<MemberListItem, 'location'> {
+  /** Included on detail responses from `MemberSerializer.to_representation`. */
+  full_name?: string;
+  profile_photo?: string | null;
   title?: string | null;
   middle_name?: string | null;
   date_of_birth?: string | null;
@@ -682,6 +685,193 @@ export async function getMember(id: string): Promise<MemberDetail | null> {
     return null;
   }
   return (await res.json().catch(() => null)) as MemberDetail;
+}
+
+/** Member profile for the logged-in portal user (GET /members/members/me/). */
+export async function getCurrentMemberProfile(): Promise<MemberDetail | null> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return null;
+  }
+  const res = await fetch(`${base}/members/members/me/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(messageFromApiErrorJson(data, 'Could not load your profile'));
+  }
+  return data as unknown as MemberDetail;
+}
+
+/** Self-service update (PATCH /api/members/members/me/). */
+export async function updateCurrentMemberProfile(
+  data: Partial<MemberDetail> & { location?: Partial<MemberLocationDetail> }
+): Promise<MemberDetail> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be signed in to update your profile');
+  }
+  const res = await fetch(`${base}/members/members/me/`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  const result = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(messageFromApiErrorJson(result, 'Could not update your profile'));
+  }
+  return result as unknown as MemberDetail;
+}
+
+export interface MemberGivingRecentRow {
+  id: string;
+  transaction_date: string;
+  category_name: string;
+  amount: string;
+}
+
+export interface MemberGivingHistoryRow {
+  id: string;
+  receipt_number: string;
+  transaction_date: string;
+  category_name: string;
+  amount: string;
+  payment_method: string;
+}
+
+export interface MemberGivingSummary {
+  ytd_total: string;
+  ytd_tithe: string;
+  ytd_offering: string;
+  ytd_other: string;
+  recent: MemberGivingRecentRow[];
+  history: MemberGivingHistoryRow[];
+}
+
+/** YTD + recent income for the linked portal member (GET /members/members/me/giving-summary/). */
+export async function getMemberGivingSummary(): Promise<MemberGivingSummary | null> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return null;
+  }
+  const res = await fetch(`${base}/members/members/me/giving-summary/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(messageFromApiErrorJson(data, 'Could not load giving summary'));
+  }
+  const recentRaw = data.recent;
+  const recent = Array.isArray(recentRaw)
+    ? (recentRaw as MemberGivingRecentRow[])
+    : [];
+  const historyRaw = data.history;
+  const history = Array.isArray(historyRaw)
+    ? (historyRaw as MemberGivingHistoryRow[])
+    : [];
+  return {
+    ytd_total: typeof data.ytd_total === 'string' ? data.ytd_total : '0.00',
+    ytd_tithe: typeof data.ytd_tithe === 'string' ? data.ytd_tithe : '0.00',
+    ytd_offering: typeof data.ytd_offering === 'string' ? data.ytd_offering : '0.00',
+    ytd_other: typeof data.ytd_other === 'string' ? data.ytd_other : '0.00',
+    recent,
+    history,
+  };
+}
+
+export interface MemberPledge {
+  id: string;
+  pledge_year: number;
+  title: string;
+  target_amount: string;
+  amount_fulfilled: string;
+  amount_remaining: string;
+  status: 'ACTIVE' | 'FULFILLED' | 'CANCELLED';
+  notes: string;
+  fulfilled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** GET /members/members/me/pledges/ */
+export async function getMyPledges(): Promise<MemberPledge[] | null> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    return null;
+  }
+  const res = await fetch(`${base}/members/members/me/pledges/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  const data = (await res.json().catch(() => ({}))) as unknown;
+  if (!res.ok) {
+    throw new Error(messageFromApiErrorJson(data as Record<string, unknown>, 'Could not load pledges'));
+  }
+  return Array.isArray(data) ? (data as MemberPledge[]) : [];
+}
+
+/** POST /members/members/me/pledges/ */
+export async function createMyPledge(payload: {
+  pledge_year: number;
+  title?: string;
+  target_amount: string;
+  notes?: string;
+}): Promise<MemberPledge> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be signed in to create a pledge');
+  }
+  const res = await fetch(`${base}/members/members/me/pledges/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(messageFromApiErrorJson(data, 'Could not create pledge'));
+  }
+  return data as unknown as MemberPledge;
+}
+
+/** PATCH /members/members/me/pledges/{id}/ — cancel only */
+export async function cancelMyPledge(id: string): Promise<MemberPledge> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be signed in');
+  }
+  const res = await fetch(`${base}/members/members/me/pledges/${id}/`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status: 'CANCELLED' }),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(messageFromApiErrorJson(data, 'Could not update pledge'));
+  }
+  return data as unknown as MemberPledge;
 }
 
 /** Update member. */

@@ -1,18 +1,62 @@
 import { Phone, Mail, MapPin, Building, Map, Globe, Users } from 'lucide-react';
+import type { MemberDetail } from '@/lib/api';
+import { formatEnumLabel } from '@/components/membership/memberProfileDisplay';
 
-export default function ContactDetailsTab() {
+type Props = {
+  member: MemberDetail | null;
+  loading: boolean;
+};
+
+export default function ContactDetailsTab({ member, loading }: Props) {
+  const loc = member?.location;
+
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 border-t-0 rounded-b-xl p-6 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-4 w-28 bg-slate-200 rounded" />
+              <div className="h-10 bg-slate-100 rounded-md" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const fields = [
-    { label: 'Phone Number', value: '+233 59 603 8258', icon: Phone, outlined: true },
-    { label: 'Email', value: 'owusuwills@gmail.com', icon: Mail, outlined: true },
+    {
+      label: 'Phone Number',
+      value: loc?.phone_primary?.trim() || '—',
+      icon: Phone,
+      outlined: true,
+    },
+    {
+      label: 'Email',
+      value: loc?.email?.trim() || '—',
+      icon: Mail,
+      outlined: true,
+    },
     {
       label: 'Residential Address',
-      value: '123 Main Street, Sunyani, Ghana',
+      value: loc?.address?.trim() || '—',
       icon: MapPin,
       outlined: false,
     },
-    { label: 'City', value: 'Sunyani', icon: Building, outlined: false },
-    { label: 'Region / State', value: 'Bono', icon: Map, outlined: true },
-    { label: 'Country', value: 'Ghana', icon: Globe, outlined: false },
+    { label: 'City', value: loc?.city?.trim() || '—', icon: Building, outlined: false },
+    {
+      label: 'Region / State',
+      value: loc?.region ? formatEnumLabel(loc.region) : '—',
+      icon: Map,
+      outlined: true,
+    },
+    {
+      label: 'Country',
+      value: loc?.country?.trim() || '—',
+      icon: Globe,
+      outlined: false,
+    },
   ];
 
   return (
@@ -40,7 +84,6 @@ export default function ContactDetailsTab() {
         })}
       </div>
 
-      {/* Emergency Contact */}
       <div className="bg-[#F8FAFC] border border-gray-200 rounded-xl p-6">
         <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-200">
           <Users size={20} className="text-[#0A2E46]" />
@@ -50,15 +93,21 @@ export default function ContactDetailsTab() {
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
             <span className="text-[13px] text-gray-500 font-medium">Name:</span>
-            <span className="text-[13px] text-[#0A2E46] font-medium">Owusu Simon</span>
+            <span className="text-[13px] text-[#0A2E46] font-medium">
+              {member?.emergency_contact_name?.trim() || '—'}
+            </span>
           </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
             <span className="text-[13px] text-gray-500 font-medium">Relationship:</span>
-            <span className="text-[13px] text-[#0A2E46] font-medium">Brother</span>
+            <span className="text-[13px] text-[#0A2E46] font-medium">
+              {member?.emergency_contact_relationship?.trim() || '—'}
+            </span>
           </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
             <span className="text-[13px] text-gray-500 font-medium">Phone:</span>
-            <span className="text-[13px] text-[#0A2E46] font-medium">+233 24 794 1259</span>
+            <span className="text-[13px] text-[#0A2E46] font-medium">
+              {member?.emergency_contact_phone?.trim() || '—'}
+            </span>
           </div>
         </div>
       </div>
