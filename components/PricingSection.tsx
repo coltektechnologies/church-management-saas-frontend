@@ -166,8 +166,9 @@ const PricingSection = () => {
                 }}
               />
               <button
+                type="button"
                 onClick={() => setIsYearly(false)}
-                className="relative z-10 w-1/2 text-center font-bold text-sm transition-colors"
+                className="relative z-10 w-1/2 cursor-pointer text-center font-bold text-sm transition-colors"
                 style={{
                   color: !isYearly ? primaryColor : '#fff',
                   fontFamily: 'Poppins, sans-serif',
@@ -176,8 +177,9 @@ const PricingSection = () => {
                 Monthly
               </button>
               <button
+                type="button"
                 onClick={() => setIsYearly(true)}
-                className="relative z-10 w-1/2 text-center font-bold text-sm transition-colors"
+                className="relative z-10 w-1/2 cursor-pointer text-center font-bold text-sm transition-colors"
                 style={{
                   color: isYearly ? primaryColor : '#fff',
                   fontFamily: 'Poppins, sans-serif',

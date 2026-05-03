@@ -7,6 +7,18 @@ import { ShieldCheck, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RegistrationData } from './Step4Payment';
 
+function getAdminFullNameForReview(data: RegistrationData): string {
+  const fromNames = [data.firstName, data.lastName]
+    .map((s) => (s || '').trim())
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  if (fromNames) {
+    return fromNames;
+  }
+  return (data.fullName || '').trim();
+}
+
 interface StepReviewProps {
   data: RegistrationData;
   onBack: () => void;
@@ -28,7 +40,7 @@ const Step5Review = ({
   const baseRows = [
     { label: 'Church Name', value: data.churchName },
     { label: 'Subdomain', value: data.subdomain ? `${data.subdomain}.opendoor.com` : '' },
-    { label: 'Full Name', value: data.fullName },
+    { label: 'Full Name', value: getAdminFullNameForReview(data) },
     { label: 'Admin Email', value: data.adminEmail },
     {
       label: 'Primary Admin Role',

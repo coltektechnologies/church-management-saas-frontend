@@ -29,7 +29,7 @@ export default function PricingPageIntro() {
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/90 sm:text-lg">
           Start free, upgrade when you&apos;re ready. Every tier includes a{' '}
-          <span className="font-semibold text-white">14-day trial</span>—no credit card required to
+          <span className="font-semibold text-white">14-day trial</span>, no credit card required to
           explore.
         </p>
         <p className="mt-6 text-sm text-white/75">

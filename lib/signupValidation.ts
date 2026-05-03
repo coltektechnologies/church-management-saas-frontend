@@ -2,6 +2,11 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import type { CountryCode } from 'libphonenumber-js';
 import { z } from 'zod';
 
+/** Strips digits from given/family names (typing or paste). */
+export function sanitizePersonNameInput(value: string): string {
+  return value.replace(/\d/g, '');
+}
+
 const emailSchema = z.string().trim().email();
 
 export function isValidSignupEmail(value: string): boolean {

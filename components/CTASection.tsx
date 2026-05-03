@@ -53,6 +53,7 @@ export default function CTASection() {
           />
 
           <button
+            type="button"
             className="
             absolute
             right-1
@@ -60,6 +61,7 @@ export default function CTASection() {
             bottom-1
             px-8
             rounded-full
+            cursor-pointer
             bg-[#2EC4B6]
             hover:bg-[#27b3a7]
             text-[#083b5c]

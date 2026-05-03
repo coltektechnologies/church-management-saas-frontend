@@ -14,7 +14,7 @@ import FeatureFooter from '@/components/FeatureFooter';
 
 const LandingPage = () => {
   return (
-    <div className="landing-page-root min-h-screen bg-white selection:bg-[#17D7BE]/30">
+    <div className="landing-page-root min-h-screen bg-white selection:bg-[#17D7BE]/30 [&_a]:cursor-pointer [&_button]:cursor-pointer">
       {/* 1. STICKY NAVIGATION */}
       <FeatureNavbar />
 

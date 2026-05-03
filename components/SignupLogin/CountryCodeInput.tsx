@@ -22,6 +22,8 @@ interface CountryCodeInputProps {
   className?: string;
   placeholder?: string;
   error?: boolean;
+  /** Run validation immediately (e.g. signup Step 2 debounced phone hook). */
+  onBlur?: () => void;
 }
 
 export const dialCountries = [
@@ -201,6 +203,7 @@ export function CountryCodeInput({
   className,
   placeholder = '000 000 0000',
   error = false,
+  onBlur,
 }: CountryCodeInputProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedCode, setSelectedCode] = React.useState(() => {
@@ -240,6 +243,7 @@ export function CountryCodeInput({
     setOpen(false);
     // Keep existing local number, just swap the dial prefix
     onChange(`${country?.dial ?? ''} ${localNumber}`.trim());
+    onBlur?.();
   };
 
   // User types in the number field — they only type digits after the code
@@ -337,6 +341,7 @@ export function CountryCodeInput({
         type="tel"
         value={localNumber}
         onChange={handleNumberChange}
+        onBlur={() => onBlur?.()}
         placeholder={placeholder}
         className="flex-1 px-3 text-sm bg-white outline-none text-[#0B2A4A] placeholder:text-gray-300 min-w-0"
       />

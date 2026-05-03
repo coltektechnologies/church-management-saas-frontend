@@ -38,7 +38,7 @@ const PricingCard = ({
   return (
     <div
       onClick={onClick}
-      className={`pricing-card group relative flex flex-col p-8 rounded-[34px] cursor-pointer shadow-xl overflow-hidden w-full border-2 transition-all duration-500 ease-in-out 
+      className={`pricing-card group/pricing relative flex flex-col p-8 rounded-[34px] cursor-pointer shadow-xl overflow-hidden w-full border-2 transition-all duration-500 ease-in-out 
         min-h-[580px] scale-100 hover:scale-105 hover:min-h-[600px] hover:z-10 hover:border-[#17D7BE] active:scale-95
         ${
           isActive
@@ -50,15 +50,6 @@ const PricingCard = ({
         color: '#FFFFFF',
       }}
     >
-      {/* Badge: Shows if active OR on hover */}
-      <div
-        className={`absolute top-4 right-6 bg-[#17D7BE] text-[#00223A] px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest animate-in fade-in zoom-in transition-opacity duration-300 ${
-          isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-        }`}
-      >
-        {title}
-      </div>
-
       {/* ===== CARD HEADER ===== */}
       <div className="pricing-header mb-6">
         <h3
@@ -79,7 +70,7 @@ const PricingCard = ({
       <div className="text-center mb-6">
         <div className="flex items-center justify-center gap-1">
           <span
-            className="text-5xl font-bold font-poppins transition-colors duration-300 group-hover:text-[#17D7BE]"
+            className="text-5xl font-bold font-poppins transition-colors duration-300 group-hover/pricing:text-[#17D7BE]"
             style={{ color: isActive ? '#17D7BE' : '#FFFFFF' }}
           >
             {currency}
@@ -91,12 +82,16 @@ const PricingCard = ({
 
       {/* BUTTON: Linked to Signup */}
       <div className="mb-8">
-        <Link href="/signup" className="w-full block" onClick={(e) => e.stopPropagation()}>
+        <Link
+          href="/signup"
+          className="block w-full cursor-pointer"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Button
             className={`w-full h-[54px] rounded-full font-bold text-lg transition-all duration-300 ${
               isActive
                 ? 'bg-[#17D7BE] text-[#00223A] hover:bg-[#13b39e] shadow-[0_0_20px_rgba(23,215,190,0.3)]'
-                : 'bg-[#17D7BE] text-[#00223A] hover:bg-[#13b39e] group-hover:shadow-[0_0_20px_rgba(23,215,190,0.3)]'
+                : 'bg-[#17D7BE] text-[#00223A] hover:bg-[#13b39e] group-hover/pricing:shadow-[0_0_20px_rgba(23,215,190,0.3)]'
             }`}
           >
             {buttonText}

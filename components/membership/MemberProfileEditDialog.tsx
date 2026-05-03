@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { MemberDetail } from '@/lib/api';
 import { updateCurrentMemberProfile } from '@/lib/api';
+import { sanitizePersonNameInput } from '@/lib/signupValidation';
 import { Loader2 } from 'lucide-react';
 
 const GENDERS = [
@@ -184,7 +185,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-first"
                   value={first_name}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  onChange={(e) => setFirstName(sanitizePersonNameInput(e.target.value))}
                   required
                 />
               </div>
@@ -201,7 +202,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-last"
                   value={last_name}
-                  onChange={(e) => setLastName(e.target.value)}
+                  onChange={(e) => setLastName(sanitizePersonNameInput(e.target.value))}
                   required
                 />
               </div>

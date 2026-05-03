@@ -23,6 +23,7 @@ import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvide
 import type { DepartmentMember, MemberRole, MemberStatus } from './membersDummyData';
 import { ALL_DEPARTMENTS } from './membersDummyData';
 import MemberRegistrationSuccess from './MemberRegistrationSuccess';
+import { sanitizePersonNameInput } from '@/lib/signupValidation';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -391,11 +392,15 @@ export default function AddMemberPage({
 
   // ── Field setters ──────────────────────────────────────────────────────────
   const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
+    let nextValue: FormState[K] = value;
+    if ((key === 'firstName' || key === 'lastName') && typeof value === 'string') {
+      nextValue = sanitizePersonNameInput(value) as FormState[K];
+    }
     setForm((prev) => {
-      const next = { ...prev, [key]: value };
+      const next = { ...prev, [key]: nextValue };
       if (key === 'firstName' || key === 'lastName') {
-        const first = key === 'firstName' ? (value as string) : prev.firstName;
-        const last = key === 'lastName' ? (value as string) : prev.lastName;
+        const first = key === 'firstName' ? (nextValue as string) : prev.firstName;
+        const last = key === 'lastName' ? (nextValue as string) : prev.lastName;
         if (first || last) {
           next.username = generateUsername(first || 'user', last || 'member');
         }

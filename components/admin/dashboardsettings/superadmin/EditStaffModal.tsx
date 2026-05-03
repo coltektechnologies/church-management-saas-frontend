@@ -34,6 +34,7 @@ import {
 import { getUser, updateUser } from '@/lib/settingsApi';
 import { fetchRolesList } from '@/lib/rolesApi';
 import { replaceUserPrimaryRole, syncUserChurchGroups } from '@/lib/adminStaffApi';
+import { sanitizePersonNameInput } from '@/lib/signupValidation';
 
 const UNASSIGNED = '__unassigned__';
 
@@ -158,7 +159,11 @@ export default function EditStaffModal({
   }, [open, staff]);
 
   const setField = <K extends keyof EditStaffFormState>(key: K, value: EditStaffFormState[K]) => {
-    setForm((p) => ({ ...p, [key]: value }));
+    let next: EditStaffFormState[K] = value;
+    if ((key === 'first_name' || key === 'last_name') && typeof value === 'string') {
+      next = sanitizePersonNameInput(value) as EditStaffFormState[K];
+    }
+    setForm((p) => ({ ...p, [key]: next }));
     setErrors((e) => ({ ...e, [key]: '' }));
   };
 

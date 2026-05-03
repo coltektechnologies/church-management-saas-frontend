@@ -122,7 +122,7 @@ export default function DevelopersSection() {
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
           We combine product craft, full-stack engineering, and a deep respect for how churches
-          operate. Connect with us below—each profile links to the channels we use most.
+          operate. Connect with us below each profile links to the channels we use most.
         </p>
       </header>
 

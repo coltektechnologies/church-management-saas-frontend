@@ -80,6 +80,16 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
       }
     });
 
+    const sizeStr = (data.churchSize || '').trim();
+    if (sizeStr && !/^\d+$/.test(sizeStr)) {
+      newErrors.churchSize = 'Enter numbers only (e.g. average attendance)';
+    }
+
+    const regionStr = (data.regionCity || '').trim();
+    if (regionStr && /\d/.test(regionStr)) {
+      newErrors.regionCity = 'Region or city must not include numbers';
+    }
+
     const ce = (data.churchEmail || '').trim();
     if (ce && !isValidSignupEmail(ce)) {
       newErrors.churchEmail = 'Enter a valid email address';
@@ -202,15 +212,25 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
           )}
         </div>
 
-        {/* Region/City */}
+        {/* Region/City: no digits */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Region/City<span className={styles.requiredAsterisk}>*</span>
           </Label>
           <Input
+            type="text"
             placeholder="Enter region/city"
+            autoComplete="address-level2"
             value={data.regionCity || ''}
-            onChange={(e) => onChange('regionCity', e.target.value)}
+            onChange={(e) => {
+              const noDigits = e.target.value.replace(/\d/g, '');
+              onChange('regionCity', noDigits);
+              setErrors((prev) => {
+                const next = { ...prev };
+                delete next.regionCity;
+                return next;
+              });
+            }}
             className={`${styles.inputField} ${errors.regionCity ? 'border-red-500' : ''}`}
           />
           {errors.regionCity && <p className={styles.errorText}>{errors.regionCity}</p>}
@@ -377,16 +397,21 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
           {errors.denomination && <p className={styles.errorText}>{errors.denomination}</p>}
         </div>
 
-        {/* Church Size */}
+        {/* Church size: numeric only */}
         <div className={styles.inputGroup}>
           <Label className={styles.label}>
             Church size<span className={styles.requiredAsterisk}>*</span>
           </Label>
           <Input
             placeholder="e.g. 500"
-            type="number"
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
             value={data.churchSize || ''}
-            onChange={(e) => onChange('churchSize', e.target.value)}
+            onChange={(e) => {
+              const digitsOnly = e.target.value.replace(/\D/g, '');
+              onChange('churchSize', digitsOnly);
+            }}
             className={`${styles.inputField} ${errors.churchSize ? 'border-red-500' : ''}`}
           />
           {errors.churchSize && <p className={styles.errorText}>{errors.churchSize}</p>}

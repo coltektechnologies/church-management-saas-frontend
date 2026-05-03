@@ -15,7 +15,7 @@ interface TestimonialCardProps {
 
 const TestimonialCard = ({ quote, author, role, rating }: TestimonialCardProps) => {
   return (
-    <div className="testimonial-card bg-[#002B48] p-8 rounded-[34px] shadow-lg h-full flex flex-col justify-between w-full">
+    <div className="testimonial-card cursor-pointer bg-[#002B48] p-8 rounded-[34px] shadow-lg h-full flex flex-col justify-between w-full">
       <div>
         {/* ===== RATING STARS (Teal) ===== */}
         <div className="rating-stars flex gap-1 mb-6">
