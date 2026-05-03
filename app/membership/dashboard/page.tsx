@@ -244,7 +244,9 @@ export default function MembershipDashboard() {
         deptIds.length > 0
           ? await Promise.all(
               deptIds.map((deptId) =>
-                fetchDepartmentActivities(deptId, 'upcoming').catch(() => [] as DepartmentActivityRow[])
+                fetchDepartmentActivities(deptId, 'upcoming').catch(
+                  () => [] as DepartmentActivityRow[]
+                )
               )
             )
           : [];
@@ -331,8 +333,8 @@ export default function MembershipDashboard() {
         </div>
         <div className="bg-[#2FC4B2]/18 text-[#0A2E46] px-4 py-2 rounded-lg border border-[#2FC4B2]/40 shadow-sm">
           <p className="text-[13px] font-medium italic">
-            &quot;I was glad when they said unto me, Let us go into the house of the LORD.&quot; - Psalm
-            122:1
+            &quot;I was glad when they said unto me, Let us go into the house of the LORD.&quot; -
+            Psalm 122:1
           </p>
         </div>
       </div>
@@ -503,8 +505,12 @@ export default function MembershipDashboard() {
                   >
                     <div className="flex items-start gap-4">
                       <div className="hidden sm:flex flex-col items-center justify-center bg-sky-100 w-12 h-12 rounded-lg border border-sky-200/80">
-                        <span className="text-[10px] font-bold uppercase text-sky-800">{monthShort}</span>
-                        <span className="text-[16px] font-bold text-sky-950 leading-none">{dayNum}</span>
+                        <span className="text-[10px] font-bold uppercase text-sky-800">
+                          {monthShort}
+                        </span>
+                        <span className="text-[16px] font-bold text-sky-950 leading-none">
+                          {dayNum}
+                        </span>
                       </div>
                       <div>
                         <h3 className="font-bold text-[15px] text-[#0A2E46]">{event.title}</h3>
@@ -552,7 +558,9 @@ export default function MembershipDashboard() {
                   </div>
                 )}
                 {!loading && displayAnnouncements.length === 0 && (
-                  <div className="p-6 text-[13px] text-slate-600 text-center">No announcements yet.</div>
+                  <div className="p-6 text-[13px] text-slate-600 text-center">
+                    No announcements yet.
+                  </div>
                 )}
                 {!loading &&
                   displayAnnouncements.map((a) => (

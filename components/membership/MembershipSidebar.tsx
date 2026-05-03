@@ -87,8 +87,12 @@ export default function MembershipSidebar() {
 
   useEffect(() => {
     const p = profile;
-    if (p.churchName?.trim()) {setChurchTitle(p.churchName.trim());}
-    if (p.logoUrl) {setLogoUrl(p.logoUrl);}
+    if (p.churchName?.trim()) {
+      setChurchTitle(p.churchName.trim());
+    }
+    if (p.logoUrl) {
+      setLogoUrl(p.logoUrl);
+    }
     setMounted(true);
     void loadSidebarContext();
   }, [loadSidebarContext, profile.churchName, profile.logoUrl]);

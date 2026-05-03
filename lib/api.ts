@@ -774,13 +774,9 @@ export async function getMemberGivingSummary(): Promise<MemberGivingSummary | nu
     throw new Error(messageFromApiErrorJson(data, 'Could not load giving summary'));
   }
   const recentRaw = data.recent;
-  const recent = Array.isArray(recentRaw)
-    ? (recentRaw as MemberGivingRecentRow[])
-    : [];
+  const recent = Array.isArray(recentRaw) ? (recentRaw as MemberGivingRecentRow[]) : [];
   const historyRaw = data.history;
-  const history = Array.isArray(historyRaw)
-    ? (historyRaw as MemberGivingHistoryRow[])
-    : [];
+  const history = Array.isArray(historyRaw) ? (historyRaw as MemberGivingHistoryRow[]) : [];
   return {
     ytd_total: typeof data.ytd_total === 'string' ? data.ytd_total : '0.00',
     ytd_tithe: typeof data.ytd_tithe === 'string' ? data.ytd_tithe : '0.00',
@@ -820,7 +816,9 @@ export async function getMyPledges(): Promise<MemberPledge[] | null> {
   }
   const data = (await res.json().catch(() => ({}))) as unknown;
   if (!res.ok) {
-    throw new Error(messageFromApiErrorJson(data as Record<string, unknown>, 'Could not load pledges'));
+    throw new Error(
+      messageFromApiErrorJson(data as Record<string, unknown>, 'Could not load pledges')
+    );
   }
   return Array.isArray(data) ? (data as MemberPledge[]) : [];
 }

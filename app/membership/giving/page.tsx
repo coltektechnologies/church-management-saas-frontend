@@ -409,8 +409,12 @@ export default function MembershipGivingPage() {
                       {filteredHistory.map((item) => (
                         <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-5 py-3.5">
-                            <div className="font-medium text-[#0A2E46] text-[14px]">{item.displayDate}</div>
-                            <div className="text-[11px] text-gray-400 mt-0.5">{item.receipt_number}</div>
+                            <div className="font-medium text-[#0A2E46] text-[14px]">
+                              {item.displayDate}
+                            </div>
+                            <div className="text-[11px] text-gray-400 mt-0.5">
+                              {item.receipt_number}
+                            </div>
                           </td>
                           <td className="px-5 py-3.5">
                             <span className="font-medium text-gray-700 text-[13px]">
@@ -432,9 +436,12 @@ export default function MembershipGivingPage() {
                       ))}
                       {filteredHistory.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="px-5 py-12 text-center text-gray-500 text-[14px]">
-                            No transactions for this filter yet. Treasury entries must be linked to your
-                            member profile to appear here.
+                          <td
+                            colSpan={5}
+                            className="px-5 py-12 text-center text-gray-500 text-[14px]"
+                          >
+                            No transactions for this filter yet. Treasury entries must be linked to
+                            your member profile to appear here.
                           </td>
                         </tr>
                       )}
@@ -443,7 +450,8 @@ export default function MembershipGivingPage() {
                 </div>
                 {summary.history.length >= 250 && (
                   <div className="p-3 border-t border-gray-100 text-center text-[12px] text-muted-foreground">
-                    Showing the latest 250 transactions. Contact the church office for a full statement.
+                    Showing the latest 250 transactions. Contact the church office for a full
+                    statement.
                   </div>
                 )}
               </Card>
@@ -458,8 +466,8 @@ export default function MembershipGivingPage() {
                   </div>
                 </div>
                 <p className="text-[13px] text-muted-foreground leading-relaxed mb-3">
-                  Create a pledge here; when you give in person or online, treasury can link the receipt to
-                  this pledge so your progress updates automatically.
+                  Create a pledge here; when you give in person or online, treasury can link the
+                  receipt to this pledge so your progress updates automatically.
                 </p>
                 {pledgeInlineError && (
                   <div
@@ -472,7 +480,8 @@ export default function MembershipGivingPage() {
                 <div className="space-y-3 mb-4 max-h-[320px] overflow-y-auto pr-1">
                   {pledges.length === 0 ? (
                     <p className="text-[13px] text-muted-foreground">
-                      No pledges yet. Use the button below to add one for this year or a special project.
+                      No pledges yet. Use the button below to add one for this year or a special
+                      project.
                     </p>
                   ) : (
                     pledges.map((p) => {
@@ -553,8 +562,8 @@ export default function MembershipGivingPage() {
                   </div>
                   <h3 className="font-bold text-[16px]">Automate your giving</h3>
                   <p className="text-[13px] text-white/80 leading-relaxed">
-                    Recurring gifts are not available in the portal yet. Ask your treasurer about standing
-                    orders or mobile-money setups.
+                    Recurring gifts are not available in the portal yet. Ask your treasurer about
+                    standing orders or mobile-money setups.
                   </p>
                   <Button
                     type="button"
@@ -644,13 +653,13 @@ export default function MembershipGivingPage() {
             <DialogTitle>Give now</DialogTitle>
           </DialogHeader>
           <p className="text-[13px] text-muted-foreground leading-relaxed">
-            Payments are not processed inside this page. Use the method your church provides—mobile money,
-            bank transfer, e-treasury, or offering during services. Your treasurer can share the correct
-            numbers or links.
+            Payments are not processed inside this page. Use the method your church provides—mobile
+            money, bank transfer, e-treasury, or offering during services. Your treasurer can share
+            the correct numbers or links.
           </p>
           <p className="text-[13px] text-muted-foreground leading-relaxed">
-            If your church has a single web page for online giving, your admin can configure it so this
-            button opens that page automatically.
+            If your church has a single web page for online giving, your admin can configure it so
+            this button opens that page automatically.
           </p>
           <DialogFooter>
             <Button type="button" onClick={() => setGiveNowDialogOpen(false)}>

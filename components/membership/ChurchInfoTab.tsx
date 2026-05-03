@@ -1,6 +1,10 @@
 import { UserSquare, Calendar, ShieldCheck, Shield, Briefcase } from 'lucide-react';
 import type { MemberDetail } from '@/lib/api';
-import { formatEnumLabel, primarySecondaryDepartments, shortMemberRef } from '@/components/membership/memberProfileDisplay';
+import {
+  formatEnumLabel,
+  primarySecondaryDepartments,
+  shortMemberRef,
+} from '@/components/membership/memberProfileDisplay';
 
 type Props = {
   member: MemberDetail | null;
@@ -35,7 +39,12 @@ export default function ChurchInfoTab({ member, loading }: Props) {
           : '—';
 
   const fields = [
-    { label: 'Member ID', value: member ? shortMemberRef(member.id) : '—', icon: UserSquare, outlined: true },
+    {
+      label: 'Member ID',
+      value: member ? shortMemberRef(member.id) : '—',
+      icon: UserSquare,
+      outlined: true,
+    },
     { label: 'Baptism', value: baptismLabel, icon: Calendar, outlined: true },
     {
       label: 'Membership Status',

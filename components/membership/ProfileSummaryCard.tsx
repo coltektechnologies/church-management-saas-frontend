@@ -33,17 +33,16 @@ type Props = {
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {return '?';}
-  if (parts.length === 1) {return parts[0].slice(0, 2).toUpperCase();}
+  if (parts.length === 0) {
+    return '?';
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export default function ProfileSummaryCard({
-  member,
-  loading,
-  onEdit,
-  onMemberUpdated,
-}: Props) {
+export default function ProfileSummaryCard({ member, loading, onEdit, onMemberUpdated }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -52,7 +51,9 @@ export default function ProfileSummaryCard({
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !member) {return;}
+    if (!file || !member) {
+      return;
+    }
     if (!file.type.startsWith('image/')) {
       toast.error('Please choose an image file');
       return;
@@ -66,8 +67,11 @@ export default function ProfileSummaryCard({
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const r = new FileReader();
         r.onload = () => {
-          if (typeof r.result === 'string') {resolve(r.result);}
-          else {reject(new Error('Could not read file'));}
+          if (typeof r.result === 'string') {
+            resolve(r.result);
+          } else {
+            reject(new Error('Could not read file'));
+          }
         };
         r.onerror = () => reject(new Error('Could not read file'));
         r.readAsDataURL(file);
@@ -147,9 +151,7 @@ export default function ProfileSummaryCard({
           <div className="flex items-center gap-2">
             <CalendarDays size={16} className="text-[#2FC4B2]" />
             <span>
-              {member?.member_since
-                ? `Member since ${formatDateLong(member.member_since)}`
-                : '—'}
+              {member?.member_since ? `Member since ${formatDateLong(member.member_since)}` : '—'}
             </span>
           </div>
           <div className="flex items-center gap-2">

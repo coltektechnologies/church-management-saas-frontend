@@ -255,8 +255,8 @@ export default function MembershipEventsPage() {
 
           {member && allRows.length === 0 && !error && (
             <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-[14px] text-slate-600 shadow-sm">
-              No department activities found yet. When your departments schedule events, they will show
-              here.
+              No department activities found yet. When your departments schedule events, they will
+              show here.
             </div>
           )}
 
@@ -272,7 +272,9 @@ export default function MembershipEventsPage() {
               className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5 bg-white border border-slate-200/90 shadow-[0_2px_10px_-4px_rgba(15,23,42,0.08)] hover:shadow-[0_6px_16px_-6px_rgba(15,23,42,0.12)] transition-all duration-300 rounded-xl"
             >
               <div className="flex flex-col gap-2.5">
-                <h3 className="text-[17px] font-bold text-[#0A2E46] tracking-tight">{activity.row.title}</h3>
+                <h3 className="text-[17px] font-bold text-[#0A2E46] tracking-tight">
+                  {activity.row.title}
+                </h3>
                 <div className="flex flex-col items-start text-[13px] font-medium text-slate-600 dark:text-slate-400 gap-1.5">
                   <div className="flex items-center gap-2">
                     <Shield className="h-4 w-4 text-[#2FC4B2]" strokeWidth={1.75} />
