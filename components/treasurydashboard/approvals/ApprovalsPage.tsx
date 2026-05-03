@@ -2,7 +2,7 @@
 
 // /components/treasurydashboard/approvals/ApprovalsPage.tsx
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, Users, BookOpen, Layers, Church, Gift, Plus, ChevronLeft } from 'lucide-react';
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
@@ -25,9 +25,10 @@ function loadRequests(): ExpenseRequest[] {
       const saved: { id: string; status: ExpenseRequest['status'] }[] = JSON.parse(raw);
       // Merge saved statuses onto the canonical dummy data so new requests always appear
       const statusMap = new Map(saved.map((s) => [s.id, s.status]));
-      return DUMMY_EXPENSE_REQUESTS.map((r) =>
-        statusMap.has(r.id) ? { ...r, status: statusMap.get(r.id)! } : r
-      );
+      return DUMMY_EXPENSE_REQUESTS.map((r) => {
+        const st = statusMap.get(r.id);
+        return st !== undefined ? { ...r, status: st } : r;
+      });
     }
   } catch {}
   return DUMMY_EXPENSE_REQUESTS;
@@ -233,8 +234,8 @@ export default function ApprovalsPage() {
                 style={{
                   borderRadius: '8px',
                   backgroundColor: filled ? bg : 'transparent',
-                  color: filled ? autoText(bg!) : textColor,
-                  border: `2px solid ${filled ? bg : borderColor}`,
+                  color: filled && bg ? autoText(bg) : textColor,
+                  border: `2px solid ${filled && bg ? bg : borderColor}`,
                 }}
               >
                 <Icon size={13} />
