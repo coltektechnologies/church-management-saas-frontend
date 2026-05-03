@@ -29,6 +29,7 @@ import { getOptions, type DropdownOption } from './dropdownOptions';
 import { getIncomeCategoriesStrict } from '@/lib/treasuryApi';
 import { getMembersListStrict, type BackendMember } from '@/lib/dashboardApi';
 import { submitTreasuryIncomeRecord } from '@/services/recordIncomeSubmit';
+import { invalidateTreasuryCachesExceptTreasuryForms } from '@/hooks/useTreasury';
 
 const TREASURY_RECORD_SAVED_EVENT = 'treasury:record-saved';
 
@@ -202,7 +203,7 @@ export default function RecordIncomePage() {
       toast.success('Income recorded', {
         description: `${record.receiptNumber} saved successfully.`,
       });
-      queryClient.invalidateQueries({ queryKey: ['treasury'] });
+      invalidateTreasuryCachesExceptTreasuryForms(queryClient);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not save income.';
       toast.error(message);

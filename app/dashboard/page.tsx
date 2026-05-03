@@ -9,9 +9,9 @@ import {
 
 /**
  * Role-aware home: proxy sends session users here first; then we route by role
- * (treasury / secretary / departments / admin shell / **`/start`** hub).
- * Uses the same department-portal API probe as login so JWT-only `/start` does not
- * strand users who have `my-portal` access (head / elder linked via Member).
+ * (treasury / secretary / departments / admin shell / **member portal** / **`/start`** hub).
+ * Uses the same API probes as login (`/departments/my-portal/`, `/members/members/me/`) so
+ * JWT lag does not strand department heads or linked members on `/start`.
  */
 export default function DashboardRedirect() {
   const router = useRouter();

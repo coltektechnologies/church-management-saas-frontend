@@ -23,6 +23,7 @@ import {
 import type { IncomeRecord } from './IncomeReceipt';
 import { todayDMY, nowString, DUMMY_MEMBERS, type Member } from './recordIncomeData';
 import { getOptions, type DropdownOption as StoredDropdownOption } from './dropdownOptions';
+import { getTreasuryMemberPledges, type TreasuryMemberPledgeRow } from '@/lib/treasuryApi';
 
 // ── Static option lists (payment method details) ──────────
 const MOMO_NETWORKS = [
@@ -630,6 +631,9 @@ export default function RecordIncomeForm({
   const [contributorName, setContributorName] = useState('');
   const [memberQuery, setMemberQuery] = useState('');
   const [memberOpen, setMemberOpen] = useState(false);
+  const [pledgeId, setPledgeId] = useState('');
+  const [pledgeRows, setPledgeRows] = useState<TreasuryMemberPledgeRow[]>([]);
+  const [pledgesLoading, setPledgesLoading] = useState(false);
   const memberRef = useRef<HTMLDivElement>(null);
   const memberInputRef = useRef<HTMLInputElement>(null);
 
@@ -687,6 +691,37 @@ export default function RecordIncomeForm({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    if (!memberId) {
+      setPledgeRows([]);
+      setPledgeId('');
+      return;
+    }
+    let cancelled = false;
+    setPledgesLoading(true);
+    void getTreasuryMemberPledges(memberId)
+      .then((rows) => {
+        if (!cancelled) {
+          setPledgeRows(rows);
+          setPledgeId('');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPledgeRows([]);
+          setPledgeId('');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setPledgesLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [memberId]);
 
   // ── Validation ─────────────────────────────────────────────────────────
   const validate = (): boolean => {
@@ -769,6 +804,7 @@ export default function RecordIncomeForm({
     incomeTypeDetail: buildIncomeTypeDetail(),
     memberId,
     memberName: selectedMember?.name?.trim() || contributorName.trim() || '—',
+    pledgeId: pledgeId.trim() || undefined,
     amount: Number(amount),
     currency,
     paymentMethod,
@@ -787,6 +823,8 @@ export default function RecordIncomeForm({
     setMemberId('');
     setContributorName('');
     setMemberQuery('');
+    setPledgeId('');
+    setPledgeRows([]);
     setAmount('');
     setCurrency('GHS');
     setPaymentMethod('cash');
@@ -829,7 +867,8 @@ export default function RecordIncomeForm({
       bankTxId ||
       checkId ||
       otherDetail ||
-      harvestDetail;
+      harvestDetail ||
+      pledgeId;
     if (isDirty) {
       setShowCancelConfirm(true);
     } else {
@@ -1247,6 +1286,39 @@ export default function RecordIncomeForm({
               )}
             </div>
           </Field>
+
+          {memberId ? (
+            <Field label="Apply to pledge (optional)" required={false} textColor={textColor}>
+              <select
+                value={pledgeId}
+                onChange={(e) => setPledgeId(e.target.value)}
+                disabled={pledgesLoading}
+                aria-busy={pledgesLoading}
+                style={{
+                  ...inputBase(cardBg, textColor, borderColor, false, false, isDark),
+                  cursor: pledgesLoading ? 'wait' : 'pointer',
+                }}
+              >
+                <option value="">General giving (not linked to a pledge)</option>
+                {pledgeRows.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.label} · paid {row.amount_fulfilled} / {row.target_amount}
+                  </option>
+                ))}
+              </select>
+              <p
+                style={{
+                  margin: '8px 0 0',
+                  fontSize: '11px',
+                  color: `${textColor}55`,
+                  fontFamily: "'OV Soge', sans-serif",
+                }}
+              >
+                Members create pledges in My Giving. Linking a receipt counts toward their pledge
+                until it is fulfilled.
+              </p>
+            </Field>
+          ) : null}
 
           <Field
             label="Contributor name"

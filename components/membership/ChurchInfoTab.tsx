@@ -1,13 +1,56 @@
 import { UserSquare, Calendar, ShieldCheck, Shield, Briefcase } from 'lucide-react';
+import type { MemberDetail } from '@/lib/api';
+import { formatEnumLabel, primarySecondaryDepartments, shortMemberRef } from '@/components/membership/memberProfileDisplay';
 
-export default function ChurchInfoTab() {
+type Props = {
+  member: MemberDetail | null;
+  loading: boolean;
+};
+
+export default function ChurchInfoTab({ member, loading }: Props) {
+  const { primary, secondary } = primarySecondaryDepartments(member?.department_names);
+
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 border-t-0 rounded-b-xl p-6 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-4 w-32 bg-slate-200 rounded" />
+              <div className="h-10 bg-slate-100 rounded-md" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const baptismLabel =
+    member?.baptism_status === 'BAPTISED'
+      ? 'Baptised'
+      : member?.baptism_status === 'NOT_BAPTISED'
+        ? 'Not baptised'
+        : member?.baptism_status
+          ? formatEnumLabel(member.baptism_status)
+          : '—';
+
   const fields = [
-    { label: 'Member ID', value: 'M-0241', icon: UserSquare, outlined: true },
-    { label: 'Baptism Date', value: 'December 10, 2021', icon: Calendar, outlined: true },
-    { label: 'Membership Status', value: 'Active Member', icon: ShieldCheck, outlined: false },
-    { label: 'Primary Department', value: 'Music Ministry', icon: Shield, outlined: false },
-    { label: 'Secondary Departments', value: 'Youth Dept, Outreach', icon: Shield, outlined: true },
-    { label: 'Service Attendance', value: '83% (Last 3 Months)', icon: Briefcase, outlined: false },
+    { label: 'Member ID', value: member ? shortMemberRef(member.id) : '—', icon: UserSquare, outlined: true },
+    { label: 'Baptism', value: baptismLabel, icon: Calendar, outlined: true },
+    {
+      label: 'Membership Status',
+      value: member?.membership_status ? formatEnumLabel(member.membership_status) : '—',
+      icon: ShieldCheck,
+      outlined: false,
+    },
+    { label: 'Primary Department', value: primary, icon: Shield, outlined: false },
+    { label: 'Secondary Departments', value: secondary, icon: Shield, outlined: true },
+    {
+      label: 'Service Attendance',
+      value: '—',
+      icon: Briefcase,
+      outlined: false,
+    },
   ];
 
   return (

@@ -15,6 +15,7 @@ import {
   BarChart2,
   Settings,
   PieChart,
+  Target,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
@@ -31,6 +32,7 @@ import {
 const navItems = [
   { title: 'Dashboard', path: '/treasury', icon: LayoutDashboard },
   { title: 'Members & Finance', path: '/treasury/members-finance', icon: Users },
+  { title: 'Member pledges', path: '/treasury/pledges', icon: Target },
   { title: 'Income Recording', path: '/treasury/income', icon: ArrowDownCircle },
   { title: 'Income allocation', path: '/treasury/allocations', icon: PieChart },
   { title: 'Expense Recording', path: '/treasury/expenses', icon: ArrowUpCircle },

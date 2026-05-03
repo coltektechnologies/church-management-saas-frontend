@@ -1,14 +1,63 @@
 import { User, Activity, CalendarDays, GraduationCap, Briefcase, Heart } from 'lucide-react';
+import type { MemberDetail } from '@/lib/api';
+import {
+  ageFromDob,
+  displayMemberName,
+  formatDateLong,
+  formatEnumLabel,
+} from '@/components/membership/memberProfileDisplay';
 
-export default function PersonalInfoTab() {
+type Props = {
+  member: MemberDetail | null;
+  loading: boolean;
+};
+
+export default function PersonalInfoTab({ member, loading }: Props) {
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 border-t-0 rounded-b-xl p-6 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-4 w-24 bg-slate-200 rounded" />
+              <div className="h-10 bg-slate-100 rounded-md" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const ageStr = ageFromDob(member?.date_of_birth);
+
   const fields = [
-    { label: 'Full Name', value: 'Owusu William', icon: User },
-    { label: 'Gender', value: 'Male', icon: Activity }, // Using Activity as placeholder for gender symbol in lucide, could also use others
-    { label: 'Date of Birth', value: 'May 02, 2000', icon: CalendarDays },
-    { label: 'Age', value: '26 years', icon: Activity },
-    { label: 'Education', value: 'Bachelor Degree', icon: GraduationCap },
-    { label: 'Occupation', value: 'Unemployed', icon: Briefcase },
-    { label: 'Marital Status', value: 'Single', icon: Heart },
+    { label: 'Full Name', value: member ? displayMemberName(member) : '—', icon: User },
+    {
+      label: 'Gender',
+      value: member?.gender ? formatEnumLabel(member.gender) : '—',
+      icon: Activity,
+    },
+    {
+      label: 'Date of Birth',
+      value: formatDateLong(member?.date_of_birth),
+      icon: CalendarDays,
+    },
+    { label: 'Age', value: ageStr ?? '—', icon: Activity },
+    {
+      label: 'Education',
+      value: member?.education_level ? formatEnumLabel(member.education_level) : '—',
+      icon: GraduationCap,
+    },
+    {
+      label: 'Occupation',
+      value: member?.occupation?.trim() || '—',
+      icon: Briefcase,
+    },
+    {
+      label: 'Marital Status',
+      value: member?.marital_status ? formatEnumLabel(member.marital_status) : '—',
+      icon: Heart,
+    },
   ];
 
   return (

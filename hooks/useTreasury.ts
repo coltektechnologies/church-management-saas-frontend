@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query';
 import type { TreasuryFilters } from '@/services/treasuryService';
 import {
   approveExpenseRequest,
@@ -12,6 +17,30 @@ import {
   fetchTreasurySummary,
   rejectExpenseRequest,
 } from '@/services/treasuryService';
+
+/** Query subtrees used by treasury *recording* UIs — refetching them after POST is redundant and can throw NetworkError in the browser. */
+const TREASURY_FORM_CACHE_ROOTS = new Set(['record-income', 'expenses']);
+
+/**
+ * Invalidate treasury React Query caches after a book-entry mutation, but skip active
+ * form lists (`record-income/*`, `expenses/*`). A broad `['treasury']` invalidate refetches
+ * those immediately after POST; redundant GETs sometimes surface as
+ * `TypeError: NetworkError when attempting to fetch resource` even though save succeeded.
+ */
+export function invalidateTreasuryCachesExceptTreasuryForms(queryClient: QueryClient): void {
+  queryClient.invalidateQueries({
+    predicate: (query) => {
+      const key = query.queryKey;
+      if (!Array.isArray(key) || key[0] !== 'treasury') {
+        return false;
+      }
+      if (typeof key[1] === 'string' && TREASURY_FORM_CACHE_ROOTS.has(key[1])) {
+        return false;
+      }
+      return true;
+    },
+  });
+}
 
 export function useTreasurySummary(filters?: TreasuryFilters) {
   return useQuery({

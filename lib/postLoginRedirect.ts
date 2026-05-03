@@ -3,6 +3,9 @@ import { getSafeReturnPath } from '@/lib/safeReturnPath';
 /** When the user has no dedicated portal, send them here instead of `/admin`. */
 export const START_HUB_PATH = '/start';
 
+/** Member self-service app (linked `Member.system_user_id`). */
+export const MEMBERSHIP_HOME_PATH = '/membership/profile';
+
 /** Role objects returned on login from UserSerializer.get_roles */
 export type LoginUserRole = { id?: string; name?: string; level?: number | string };
 
@@ -138,6 +141,26 @@ function isTreasuryTeamRoleName(raw: string | undefined | null): boolean {
  * Standalone `/treasury` app — treasurer/treasury roles or platform admin.
  * (The admin shell still links to `/admin/treasury` for pastors/staff without these roles.)
  */
+/**
+ * Church **Member** portal (`/membership`): JWT role level 4 (see backend `Role.ROLE_LEVELS`)
+ * or role name `Member` / `Church Member`. Level 5 is Visitor — not sent here.
+ */
+export function userHasMembershipPortalAccess(user: PostLoginUser | null | undefined): boolean {
+  if (!user) {
+    return false;
+  }
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  return roles.some((r) => {
+    const name = String(r.name ?? '')
+      .trim()
+      .toLowerCase();
+    if (name === 'member' || name === 'church member') {
+      return true;
+    }
+    return roleLevel(r) === 4;
+  });
+}
+
 export function userHasTreasuryPortalAccess(user: PostLoginUser | null | undefined): boolean {
   if (!user) {
     return false;
@@ -171,7 +194,8 @@ export function userHasSecretaryPortalAccess(user: PostLoginUser | null | undefi
  * Otherwise a Level-1 role (Pastor / First Elder, etc.) would win first and send users who are
  * also Department Head (typically Level 3) to `/admin` instead of `/departments`.
  *
- * Priority: treasury → secretary → department portal → admin shell (level ≤ 1 only) → `Start` hub.
+ * Priority: treasury → secretary → department portal → admin shell (level ≤ 1 only) →
+ * member portal (level 4 / “Member”) → `Start` hub.
  * Users without a mapped app no longer default to `/admin` (see START_HUB_PATH).
  */
 export function canAccessAdminShell(user: PostLoginUser | null | undefined): boolean {
@@ -209,6 +233,10 @@ export function defaultHomePathForUser(user: PostLoginUser | null | undefined): 
     return '/admin';
   }
 
+  if (userHasMembershipPortalAccess(user)) {
+    return MEMBERSHIP_HOME_PATH;
+  }
+
   return START_HUB_PATH;
 }
 
@@ -227,9 +255,23 @@ export function resolvePostLoginPath(
 }
 
 /**
- * Same as {@link resolvePostLoginPath}, then if the sync role map sends the user to `/start`,
- * check `GET /departments/my-portal/` (Member + department head / elder in charge). JWT roles
- * often omit "Department Head" until sync — without this probe, department leads land on `/start`.
+ * True when `GET /members/members/me/` returns a row (linked portal member), regardless of
+ * whether JWT `roles` yet includes the Member role.
+ */
+export async function canAccessMembershipPortalViaApi(): Promise<boolean> {
+  try {
+    const { getCurrentMemberProfile } = await import('@/lib/api');
+    const row = await getCurrentMemberProfile();
+    return row !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Same as {@link resolvePostLoginPath}, then if the sync role map sends the user to `/start`:
+ * 1. `GET /departments/my-portal/` — JWT often omits "Department Head" until sync.
+ * 2. `GET /members/members/me/` — member portal uses `Member.system_user_id`, not only JWT.
  */
 export async function resolvePostLoginDestinationWithDepartmentProbe(
   next: string | null | undefined,
@@ -240,6 +282,13 @@ export async function resolvePostLoginDestinationWithDepartmentProbe(
     try {
       if (await canAccessDepartmentPortalViaApi()) {
         return '/departments';
+      }
+    } catch {
+      /* keep START_HUB_PATH */
+    }
+    try {
+      if (await canAccessMembershipPortalViaApi()) {
+        return MEMBERSHIP_HOME_PATH;
       }
     } catch {
       /* keep START_HUB_PATH */

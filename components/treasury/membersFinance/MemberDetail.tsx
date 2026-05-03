@@ -1,11 +1,32 @@
 'use client';
 
-import { FileText, Receipt } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { FileText, Loader2, Receipt, Target } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import MemberAvatar from './MemberAvatar';
 import ContributionStats from './ContributionStats';
 import TransactionList from './TransactionList';
 import { readableMemberTitle } from '@/components/treasury/membersFinance/exportMemberFinanceDocuments';
+import { getTreasuryMemberPledges } from '@/lib/treasuryApi';
 import { MemberContribution } from '@/types/memberFinance';
+
+function formatGhsAmount(raw: string): string {
+  const n = parseFloat(raw);
+  if (!Number.isFinite(n)) {
+    return raw;
+  }
+  return `GHS ${n.toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function pledgeStatusBadgeClass(st: string): string {
+  if (st === 'FULFILLED') {
+    return 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-none';
+  }
+  if (st === 'CANCELLED') {
+    return 'bg-slate-200 text-slate-700 hover:bg-slate-200 border-none';
+  }
+  return 'bg-amber-100 text-amber-900 hover:bg-amber-100 border-none';
+}
 
 interface Props {
   member: MemberContribution | null;
@@ -47,6 +68,23 @@ function EmptyState() {
 }
 
 export default function MemberDetail({ member, onStatement, onReceipt }: Props) {
+  const mid = member?.id;
+
+  const {
+    data: pledgeRows = [],
+    isLoading: pledgesLoading,
+    isError: pledgesError,
+  } = useQuery({
+    queryKey: ['treasury', 'member-pledges-panel', mid ?? ''],
+    queryFn: () => {
+      if (!mid) {
+        return Promise.resolve([]);
+      }
+      return getTreasuryMemberPledges(mid, { includeAllStatuses: true });
+    },
+    enabled: Boolean(mid),
+  });
+
   if (!member) {
     return (
       <div className="flex-1 min-w-0 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-600 rounded-2xl flex flex-col overflow-hidden">
@@ -91,8 +129,65 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
         {/* YTD Stats */}
         <ContributionStats member={member} />
 
+        {/* Pledges (from My Giving; payments linked in Record Income update Paid) */}
+        <div className="px-6 pb-5 border-b border-slate-100 dark:border-slate-700/80">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <h3
+              className="text-base font-bold text-slate-900 dark:text-slate-100"
+              style={{ fontFamily: "'OV Soge', sans-serif" }}
+            >
+              Pledges
+            </h3>
+          </div>
+          {pledgesLoading ? (
+            <div className="flex items-center gap-2 text-sm text-slate-500 py-4">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading pledges…
+            </div>
+          ) : pledgesError ? (
+            <p className="text-sm text-red-600 dark:text-red-400 py-2">Could not load pledges.</p>
+          ) : pledgeRows.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400 py-1">
+              No pledges on file for this member.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-600">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/60 text-left text-xs uppercase text-slate-500 dark:text-slate-400">
+                    <th className="px-3 py-2 font-semibold">Title / year</th>
+                    <th className="px-3 py-2 font-semibold text-right">Target</th>
+                    <th className="px-3 py-2 font-semibold text-right">Paid</th>
+                    <th className="px-3 py-2 font-semibold text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                  {pledgeRows.map((p) => (
+                    <tr key={p.id}>
+                      <td className="px-3 py-2.5 text-slate-800 dark:text-slate-200">
+                        <div>{p.title?.trim() || 'Giving pledge'}</div>
+                        <div className="text-xs text-slate-500">{p.pledge_year}</div>
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-slate-800 dark:text-slate-200">
+                        {formatGhsAmount(p.target_amount)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-teal-700 dark:text-teal-400 font-medium">
+                        {formatGhsAmount(p.amount_fulfilled)}
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        <Badge className={pledgeStatusBadgeClass(p.status)}>{p.status}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         {/* Recent Transactions */}
-        <div className="px-6 pb-6 flex-1">
+        <div className="px-6 pb-6 flex-1 pt-5">
           <h3
             className="text-base font-bold text-slate-900 dark:text-slate-100 mb-4"
             style={{ fontFamily: "'OV Soge', sans-serif" }}
