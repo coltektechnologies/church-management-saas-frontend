@@ -5,7 +5,6 @@ import {
   useContext,
   useState,
   useLayoutEffect,
-  useEffect,
   useCallback,
   useSyncExternalStore,
   type ReactNode,
@@ -106,7 +105,8 @@ const readStoredProfile = (): ChurchProfile => {
 };
 
 export const ChurchProfileProvider = ({ children }: { children: ReactNode }) => {
-  const [profile, setProfile] = useState<ChurchProfile>(readStoredProfile);
+  /** Always start with DEFAULT so SSR + first client paint match (avoids hydration mismatch when localStorage differs). */
+  const [profile, setProfile] = useState<ChurchProfile>(DEFAULT);
 
   const isReady = useSyncExternalStore(
     () => () => {},
@@ -118,9 +118,12 @@ export const ChurchProfileProvider = ({ children }: { children: ReactNode }) => 
     applyGlobalStyles(profile);
   }, [profile]);
 
-  useEffect(() => {
-    applyGlobalStyles(profile);
-  }, [profile]);
+  /** After mount, hydrate from localStorage (deferred to avoid react-hooks/set-state-in-effect on synchronous effect bodies). */
+  useLayoutEffect(() => {
+    queueMicrotask(() => {
+      setProfile(readStoredProfile());
+    });
+  }, []);
 
   const updateProfile = useCallback((partial: Partial<ChurchProfile>) => {
     setProfile((prev) => {

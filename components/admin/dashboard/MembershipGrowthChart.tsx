@@ -18,11 +18,15 @@ import {
   Tooltip,
   Legend,
   type PieLabelRenderProps,
-  type BarRectangleItem,
 } from 'recharts';
-import { ChevronDown, BarChart3, Plus, Trash2 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { ChartToolbarSelect } from '@/components/admin/dashboard/ChartToolbarSelect';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { SlidersHorizontal } from 'lucide-react';
 
 const CHART_TYPES = [
   { id: 'bar', label: 'Bar' },
@@ -32,9 +36,22 @@ const CHART_TYPES = [
 ];
 
 const PLOT_OPTIONS = [
-  { id: 'count', label: 'Member Count' },
-  { id: 'active', label: 'Active Members' },
-  { id: 'departments', label: 'By Department' },
+  { id: 'count', label: 'Member count' },
+  { id: 'active', label: 'Active members' },
+  { id: 'departments', label: 'By department' },
+];
+
+const PRESET_RANGE_OPTIONS = [
+  { value: 'all', label: 'All time' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '90d', label: 'Last 90 days' },
+  { value: '6m', label: 'Last 6 months' },
+  { value: 'year', label: 'This year' },
+];
+
+const RANGE_MODE_OPTIONS = [
+  { value: 'preset', label: 'Preset range' },
+  { value: 'custom', label: 'Custom dates' },
 ];
 
 const PLACEHOLDER_DATA = [
@@ -52,13 +69,12 @@ export default function MembershipGrowthChart() {
   const pc = profile.primaryColor || '#0B2A4A';
   const ac = profile.accentColor || '#2FC4B2';
 
-  const DEFAULT_COLORS = [pc, ac, '#E4002B', '#FFB020', '#6366F1', '#EC4899', '#14B8A6', '#F97316'];
+  const seriesColors = useMemo(
+    () => [pc, ac, '#E4002B', '#FFB020', '#6366F1', '#EC4899', '#14B8A6', '#F97316'],
+    [pc, ac]
+  );
 
   const [chartType, setChartType] = useState('bar');
-  const [colors, setColors] = useState([pc, ac]);
-  const [barColors, setBarColors] = useState<Record<number, string>>({});
-  const [selectedBar, setSelectedBar] = useState<number | null>(null);
-  const [showColorPicker, setShowColorPicker] = useState(false);
   const [plotType, setPlotType] = useState('count');
   const [rangeMode, setRangeMode] = useState<'preset' | 'custom'>('preset');
   const [presetRange, setPresetRange] = useState('all');
@@ -130,22 +146,7 @@ export default function MembershipGrowthChart() {
   const fillOpacity = hasData ? 1 : 0.15;
   const strokeOpacity = hasData ? 1 : 0.2;
 
-  const addColor = () => {
-    if (colors.length < 8) {
-      setColors([...colors, DEFAULT_COLORS[colors.length % 8]]);
-    }
-  };
-  const removeColor = (i: number) => {
-    if (colors.length > 1) {
-      setColors(colors.filter((_, j) => j !== i));
-    }
-  };
-  const updateColor = (i: number, v: string) => {
-    const u = [...colors];
-    u[i] = v;
-    setColors(u);
-  };
-  const getColor = (i: number) => barColors[i] ?? colors[i % colors.length];
+  const getColor = (i: number) => seriesColors[i % seriesColors.length];
 
   const renderChart = () => {
     const common = { data: chartData, margin: { top: 5, right: 10, left: -10, bottom: 5 } };
@@ -168,12 +169,7 @@ export default function MembershipGrowthChart() {
             opacity={fillOpacity}
           >
             {chartData.map((_, i) => (
-              <Cell
-                key={i}
-                fill={getColor(i)}
-                cursor="pointer"
-                onClick={() => setSelectedBar(selectedBar === i ? null : i)}
-              />
+              <Cell key={i} fill={getColor(i)} />
             ))}
           </Pie>
           <Tooltip />
@@ -237,16 +233,9 @@ export default function MembershipGrowthChart() {
           barSize={36}
           name="Members"
           fillOpacity={fillOpacity}
-          onClick={(_: BarRectangleItem, i: number) => setSelectedBar(selectedBar === i ? null : i)}
-          cursor="pointer"
         >
           {chartData.map((_, i) => (
-            <Cell
-              key={i}
-              fill={getColor(i)}
-              stroke={selectedBar === i ? 'hsl(var(--primary))' : 'none'}
-              strokeWidth={selectedBar === i ? 2 : 0}
-            />
+            <Cell key={i} fill={getColor(i)} />
           ))}
         </Bar>
       </BarChart>
@@ -257,192 +246,92 @@ export default function MembershipGrowthChart() {
     // border/shadow/radius applied by wrapper in DashboardPage
     <div className="bg-card p-3 sm:p-4 lg:p-5 h-full flex flex-col">
       {/* ── Card title + controls ── */}
-      <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
-        <h3 className="text-xs sm:text-sm lg:text-base font-bold text-foreground">
+      <div className="flex items-center justify-between gap-3 min-w-0 w-full shrink-0">
+        <h3 className="shrink-0 min-w-0 truncate text-sm sm:text-base font-bold text-foreground tracking-tight">
           Membership Growth
         </h3>
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-          {/* Range mode */}
-          <div className="relative">
-            <select
-              value={rangeMode}
-              onChange={(e) => setRangeMode(e.target.value as 'preset' | 'custom')}
-              className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
+        <Popover modal={false}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="shrink-0 gap-2 font-medium"
             >
-              <option value="preset">Preset</option>
-              <option value="custom">Date Range</option>
-            </select>
-            <ChevronDown
-              size={10}
-              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-            />
-          </div>
+              <SlidersHorizontal className="size-4 opacity-80" aria-hidden />
+              Options
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={8}
+            className="w-[min(calc(100vw-2rem),20rem)] sm:w-80 p-4 z-[2147483642]"
+          >
+            <p className="text-sm font-semibold text-foreground mb-4">Chart options</p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Range mode</Label>
+                <ChartToolbarSelect
+                  fullWidth
+                  value={rangeMode}
+                  onValueChange={(v) => setRangeMode(v as 'preset' | 'custom')}
+                  options={RANGE_MODE_OPTIONS}
+                />
+              </div>
 
-          {rangeMode === 'preset' ? (
-            <div className="relative">
-              <select
-                value={presetRange}
-                onChange={(e) => setPresetRange(e.target.value)}
-                className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
-              >
-                <option value="all">All Time</option>
-                <option value="30d">30 Days</option>
-                <option value="90d">90 Days</option>
-                <option value="6m">6 Months</option>
-                <option value="year">This Year</option>
-              </select>
-              <ChevronDown
-                size={10}
-                className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-              />
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <input
-                type="date"
-                value={customFrom}
-                onChange={(e) => setCustomFrom(e.target.value)}
-                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground w-[110px] sm:w-[130px]"
-              />
-              <span className="text-[9px] text-muted-foreground">to</span>
-              <input
-                type="date"
-                value={customTo}
-                onChange={(e) => setCustomTo(e.target.value)}
-                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground w-[110px] sm:w-[130px]"
-              />
-            </div>
-          )}
-
-          {/* Plot type */}
-          <div className="relative">
-            <select
-              value={plotType}
-              onChange={(e) => setPlotType(e.target.value)}
-              className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
-            >
-              {PLOT_OPTIONS.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={10}
-              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-            />
-          </div>
-
-          {/* Colors */}
-          <div className="relative">
-            <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
-              className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 hover:bg-muted transition-colors flex items-center gap-1"
-            >
-              <div className="flex -space-x-1">
-                {colors.slice(0, 3).map((c, i) => (
-                  <span
-                    key={i}
-                    className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border border-background"
-                    style={{ backgroundColor: c }}
+              {rangeMode === 'preset' ? (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Period</Label>
+                  <ChartToolbarSelect
+                    fullWidth
+                    value={presetRange}
+                    onValueChange={setPresetRange}
+                    options={PRESET_RANGE_OPTIONS}
                   />
-                ))}
-                {colors.length > 3 && (
-                  <span className="text-[8px] text-muted-foreground ml-1">
-                    +{colors.length - 3}
-                  </span>
-                )}
-              </div>
-              <span className="hidden sm:inline">Colors</span>
-            </button>
-            {showColorPicker && (
-              <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-lg p-3 shadow-lg z-20 min-w-[200px] max-w-[240px]">
-                <p className="text-[10px] font-semibold text-foreground mb-2">Default Colors</p>
-                <div className="space-y-1.5 max-h-[160px] overflow-y-auto">
-                  {colors.map((c, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={c}
-                        onChange={(e) => updateColor(i, e.target.value)}
-                        className="w-6 h-6 rounded cursor-pointer border-0 shrink-0"
-                      />
-                      <span className="text-[10px] font-mono text-muted-foreground flex-1">
-                        {c}
-                      </span>
-                      {colors.length > 1 && (
-                        <button
-                          onClick={() => removeColor(i)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
                 </div>
-                {colors.length < 8 && (
-                  <button
-                    onClick={addColor}
-                    className="mt-2 w-full flex items-center justify-center gap-1 text-[10px] text-primary font-medium hover:bg-primary/5 rounded py-1"
-                  >
-                    <Plus size={12} /> Add color
-                  </button>
-                )}
-                {selectedBar !== null && (
-                  <div className="mt-3 pt-2 border-t border-border">
-                    <p className="text-[10px] font-semibold text-foreground mb-1">
-                      Bar #{selectedBar + 1}: {chartData[selectedBar]?.name}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={getColor(selectedBar)}
-                        onChange={(e) =>
-                          setBarColors((prev) => ({ ...prev, [selectedBar]: e.target.value }))
-                        }
-                        className="w-6 h-6 rounded cursor-pointer border-0 shrink-0"
-                      />
-                      <span className="text-[10px] font-mono text-muted-foreground">
-                        {getColor(selectedBar)}
-                      </span>
-                    </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Custom dates</Label>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="date"
+                      value={customFrom}
+                      onChange={(e) => setCustomFrom(e.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm text-foreground"
+                    />
+                    <span className="text-[11px] text-muted-foreground text-center">to</span>
+                    <input
+                      type="date"
+                      value={customTo}
+                      onChange={(e) => setCustomTo(e.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm text-foreground"
+                    />
                   </div>
-                )}
-                {Object.keys(barColors).length > 0 && (
-                  <button
-                    onClick={() => {
-                      setBarColors({});
-                      setSelectedBar(null);
-                    }}
-                    className="mt-2 w-full text-[10px] text-destructive font-medium hover:underline"
-                  >
-                    Reset individual colors
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
 
-          {/* Chart type */}
-          <div className="relative">
-            <select
-              value={chartType}
-              onChange={(e) => setChartType(e.target.value)}
-              className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
-            >
-              {CHART_TYPES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={10}
-              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-            />
-          </div>
-        </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Plot</Label>
+                <ChartToolbarSelect
+                  fullWidth
+                  value={plotType}
+                  onValueChange={setPlotType}
+                  options={PLOT_OPTIONS.map((t) => ({ value: t.id, label: t.label }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Chart type</Label>
+                <ChartToolbarSelect
+                  fullWidth
+                  value={chartType}
+                  onValueChange={setChartType}
+                  options={CHART_TYPES.map((t) => ({ value: t.id, label: t.label }))}
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* ── Horizontal rule after title + controls ── */}
@@ -463,14 +352,6 @@ export default function MembershipGrowthChart() {
           </div>
         )}
       </div>
-
-      {selectedBar !== null && hasData && (
-        <p className="text-[10px] text-muted-foreground mt-2 text-center shrink-0">
-          Selected:{' '}
-          <span className="font-medium text-foreground">{chartData[selectedBar]?.name}</span> —
-          click bar to change its color
-        </p>
-      )}
     </div>
   );
 }

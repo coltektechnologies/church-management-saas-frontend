@@ -18,9 +18,14 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-import { ChevronDown, TrendingUp, Trash2 } from 'lucide-react';
+import { SlidersHorizontal, TrendingUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
+import { ChartToolbarSelect } from '@/components/admin/dashboard/ChartToolbarSelect';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -37,6 +42,24 @@ const CHART_TYPES = [
   { id: 'pie', label: 'Pie' },
 ];
 
+const INCOME_PRESET_OPTIONS = [
+  { value: 'all', label: 'All time' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '90d', label: 'Last 90 days' },
+  { value: 'year', label: 'This year' },
+];
+
+const RANGE_MODE_OPTIONS = [
+  { value: 'preset', label: 'Preset range' },
+  { value: 'custom', label: 'Custom dates' },
+];
+
+const X_AXIS_OPTIONS = [
+  { value: 'date', label: 'By month' },
+  { value: 'category', label: 'By category' },
+];
+
 const PLACEHOLDER_DATA = [
   { name: 'Jan', income: 3000, expenses: 1200 },
   { name: 'Feb', income: 4500, expenses: 2000 },
@@ -50,17 +73,11 @@ const fmtCurrency = (v: number | undefined) => `₵${(v ?? 0).toLocaleString()}`
 export default function IncomeExpenseChart() {
   const router = useRouter();
   const { transactions } = useAppData();
+  const { profile } = useChurchProfile();
+  const incomeColor = profile.accentColor || '#10B981';
+  const expenseColor = profile.primaryColor || '#F87171';
 
   const [chartType, setChartType] = useState('line');
-  const [incomeColor, setIncomeColor] = useState('#10B981');
-  const [expenseColor, setExpenseColor] = useState('#F87171');
-  const [barIncomeColors, setBarIncomeColors] = useState<Record<number, string>>({});
-  const [barExpenseColors, setBarExpenseColors] = useState<Record<number, string>>({});
-  const [selectedBar, setSelectedBar] = useState<{
-    index: number;
-    series: 'income' | 'expenses';
-  } | null>(null);
-  const [showColorPicker, setShowColorPicker] = useState(false);
   const [rangeMode, setRangeMode] = useState<'preset' | 'custom'>('preset');
   const [presetRange, setPresetRange] = useState('all');
   const [customFrom, setCustomFrom] = useState('');
@@ -139,8 +156,6 @@ export default function IncomeExpenseChart() {
   }, [filteredTxns, xAxis, hasData]);
 
   const fillOpacity = hasData ? 1 : 0.15;
-  const getIncomeColor = (i: number) => barIncomeColors[i] ?? incomeColor;
-  const getExpenseColor = (i: number) => barExpenseColors[i] ?? expenseColor;
 
   const renderChart = () => {
     const common = { data: chartData, margin: { top: 5, right: 10, left: -10, bottom: 5 } };
@@ -187,43 +202,15 @@ export default function IncomeExpenseChart() {
             name="Income"
             radius={[4, 4, 0, 0]}
             fillOpacity={fillOpacity}
-            cursor="pointer"
-            onClick={(_: unknown, i: number) => setSelectedBar({ index: i, series: 'income' })}
-          >
-            {chartData.map((_, i) => (
-              <Cell
-                key={i}
-                fill={getIncomeColor(i)}
-                stroke={
-                  selectedBar?.index === i && selectedBar.series === 'income'
-                    ? 'hsl(var(--primary))'
-                    : 'none'
-                }
-                strokeWidth={selectedBar?.index === i && selectedBar.series === 'income' ? 2 : 0}
-              />
-            ))}
-          </Bar>
+            fill={incomeColor}
+          />
           <Bar
             dataKey="expenses"
             name="Expenses"
             radius={[4, 4, 0, 0]}
             fillOpacity={fillOpacity}
-            cursor="pointer"
-            onClick={(_: unknown, i: number) => setSelectedBar({ index: i, series: 'expenses' })}
-          >
-            {chartData.map((_, i) => (
-              <Cell
-                key={i}
-                fill={getExpenseColor(i)}
-                stroke={
-                  selectedBar?.index === i && selectedBar.series === 'expenses'
-                    ? 'hsl(var(--primary))'
-                    : 'none'
-                }
-                strokeWidth={selectedBar?.index === i && selectedBar.series === 'expenses' ? 2 : 0}
-              />
-            ))}
-          </Bar>
+            fill={expenseColor}
+          />
         </BarChart>
       );
     }
@@ -287,190 +274,92 @@ export default function IncomeExpenseChart() {
     // border/shadow/radius applied by wrapper in DashboardPage
     <div className="bg-card p-3 sm:p-4 lg:p-5 h-full flex flex-col">
       {/* ── Card title + controls ── */}
-      <div className="flex items-center justify-between flex-wrap gap-2 shrink-0">
-        <h3 className="text-xs sm:text-sm lg:text-base font-bold text-foreground">
+      <div className="flex items-center justify-between gap-3 min-w-0 w-full shrink-0">
+        <h3 className="shrink-0 min-w-0 truncate text-sm sm:text-base font-bold text-foreground tracking-tight">
           Income vs Expense
         </h3>
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
-          {/* Range mode */}
-          <div className="relative">
-            <select
-              value={rangeMode}
-              onChange={(e) => setRangeMode(e.target.value as 'preset' | 'custom')}
-              className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
+        <Popover modal={false}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="shrink-0 gap-2 font-medium"
             >
-              <option value="preset">Preset</option>
-              <option value="custom">Date Range</option>
-            </select>
-            <ChevronDown
-              size={10}
-              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-            />
-          </div>
-
-          {rangeMode === 'preset' ? (
-            <div className="relative">
-              <select
-                value={presetRange}
-                onChange={(e) => setPresetRange(e.target.value)}
-                className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
-              >
-                <option value="all">All Time</option>
-                <option value="7d">7 Days</option>
-                <option value="30d">30 Days</option>
-                <option value="90d">90 Days</option>
-                <option value="year">This Year</option>
-              </select>
-              <ChevronDown
-                size={10}
-                className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-              />
-            </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <input
-                type="date"
-                value={customFrom}
-                onChange={(e) => setCustomFrom(e.target.value)}
-                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground w-[110px] sm:w-[130px]"
-              />
-              <span className="text-[9px] text-muted-foreground">to</span>
-              <input
-                type="date"
-                value={customTo}
-                onChange={(e) => setCustomTo(e.target.value)}
-                className="text-[9px] sm:text-[10px] border border-border rounded-full px-2 py-1 bg-card text-foreground w-[110px] sm:w-[130px]"
-              />
-            </div>
-          )}
-
-          {/* X-axis */}
-          <div className="relative">
-            <select
-              value={xAxis}
-              onChange={(e) => setXAxis(e.target.value as 'date' | 'category')}
-              className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
-            >
-              <option value="date">By Month</option>
-              <option value="category">By Category</option>
-            </select>
-            <ChevronDown
-              size={10}
-              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-            />
-          </div>
-
-          {/* Colors */}
-          <div className="relative">
-            <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
-              className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 hover:bg-muted transition-colors flex items-center gap-1"
-            >
-              <div className="flex gap-1">
-                <span
-                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full"
-                  style={{ backgroundColor: incomeColor }}
-                />
-                <span
-                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full"
-                  style={{ backgroundColor: expenseColor }}
+              <SlidersHorizontal className="size-4 opacity-80" aria-hidden />
+              Options
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={8}
+            className="w-[min(calc(100vw-2rem),20rem)] sm:w-80 p-4 z-[2147483642]"
+          >
+            <p className="text-sm font-semibold text-foreground mb-4">Chart options</p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Range mode</Label>
+                <ChartToolbarSelect
+                  fullWidth
+                  value={rangeMode}
+                  onValueChange={(v) => setRangeMode(v as 'preset' | 'custom')}
+                  options={RANGE_MODE_OPTIONS}
                 />
               </div>
-              <span className="hidden sm:inline">Colors</span>
-            </button>
-            {showColorPicker && (
-              <div className="absolute right-0 top-full mt-1 bg-card border border-border rounded-lg p-3 shadow-lg z-20 min-w-[180px]">
-                <label className="text-[10px] font-medium text-foreground flex items-center justify-between gap-2 mb-1.5">
-                  Income
-                  <input
-                    type="color"
-                    value={incomeColor}
-                    onChange={(e) => setIncomeColor(e.target.value)}
-                    className="w-6 h-6 rounded cursor-pointer border-0"
+
+              {rangeMode === 'preset' ? (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Period</Label>
+                  <ChartToolbarSelect
+                    fullWidth
+                    value={presetRange}
+                    onValueChange={setPresetRange}
+                    options={INCOME_PRESET_OPTIONS}
                   />
-                </label>
-                <label className="text-[10px] font-medium text-foreground flex items-center justify-between gap-2">
-                  Expenses
-                  <input
-                    type="color"
-                    value={expenseColor}
-                    onChange={(e) => setExpenseColor(e.target.value)}
-                    className="w-6 h-6 rounded cursor-pointer border-0"
-                  />
-                </label>
-                {selectedBar && (
-                  <div className="mt-3 pt-2 border-t border-border">
-                    <p className="text-[10px] font-semibold text-foreground mb-1">
-                      {selectedBar.series === 'income' ? 'Income' : 'Expense'} Bar #
-                      {selectedBar.index + 1}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={
-                          selectedBar.series === 'income'
-                            ? getIncomeColor(selectedBar.index)
-                            : getExpenseColor(selectedBar.index)
-                        }
-                        onChange={(e) => {
-                          if (selectedBar.series === 'income') {
-                            setBarIncomeColors((p) => ({
-                              ...p,
-                              [selectedBar.index]: e.target.value,
-                            }));
-                          } else {
-                            setBarExpenseColors((p) => ({
-                              ...p,
-                              [selectedBar.index]: e.target.value,
-                            }));
-                          }
-                        }}
-                        className="w-6 h-6 rounded cursor-pointer border-0 shrink-0"
-                      />
-                      <span className="text-[10px] font-mono text-muted-foreground">
-                        {selectedBar.series === 'income'
-                          ? getIncomeColor(selectedBar.index)
-                          : getExpenseColor(selectedBar.index)}
-                      </span>
-                    </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Custom dates</Label>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="date"
+                      value={customFrom}
+                      onChange={(e) => setCustomFrom(e.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm text-foreground"
+                    />
+                    <span className="text-[11px] text-muted-foreground text-center">to</span>
+                    <input
+                      type="date"
+                      value={customTo}
+                      onChange={(e) => setCustomTo(e.target.value)}
+                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm text-foreground"
+                    />
                   </div>
-                )}
-                {(Object.keys(barIncomeColors).length > 0 ||
-                  Object.keys(barExpenseColors).length > 0) && (
-                  <button
-                    onClick={() => {
-                      setBarIncomeColors({});
-                      setBarExpenseColors({});
-                      setSelectedBar(null);
-                    }}
-                    className="mt-2 w-full text-[10px] text-destructive font-medium hover:underline flex items-center justify-center gap-1"
-                  >
-                    <Trash2 size={11} /> Reset individual colors
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
 
-          {/* Chart type */}
-          <div className="relative">
-            <select
-              value={chartType}
-              onChange={(e) => setChartType(e.target.value)}
-              className="text-[9px] sm:text-[10px] lg:text-xs border border-border rounded-full px-2 sm:px-3 py-1 bg-card text-foreground cursor-pointer appearance-none pr-4 sm:pr-6"
-            >
-              {CHART_TYPES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              size={10}
-              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground"
-            />
-          </div>
-        </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Breakdown</Label>
+                <ChartToolbarSelect
+                  fullWidth
+                  value={xAxis}
+                  onValueChange={(v) => setXAxis(v as 'date' | 'category')}
+                  options={X_AXIS_OPTIONS}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Chart type</Label>
+                <ChartToolbarSelect
+                  fullWidth
+                  value={chartType}
+                  onValueChange={setChartType}
+                  options={CHART_TYPES.map((t) => ({ value: t.id, label: t.label }))}
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* ── Horizontal rule after title + controls ── */}

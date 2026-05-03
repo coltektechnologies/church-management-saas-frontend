@@ -32,26 +32,28 @@ const StatCard = ({
   empty = false,
 }: StatCardProps) => {
   const { profile } = useChurchProfile();
-  const pc = profile.primaryColor || '#0B2A4A';
 
   const mounted = useIsMounted();
   const dark = mounted ? (profile.darkMode ?? false) : false;
 
-  const cardBg = dark ? '#112240' : '#FDFEFE';
+  const cardBg = dark ? '#112240' : '#FFFFFF';
   const txtMain = dark ? '#FFFFFF' : '#0B2A4A';
-  const txtMuted = dark ? 'rgba(255,255,255,0.45)' : 'rgba(11,42,74,0.55)';
+  const txtMuted = dark ? 'rgba(255,255,255,0.45)' : '#64748B';
   const hrColor = dark ? 'rgba(255,255,255,0.1)' : 'rgba(11,42,74,0.12)';
-  const iconColor = dark ? '#FFFFFF' : '#1E124A';
+  const iconColor = dark ? '#FFFFFF' : '#0B2A4A';
 
   return (
     <button
       onClick={onViewDetail}
-      className="flex flex-col min-w-0 text-left hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group w-full"
+      type="button"
+      className={`flex flex-col min-w-0 text-left hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group w-full ${
+        dark ? '' : 'shadow-sm border border-slate-100/90'
+      }`}
       style={{
         backgroundColor: cardBg,
-        border: dark ? '1px solid rgba(255,255,255,0.1)' : 'none',
-        boxShadow: dark ? '0px 1px 6px 0px rgba(0,0,0,0.4)' : '0px 0px 0.5px 0px #2FC4B2',
-        borderRadius: '5px',
+        border: dark ? '1px solid rgba(255,255,255,0.1)' : undefined,
+        boxShadow: dark ? '0px 1px 6px 0px rgba(0,0,0,0.4)' : undefined,
+        borderRadius: '8px',
         outline: 'none',
         padding: '16px',
       }}
@@ -107,12 +109,12 @@ const StatCard = ({
           {subtitle}
         </span>
         <span
-          className="group-hover:underline"
+          className="group-hover:underline group-hover:text-slate-700 dark:group-hover:text-white/90"
           style={{
             fontFamily: 'OV Soge, sans-serif',
             fontWeight: 500,
             fontSize: '11px',
-            color: pc,
+            color: txtMuted,
           }}
         >
           View detail

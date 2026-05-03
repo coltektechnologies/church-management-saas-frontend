@@ -42,7 +42,6 @@ export default function DashboardPage() {
     publishedAnnouncements,
     pendingAnnouncements,
     averageAttendance,
-    activeMembers,
     apiLoading,
     apiError,
     refetchDashboard,
@@ -55,8 +54,6 @@ export default function DashboardPage() {
   // fallbacks on the server, real values only after hydration.
   const dark = mounted ? (profile.darkMode ?? false) : false;
   const adminName = mounted ? profile.adminName || 'Admin' : 'Admin';
-  const pc = mounted ? profile.primaryColor || '#0B2A4A' : '#0B2A4A';
-  const churchName = mounted ? profile.churchName || '' : '';
 
   const featuredCardStyle: React.CSSProperties = {
     backgroundColor: dark ? '#112240' : '#FDFEFE',
@@ -66,8 +63,21 @@ export default function DashboardPage() {
     overflow: 'hidden',
   };
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const summaryLead = "Here's what's happening with your church today.";
+  const summaryBody = (() => {
+    const p = pendingAnnouncements;
+    const n = newMembersThisWeek;
+    if (p > 0 && n > 0) {
+      return ` You have ${p} pending announcement${p === 1 ? '' : 's'} and ${n} new member${n === 1 ? '' : 's'} this week.`;
+    }
+    if (p > 0) {
+      return ` You have ${p} pending announcement${p === 1 ? '' : 's'}.`;
+    }
+    if (n > 0) {
+      return ` You have ${n} new member${n === 1 ? '' : 's'} this week.`;
+    }
+    return " You're all caught up—no pending announcements and no new members this week.";
+  })();
 
   return (
     <div className="p-3 sm:p-4 lg:p-6 space-y-5">
@@ -101,97 +111,65 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Welcome banner */}
-      <div
-        className="p-4 sm:p-5 lg:p-6 text-white relative overflow-hidden"
-        style={{
-          background: `linear-gradient(135deg, ${pc}ee 0%, ${pc}99 100%)`,
-          borderRadius: '5px',
-        }}
-      >
-        <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full opacity-10 bg-white" />
-        <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full opacity-10 bg-white" />
-
-        <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div>
-            <h1
-              className="text-base sm:text-lg lg:text-xl"
-              style={{ fontFamily: 'OV Soge, sans-serif', fontWeight: 600 }}
-            >
-              {greeting}, {adminName} 👋
-            </h1>
-
-            <p className="text-white/80 text-[11px] sm:text-xs mt-1 leading-relaxed">
-              {pendingAnnouncements > 0 && (
-                <>
-                  You have{' '}
-                  <button
-                    onClick={() => router.push('/admin/announcements')}
-                    className="underline font-semibold hover:text-white transition-colors"
-                  >
-                    {pendingAnnouncements} pending announcement{pendingAnnouncements > 1 ? 's' : ''}
-                  </button>
-                  {newMembersThisWeek > 0 && ' and '}
-                </>
-              )}
-              {newMembersThisWeek > 0 && (
-                <button
-                  onClick={() => router.push('/admin/members')}
-                  className="underline font-semibold hover:text-white transition-colors"
-                >
-                  {newMembersThisWeek} new member{newMembersThisWeek > 1 ? 's' : ''} this week
-                </button>
-              )}
-              {pendingAnnouncements === 0 && newMembersThisWeek === 0 && (
-                <span>Welcome back to {churchName || 'your church dashboard'}.</span>
-              )}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <DashboardDateRangePicker />
-            <span className="text-[10px] bg-white/20 rounded-full px-3 py-1.5 font-medium hidden sm:inline-block">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </span>
-          </div>
-        </div>
+      {/* Welcome row — light layout aligned with /admin reference (no gradient hero) */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
+        <h1
+          className="text-2xl sm:text-[1.75rem] font-black tracking-tight text-[#0B2A4A] dark:text-white shrink-0"
+          style={{ fontFamily: 'OV Soge, sans-serif' }}
+        >
+          Welcome back, {adminName}! 👋
+        </h1>
+        <p
+          className="text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400 lg:max-w-xl lg:text-right"
+          style={{ fontFamily: 'OV Soge, sans-serif' }}
+        >
+          {summaryLead}
+          {summaryBody}
+        </p>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="flex flex-wrap items-center justify-end gap-2 -mt-1">
+        <DashboardDateRangePicker />
+        <span className="text-xs text-slate-500 dark:text-slate-500 hidden sm:inline tabular-nums">
+          {new Date().toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })}
+        </span>
+      </div>
+
+      {/* Stat Cards — reference: white tiles, title | icon, divider, value, Last month | View detail */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         <StatCard
           title="Total Members"
           value={totalMembers.toLocaleString()}
-          subtitle={totalMembers > 0 ? `${activeMembers} active` : 'No members yet'}
+          subtitle="Last month"
           icon={Users2}
           empty={totalMembers === 0}
           onViewDetail={() => router.push('/admin/members')}
         />
         <StatCard
           title="Monthly Income"
-          value={`₵${totalIncome.toLocaleString()}`}
-          subtitle={totalIncome > 0 ? 'Filtered by date' : 'No transactions yet'}
+          value={`GHS${totalIncome.toLocaleString()}`}
+          subtitle="Last month"
           icon={CircleDollarSign}
           empty={totalIncome === 0}
           onViewDetail={() => router.push('/admin/treasury')}
         />
         <StatCard
           title="Announcements"
-          value={String(publishedAnnouncements)}
-          subtitle="Published"
+          value={publishedAnnouncements.toLocaleString()}
+          subtitle="Last month"
           icon={Megaphone}
           empty={publishedAnnouncements === 0}
           onViewDetail={() => router.push('/admin/announcements')}
         />
         <StatCard
           title="Attendance"
-          value={`${averageAttendance}%`}
-          subtitle="Average"
+          value={averageAttendance.toLocaleString()}
+          subtitle="Last month"
           icon={PersonStanding}
           empty={averageAttendance === 0}
           onViewDetail={() => router.push('/admin/members')}
