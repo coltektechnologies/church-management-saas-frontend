@@ -1034,10 +1034,14 @@ export function titheStatsToChartSeries(stats: TitheOfferingStats): TitheTrendCh
 }
 
 export function titheTrendChartTitle(stats: TitheOfferingStats): string {
-  if (stats.view === 'yearly' && stats.yearly_from != null && stats.yearly_to != null) {
+  if (
+    stats.view === 'yearly' &&
+    typeof stats.yearly_from === 'number' &&
+    typeof stats.yearly_to === 'number'
+  ) {
     return `Tithes vs offerings by year (${stats.yearly_from}–${stats.yearly_to})`;
   }
-  if (stats.view === 'calendar_month' && stats.calendar_year != null) {
+  if (stats.view === 'calendar_month' && typeof stats.calendar_year === 'number') {
     return `Tithes vs offerings (${stats.calendar_year})`;
   }
   if (
