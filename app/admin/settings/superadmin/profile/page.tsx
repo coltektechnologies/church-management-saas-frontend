@@ -20,7 +20,8 @@ import {
   ArrowLeft,
   Camera,
   Globe,
-  MapPin} from 'lucide-react';
+  MapPin,
+} from 'lucide-react';
 
 export default function YourProfilePage() {
   const { profile, updateProfile, isReady } = useChurchProfile();
@@ -34,7 +35,8 @@ export default function YourProfilePage() {
     avatarUrl: profile.avatarUrl as string | null,
     bio: '',
     location: '',
-    website: ''});
+    website: '',
+  });
 
   const [saving, setSaving] = useState(false);
 
@@ -65,10 +67,12 @@ export default function YourProfilePage() {
       adminEmail: form.adminEmail,
       adminRole: form.adminRole,
       adminPhone: form.adminPhone,
-      avatarUrl: form.avatarUrl});
+      avatarUrl: form.avatarUrl,
+    });
     setSaving(false);
     toast.success('Profile saved', {
-      description: 'Your info is now live in the sidebar and top bar.'});
+      description: 'Your info is now live in the sidebar and top bar.',
+    });
   };
 
   // Member since — derived from localStorage creation (approximate with today if not set)
@@ -90,7 +94,8 @@ export default function YourProfilePage() {
         <div
           className="h-28 w-full relative"
           style={{
-            background: `linear-gradient(135deg, ${pc} 0%, ${profile.accentColor || '#2FC4B2'} 100%)`}}
+            background: `linear-gradient(135deg, ${pc} 0%, ${profile.accentColor || '#2FC4B2'} 100%)`,
+          }}
         />
 
         {/* Avatar overlapping banner */}
@@ -152,16 +157,10 @@ export default function YourProfilePage() {
 
           {/* Name + role + metadata */}
           <div className="space-y-1 mb-6">
-            <h2
-              className="text-2xl font-black text-[#0B2A4A] dark:text-white"
-            >
+            <h2 className="text-2xl font-black text-[#0B2A4A] dark:text-white">
               {form.adminName || 'Your Name'}
             </h2>
-            <p
-              className="text-gray-400 dark:text-white/50 text-[13px]"
-            >
-              {form.adminRole}
-            </p>
+            <p className="text-gray-400 dark:text-white/50 text-[13px]">{form.adminRole}</p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-gray-400 dark:text-white/40 pt-1">
               {profile.churchName && (
                 <span className="flex items-center gap-1">
@@ -198,20 +197,15 @@ export default function YourProfilePage() {
                     ? 'Active'
                     : profile.subscriptionStatus === 'trial'
                       ? 'Trial'
-                      : 'Inactive'},
+                      : 'Inactive',
+              },
               { label: 'Role', value: form.adminRole || 'Admin' },
             ].map((s) => (
               <div key={s.label}>
-                <p
-                  className="text-[13px] font-bold text-[#0B2A4A] dark:text-white truncate"
-                >
+                <p className="text-[13px] font-bold text-[#0B2A4A] dark:text-white truncate">
                   {s.value}
                 </p>
-                <p
-                  className="text-[11px] text-gray-400"
-                >
-                  {s.label}
-                </p>
+                <p className="text-[11px] text-gray-400">{s.label}</p>
               </div>
             ))}
           </div>

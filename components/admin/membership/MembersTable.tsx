@@ -425,9 +425,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
 
       <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10 overflow-hidden w-full min-w-0">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 py-4 border-b border-[var(--admin-border)] bg-[var(--admin-surface)]">
-          <h3 className="text-lg font-bold shrink-0 text-slate-900 dark:text-white">
-            All Members
-          </h3>
+          <h3 className="text-lg font-bold shrink-0 text-slate-900 dark:text-white">All Members</h3>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end sm:ml-auto">
             <Button
               type="button"
@@ -499,7 +497,9 @@ export default function MembersTable({ filters }: MembersTableProps) {
                   onChange={toggleAll}
                   aria-label="Select all members on this page"
                 />
-                <span className="text-sm text-[color:var(--admin-text)]">Select all on this page</span>
+                <span className="text-sm text-[color:var(--admin-text)]">
+                  Select all on this page
+                </span>
               </div>
               {paginated.map((member) => (
                 <div
@@ -520,8 +520,12 @@ export default function MembersTable({ filters }: MembersTableProps) {
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-[color:var(--admin-text)] break-words">{member.name}</p>
-                      <p className="text-xs text-[color:var(--admin-text-muted)] font-mono">{member.memberId}</p>
+                      <p className="font-medium text-[color:var(--admin-text)] break-words">
+                        {member.name}
+                      </p>
+                      <p className="text-xs text-[color:var(--admin-text-muted)] font-mono">
+                        {member.memberId}
+                      </p>
                     </div>
                     <span
                       className={`shrink-0 inline-flex px-2 py-1 rounded-full text-xs font-medium border ${
@@ -550,7 +554,9 @@ export default function MembersTable({ filters }: MembersTableProps) {
                         <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
                           Department
                         </dt>
-                        <dd className="text-[color:var(--admin-text)] break-words">{member.department}</dd>
+                        <dd className="text-[color:var(--admin-text)] break-words">
+                          {member.department}
+                        </dd>
                       </div>
                       <div>
                         <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
@@ -635,13 +641,19 @@ export default function MembersTable({ filters }: MembersTableProps) {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-[color:var(--admin-text-muted)]">
+                  <TableCell
+                    colSpan={8}
+                    className="py-12 text-center text-[color:var(--admin-text-muted)]"
+                  >
                     Loading members...
                   </TableCell>
                 </TableRow>
               ) : paginated.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-12 text-center text-[color:var(--admin-text-muted)]">
+                  <TableCell
+                    colSpan={8}
+                    className="py-12 text-center text-[color:var(--admin-text-muted)]"
+                  >
                     No members found
                   </TableCell>
                 </TableRow>
@@ -697,7 +709,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
                         className={cn(
                           'inline-flex px-2.5 py-1 rounded-md text-xs font-medium whitespace-normal text-center',
                           roleStyles[member.role] ||
-                          'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-slate-200'
+                            'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-slate-200'
                         )}
                       >
                         {member.role}

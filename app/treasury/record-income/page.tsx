@@ -129,7 +129,9 @@ export default function RecordIncomePage() {
           amount: record.amount,
           currency: record.currency,
           memberName: record.memberName,
-          date: record.date}});
+          date: record.date,
+        },
+      });
 
       // 3. Toast confirmation
       setToast(`Receipt ${record.receiptNumber} saved successfully!`);
@@ -148,7 +150,8 @@ export default function RecordIncomePage() {
       style={{
         minHeight: '100%',
         padding: 'clamp(12px, 3vw, 32px)',
-        position: 'relative'}}
+        position: 'relative',
+      }}
     >
       {/* Toast */}
       {toast && (
@@ -167,7 +170,8 @@ export default function RecordIncomePage() {
             fontSize: 13,
             boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
             whiteSpace: 'nowrap',
-            pointerEvents: 'none'}}
+            pointerEvents: 'none',
+          }}
         >
           ✓ {toast}
         </div>
@@ -181,7 +185,8 @@ export default function RecordIncomePage() {
             fontWeight: 700,
             fontSize: 'clamp(16px, 2.2vw, 22px)',
             color: textColor,
-            margin: 0}}
+            margin: 0,
+          }}
         >
           Record Income
         </h1>
@@ -189,7 +194,8 @@ export default function RecordIncomePage() {
           style={{
             fontSize: 13,
             color: `${textColor}60`,
-            margin: '4px 0 0'}}
+            margin: '4px 0 0',
+          }}
         >
           Create and save individual or department income records
         </p>

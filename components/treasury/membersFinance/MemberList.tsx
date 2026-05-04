@@ -20,7 +20,8 @@ export default function MemberList({
   onSelect,
   pageSize = 7,
   isLoading = false,
-  loadError = null}: Props) {
+  loadError = null,
+}: Props) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
@@ -52,9 +53,7 @@ export default function MemberList({
           size={20}
           className="text-teal-600 dark:text-[var(--secretary-accent,#2FC4B2)] flex-shrink-0"
         />
-        <h2
-          className="text-base font-bold text-slate-900 dark:text-slate-100"
-        >
+        <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
           Member Contributions
         </h2>
       </div>

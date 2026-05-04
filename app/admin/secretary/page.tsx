@@ -75,7 +75,12 @@ export default function AdminSecretaryPage() {
             you switch between this page and the full hub.
           </p>
         </div>
-        <Button variant="outline" size="sm" className="shrink-0 gap-2 border-[var(--admin-border)]" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-2 border-[var(--admin-border)]"
+          asChild
+        >
           <Link href="/admin/announcements">
             <ExternalLink className="h-4 w-4" aria-hidden />
             Full announcements hub

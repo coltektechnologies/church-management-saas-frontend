@@ -54,9 +54,7 @@ const SecurityTab = () => {
           <ShieldCheck size={20} />
         </div>
         <div>
-          <h3 className="text-lg font-black text-foreground tracking-tight">
-            Security Settings
-          </h3>
+          <h3 className="text-lg font-black text-foreground tracking-tight">Security Settings</h3>
           <p className="text-xs text-muted-foreground font-medium">
             Protect your account and system access.
           </p>

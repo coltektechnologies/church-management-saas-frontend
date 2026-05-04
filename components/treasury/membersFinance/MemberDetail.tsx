@@ -51,14 +51,10 @@ function EmptyState() {
           <path d="M64 68h8M68 64v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
-      <p
-        className="text-lg font-semibold text-slate-500 dark:text-slate-300"
-      >
+      <p className="text-lg font-semibold text-slate-500 dark:text-slate-300">
         Select a member to view
       </p>
-      <p
-        className="text-lg font-semibold text-slate-500 dark:text-slate-300"
-      >
+      <p className="text-lg font-semibold text-slate-500 dark:text-slate-300">
         contribution details
       </p>
     </div>
@@ -71,7 +67,8 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
   const {
     data: pledgeRows = [],
     isLoading: pledgesLoading,
-    isError: pledgesError} = useQuery({
+    isError: pledgesError,
+  } = useQuery({
     queryKey: ['treasury', 'member-pledges-panel', mid ?? ''],
     queryFn: () => {
       if (!mid) {
@@ -79,7 +76,8 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
       }
       return getTreasuryMemberPledges(mid, { includeAllStatuses: true });
     },
-    enabled: Boolean(mid)});
+    enabled: Boolean(mid),
+  });
 
   if (!member) {
     return (
@@ -101,9 +99,7 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
           <div className="flex items-center gap-4">
             <MemberAvatar name={avatarName} avatarUrl={member.avatarUrl} size={56} />
             <div className="min-w-0">
-              <p
-                className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate"
-              >
+              <p className="text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
                 {displayName}
               </p>
               <div className="flex items-center gap-4 mt-1 flex-wrap">
@@ -128,11 +124,7 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
         <div className="px-6 pb-5 border-b border-slate-100 dark:border-slate-700/80">
           <div className="flex items-center gap-2 mb-3">
             <Target className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-            <h3
-              className="text-base font-bold text-slate-900 dark:text-slate-100"
-            >
-              Pledges
-            </h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Pledges</h3>
           </div>
           {pledgesLoading ? (
             <div className="flex items-center gap-2 text-sm text-slate-500 py-4">
@@ -182,9 +174,7 @@ export default function MemberDetail({ member, onStatement, onReceipt }: Props) 
 
         {/* Recent Transactions */}
         <div className="px-6 pb-6 flex-1 pt-5">
-          <h3
-            className="text-base font-bold text-slate-900 dark:text-slate-100 mb-4"
-          >
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-4">
             Recent Transactions
           </h3>
           <TransactionList transactions={member.transactions} />

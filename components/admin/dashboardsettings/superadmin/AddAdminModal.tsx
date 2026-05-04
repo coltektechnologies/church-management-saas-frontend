@@ -312,16 +312,20 @@ export default function AddAdminModal({
             </Label>
             <p className="text-xs text-slate-500 -mt-1 mb-2">
               Open the dropdown to choose one or more groups. They are sent as{' '}
-              <code className="text-[10px] bg-muted dark:bg-white/10 px-1 rounded">church_groups</code> when the
-              user is created.
+              <code className="text-[10px] bg-muted dark:bg-white/10 px-1 rounded">
+                church_groups
+              </code>{' '}
+              when the user is created.
             </p>
             {groupsLoading ? (
               <p className="text-sm text-slate-500 py-3">Loading groups…</p>
             ) : churchGroups.length === 0 ? (
               <p className="text-sm text-muted-foreground py-3 rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.06] px-4">
                 No church groups yet. Run{' '}
-                <code className="text-[10px] bg-muted dark:bg-white/10 px-1 rounded">setup_initial_data</code> on
-                the backend or create groups in church settings.
+                <code className="text-[10px] bg-muted dark:bg-white/10 px-1 rounded">
+                  setup_initial_data
+                </code>{' '}
+                on the backend or create groups in church settings.
               </p>
             ) : (
               <div className="space-y-2">

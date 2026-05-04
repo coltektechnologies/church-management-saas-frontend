@@ -17,12 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import {
-  changePassword,
-  getStoredUser,
-  getUser,
-  updateUser,
-} from '@/lib/settingsApi';
+import { changePassword, getStoredUser, getUser, updateUser } from '@/lib/settingsApi';
 
 export default function SecurityPage() {
   const { profile } = useChurchProfile();
@@ -111,8 +106,7 @@ export default function SecurityPage() {
     setMfaSaving(true);
     try {
       const updated = await updateUser(u.id, { mfa_enabled: next });
-      const enabled =
-        typeof updated.mfa_enabled === 'boolean' ? updated.mfa_enabled : next;
+      const enabled = typeof updated.mfa_enabled === 'boolean' ? updated.mfa_enabled : next;
       setTwoFA(enabled);
       toast.success(
         enabled ? 'Two-factor authentication enabled' : 'Two-factor authentication disabled'
@@ -135,7 +129,9 @@ export default function SecurityPage() {
 
       <div>
         <h2 className="text-2xl font-black text-[#0B2A4A] dark:text-white">Security</h2>
-        <p className="text-sm text-muted-foreground mt-1">Keep your account and church data safe.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Keep your account and church data safe.
+        </p>
       </div>
 
       {/* Security score */}
@@ -331,7 +327,9 @@ export default function SecurityPage() {
             className={`relative w-12 h-6 rounded-full transition-colors duration-300 shrink-0 disabled:opacity-50`}
             style={{ backgroundColor: twoFA ? pc : '#E5E7EB' }}
             aria-pressed={twoFA}
-            aria-label={twoFA ? 'Disable two-factor authentication' : 'Enable two-factor authentication'}
+            aria-label={
+              twoFA ? 'Disable two-factor authentication' : 'Enable two-factor authentication'
+            }
           >
             <span
               className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-300 ${twoFA ? 'left-[26px]' : 'left-0.5'}`}
