@@ -75,13 +75,14 @@ export default function MembershipDashboardPage() {
     <div className="w-full min-w-0 space-y-8">
       {/* Header & Breadcrumb */}
       <div>
-        <h1
-          className="font-semibold text-2xl leading-none tracking-normal text-[color:var(--admin-text,#1A202C)]"
-        >
+        <h1 className="font-semibold text-2xl leading-none tracking-normal text-[color:var(--admin-text,#1A202C)]">
           Membership Dashboard
         </h1>
         <nav className="flex items-center gap-2 mt-2 font-normal text-base leading-none text-[color:var(--admin-text-muted,rgba(0,0,0,0.45))]">
-          <Link href={appHomeHref} className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+          <Link
+            href={appHomeHref}
+            className="flex items-center gap-1 hover:opacity-80 transition-opacity"
+          >
             <Home className="h-4 w-4" />
             {appHomeLabel}
           </Link>

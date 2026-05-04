@@ -163,10 +163,7 @@ export default function DashboardCalendar() {
       {/* Weekday labels */}
       <div className="mb-2 grid grid-cols-7 gap-y-1 text-center">
         {DAYS.map((d) => (
-          <span
-            key={d}
-            className="py-1.5 text-[11px] font-medium text-muted-foreground sm:text-xs"
-          >
+          <span key={d} className="py-1.5 text-[11px] font-medium text-muted-foreground sm:text-xs">
             {d}
           </span>
         ))}
@@ -187,7 +184,8 @@ export default function DashboardCalendar() {
             cellClass += ' text-muted-foreground/25';
           } else if (hasEvent && isPastDay) {
             /* Past events — ash */
-            cellClass += ' bg-neutral-200 text-neutral-900 dark:bg-neutral-600 dark:text-neutral-100';
+            cellClass +=
+              ' bg-neutral-200 text-neutral-900 dark:bg-neutral-600 dark:text-neutral-100';
           } else if (hasEvent && isUpcomingOrToday) {
             /* Upcoming / today — deep */
             cellClass += ' bg-neutral-900 text-white dark:bg-neutral-950';
@@ -196,7 +194,10 @@ export default function DashboardCalendar() {
           }
 
           return (
-            <div key={i} className="flex min-h-[2.25rem] flex-col items-center justify-start sm:min-h-[2.5rem]">
+            <div
+              key={i}
+              className="flex min-h-[2.25rem] flex-col items-center justify-start sm:min-h-[2.5rem]"
+            >
               <span className={cellClass}>{c.day}</span>
             </div>
           );

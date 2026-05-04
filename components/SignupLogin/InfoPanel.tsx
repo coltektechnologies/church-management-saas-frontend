@@ -8,15 +8,18 @@ const InfoPanel = () => {
     {
       icon: Users,
       title: 'Manage members',
-      desc: 'Keep member records up to date, assign departments, and manage your church structure with ease.'},
+      desc: 'Keep member records up to date, assign departments, and manage your church structure with ease.',
+    },
     {
       icon: Megaphone,
       title: 'Create announcements',
-      desc: 'Create, approve, and publish announcements and church programs to the right people at the right time.'},
+      desc: 'Create, approve, and publish announcements and church programs to the right people at the right time.',
+    },
     {
       icon: BarChart3,
       title: 'View financial report',
-      desc: 'Record income and expenses, track assets, and generate financial reports with transparency.'},
+      desc: 'Record income and expenses, track assets, and generate financial reports with transparency.',
+    },
   ];
 
   return (
@@ -28,7 +31,8 @@ const InfoPanel = () => {
           fontSize: '25px',
           lineHeight: '100%',
           letterSpacing: '0%',
-          color: '#FFFFFF'}}
+          color: '#FFFFFF',
+        }}
       >
         Create your Open Door <br /> church account.
       </h1>
@@ -41,7 +45,8 @@ const InfoPanel = () => {
           fontSize: '14px',
           lineHeight: '100%',
           letterSpacing: '0%',
-          color: '#2FC4B2'}}
+          color: '#2FC4B2',
+        }}
       >
         Start with a 14-day free trial and upgrade anytime <br className="hidden lg:block" />
         as your church grows.
@@ -60,7 +65,8 @@ const InfoPanel = () => {
                   fontSize: '18px',
                   lineHeight: '100%',
                   letterSpacing: '0%',
-                  color: '#FFFFFF'}}
+                  color: '#FFFFFF',
+                }}
               >
                 {f.title}
               </h3>
@@ -74,7 +80,8 @@ const InfoPanel = () => {
                 fontSize: '14px',
                 lineHeight: '1.4',
                 letterSpacing: '0%',
-                color: '#2FC4B2'}}
+                color: '#2FC4B2',
+              }}
             >
               {f.desc}
             </p>

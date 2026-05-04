@@ -473,7 +473,9 @@ export default function SettingsTab({
               className="border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-3 py-1.5 w-32 mt-1 focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/70 outline-none"
             />
           ) : (
-            <p className="text-lg font-semibold mt-1 text-foreground">GHS {settings.autoApprovalThreshold}</p>
+            <p className="text-lg font-semibold mt-1 text-foreground">
+              GHS {settings.autoApprovalThreshold}
+            </p>
           )}
           <p className="text-xs text-muted-foreground mt-2">
             Expense requests below this amount are automatically approved.

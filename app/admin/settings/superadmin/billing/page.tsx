@@ -11,7 +11,8 @@ import {
   Crown,
   CreditCard,
   AlertCircle,
-  Calendar} from 'lucide-react';
+  Calendar,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { PRICING_PLANS } from '@/components/PricingSection';
@@ -21,7 +22,8 @@ const PLAN_META: Record<string, { icon: typeof Zap; color: string }> = {
   free: { icon: Zap, color: '#6B7280' },
   basic: { icon: TrendingUp, color: '#2FC4B2' },
   premium: { icon: TrendingUp, color: '#0B2A4A' },
-  enterprise: { icon: Crown, color: '#F59E0B' }};
+  enterprise: { icon: Crown, color: '#F59E0B' },
+};
 
 export default function BillingPage() {
   const { profile, updateProfile } = useChurchProfile();
@@ -54,11 +56,7 @@ export default function BillingPage() {
       </Link>
 
       <div>
-        <h2
-          className="text-2xl font-black text-[#0B2A4A] dark:text-white"
-        >
-          Billing &amp; Plans
-        </h2>
+        <h2 className="text-2xl font-black text-[#0B2A4A] dark:text-white">Billing &amp; Plans</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Manage your subscription. Your current plan is highlighted.
         </p>
@@ -77,19 +75,13 @@ export default function BillingPage() {
             <CreditCard size={22} />
           </div>
           <div>
-            <p
-              className="text-[11px] font-black uppercase tracking-widest text-muted-foreground"
-            >
+            <p className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">
               Current plan
             </p>
-            <p
-              className="text-lg font-black text-[#0B2A4A] dark:text-white capitalize"
-            >
+            <p className="text-lg font-black text-[#0B2A4A] dark:text-white capitalize">
               {PRICING_PLANS.find((p) => p.id === currentPlanId)?.title || 'Start Free'}
             </p>
-            <p
-              className="text-[12px] text-muted-foreground flex items-center gap-1.5"
-            >
+            <p className="text-[12px] text-muted-foreground flex items-center gap-1.5">
               <Calendar size={12} />
               {currentPlanId === 'free' ? 'Trial — upgrade to keep access' : 'Active subscription'}
             </p>
@@ -98,9 +90,7 @@ export default function BillingPage() {
         {currentPlanId === 'free' && (
           <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl">
             <AlertCircle size={15} className="text-amber-500 shrink-0" />
-            <p
-              className="text-[12px] text-amber-700 dark:text-amber-400 font-semibold"
-            >
+            <p className="text-[12px] text-amber-700 dark:text-amber-400 font-semibold">
               Free trial — upgrade before it expires
             </p>
           </div>
@@ -109,11 +99,7 @@ export default function BillingPage() {
 
       {/* Billing toggle */}
       <div className="flex items-center gap-3">
-        <p
-          className="text-[13px] font-semibold text-muted-foreground"
-        >
-          Billing:
-        </p>
+        <p className="text-[13px] font-semibold text-muted-foreground">Billing:</p>
         <div className="flex bg-muted/80 dark:bg-white/10 rounded-xl p-1 gap-1">
           {(['monthly', 'annual'] as const).map((b) => (
             <button
@@ -151,7 +137,8 @@ export default function BillingPage() {
               style={{
                 background: isCurrent
                   ? `linear-gradient(135deg, ${pc} 0%, ${pc}EE 100%)`
-                  : undefined}}
+                  : undefined,
+              }}
             >
               {isCurrent && (
                 <div
@@ -209,7 +196,8 @@ export default function BillingPage() {
                       key={f}
                       className="flex items-center gap-2 text-[12px]"
                       style={{
-                        color: isCurrent ? 'rgba(255,255,255,0.85)' : undefined}}
+                        color: isCurrent ? 'rgba(255,255,255,0.85)' : undefined,
+                      }}
                     >
                       <Check
                         size={12}
@@ -233,7 +221,8 @@ export default function BillingPage() {
                       : plan.monthlyPrice === '0'
                         ? '#F1F5F9'
                         : pc,
-                    color: isCurrent ? '#fff' : plan.monthlyPrice === '0' ? '#94A3B8' : '#fff'}}
+                    color: isCurrent ? '#fff' : plan.monthlyPrice === '0' ? '#94A3B8' : '#fff',
+                  }}
                 >
                   {loading === plan.id
                     ? 'Updating...'
@@ -249,17 +238,13 @@ export default function BillingPage() {
 
       {/* Payment method strip */}
       <div className="bg-[var(--admin-surface)] rounded-2xl border border-[var(--admin-border)] p-6 shadow-sm dark:shadow-none dark:ring-1 dark:ring-white/10">
-        <h3
-          className="text-[15px] font-black text-[#0B2A4A] dark:text-white mb-4"
-        >
+        <h3 className="text-[15px] font-black text-[#0B2A4A] dark:text-white mb-4">
           Payment Method
         </h3>
         <div className="flex items-center gap-4 p-4 bg-muted/40 dark:bg-white/[0.04] rounded-xl border border-dashed border-[var(--admin-border)]">
           <CreditCard size={24} className="text-muted-foreground/50" />
           <div>
-            <p
-              className="text-[13px] font-bold text-[#0B2A4A] dark:text-white"
-            >
+            <p className="text-[13px] font-bold text-[#0B2A4A] dark:text-white">
               No payment method added
             </p>
             <p className="text-[11px] text-muted-foreground">

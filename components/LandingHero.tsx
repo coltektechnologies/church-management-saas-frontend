@@ -14,7 +14,8 @@ const LandingHero = () => {
     <section
       className="relative w-full overflow-hidden py-20 sm:py-24 lg:py-0 lg:min-h-screen"
       style={{
-        background: 'linear-gradient(to right, #1C3D72, #2EC4B6)'}}
+        background: 'linear-gradient(to right, #1C3D72, #2EC4B6)',
+      }}
     >
       {/* GRID OVERLAY */}
       <div
@@ -24,7 +25,8 @@ const LandingHero = () => {
             linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)
           `,
-          backgroundSize: '60px 60px'}}
+          backgroundSize: '60px 60px',
+        }}
       />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 lg:min-h-screen lg:flex lg:items-center lg:py-24">

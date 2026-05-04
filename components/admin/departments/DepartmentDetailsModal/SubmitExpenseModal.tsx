@@ -333,7 +333,8 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
               {/* Document upload */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Supporting Documents <span className="text-muted-foreground font-normal">(optional)</span>
+                  Supporting Documents{' '}
+                  <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <div
                   onClick={() => fileRef.current?.click()}
@@ -400,7 +401,10 @@ export default function SubmitExpenseModal({ isOpen, onClose, onCreate, departme
                         </div>
                       </div>
                       {i < APPROVAL_CHAIN.length - 1 && (
-                        <ChevronRight size={16} className="text-muted-foreground/40 mb-4 flex-shrink-0" />
+                        <ChevronRight
+                          size={16}
+                          className="text-muted-foreground/40 mb-4 flex-shrink-0"
+                        />
                       )}
                     </div>
                   ))}

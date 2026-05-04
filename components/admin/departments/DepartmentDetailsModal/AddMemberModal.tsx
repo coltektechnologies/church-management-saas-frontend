@@ -43,7 +43,9 @@ export default function AddMemberModal({
         <h3 className="text-xl font-semibold">Add Member</h3>
 
         <div>
-          <label className="block text-sm font-medium mb-2 text-foreground">Select Church Member</label>
+          <label className="block text-sm font-medium mb-2 text-foreground">
+            Select Church Member
+          </label>
 
           <select
             value={selectedMemberId}

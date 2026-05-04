@@ -443,8 +443,7 @@ const AdminReportsHub: FC<AdminReportsHubProps> = ({ variant = 'admin', departme
 
   /** When a preview opens or finishes loading, scroll it into view (below long report lists). */
   useEffect(() => {
-    const visible =
-      !!(previewKey || previewLoading || previewJson || previewError);
+    const visible = !!(previewKey || previewLoading || previewJson || previewError);
     if (!visible) {
       return;
     }

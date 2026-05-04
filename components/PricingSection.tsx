@@ -16,7 +16,8 @@ export const PRICING_PLANS = [
       '1 Administrative User',
       'Full access for 14 days',
     ],
-    buttonText: 'Start a Free Plan'},
+    buttonText: 'Start a Free Plan',
+  },
   {
     id: 'basic',
     title: 'Basic',
@@ -29,7 +30,8 @@ export const PRICING_PLANS = [
       '5 Department Admin Accounts',
       'Automated SMS Notifications',
     ],
-    buttonText: 'Start a Basic Plan'},
+    buttonText: 'Start a Basic Plan',
+  },
   {
     id: 'premium',
     title: 'Premium',
@@ -42,7 +44,8 @@ export const PRICING_PLANS = [
       'Unlimited Admin & Staff Roles',
       'Full Departmental Coordination Hub',
     ],
-    buttonText: 'Start a Premium Plan'},
+    buttonText: 'Start a Premium Plan',
+  },
   {
     id: 'enterprise',
     title: 'Enterprise',
@@ -55,7 +58,8 @@ export const PRICING_PLANS = [
       'Dedicated Account Manager',
       'White-label Mobile App',
     ],
-    buttonText: 'Start an Enterprise Plan'},
+    buttonText: 'Start an Enterprise Plan',
+  },
 ];
 
 // Canonical defaults
@@ -132,7 +136,8 @@ const PricingSection = () => {
               fontSize: 'clamp(28px, 4vw, 40px)',
               lineHeight: '110%',
               letterSpacing: '0.03em',
-              color: primaryColor}}
+              color: primaryColor,
+            }}
           >
             Simple Pricing for Every Ministry.
           </h2>
@@ -141,7 +146,8 @@ const PricingSection = () => {
               fontFamily: 'Poppins, sans-serif',
               fontWeight: 400,
               fontSize: '18px',
-              color: primaryColor}}
+              color: primaryColor,
+            }}
           >
             Start with a 14-day free trial. No credit card required.
           </p>
@@ -155,7 +161,8 @@ const PricingSection = () => {
                 className="absolute h-[46px] w-[126px] rounded-full transition-all duration-300 ease-in-out"
                 style={{
                   backgroundColor: accentColor,
-                  transform: isYearly ? 'translateX(126px)' : 'translateX(2px)'}}
+                  transform: isYearly ? 'translateX(126px)' : 'translateX(2px)',
+                }}
               />
               <button
                 type="button"
@@ -163,7 +170,8 @@ const PricingSection = () => {
                 className="relative z-10 w-1/2 cursor-pointer text-center font-bold text-sm transition-colors"
                 style={{
                   color: !isYearly ? primaryColor : '#fff',
-                  fontFamily: 'Poppins, sans-serif'}}
+                  fontFamily: 'Poppins, sans-serif',
+                }}
               >
                 Monthly
               </button>
@@ -173,7 +181,8 @@ const PricingSection = () => {
                 className="relative z-10 w-1/2 cursor-pointer text-center font-bold text-sm transition-colors"
                 style={{
                   color: isYearly ? primaryColor : '#fff',
-                  fontFamily: 'Poppins, sans-serif'}}
+                  fontFamily: 'Poppins, sans-serif',
+                }}
               >
                 Yearly
               </button>

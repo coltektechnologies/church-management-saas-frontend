@@ -27,7 +27,8 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        position: 'relative'}}
+        position: 'relative',
+      }}
     >
       {/* ===== FEATURE TITLE (Top Left) ===== */}
       <h3
@@ -35,7 +36,8 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
         style={{
           fontWeight: 700,
           fontSize: '24px',
-          marginBottom: '20px'}}
+          marginBottom: '20px',
+        }}
       >
         {title}
       </h3>
@@ -48,7 +50,8 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
           style={{
             width: '120px',
             height: '120px',
-            background: 'rgba(23, 215, 190, 0.05)'}}
+            background: 'rgba(23, 215, 190, 0.05)',
+          }}
         >
           {/* Inner Circle Background - Solid Deep Navy */}
           <div
@@ -56,7 +59,8 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
             style={{
               width: '80px',
               height: '80px',
-              background: '#001D31'}}
+              background: '#001D31',
+            }}
           >
             <Icon
               className="feature-card-icon"
@@ -76,7 +80,8 @@ const LandingFeatureCard = ({ icon: Icon, title, description }: LandingFeatureCa
           lineHeight: '1.4',
           color: 'rgba(255, 255, 255, 0.9)',
           marginTop: 'auto',
-          paddingTop: '20px'}}
+          paddingTop: '20px',
+        }}
       >
         {description}
       </p>

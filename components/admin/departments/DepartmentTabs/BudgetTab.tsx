@@ -156,7 +156,8 @@ export default function BudgetTab({ department, expenses }: Props) {
                   <p className="text-sm text-muted-foreground">{expense.description}</p>
                   {expense.submitterName && (
                     <p className="text-xs text-muted-foreground">
-                      By: <span className="font-medium text-foreground">{expense.submitterName}</span>
+                      By:{' '}
+                      <span className="font-medium text-foreground">{expense.submitterName}</span>
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">

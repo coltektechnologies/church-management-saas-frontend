@@ -18,7 +18,8 @@ import {
   LogOut,
   Shield,
   CreditCard,
-  ChevronRight} from 'lucide-react';
+  ChevronRight,
+} from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useChurchProfile, type SubscriptionStatus } from '@/components/admin/dashboard/contexts';
 import {
@@ -27,7 +28,8 @@ import {
   useMarkAllNotificationsReadMutation,
   useMarkNotificationReadMutation,
   useNotificationsListQuery,
-  useUnreadNotificationCountQuery} from '@/hooks/useNotificationsInbox';
+  useUnreadNotificationCountQuery,
+} from '@/hooks/useNotificationsInbox';
 import type { MockNotificationItem } from '@/services/notificationsMock';
 import { notificationsApiEnabled } from '@/services/notificationsService';
 import { performLogout } from '@/lib/churchSessionBrowser';
@@ -74,7 +76,8 @@ function NavAvatar({ size, avatarUrl, adminName, primaryColor, isReady }: NavAva
         width: size,
         height: size,
         backgroundColor: primaryColor,
-        fontSize: Math.round(size * 0.35)}}
+        fontSize: Math.round(size * 0.35),
+      }}
     >
       {initials || '?'}
     </div>
@@ -106,7 +109,8 @@ function mapInboxItemToNavbarRow(n: MockNotificationItem): NavbarNotificationRow
     subtitle: msg.length > 140 ? `${msg.slice(0, 137)}…` : msg,
     timeLabel: formatDistanceToNow(new Date(n.created_at), { addSuffix: true }),
     read: n.is_read,
-    tone};
+    tone,
+  };
 }
 
 interface NotifRowProps {
@@ -122,7 +126,8 @@ function NotifRow({ n, compact, showDismiss = false, onMark, onDismiss }: NotifR
     info: '#3B82F6',
     success: '#10B981',
     warning: '#F59E0B',
-    error: '#EF4444'};
+    error: '#EF4444',
+  };
   return (
     <div
       role="button"
@@ -154,9 +159,7 @@ function NotifRow({ n, compact, showDismiss = false, onMark, onDismiss }: NotifR
             {n.subtitle}
           </p>
         )}
-        <p className="text-[10px] text-gray-300 dark:text-slate-600 mt-0.5">
-          {n.timeLabel}
-        </p>
+        <p className="text-[10px] text-gray-300 dark:text-slate-600 mt-0.5">{n.timeLabel}</p>
       </div>
       {showDismiss && onDismiss && (
         <div
@@ -183,7 +186,8 @@ const STATUS_STYLES: Record<
 > = {
   trial: { label: 'On Trial', color: '#B45309', bg: '#FEF3C7', darkBg: '#78350F' },
   active: { label: 'Active', color: '#065F46', bg: '#D1FAE5', darkBg: '#064E3B' },
-  inactive: { label: 'Inactive', color: '#991B1B', bg: '#FEE2E2', darkBg: '#7F1D1D' }};
+  inactive: { label: 'Inactive', color: '#991B1B', bg: '#FEE2E2', darkBg: '#7F1D1D' },
+};
 
 const PAGE_TITLES: Record<string, string> = {
   '/admin': 'Dashboard',
@@ -200,7 +204,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/settings/superadmin/notifications': 'Notifications',
   '/admin/settings/superadmin/profile': 'Profile',
   '/admin/notifications': 'Notifications',
-  '/admin/profile': 'Profile'};
+  '/admin/profile': 'Profile',
+};
 
 export default function TopNavbar() {
   const pathname = usePathname();
@@ -394,7 +399,8 @@ export default function TopNavbar() {
                 className="text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 hidden md:inline"
                 style={{
                   color: statusStyle.color,
-                  backgroundColor: dark ? statusStyle.darkBg : statusStyle.bg}}
+                  backgroundColor: dark ? statusStyle.darkBg : statusStyle.bg,
+                }}
               >
                 {statusStyle.label}
               </span>
@@ -662,7 +668,9 @@ export default function TopNavbar() {
                     >
                       {adminName}
                     </p>
-                    <p className="text-gray-400 dark:text-slate-400 text-[12px] truncate">{adminEmail}</p>
+                    <p className="text-gray-400 dark:text-slate-400 text-[12px] truncate">
+                      {adminEmail}
+                    </p>
                     <span
                       className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
                       style={{ color: pc, backgroundColor: `${pc}18` }}
@@ -680,7 +688,8 @@ export default function TopNavbar() {
                   {
                     label: 'Billing & Plans',
                     href: '/admin/settings/superadmin/billing',
-                    icon: CreditCard},
+                    icon: CreditCard,
+                  },
                   { label: 'Security', href: '/admin/settings/superadmin/security', icon: Shield },
                 ].map((item) => {
                   const Icon = item.icon;
@@ -723,13 +732,16 @@ export default function TopNavbar() {
                 <p className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">
                   Church
                 </p>
-                <p className="text-[13px] font-semibold text-[#0B2A4A] dark:text-white truncate">{churchName}</p>
+                <p className="text-[13px] font-semibold text-[#0B2A4A] dark:text-white truncate">
+                  {churchName}
+                </p>
                 {mounted && (
                   <span
                     className="text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-1 inline-block"
                     style={{
                       color: statusStyle.color,
-                      backgroundColor: dark ? statusStyle.darkBg : statusStyle.bg}}
+                      backgroundColor: dark ? statusStyle.darkBg : statusStyle.bg,
+                    }}
                   >
                     {statusStyle.label}
                   </span>

@@ -7,7 +7,8 @@ const fieldClassName =
   'border border-[var(--admin-border)] bg-[var(--admin-surface)] text-foreground rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 dark:focus:ring-emerald-500/70 outline-none dark:[color-scheme:dark]';
 const panelMuted =
   'p-5 rounded-xl bg-muted/40 dark:bg-white/[0.04] border border-[var(--admin-border)]';
-const ringOffsetSurface = 'ring-offset-[var(--admin-surface)] dark:ring-offset-[var(--admin-surface)]';
+const ringOffsetSurface =
+  'ring-offset-[var(--admin-surface)] dark:ring-offset-[var(--admin-surface)]';
 
 interface FormData {
   name: string;

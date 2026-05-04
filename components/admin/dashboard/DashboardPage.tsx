@@ -8,7 +8,8 @@ import {
   Megaphone,
   PersonStanding,
   RefreshCw,
-  AlertCircle} from 'lucide-react';
+  AlertCircle,
+} from 'lucide-react';
 
 import { useAppData } from '@/components/admin/dashboard/contexts/AppDataContext';
 import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
@@ -43,7 +44,8 @@ export default function DashboardPage() {
     averageAttendance,
     apiLoading,
     apiError,
-    refetchDashboard} = useAppData();
+    refetchDashboard,
+  } = useAppData();
 
   const mounted = useIsMounted();
 
@@ -58,7 +60,8 @@ export default function DashboardPage() {
     border: dark ? '1px solid rgba(255,255,255,0.08)' : 'none',
     boxShadow: dark ? '0px 1px 6px 0px rgba(0,0,0,0.4)' : '0px 1px 4px 0px #2FC4B2',
     borderRadius: '5px',
-    overflow: 'hidden'};
+    overflow: 'hidden',
+  };
 
   const summaryLead = "Here's what's happening with your church today.";
   const summaryBody = (() => {
@@ -126,7 +129,8 @@ export default function DashboardPage() {
             weekday: 'short',
             month: 'short',
             day: 'numeric',
-            year: 'numeric'})}
+            year: 'numeric',
+          })}
         </span>
       </div>
 

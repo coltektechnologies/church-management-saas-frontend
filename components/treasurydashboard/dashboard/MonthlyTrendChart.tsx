@@ -30,12 +30,14 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  LabelList} from 'recharts';
+  LabelList,
+} from 'recharts';
 import { Settings2, X } from 'lucide-react';
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import {
   getOptions,
-  type DropdownOption} from '@/components/treasurydashboard/recordIncome/dropdownOptions';
+  type DropdownOption,
+} from '@/components/treasurydashboard/recordIncome/dropdownOptions';
 
 // ── Sub-panels ────────────────────────────────────────────────────────────────
 import ChartTypePanel, { CHART_FAMILIES } from './chartOptions/ChartTypePanel';
@@ -43,7 +45,8 @@ import CompareSeriesPanel, { PALETTE } from './chartOptions/CompareSeriesPanel';
 import DateRangePanel, {
   TREASURY_PRESETS,
   resolveTreasuryPreset,
-  type TreasuryDateRange} from './chartOptions/DateRangePanel';
+  type TreasuryDateRange,
+} from './chartOptions/DateRangePanel';
 import AppearancePanel from './chartOptions/AppearancePanel';
 import ColorSeriesPanel from './chartOptions/ColorSeriesPanel';
 
@@ -108,14 +111,16 @@ const TYPE_BASE: Record<string, number> = {
   thanksgiving: 6_200,
   harvest: 4_100,
   welfare: 2_800,
-  other: 3_500};
+  other: 3_500,
+};
 const TYPE_SEED: Record<string, number> = {
   tithe: 7341,
   offering: 2891,
   thanksgiving: 5612,
   harvest: 3309,
   welfare: 1247,
-  other: 8823};
+  other: 8823,
+};
 
 function lcg(seed: number) {
   let s = seed >>> 0 || 1;
@@ -211,7 +216,8 @@ const DEFAULT_PREFS: MtcPrefs = {
   showLabels: false,
   legendPos: 'bottom',
   showBorder: false,
-  seriesColors: {}};
+  seriesColors: {},
+};
 
 function loadPrefs(): MtcPrefs {
   if (typeof window === 'undefined') {
@@ -248,7 +254,8 @@ function ChartTooltip({
   label,
   cardBg,
   textColor,
-  liveTypes}: {
+  liveTypes,
+}: {
   active?: boolean;
   payload?: Array<{ value: number; name: string; color: string }>;
   label?: string;
@@ -267,7 +274,8 @@ function ChartTooltip({
         border: '1px solid rgba(0,0,0,0.1)',
         borderRadius: 10,
         padding: '10px 14px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)'}}
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+      }}
     >
       <p style={{ fontSize: 11, color: `${textColor}80`, marginBottom: 6, fontWeight: 600 }}>
         {label}
@@ -284,7 +292,8 @@ function ChartTooltip({
               borderRadius: '50%',
               backgroundColor: item.color,
               flexShrink: 0,
-              display: 'inline-block'}}
+              display: 'inline-block',
+            }}
           />
           <span style={{ fontSize: 11, color: `${textColor}70` }}>{getLabel(item.name)}</span>
           <span
@@ -293,7 +302,8 @@ function ChartTooltip({
               fontWeight: 700,
               color: textColor,
               marginLeft: 'auto',
-              paddingLeft: 16}}
+              paddingLeft: 16,
+            }}
           >
             ₵ {Number(item.value).toLocaleString('en-GH', { minimumFractionDigits: 0 })}
           </span>
@@ -369,7 +379,8 @@ export default function MonthlyTrendChart() {
     showLabels,
     legendPos,
     showBorder,
-    seriesColors} = prefs;
+    seriesColors,
+  } = prefs;
 
   // ── Active settings panel ─────────────────────────────────────────────────
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
@@ -458,7 +469,8 @@ export default function MonthlyTrendChart() {
       selectedTypes.map((tv, i) => ({
         name: liveTypes.find((t) => t.value === tv)?.label ?? tv,
         value: filteredData.reduce((s, row) => s + (Number(row[tv]) || 0), 0),
-        fill: seriesColors[tv] ?? PALETTE[i % PALETTE.length]})),
+        fill: seriesColors[tv] ?? PALETTE[i % PALETTE.length],
+      })),
     [selectedTypes, filteredData, liveTypes, seriesColors]
   );
 
@@ -521,7 +533,8 @@ export default function MonthlyTrendChart() {
         verticalAlign={legendPos}
         wrapperStyle={{
           fontSize: 10,
-          paddingTop: legendPos === 'bottom' ? 8 : 0}}
+          paddingTop: legendPos === 'bottom' ? 8 : 0,
+        }}
         formatter={(v) => (
           <span style={{ color: textColor, fontSize: 10 }}>{getTypeLabel(String(v))}</span>
         )}
@@ -755,10 +768,7 @@ export default function MonthlyTrendChart() {
       return (
         <RadarChart data={filteredData} margin={{ top: 8, right: 20, bottom: 8, left: 20 }}>
           <PolarGrid stroke={`${textColor}15`} />
-          <PolarAngleAxis
-            dataKey="month"
-            tick={{ fontSize: 10, fill: `${textColor}60` }}
-          />
+          <PolarAngleAxis dataKey="month" tick={{ fontSize: 10, fill: `${textColor}60` }} />
           <PolarRadiusAxis tick={false} axisLine={false} />
           <Tooltip content={tooltipContent} />
           {commonLegend}
@@ -798,7 +808,8 @@ export default function MonthlyTrendChart() {
                 ? {
                     position: 'insideStart',
                     fill: '#fff',
-                    fontSize: 10}
+                    fontSize: 10,
+                  }
                 : false
             }
           />
@@ -854,7 +865,8 @@ export default function MonthlyTrendChart() {
   const summaryTotals = selectedTypes.map((tv, i) => ({
     label: getTypeLabel(tv),
     total: filteredData.reduce((s, row) => s + (Number(row[tv]) || 0), 0),
-    color: getColor(tv, i)}));
+    color: getColor(tv, i),
+  }));
 
   const commonPanelProps = { textColor, accentColor, borderColor, isDark };
 
@@ -874,7 +886,8 @@ export default function MonthlyTrendChart() {
         border: `${showBorder ? '2px' : '1px'} solid ${showBorder ? accentColor + '60' : borderColor}`,
         borderRadius: 10,
         boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
-        overflow: 'hidden'}}
+        overflow: 'hidden',
+      }}
     >
       {/* ──────────────── HEADER ──────────────── */}
       <div
@@ -885,7 +898,8 @@ export default function MonthlyTrendChart() {
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 8}}
+          gap: 8,
+        }}
       >
         {/* Title */}
         <div style={{ minWidth: 0, flex: 1 }}>
@@ -898,7 +912,8 @@ export default function MonthlyTrendChart() {
               margin: 0,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'}}
+              whiteSpace: 'nowrap',
+            }}
           >
             {heading}
           </h3>
@@ -926,7 +941,8 @@ export default function MonthlyTrendChart() {
                   border: `1px solid ${isActive ? accentColor : borderColor}`,
                   backgroundColor: isActive ? `${accentColor}18` : 'transparent',
                   color: isActive ? accentColor : `${textColor}70`,
-                  transition: 'all 0.15s'}}
+                  transition: 'all 0.15s',
+                }}
               >
                 {isActive && <Settings2 size={10} />}
                 {btn.label}
@@ -950,7 +966,8 @@ export default function MonthlyTrendChart() {
                 border: `1px solid ${borderColor}`,
                 backgroundColor: `${textColor}08`,
                 color: `${textColor}60`,
-                transition: 'all 0.15s'}}
+                transition: 'all 0.15s',
+              }}
             >
               <X size={12} />
             </button>
@@ -964,7 +981,8 @@ export default function MonthlyTrendChart() {
           style={{
             padding: '16px 18px',
             backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FAFBFC',
-            borderBottom: `1px solid ${borderColor}`}}
+            borderBottom: `1px solid ${borderColor}`,
+          }}
         >
           {activePanel === 'chartType' && (
             <ChartTypePanel
@@ -990,7 +1008,8 @@ export default function MonthlyTrendChart() {
                       ? p.selectedTypes.length > 1
                         ? p.selectedTypes.filter((v) => v !== value)
                         : p.selectedTypes
-                      : [...p.selectedTypes, value]};
+                      : [...p.selectedTypes, value],
+                  };
                 })
               }
               {...commonPanelProps}
@@ -1038,7 +1057,8 @@ export default function MonthlyTrendChart() {
               onColorReset={(tv, idx) =>
                 setPrefs((p) => ({
                   ...p,
-                  seriesColors: { ...p.seriesColors, [tv]: PALETTE[idx % PALETTE.length] }}))
+                  seriesColors: { ...p.seriesColors, [tv]: PALETTE[idx % PALETTE.length] },
+                }))
               }
               {...commonPanelProps}
             />
@@ -1059,12 +1079,11 @@ export default function MonthlyTrendChart() {
               gap: 8,
               border: `1px dashed ${borderColor}`,
               borderRadius: 8,
-              backgroundColor: `${textColor}04`}}
+              backgroundColor: `${textColor}04`,
+            }}
           >
             <span style={{ fontSize: 28, opacity: 0.2 }}>📊</span>
-            <p
-              style={{ fontSize: 12, color: `${textColor}50` }}
-            >
+            <p style={{ fontSize: 12, color: `${textColor}50` }}>
               Select at least one income series above
             </p>
           </div>
@@ -1090,7 +1109,8 @@ export default function MonthlyTrendChart() {
                 padding: '7px 12px',
                 borderRadius: 8,
                 border: `1px solid ${s.color}30`,
-                backgroundColor: `${s.color}08`}}
+                backgroundColor: `${s.color}08`,
+              }}
             >
               <span
                 style={{
@@ -1099,7 +1119,8 @@ export default function MonthlyTrendChart() {
                   borderRadius: '50%',
                   backgroundColor: s.color,
                   flexShrink: 0,
-                  display: 'inline-block'}}
+                  display: 'inline-block',
+                }}
               />
               <div>
                 <div
@@ -1108,7 +1129,8 @@ export default function MonthlyTrendChart() {
                     color: `${textColor}60`,
                     fontWeight: 700,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.05em'}}
+                    letterSpacing: '0.05em',
+                  }}
                 >
                   {s.label}
                 </div>
@@ -1117,7 +1139,8 @@ export default function MonthlyTrendChart() {
                     fontSize: 13,
                     fontWeight: 700,
                     color: textColor,
-                    fontFamily: "'Poppins',sans-serif"}}
+                    fontFamily: "'Poppins',sans-serif",
+                  }}
                 >
                   ₵&nbsp;{s.total.toLocaleString('en-GH', { minimumFractionDigits: 0 })}
                 </div>
@@ -1131,7 +1154,8 @@ export default function MonthlyTrendChart() {
                 color: `${textColor}40`,
                 fontWeight: 600,
                 letterSpacing: '0.04em',
-                textTransform: 'uppercase'}}
+                textTransform: 'uppercase',
+              }}
             >
               {rangeSummaryLabel}
             </span>
