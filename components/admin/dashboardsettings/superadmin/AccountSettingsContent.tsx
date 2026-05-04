@@ -25,7 +25,6 @@ import NotificationTab from './NotificationTab';
 import SecurityTab from './SecurityTab';
 import SystemPreferencesTab from './SystemPreferencesTab';
 import ColorThemeSettings from './ColorThemeSettings';
-import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 
 const TABS = [
   { key: 'profile', label: 'My Profile', icon: User },
@@ -54,7 +53,6 @@ const TAB_CONTENT: Record<string, React.ReactNode> = {
 };
 
 const AccountSettingsContent = () => {
-  const { profile } = useChurchProfile();
   const [activeTab, setActiveTab] = useState('profile');
   const [mobileOpen, setMobileOpen] = useState(false);
 
