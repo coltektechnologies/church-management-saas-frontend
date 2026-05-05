@@ -117,6 +117,7 @@ export default function AdminTreasuryBudgetAllocationPage() {
 
   const depts = data?.departments;
   const sumEffective = depts ? depts.reduce((s, r) => s + effectiveAllocated(r, overrides), 0) : 0;
+  const savedAdminEnvelopeSum = data?.totals?.admin_allocated_sum ?? 0;
 
   const years = useMemo(() => fiscalYearOptions(), []);
 
@@ -293,7 +294,7 @@ export default function AdminTreasuryBudgetAllocationPage() {
                 <span className="break-words">
                   Sum of admin envelopes (saved):{' '}
                   <strong className="text-foreground tabular-nums">
-                    {formatCurrency(data?.totals?.admin_allocated_sum ?? 0)}
+                    {formatCurrency(savedAdminEnvelopeSum)}
                   </strong>
                 </span>
                 <span className="break-words">
