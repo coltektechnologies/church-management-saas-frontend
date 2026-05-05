@@ -293,7 +293,7 @@ export default function AdminTreasuryBudgetAllocationPage() {
                 <span className="break-words">
                   Sum of admin envelopes (saved):{' '}
                   <strong className="text-foreground tabular-nums">
-                    {formatCurrency(data.totals.admin_allocated_sum)}
+                    {formatCurrency(data?.totals?.admin_allocated_sum ?? 0)}
                   </strong>
                 </span>
                 <span className="break-words">
