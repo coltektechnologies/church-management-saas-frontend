@@ -21,7 +21,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { createMember, CreateMemberPayload, getMemberStats } from '@/lib/api';
+import {
+  createMember,
+  CreateMemberPayload,
+  checkRegistrationEmail,
+  getMemberStats,
+} from '@/lib/api';
 import {
   sanitizePersonNameInput,
   sanitizeNoDigits,
@@ -34,6 +39,7 @@ import { getChurch, getChurchId } from '@/lib/settingsApi';
 import CountryCodeInput from '@/components/SignupLogin/CountryCodeInput';
 import { toast } from 'sonner';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
+import { useDebouncedRegistrationEmail } from '@/hooks/useDebouncedRegistrationEmail';
 
 const TITLES = [
   { value: 'Mr', label: 'Mr' },
@@ -223,6 +229,13 @@ export default function AddMemberPage() {
 
   const requireDepartmentInterest = departments.length > 0;
 
+  const {
+    remoteError: emailRemoteError,
+    checking: emailChecking,
+    flushVerify: flushEmailVerify,
+    canProceedEmail,
+  } = useDebouncedRegistrationEmail(form.email, 'admin');
+
   const loadDepartments = useCallback(() => {
     setDepartmentsLoading(true);
     setDepartmentsError(null);
@@ -357,6 +370,17 @@ export default function AddMemberPage() {
       setError(msg);
       toast.error('Invalid email', { description: msg });
       return;
+    }
+    if (emailTrim) {
+      const check = await checkRegistrationEmail(emailTrim, 'admin');
+      if (!check.ok) {
+        const msg =
+          check.message ||
+          'This email cannot be used. It may already be registered or the domain may be invalid.';
+        setError(msg);
+        toast.error('Email verification failed', { description: msg });
+        return;
+      }
     }
 
     const primaryPhoneErr = getSignupPhoneError(form.phone_number, phoneCountryIso);
@@ -604,9 +628,6 @@ export default function AddMemberPage() {
                         className={`pl-9 ${invalid('first_name') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         autoComplete="given-name"
                       />
-                      <p className="text-[11px] text-muted-foreground">
-                        Letters only — numbers are removed.
-                      </p>
                       {invalid('first_name') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                     <div className="space-y-2">
@@ -618,9 +639,6 @@ export default function AddMemberPage() {
                         className="pl-9"
                         autoComplete="additional-name"
                       />
-                      <p className="text-[11px] text-muted-foreground">
-                        Letters only — numbers are removed.
-                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label>Last Name *</Label>
@@ -632,9 +650,6 @@ export default function AddMemberPage() {
                         className={`pl-9 ${invalid('last_name') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         autoComplete="family-name"
                       />
-                      <p className="text-[11px] text-muted-foreground">
-                        Letters only — numbers are removed.
-                      </p>
                       {invalid('last_name') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                   </div>
@@ -809,14 +824,40 @@ export default function AddMemberPage() {
                           placeholder="opendoor@gmail.com"
                           value={form.email}
                           onChange={(e) => update('email', e.target.value)}
-                          onBlur={() => markTouched('email')}
-                          className={`pl-9 ${invalid('email') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          onBlur={() => {
+                            markTouched('email');
+                            flushEmailVerify();
+                          }}
+                          className={`pl-9 ${
+                            invalid('email') || emailRemoteError
+                              ? 'border-red-500 focus-visible:ring-red-500'
+                              : ''
+                          }`}
                           autoComplete="email"
+                          aria-invalid={invalid('email') || !!emailRemoteError}
                         />
                       </div>
+                      {emailChecking &&
+                        form.email.trim() &&
+                        isValidSignupEmail(form.email.trim()) && (
+                          <p className="text-xs text-muted-foreground">Verifying email…</p>
+                        )}
                       {invalid('email') && (
                         <p className="text-xs text-red-600">Enter a valid email address.</p>
                       )}
+                      {!invalid('email') && emailRemoteError && (
+                        <p className="text-xs text-red-600">{emailRemoteError}</p>
+                      )}
+                      {!invalid('email') &&
+                        !emailRemoteError &&
+                        !emailChecking &&
+                        form.email.trim() &&
+                        isValidSignupEmail(form.email.trim()) &&
+                        canProceedEmail && (
+                          <p className="text-xs text-emerald-700">
+                            Email verified for this account.
+                          </p>
+                        )}
                     </div>
                     <div className="space-y-2">
                       <Label>Occupation *</Label>
@@ -831,9 +872,6 @@ export default function AddMemberPage() {
                           autoComplete="organization-title"
                         />
                       </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        Letters and spaces only — numbers are removed.
-                      </p>
                       {invalid('occupation') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                   </div>
