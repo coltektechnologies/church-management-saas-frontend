@@ -1,16 +1,19 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { useTreasuryProfile } from '@/components/treasurydashboard/contexts/TreasuryProfileContext';
 import WelcomeHeader from '@/components/treasurydashboard/dashboard/WelcomeHeader';
 import KPICard from '@/components/treasurydashboard/dashboard/KPICard';
 import {
+  useDepartmentBudgets,
   useIncomeBreakdown,
   useMemberContributions,
   useMonthlyTrend,
   useRecentTransactions,
   useTreasurySummary,
 } from '@/hooks/useTreasury';
+import { DepartmentBudgets } from '@/components/treasury/DepartmentBudgets';
 import { formatCurrency } from '@/services/treasuryService';
 
 const TreasuryMonthlyTrendApi = dynamic(
@@ -136,6 +139,7 @@ export default function TreasuryDashboard() {
   const { data: recentTx = [], isLoading: loadingTx } = useRecentTransactions(filters);
   const { data: incomeBreakdown = [] } = useIncomeBreakdown(filters);
   const { data: members = [], isLoading: loadingMembers } = useMemberContributions(filters);
+  const { data: deptBudgets, isLoading: loadingDeptBudgets } = useDepartmentBudgets();
 
   const isDark = isReady ? profile.darkMode : false;
   const bgColor = isDark ? profile.darkBackgroundColor || '#0A1628' : '#F5F7FA';
@@ -262,6 +266,21 @@ export default function TreasuryDashboard() {
         <div className="td-row td-row-bottom">
           <IncomeExpenseChart apiMonthlySeries={iecFromTrend} isLoadingApi={loadingTrend} />
           <RecentTransactions apiTransactions={recentTx} isLoadingApi={loadingTx} />
+        </div>
+
+        {/* Same API as admin treasury: "allocated" prefers admin top-down envelope for the fiscal year when set */}
+        <div
+          className="mt-1"
+          style={
+            {
+              '--admin-surface': cardBg,
+              '--admin-border': isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              '--admin-text': textColor,
+              '--admin-text-muted': isDark ? 'rgba(255,255,255,0.55)' : '#64748B',
+            } as CSSProperties
+          }
+        >
+          <DepartmentBudgets data={deptBudgets} isLoading={loadingDeptBudgets} />
         </div>
       </div>
     </>

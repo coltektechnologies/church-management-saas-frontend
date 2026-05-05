@@ -7,6 +7,36 @@ export function sanitizePersonNameInput(value: string): string {
   return value.replace(/\d/g, '');
 }
 
+/** Strips digits (e.g. occupation — letters only). */
+export function sanitizeNoDigits(value: string): string {
+  return value.replace(/\d/g, '');
+}
+
+/**
+ * Map church `country` from API (often ISO alpha-2 or English name) to ISO alpha-2 for libphonenumber.
+ * Defaults to GH when unknown so phone validation still runs.
+ */
+export function resolveCountryToIsoAlpha2(country: string | undefined | null): string {
+  if (!country?.trim()) {
+    return 'GH';
+  }
+  const t = country.trim();
+  if (/^[A-Za-z]{2}$/.test(t)) {
+    return t.toUpperCase();
+  }
+  const map: Record<string, string> = {
+    Ghana: 'GH',
+    Nigeria: 'NG',
+    Kenya: 'KE',
+    Canada: 'CA',
+    India: 'IN',
+    'United States': 'US',
+    'United Kingdom': 'GB',
+    'South Africa': 'ZA',
+  };
+  return map[t] ?? 'GH';
+}
+
 const emailSchema = z.string().trim().email();
 
 export function isValidSignupEmail(value: string): boolean {

@@ -16,6 +16,29 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { PRICING_PLANS } from '@/components/PricingSection';
+import { initializePaystackCheckout } from '@/lib/subscriptionPaymentsApi';
+
+/** Matches backend Church.subscription_plan codes */
+const BACKEND_PLAN: Record<string, 'FREE' | 'BASIC' | 'PREMIUM' | 'ENTERPRISE'> = {
+  free: 'FREE',
+  basic: 'BASIC',
+  premium: 'PREMIUM',
+  enterprise: 'ENTERPRISE',
+};
+
+function amountGhs(
+  plan: (typeof PRICING_PLANS)[number],
+  billingPeriod: 'monthly' | 'annual'
+): number {
+  if (plan.monthlyPrice === '0') {
+    return 0;
+  }
+  if (billingPeriod === 'monthly') {
+    return Number(plan.monthlyPrice);
+  }
+  const yearly = Number(plan.yearlyPrice);
+  return Math.round(yearly * 0.8 * 100) / 100;
+}
 
 // Map plan id → display info (matches PRICING_PLANS exactly)
 const PLAN_META: Record<string, { icon: typeof Zap; color: string }> = {
@@ -39,11 +62,58 @@ export default function BillingPage() {
     if (planId === currentPlanId) {
       return;
     }
+    const plan = PRICING_PLANS.find((p) => p.id === planId);
+    if (!plan) {
+      return;
+    }
+
+    const amt = amountGhs(plan, billing);
+    const backendCode = BACKEND_PLAN[planId];
+
+    // Free tier: no Paystack — update local profile only
+    if (amt <= 0 || planId === 'free') {
+      setLoading(planId);
+      try {
+        await new Promise((r) => setTimeout(r, 300));
+        updateProfile({ subscribedPlan: planId } as Parameters<typeof updateProfile>[0]);
+        toast.success('Plan updated', { description: `You are now on the ${plan.title} plan.` });
+      } finally {
+        setLoading(null);
+      }
+      return;
+    }
+
+    const email = profile.adminEmail?.trim();
+    if (!email) {
+      toast.error('Add your email in profile settings before paying.');
+      return;
+    }
+
+    if (!backendCode) {
+      toast.error('Unknown plan.');
+      return;
+    }
+
     setLoading(planId);
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(null);
-    updateProfile({ subscribedPlan: planId } as Parameters<typeof updateProfile>[0]);
-    toast.success('Plan updated', { description: `You are now on the ${planId} plan.` });
+    try {
+      const { authorization_url } = await initializePaystackCheckout({
+        amount: amt,
+        email,
+        redirect_path: '/admin/settings/superadmin/billing',
+        metadata: {
+          subscription_plan: backendCode,
+          billing_cycle: billing === 'monthly' ? 'MONTHLY' : 'YEARLY',
+          frontend_plan_id: planId,
+        },
+      });
+      toast.message('Redirecting to Paystack…', {
+        description: 'Complete payment on the secure Paystack page.',
+      });
+      window.location.assign(authorization_url);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not open Paystack checkout');
+      setLoading(null);
+    }
   };
 
   return (
@@ -225,10 +295,14 @@ export default function BillingPage() {
                   }}
                 >
                   {loading === plan.id
-                    ? 'Updating...'
+                    ? plan.monthlyPrice === '0'
+                      ? 'Updating...'
+                      : 'Opening Paystack...'
                     : isCurrent
                       ? 'Current Plan'
-                      : `Switch to ${plan.title}`}
+                      : plan.monthlyPrice === '0'
+                        ? `Switch to ${plan.title}`
+                        : `Pay with Paystack — ${plan.title}`}
                 </Button>
               </div>
             </div>

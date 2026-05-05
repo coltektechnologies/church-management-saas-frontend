@@ -98,6 +98,7 @@ export default function TreasuryPage() {
           <Button
             variant="default"
             className="bg-[var(--primary-brand,#082f49)] hover:opacity-90 text-white gap-2 cursor-pointer font-medium rounded-md px-6 shadow-sm"
+            onClick={() => router.push('/admin/treasury/budget-allocation')}
           >
             <PlusCircle className="size-4" /> Create Budget
           </Button>

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   User,
-  Phone,
   Mail,
   Briefcase,
   Home,
@@ -23,8 +22,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { createMember, CreateMemberPayload, getMemberStats } from '@/lib/api';
-import { sanitizePersonNameInput } from '@/lib/signupValidation';
+import {
+  sanitizePersonNameInput,
+  sanitizeNoDigits,
+  resolveCountryToIsoAlpha2,
+  getSignupPhoneError,
+  isValidSignupEmail,
+} from '@/lib/signupValidation';
 import { fetchDepartmentsList, type DepartmentListRow } from '@/lib/departmentsApi';
+import { getChurch, getChurchId } from '@/lib/settingsApi';
+import CountryCodeInput from '@/components/SignupLogin/CountryCodeInput';
 import { toast } from 'sonner';
 import { useMembersPortal } from '@/components/admin/membership/MembersPortalContext';
 
@@ -132,6 +139,7 @@ type TouchedKeys = keyof Pick<
   | 'emergency_contact_relationship'
   | 'emergency_contact_phone'
   | 'phone_number'
+  | 'email'
   | 'occupation'
   | 'residential_address'
   | 'city'
@@ -173,6 +181,16 @@ function isFieldInvalid(
   if (key === 'custom_region') {
     return form.region === 'Other' && !form.custom_region.trim();
   }
+  if (key === 'email') {
+    if (!touched.email) {
+      return false;
+    }
+    const v = form.email.trim();
+    if (!v) {
+      return false;
+    }
+    return !isValidSignupEmail(v);
+  }
   if (key === 'interested_departments') {
     return requireDepartmentInterest && form.interested_departments.length === 0;
   }
@@ -199,6 +217,9 @@ export default function AddMemberPage() {
   const [departments, setDepartments] = useState<DepartmentListRow[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+  const [churchCountryRaw, setChurchCountryRaw] = useState<string | undefined>(undefined);
+
+  const phoneCountryIso = resolveCountryToIsoAlpha2(churchCountryRaw);
 
   const requireDepartmentInterest = departments.length > 0;
 
@@ -227,14 +248,33 @@ export default function AddMemberPage() {
     loadDepartments();
   }, [loadDepartments]);
 
+  useEffect(() => {
+    const id = getChurchId();
+    if (!id) {
+      return;
+    }
+    getChurch(id)
+      .then((c) => setChurchCountryRaw(typeof c?.country === 'string' ? c.country : undefined))
+      .catch(() => setChurchCountryRaw(undefined));
+  }, []);
+
   const markTouched = (key: TouchedKeys) => {
     setTouched((prev) => ({ ...prev, [key]: true }));
   };
 
   const update = (key: keyof typeof form, value: string | boolean | string[]) => {
     let next = value;
-    if ((key === 'first_name' || key === 'last_name') && typeof value === 'string') {
+    if (
+      (key === 'first_name' ||
+        key === 'middle_name' ||
+        key === 'last_name' ||
+        key === 'emergency_contact_full_name') &&
+      typeof value === 'string'
+    ) {
       next = sanitizePersonNameInput(value);
+    }
+    if (key === 'occupation' && typeof value === 'string') {
+      next = sanitizeNoDigits(value);
     }
     setForm((prev) => ({ ...prev, [key]: next }));
     setError('');
@@ -311,6 +351,27 @@ export default function AddMemberPage() {
       return;
     }
 
+    const emailTrim = form.email.trim();
+    if (emailTrim && !isValidSignupEmail(emailTrim)) {
+      const msg = 'Enter a valid email address.';
+      setError(msg);
+      toast.error('Invalid email', { description: msg });
+      return;
+    }
+
+    const primaryPhoneErr = getSignupPhoneError(form.phone_number, phoneCountryIso);
+    if (primaryPhoneErr) {
+      setError(primaryPhoneErr);
+      toast.error('Primary phone', { description: primaryPhoneErr });
+      return;
+    }
+    const emergencyPhoneErr = getSignupPhoneError(form.emergency_contact_phone, phoneCountryIso);
+    if (emergencyPhoneErr) {
+      setError(emergencyPhoneErr);
+      toast.error('Emergency contact phone', { description: emergencyPhoneErr });
+      return;
+    }
+
     const payload: CreateMemberPayload = {
       title: form.title,
       first_name: form.first_name,
@@ -320,8 +381,8 @@ export default function AddMemberPage() {
       date_of_birth: form.date_of_birth,
       marital_status: form.marital_status as CreateMemberPayload['marital_status'],
       national_id: form.national_id,
-      phone_number: form.phone_number,
-      email: form.email || undefined,
+      phone_number: form.phone_number.trim(),
+      email: emailTrim || undefined,
       occupation: form.occupation,
       residential_address: form.residential_address,
       city: form.city,
@@ -330,7 +391,7 @@ export default function AddMemberPage() {
       emergency_contact: {
         full_name: form.emergency_contact_full_name,
         relationship: form.emergency_contact_relationship,
-        phone_number: form.emergency_contact_phone,
+        phone_number: form.emergency_contact_phone.trim(),
       },
       member_since: form.member_since,
       membership_status: form.membership_status as CreateMemberPayload['membership_status'],
@@ -541,7 +602,11 @@ export default function AddMemberPage() {
                         onChange={(e) => update('first_name', e.target.value)}
                         onBlur={() => markTouched('first_name')}
                         className={`pl-9 ${invalid('first_name') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        autoComplete="given-name"
                       />
+                      <p className="text-[11px] text-muted-foreground">
+                        Letters only — numbers are removed.
+                      </p>
                       {invalid('first_name') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                     <div className="space-y-2">
@@ -551,7 +616,11 @@ export default function AddMemberPage() {
                         value={form.middle_name}
                         onChange={(e) => update('middle_name', e.target.value)}
                         className="pl-9"
+                        autoComplete="additional-name"
                       />
+                      <p className="text-[11px] text-muted-foreground">
+                        Letters only — numbers are removed.
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label>Last Name *</Label>
@@ -561,7 +630,11 @@ export default function AddMemberPage() {
                         onChange={(e) => update('last_name', e.target.value)}
                         onBlur={() => markTouched('last_name')}
                         className={`pl-9 ${invalid('last_name') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        autoComplete="family-name"
                       />
+                      <p className="text-[11px] text-muted-foreground">
+                        Letters only — numbers are removed.
+                      </p>
                       {invalid('last_name') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                   </div>
@@ -657,16 +730,32 @@ export default function AddMemberPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Phone Number *</Label>
-                    <Input
-                      placeholder="Phone Number"
+                    <CountryCodeInput
                       value={form.emergency_contact_phone}
-                      onChange={(e) => update('emergency_contact_phone', e.target.value)}
+                      onChange={(val) => update('emergency_contact_phone', val)}
                       onBlur={() => markTouched('emergency_contact_phone')}
-                      className={`pl-9 ${invalid('emergency_contact_phone') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      defaultCountryIso={phoneCountryIso}
+                      placeholder="000 000 0000"
+                      error={
+                        !!(
+                          invalid('emergency_contact_phone') ||
+                          (touched.emergency_contact_phone &&
+                            form.emergency_contact_phone.trim() &&
+                            getSignupPhoneError(form.emergency_contact_phone, phoneCountryIso))
+                        )
+                      }
+                      className="rounded-none border-[#DDDDDD]"
                     />
                     {invalid('emergency_contact_phone') && (
                       <p className="text-xs text-red-600">Required</p>
                     )}
+                    {touched.emergency_contact_phone &&
+                      form.emergency_contact_phone.trim() &&
+                      getSignupPhoneError(form.emergency_contact_phone, phoneCountryIso) && (
+                        <p className="text-xs text-red-600">
+                          {getSignupPhoneError(form.emergency_contact_phone, phoneCountryIso)}
+                        </p>
+                      )}
                   </div>
                 </div>
               </section>
@@ -686,17 +775,30 @@ export default function AddMemberPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>Primary Phone *</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                          placeholder="+233 596 038 258"
-                          value={form.phone_number}
-                          onChange={(e) => update('phone_number', e.target.value)}
-                          onBlur={() => markTouched('phone_number')}
-                          className={`pl-9 ${invalid('phone_number') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                        />
-                      </div>
+                      <CountryCodeInput
+                        value={form.phone_number}
+                        onChange={(val) => update('phone_number', val)}
+                        onBlur={() => markTouched('phone_number')}
+                        defaultCountryIso={phoneCountryIso}
+                        placeholder="000 000 0000"
+                        error={
+                          !!(
+                            invalid('phone_number') ||
+                            (touched.phone_number &&
+                              form.phone_number.trim() &&
+                              getSignupPhoneError(form.phone_number, phoneCountryIso))
+                          )
+                        }
+                        className="rounded-none border-[#DDDDDD]"
+                      />
                       {invalid('phone_number') && <p className="text-xs text-red-600">Required</p>}
+                      {touched.phone_number &&
+                        form.phone_number.trim() &&
+                        getSignupPhoneError(form.phone_number, phoneCountryIso) && (
+                          <p className="text-xs text-red-600">
+                            {getSignupPhoneError(form.phone_number, phoneCountryIso)}
+                          </p>
+                        )}
                     </div>
                     <div className="space-y-2">
                       <Label>Email Address</Label>
@@ -707,9 +809,14 @@ export default function AddMemberPage() {
                           placeholder="opendoor@gmail.com"
                           value={form.email}
                           onChange={(e) => update('email', e.target.value)}
-                          className="pl-9"
+                          onBlur={() => markTouched('email')}
+                          className={`pl-9 ${invalid('email') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          autoComplete="email"
                         />
                       </div>
+                      {invalid('email') && (
+                        <p className="text-xs text-red-600">Enter a valid email address.</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label>Occupation *</Label>
@@ -721,8 +828,12 @@ export default function AddMemberPage() {
                           onChange={(e) => update('occupation', e.target.value)}
                           onBlur={() => markTouched('occupation')}
                           className={`pl-9 ${invalid('occupation') ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          autoComplete="organization-title"
                         />
                       </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Letters and spaces only — numbers are removed.
+                      </p>
                       {invalid('occupation') && <p className="text-xs text-red-600">Required</p>}
                     </div>
                   </div>

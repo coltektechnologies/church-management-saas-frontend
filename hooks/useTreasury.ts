@@ -79,10 +79,10 @@ export function useMemberContributions(filters?: TreasuryFilters) {
   });
 }
 
-export function useDepartmentBudgets() {
+export function useDepartmentBudgets(fiscalYear?: number) {
   return useQuery({
-    queryKey: ['treasury', 'department-budgets'],
-    queryFn: fetchDepartmentBudgets,
+    queryKey: ['treasury', 'department-budgets', fiscalYear ?? 'current'],
+    queryFn: () => fetchDepartmentBudgets(fiscalYear),
   });
 }
 

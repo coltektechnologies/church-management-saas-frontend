@@ -412,39 +412,52 @@ export default function TopNavbar() {
           </button>
 
           {statusOpen && (
-            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-52 bg-white dark:bg-[#253347] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-[min(100vw-1.5rem,17rem)] max-w-[17rem] bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
               <p className="px-4 pt-3 pb-1 text-gray-400 dark:text-slate-500 uppercase text-[10px] font-semibold tracking-widest">
                 Subscription
               </p>
-              {(
-                Object.entries(STATUS_STYLES) as [
-                  SubscriptionStatus,
-                  (typeof STATUS_STYLES)[SubscriptionStatus],
-                ][]
-              ).map(([key, val]) => (
-                <div
-                  key={key}
-                  className={`flex items-center justify-between px-4 py-2.5 ${statusKey === key ? 'bg-gray-50 dark:bg-white/5' : ''}`}
-                >
-                  <span className="text-[#0B2A4A] dark:text-white capitalize text-[13px] font-medium">
-                    {key}
-                  </span>
-                  <span
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                    style={{ color: val.color, backgroundColor: dark ? val.darkBg : val.bg }}
-                  >
-                    {val.label}
-                  </span>
+              <div className="px-4 py-3 space-y-3">
+                <div className="space-y-2">
+                  <p className="text-[11px] font-medium text-gray-500 dark:text-slate-400">
+                    Current status
+                  </p>
+                  {mounted ? (
+                    <div className="flex flex-col gap-2">
+                      <span
+                        className="inline-flex w-fit max-w-full items-center rounded-full px-3 py-1.5 text-[12px] font-bold leading-none"
+                        style={{
+                          color: statusStyle.color,
+                          backgroundColor: dark ? statusStyle.darkBg : statusStyle.bg,
+                        }}
+                      >
+                        {statusStyle.label}
+                      </span>
+                      <span className="text-[11px] text-[#0B2A4A] dark:text-slate-300 leading-relaxed">
+                        {statusKey === 'trial' && 'Your church is on a trial subscription.'}
+                        {statusKey === 'active' && 'Your church has an active subscription.'}
+                        {statusKey === 'inactive' && 'Your church subscription is inactive.'}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-[12px] text-muted-foreground">Loading…</span>
+                  )}
                 </div>
-              ))}
+                <p className="text-[11px] text-gray-500 dark:text-slate-400 leading-snug pt-2 border-t border-gray-100 dark:border-white/10">
+                  Plan and billing for{' '}
+                  <span className="font-medium text-[#0B2A4A] dark:text-slate-200 break-words">
+                    {churchName}
+                  </span>
+                  .
+                </p>
+              </div>
               <div className="px-4 py-3 border-t border-gray-100 dark:border-white/10">
                 <Link
                   href="/admin/settings/superadmin/billing"
                   onClick={() => setStatusOpen(false)}
-                  className="flex items-center gap-2 text-[12px] font-semibold hover:underline"
-                  style={{ color: pc }}
+                  className="flex items-center gap-2 text-[12px] font-semibold hover:underline text-[#0B2A4A] dark:text-white"
+                  style={!dark ? { color: pc } : undefined}
                 >
-                  <CreditCard size={13} /> Manage Subscription
+                  <CreditCard size={13} className="shrink-0 opacity-90" /> Manage Subscription
                 </Link>
               </div>
             </div>

@@ -550,10 +550,17 @@ export async function getMemberContributions(params?: {
 }
 
 /** GET /api/analytics/finance/department-budgets/ */
-export async function getDepartmentBudgets(): Promise<DepartmentBudgetsResponse | null> {
+export async function getDepartmentBudgets(
+  fiscalYear?: number
+): Promise<DepartmentBudgetsResponse | null> {
   const base = getApiBaseUrl();
+  const sp = new URLSearchParams();
+  if (fiscalYear !== undefined && fiscalYear !== null) {
+    sp.set('fiscal_year', String(fiscalYear));
+  }
+  const qs = sp.toString();
   return fetchAuthSafe<DepartmentBudgetsResponse>(
-    `${base}/analytics/finance/department-budgets/`,
+    `${base}/analytics/finance/department-budgets/${qs ? `?${qs}` : ''}`,
     undefined,
     null
   );

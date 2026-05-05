@@ -413,8 +413,8 @@ export async function fetchMemberContributions(
   }));
 }
 
-export async function fetchDepartmentBudgets(): Promise<DepartmentBudget[]> {
-  const res = await treasuryApi.getDepartmentBudgets();
+export async function fetchDepartmentBudgets(fiscalYear?: number): Promise<DepartmentBudget[]> {
+  const res = await treasuryApi.getDepartmentBudgets(fiscalYear);
   if (!res?.departments?.length) {
     return [];
   }

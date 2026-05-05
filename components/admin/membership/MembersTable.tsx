@@ -94,6 +94,120 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
+function escapeHtml(s: string): string {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escapeCsvCell(val: string): string {
+  const str = String(val ?? '');
+  if (/[",\n\r]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+function fmtMemberSinceExport(iso: string): string {
+  if (!iso) {
+    return '';
+  }
+  try {
+    return format(new Date(iso), 'yyyy-MM-dd');
+  } catch {
+    return iso;
+  }
+}
+
+function exportMembersCSV(rows: MemberRow[]) {
+  const hdr = [
+    'Name',
+    'Member ID',
+    'Phone',
+    'Email',
+    'Department',
+    'Role',
+    'Status',
+    'Member Since',
+  ];
+  const lines = [
+    hdr.join(','),
+    ...rows.map((m) =>
+      [
+        escapeCsvCell(m.name),
+        escapeCsvCell(m.memberId),
+        escapeCsvCell(m.phone),
+        escapeCsvCell(m.email),
+        escapeCsvCell(m.department),
+        escapeCsvCell(m.role),
+        escapeCsvCell(String(m.status)),
+        escapeCsvCell(fmtMemberSinceExport(m.memberSince)),
+      ].join(',')
+    ),
+  ].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines], { type: 'text/csv;charset=utf-8;' }));
+  a.download = 'members.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportMembersPDF(rows: MemberRow[]) {
+  const body = rows
+    .map(
+      (m) => `<tr>
+    <td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.memberId)}</td><td>${escapeHtml(m.phone)}</td><td>${escapeHtml(m.email)}</td>
+    <td>${escapeHtml(m.department)}</td><td>${escapeHtml(m.role)}</td><td>${escapeHtml(String(m.status))}</td><td>${escapeHtml(fmtMemberSinceExport(m.memberSince))}</td>
+  </tr>`
+    )
+    .join('');
+  const win = window.open('', '_blank', 'width=1000,height=700');
+  if (!win) {
+    toast.error('Allow pop-ups to export PDF.');
+    return;
+  }
+  win.document.write(`<!DOCTYPE html><html><head><title>Members Export</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:10px;padding:24px;color:#111}
+  h2{font-size:15px;margin-bottom:14px;color:#0B2A4A}table{border-collapse:collapse;width:100%}
+  th{background:#0B2A4A;color:#fff;padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+  td{padding:6px 9px;border-bottom:1px solid #E5E7EB;font-size:9px}tr:nth-child(even) td{background:#F8F9FA}
+  .btn{display:inline-block;margin-top:18px;padding:8px 22px;background:#2FC4B2;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer}
+  @media print{.btn{display:none}}</style></head><body><h2>All Members</h2>
+  <table><thead><tr><th>Name</th><th>Member ID</th><th>Phone</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th><th>Member Since</th></tr></thead>
+  <tbody>${body}</tbody></table>
+  <button class="btn" onclick="window.print()">Print / Save as PDF</button></body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 400);
+}
+
+async function exportMembersExcel(rows: MemberRow[]) {
+  try {
+    const XLSX = await import('xlsx');
+    const data: (string | number)[][] = [
+      ['Name', 'Member ID', 'Phone', 'Email', 'Department', 'Role', 'Status', 'Member Since'],
+      ...rows.map((m) => [
+        m.name,
+        m.memberId,
+        m.phone,
+        m.email,
+        m.department,
+        m.role,
+        m.status,
+        fmtMemberSinceExport(m.memberSince),
+      ]),
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Members');
+    XLSX.writeFile(wb, 'members.xlsx');
+  } catch {
+    exportMembersCSV(rows);
+    toast.message('Excel unavailable; downloaded CSV instead.');
+  }
+}
+
 export interface MembersTableProps {
   filters?: MemberFilterState;
 }
@@ -111,6 +225,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [smsRecipientIds, setSmsRecipientIds] = useState<string[]>([]);
   const [emailRecipientIds, setEmailRecipientIds] = useState<string[]>([]);
 
@@ -274,6 +389,32 @@ export default function MembersTable({ filters }: MembersTableProps) {
     openDeleteForIds(Array.from(selectedIds));
   };
 
+  const handleExportAll = (fmt: 'csv' | 'pdf' | 'excel') => {
+    const rows = filteredMembers;
+    if (rows.length === 0) {
+      toast.error('No members to export');
+      return;
+    }
+    if (fmt === 'csv') {
+      exportMembersCSV(rows);
+    } else if (fmt === 'pdf') {
+      exportMembersPDF(rows);
+    } else {
+      void exportMembersExcel(rows);
+    }
+    toast.success(`Exported ${rows.length} member${rows.length === 1 ? '' : 's'}`);
+  };
+
+  const handleExportSelected = () => {
+    const rows = filteredMembers.filter((m) => selectedIds.has(m.id));
+    if (rows.length === 0) {
+      toast.error('Select at least one member');
+      return;
+    }
+    exportMembersCSV(rows);
+    toast.success(`Exported ${rows.length} member${rows.length === 1 ? '' : 's'}`);
+  };
+
   const smsRecipients = smsRecipientIds
     .map((rid) => members.find((m) => m.id === rid))
     .filter((m): m is MemberRow => Boolean(m))
@@ -341,6 +482,90 @@ export default function MembersTable({ filters }: MembersTableProps) {
     </div>
   );
 
+  const renderMemberCard = (member: MemberRow) => (
+    <div
+      key={member.id}
+      className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-sm dark:shadow-none space-y-3 min-w-0"
+    >
+      <div className="flex items-start gap-3 min-w-0">
+        <input
+          type="checkbox"
+          className="h-5 w-5 min-w-5 shrink-0 mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+          checked={selectedIds.has(member.id)}
+          onChange={() => toggleMember(member.id)}
+          aria-label={`Select ${member.name}`}
+        />
+        <Avatar className="h-10 w-10 shrink-0 bg-green-100 dark:bg-green-950/50">
+          <AvatarFallback className="bg-green-100 text-green-700 text-sm dark:bg-green-950/50 dark:text-green-300">
+            {getInitials(member.name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-[color:var(--admin-text)] break-words">{member.name}</p>
+          <p className="text-xs text-[color:var(--admin-text-muted)] font-mono">
+            {member.memberId}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 inline-flex px-2 py-1 rounded-full text-xs font-medium border ${
+            statusStyles[member.status] ||
+            'border-gray-300 text-gray-600 dark:border-slate-600 dark:text-slate-400'
+          }`}
+        >
+          {member.status?.replace(/_/g, ' ')}
+        </span>
+      </div>
+      <dl className="grid grid-cols-1 gap-2 text-sm border-t border-[var(--admin-border)] pt-3">
+        <div>
+          <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
+            Phone
+          </dt>
+          <dd className="text-[color:var(--admin-text)] break-all">{member.phone}</dd>
+        </div>
+        <div>
+          <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
+            Email
+          </dt>
+          <dd className="text-[color:var(--admin-text)] break-all">{member.email}</dd>
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <div>
+            <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
+              Department
+            </dt>
+            <dd className="text-[color:var(--admin-text)] break-words">{member.department}</dd>
+          </div>
+          <div>
+            <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
+              Role
+            </dt>
+            <dd>
+              <span
+                className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
+                  roleStyles[member.role] ||
+                  'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-slate-200'
+                }`}
+              >
+                {member.role}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
+              Member since
+            </dt>
+            <dd className="text-[color:var(--admin-text)]">
+              {member.memberSince ? format(new Date(member.memberSince), 'MMM d, yyyy') : '—'}
+            </dd>
+          </div>
+        </div>
+      </dl>
+      <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-[var(--admin-border)]">
+        {renderRowActions(member, true)}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4 w-full min-w-0">
       {/* Dynamic action bar when members are selected */}
@@ -393,9 +618,10 @@ export default function MembersTable({ filters }: MembersTableProps) {
             <Button
               size="sm"
               className="h-8 gap-1.5 flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleExportSelected}
             >
               <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Export Selected</span>
+              <span className="hidden sm:inline">Export Selected (CSV)</span>
             </Button>
             <Button variant="outline" size="sm" className="h-8 gap-1.5 flex-1 sm:flex-none">
               <RefreshCw className="h-4 w-4" />
@@ -431,8 +657,15 @@ export default function MembersTable({ filters }: MembersTableProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 rounded-md border-[var(--admin-border)] text-gray-500 dark:text-slate-400 dark:hover:bg-white/10"
               title="Grid view"
+              aria-pressed={viewMode === 'grid'}
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                'h-8 w-8 p-0 rounded-md border-[var(--admin-border)]',
+                viewMode === 'grid'
+                  ? 'border-[var(--color-primary,var(--primary-brand,#0B2A4A))] bg-[var(--color-primary,var(--primary-brand,#0B2A4A))] text-white hover:opacity-90 hover:text-white'
+                  : 'text-gray-500 dark:text-slate-400 dark:hover:bg-white/10'
+              )}
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -440,8 +673,15 @@ export default function MembersTable({ filters }: MembersTableProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0 rounded-md border-[var(--color-primary,var(--primary-brand,#0B2A4A))] bg-[var(--color-primary,var(--primary-brand,#0B2A4A))] text-white hover:opacity-90 hover:text-white"
               title="List view"
+              aria-pressed={viewMode === 'list'}
+              onClick={() => setViewMode('list')}
+              className={cn(
+                'h-8 w-8 p-0 rounded-md border-[var(--admin-border)]',
+                viewMode === 'list'
+                  ? 'border-[var(--color-primary,var(--primary-brand,#0B2A4A))] bg-[var(--color-primary,var(--primary-brand,#0B2A4A))] text-white hover:opacity-90 hover:text-white'
+                  : 'text-gray-500 dark:text-slate-400 dark:hover:bg-white/10'
+              )}
             >
               <LayoutList className="h-4 w-4" />
             </Button>
@@ -450,6 +690,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
               variant="outline"
               size="sm"
               className="h-8 rounded-md border-[var(--admin-border)] text-xs text-[color:var(--admin-text)] dark:hover:bg-white/10"
+              onClick={() => handleExportAll('csv')}
             >
               CSV
             </Button>
@@ -458,6 +699,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
               variant="outline"
               size="sm"
               className="h-8 rounded-md border-[var(--admin-border)] text-xs text-[color:var(--admin-text)] dark:hover:bg-white/10"
+              onClick={() => handleExportAll('pdf')}
             >
               PDF
             </Button>
@@ -466,6 +708,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
               variant="outline"
               size="sm"
               className="h-8 rounded-md border-[var(--admin-border)] text-xs text-[color:var(--admin-text)] dark:hover:bg-white/10"
+              onClick={() => handleExportAll('excel')}
             >
               Excel
             </Button>
@@ -501,101 +744,18 @@ export default function MembersTable({ filters }: MembersTableProps) {
                   Select all on this page
                 </span>
               </div>
-              {paginated.map((member) => (
-                <div
-                  key={member.id}
-                  className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-sm dark:shadow-none space-y-3 min-w-0"
-                >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5 min-w-5 shrink-0 mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
-                      checked={selectedIds.has(member.id)}
-                      onChange={() => toggleMember(member.id)}
-                      aria-label={`Select ${member.name}`}
-                    />
-                    <Avatar className="h-10 w-10 shrink-0 bg-green-100 dark:bg-green-950/50">
-                      <AvatarFallback className="bg-green-100 text-green-700 text-sm dark:bg-green-950/50 dark:text-green-300">
-                        {getInitials(member.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-[color:var(--admin-text)] break-words">
-                        {member.name}
-                      </p>
-                      <p className="text-xs text-[color:var(--admin-text-muted)] font-mono">
-                        {member.memberId}
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 inline-flex px-2 py-1 rounded-full text-xs font-medium border ${
-                        statusStyles[member.status] ||
-                        'border-gray-300 text-gray-600 dark:border-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      {member.status?.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                  <dl className="grid grid-cols-1 gap-2 text-sm border-t border-[var(--admin-border)] pt-3">
-                    <div>
-                      <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
-                        Phone
-                      </dt>
-                      <dd className="text-[color:var(--admin-text)] break-all">{member.phone}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
-                        Email
-                      </dt>
-                      <dd className="text-[color:var(--admin-text)] break-all">{member.email}</dd>
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2">
-                      <div>
-                        <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
-                          Department
-                        </dt>
-                        <dd className="text-[color:var(--admin-text)] break-words">
-                          {member.department}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
-                          Role
-                        </dt>
-                        <dd>
-                          <span
-                            className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium ${
-                              roleStyles[member.role] ||
-                              'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-slate-200'
-                            }`}
-                          >
-                            {member.role}
-                          </span>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-[color:var(--admin-text-muted)] text-xs uppercase tracking-wide">
-                          Member since
-                        </dt>
-                        <dd className="text-[color:var(--admin-text)]">
-                          {member.memberSince
-                            ? format(new Date(member.memberSince), 'MMM d, yyyy')
-                            : '—'}
-                        </dd>
-                      </div>
-                    </div>
-                  </dl>
-                  <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-[var(--admin-border)]">
-                    {renderRowActions(member, true)}
-                  </div>
-                </div>
-              ))}
+              {paginated.map(renderMemberCard)}
             </>
           )}
         </div>
 
-        {/* md+: fixed column layout so wide screens stay proportional */}
-        <div className="hidden md:block w-full min-w-0 overflow-x-auto">
+        {/* md+: list (table) */}
+        <div
+          className={cn(
+            'w-full min-w-0 overflow-x-auto',
+            viewMode === 'list' ? 'hidden md:block' : 'hidden'
+          )}
+        >
           <Table className="table-fixed w-full min-w-[980px]">
             <colgroup>
               <col style={{ width: '3rem' }} />
@@ -738,6 +898,42 @@ export default function MembersTable({ filters }: MembersTableProps) {
               )}
             </TableBody>
           </Table>
+        </div>
+
+        {/* md+: grid (cards) */}
+        <div className={cn('w-full min-w-0', viewMode === 'grid' ? 'hidden md:block' : 'hidden')}>
+          {loading ? (
+            <div className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] mx-4 sm:mx-5 mb-4 py-12 text-center text-[color:var(--admin-text-muted)] text-sm">
+              Loading members...
+            </div>
+          ) : paginated.length === 0 ? (
+            <div className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] mx-4 sm:mx-5 mb-4 py-12 text-center text-[color:var(--admin-text-muted)] text-sm">
+              No members found
+            </div>
+          ) : (
+            <div className="px-4 sm:px-5 pb-4 pt-2 space-y-3">
+              <div className="flex items-center gap-2 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-2">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 min-w-5 shrink-0 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) {
+                      el.indeterminate = isSomeSelected && !isAllSelected;
+                    }
+                  }}
+                  onChange={toggleAll}
+                  aria-label="Select all members on this page"
+                />
+                <span className="text-sm text-[color:var(--admin-text)]">
+                  Select all on this page
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {paginated.map(renderMemberCard)}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 sm:px-5 py-4 border-t border-[var(--admin-border)] bg-[var(--admin-surface)]">

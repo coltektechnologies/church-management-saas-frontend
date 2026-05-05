@@ -31,7 +31,8 @@ export function DepartmentBudgets({ data, isLoading }: DepartmentBudgetsProps) {
 
       <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
         {data.map((dept) => {
-          const utilPercent = Math.round((dept.utilized / dept.allocated) * 100);
+          const utilPercent =
+            dept.allocated > 0 ? Math.round((dept.utilized / dept.allocated) * 100) : 0;
           return (
             <div
               key={dept.id}

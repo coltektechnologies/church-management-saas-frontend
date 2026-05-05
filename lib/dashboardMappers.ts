@@ -127,6 +127,28 @@ export function mapBackendExpenseRequestToApproval(b: BackendExpenseRequest): Ap
   };
 }
 
+/**
+ * Prefer church name over UUID in descriptions for older audit rows (API already exposes church_name).
+ */
+function humanizeActivityDescription(a: ActivityFeedItem): string {
+  let desc = (a.description || '').trim();
+  const cn = a.church_name?.trim();
+  const oid = a.object_id?.trim();
+  const model = (a.model_name || '').toLowerCase();
+  if (cn && oid && model === 'church') {
+    const escaped = oid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    desc = desc.replace(new RegExp(`\\(ID:\\s*${escaped}\\)`, 'gi'), `(${cn})`);
+  }
+
+  const actorEmail = a.user_email?.trim();
+  const actorName = a.user_display?.trim();
+  if (actorEmail && actorName && actorName !== actorEmail && desc.endsWith(actorEmail)) {
+    desc = `${desc.slice(0, -actorEmail.length)}${actorName}`;
+  }
+
+  return desc;
+}
+
 /** Infer activity type from audit log model_name */
 function inferActivityType(modelName: string): ActivityLogItem['type'] {
   const m = (modelName || '').toLowerCase();
@@ -156,7 +178,7 @@ export function mapBackendActivityToLogItem(a: ActivityFeedItem): ActivityLogIte
   return {
     id: a.id,
     title: a.action_display || a.action || 'Activity',
-    subtitle: a.description || '',
+    subtitle: humanizeActivityDescription(a),
     timestamp: a.created_at,
     type: inferActivityType(a.model_name || ''),
   };

@@ -942,3 +942,47 @@ export async function sendDepartmentMemberMessage(
     }
   );
 }
+
+/** GET/PUT /api/departments/expense-allocations/ — admin top-down envelopes per fiscal year. */
+export type DepartmentExpenseAllocationRow = {
+  id: string;
+  name: string;
+  code: string;
+  expense_budget_from_programs: number;
+  expense_budget_admin: number | null;
+};
+
+export type DepartmentExpenseAllocationsResponse = {
+  fiscal_year: number;
+  departments: DepartmentExpenseAllocationRow[];
+  totals: { from_programs: number; admin_allocated_sum: number };
+};
+
+export async function fetchDepartmentExpenseAllocations(
+  fiscalYear?: number
+): Promise<DepartmentExpenseAllocationsResponse> {
+  const base = getApiBaseUrl();
+  const sp = new URLSearchParams();
+  if (fiscalYear !== undefined && fiscalYear !== null) {
+    sp.set('fiscal_year', String(fiscalYear));
+  }
+  const qs = sp.toString();
+  return fetchAuth<DepartmentExpenseAllocationsResponse>(
+    `${base}/departments/expense-allocations/${qs ? `?${qs}` : ''}`,
+    { method: 'GET' }
+  );
+}
+
+export async function saveDepartmentExpenseAllocations(payload: {
+  fiscal_year: number;
+  allocations: { department_id: string; expense_budget: number | null }[];
+}): Promise<DepartmentExpenseAllocationsResponse> {
+  const base = getApiBaseUrl();
+  return fetchAuth<DepartmentExpenseAllocationsResponse>(
+    `${base}/departments/expense-allocations/`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }
+  );
+}
