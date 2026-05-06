@@ -7,7 +7,7 @@ import * as treasuryApi from '@/lib/treasuryApi';
 
 /* ─── Types (re-exported for consumers) ─── */
 export type TransactionType = 'income' | 'expense';
-export type PeriodFilter = 'this_week' | 'this_quarter' | 'this_year' | 'custom';
+export type PeriodFilter = 'this_week' | 'this_month' | 'this_quarter' | 'this_year' | 'custom';
 
 export interface TreasurySummary {
   totalIncome: number;
@@ -118,7 +118,6 @@ export function periodToDateRange(filters?: TreasuryFilters): {
   const today = new Date();
   const y = today.getFullYear();
   const m = today.getMonth();
-  const _day = today.getDate();
 
   if (filters?.from && filters?.to) {
     return {
@@ -131,6 +130,18 @@ export function periodToDateRange(filters?: TreasuryFilters): {
 
   switch (filters?.period) {
     case 'this_week': {
+      // Monday → today (local time)
+      const day = today.getDay(); // 0 Sun, 1 Mon...
+      const diffToMonday = (day + 6) % 7;
+      const weekStart = new Date(y, m, today.getDate() - diffToMonday);
+      return {
+        start_date: weekStart.toISOString().slice(0, 10),
+        end_date: today.toISOString().slice(0, 10),
+        date_from: weekStart.toISOString().slice(0, 10),
+        date_to: today.toISOString().slice(0, 10),
+      };
+    }
+    case 'this_month': {
       const monthStart = new Date(y, m, 1);
       return {
         start_date: monthStart.toISOString().slice(0, 10),
@@ -166,6 +177,8 @@ export function periodToDateRange(filters?: TreasuryFilters): {
 export function periodDaysForTrends(period?: PeriodFilter): number {
   switch (period) {
     case 'this_week':
+      return 7;
+    case 'this_month':
       return 31;
     case 'this_quarter':
       return 92;

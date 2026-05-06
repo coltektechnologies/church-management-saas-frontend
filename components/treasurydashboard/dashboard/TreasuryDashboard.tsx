@@ -131,8 +131,8 @@ function formatPct(n: number | undefined): string {
 export default function TreasuryDashboard() {
   const { profile, isReady } = useTreasuryProfile();
 
-  /** Match admin treasury: `this_week` maps to month-start → today (MTD-style range in service). */
-  const filters = { period: 'this_week' as const };
+  /** Month-to-date range for KPI cards + lists. */
+  const filters = { period: 'this_month' as const };
 
   const { data: summary, isLoading: loadingSummary } = useTreasurySummary(filters);
   const { data: monthlyTrend = [], isLoading: loadingTrend } = useMonthlyTrend(filters);
