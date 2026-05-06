@@ -109,6 +109,13 @@ const MONTH_ABBREV: Record<string, string> = {
   '12': 'Dec',
 };
 
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export function periodToDateRange(filters?: TreasuryFilters): {
   start_date?: string;
   end_date?: string;
@@ -135,38 +142,38 @@ export function periodToDateRange(filters?: TreasuryFilters): {
       const diffToMonday = (day + 6) % 7;
       const weekStart = new Date(y, m, today.getDate() - diffToMonday);
       return {
-        start_date: weekStart.toISOString().slice(0, 10),
-        end_date: today.toISOString().slice(0, 10),
-        date_from: weekStart.toISOString().slice(0, 10),
-        date_to: today.toISOString().slice(0, 10),
+        start_date: toLocalDateString(weekStart),
+        end_date: toLocalDateString(today),
+        date_from: toLocalDateString(weekStart),
+        date_to: toLocalDateString(today),
       };
     }
     case 'this_month': {
       const monthStart = new Date(y, m, 1);
       return {
-        start_date: monthStart.toISOString().slice(0, 10),
-        end_date: today.toISOString().slice(0, 10),
-        date_from: monthStart.toISOString().slice(0, 10),
-        date_to: today.toISOString().slice(0, 10),
+        start_date: toLocalDateString(monthStart),
+        end_date: toLocalDateString(today),
+        date_from: toLocalDateString(monthStart),
+        date_to: toLocalDateString(today),
       };
     }
     case 'this_quarter': {
       const q = Math.floor(m / 3) + 1;
       const qStart = new Date(y, (q - 1) * 3, 1);
       return {
-        start_date: qStart.toISOString().slice(0, 10),
-        end_date: today.toISOString().slice(0, 10),
-        date_from: qStart.toISOString().slice(0, 10),
-        date_to: today.toISOString().slice(0, 10),
+        start_date: toLocalDateString(qStart),
+        end_date: toLocalDateString(today),
+        date_from: toLocalDateString(qStart),
+        date_to: toLocalDateString(today),
       };
     }
     case 'this_year': {
       const yearStart = new Date(y, 0, 1);
       return {
-        start_date: yearStart.toISOString().slice(0, 10),
-        end_date: today.toISOString().slice(0, 10),
-        date_from: yearStart.toISOString().slice(0, 10),
-        date_to: today.toISOString().slice(0, 10),
+        start_date: toLocalDateString(yearStart),
+        end_date: toLocalDateString(today),
+        date_from: toLocalDateString(yearStart),
+        date_to: toLocalDateString(today),
       };
     }
     default:
@@ -234,8 +241,8 @@ export async function fetchTreasurySummary(filters?: TreasuryFilters): Promise<T
       const prevEnd = new Date(start.getTime() - 1);
       const prevStart = new Date(prevEnd.getTime() - diff);
       return treasuryApi.getTreasuryStatistics({
-        start_date: prevStart.toISOString().slice(0, 10),
-        end_date: prevEnd.toISOString().slice(0, 10),
+        start_date: toLocalDateString(prevStart),
+        end_date: toLocalDateString(prevEnd),
       });
     })(),
   ]);

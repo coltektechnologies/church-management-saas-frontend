@@ -2,7 +2,10 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { invalidateTreasuryCachesExceptTreasuryForms } from '@/hooks/useTreasury';
+import {
+  invalidateTreasuryCachesExceptTreasuryForms,
+  useTreasurySummary,
+} from '@/hooks/useTreasury';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -72,6 +75,7 @@ import {
 import { amountToCurrencyWords } from '@/lib/amountInWords';
 import { getSessionUserDisplayName } from '@/lib/treasurySessionIdentity';
 import type { ExpenseApprovalChain } from '@/lib/treasuryApi';
+import { formatCurrency } from '@/services/treasuryService';
 
 const formSchema = z
   .object({
@@ -223,7 +227,13 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const today = useMemo(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }, []);
 
   const { data: categories = [], isLoading: catLoading } = useQuery({
     queryKey: ['treasury', 'expenses', 'categories'],
@@ -238,6 +248,10 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
   const { data: expenseRequests = [], isLoading: requestsLoading } = useQuery({
     queryKey: ['treasury', 'expense-requests', 'expenses-page'],
     queryFn: () => getExpenseRequests({ page_size: 200 }),
+  });
+
+  const { data: summary, isLoading: summaryLoading } = useTreasurySummary({
+    period: 'this_month',
   });
 
   React.useEffect(() => {
@@ -325,6 +339,7 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
     const pending = expenseRequests.filter((r) => pendingStatuses.has(r.status)).length;
     const approved = expenseRequests.filter((r) => r.status === 'APPROVED').length;
     const recorded = expenseRequests.filter((r) => r.status === 'DISBURSED').length;
+    const totalExpensesMtd = summaryLoading ? '…' : formatCurrency(summary?.totalExpenses ?? 0);
     return [
       { label: 'Pending Requests', value: String(pending), icon: Hourglass, bg: 'bg-[#f59e0b]' },
       {
@@ -335,8 +350,14 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
       },
       { label: 'Total Requests', value: String(total), icon: LayoutList, bg: 'bg-[#3b82f6]' },
       { label: 'Disbursed', value: String(recorded), icon: CheckSquare, bg: 'bg-[#8b5cf6]' },
+      {
+        label: 'Total Expenses (MTD)',
+        value: totalExpensesMtd,
+        icon: DollarSign,
+        bg: 'bg-[#ef4444]',
+      },
     ];
-  }, [expenseRequests, pendingStatuses]);
+  }, [expenseRequests, pendingStatuses, summary, summaryLoading]);
 
   const approvedRequests = useMemo(() => {
     let rows = expenseRequests;
@@ -551,7 +572,7 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
 
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {summaryCards.map((card, idx) => {
             const Icon = card.icon;
             return (
