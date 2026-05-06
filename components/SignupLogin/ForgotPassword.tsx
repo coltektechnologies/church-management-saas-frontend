@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import logo from '@/assets/logo.svg';
 import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
+import { requestPasswordReset } from '@/lib/api';
+import { isValidSignupEmail } from '@/lib/signupValidation';
 
 const ForgotPassword = () => {
   useRedirectIfAuthenticated();
@@ -19,21 +21,30 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!email.trim()) {
+    const emailTrim = email.trim();
+    if (!emailTrim) {
       setError('Please enter your email address.');
+      return;
+    }
+    if (!isValidSignupEmail(emailTrim)) {
+      setError('Enter a valid email address.');
       return;
     }
 
     setLoading(true);
-    // TODO: Replace with real password reset API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await requestPasswordReset({ email: emailTrim });
       setSubmitted(true);
-    }, 1000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not request password reset';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const styles = {

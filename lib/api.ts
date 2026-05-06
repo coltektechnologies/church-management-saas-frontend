@@ -267,6 +267,50 @@ export async function checkRegistrationEmail(
   };
 }
 
+export async function requestPasswordReset(payload: {
+  email: string;
+  subdomain?: string;
+}): Promise<{ ok: boolean; message?: string }> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/auth/password-reset/request/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: payload.email.trim().toLowerCase(),
+      ...(payload.subdomain ? { subdomain: payload.subdomain.trim().toLowerCase() } : {}),
+    }),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(apiErrorMessage(data, 'Failed to request password reset'));
+  }
+  return {
+    ok: data.ok === true || data.ok === 'true',
+    message: typeof data.message === 'string' ? data.message : undefined,
+  };
+}
+
+export async function confirmPasswordReset(payload: {
+  token: string;
+  new_password: string;
+  new_password_confirm: string;
+}): Promise<{ ok: boolean; message?: string }> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/auth/password-reset/confirm/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok) {
+    throw new Error(apiErrorMessage(data, 'Failed to reset password'));
+  }
+  return {
+    ok: data.ok === true || data.ok === 'true',
+    message: typeof data.message === 'string' ? data.message : undefined,
+  };
+}
+
 /** Format + server validation (DNS / uniqueness) for church email only — use before step 1 API. */
 export async function verifyChurchEmailForRegistration(
   churchEmail: string

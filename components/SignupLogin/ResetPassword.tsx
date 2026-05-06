@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/SignupLogin/Header';
 import Footer from '@/components/SignupLogin/Footer';
 import { Input } from '@/components/ui/input';
@@ -12,10 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, KeyRound, CheckCircle2, ArrowLeft, Info } from 'lucide-react';
 import logo from '@/assets/logo.svg';
 import { useRedirectIfAuthenticated } from '@/lib/useRedirectIfAuthenticated';
+import { confirmPasswordReset } from '@/lib/api';
 
 const ResetPassword = () => {
   useRedirectIfAuthenticated();
   const router = useRouter();
+  const sp = useSearchParams();
+  const token = (sp.get('token') || '').trim();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -26,10 +30,13 @@ const ResetPassword = () => {
 
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
+    if (!token) {
+      newErrors.token = 'Reset link is missing or invalid. Please request a new one.';
+    }
     if (!password.trim()) {
       newErrors.password = 'Required';
     } else if (!passwordRegex.test(password)) {
@@ -48,12 +55,20 @@ const ResetPassword = () => {
     }
 
     setLoading(true);
-    // TODO: Replace with real reset API call using token from URL
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await confirmPasswordReset({
+        token,
+        new_password: password,
+        new_password_confirm: confirmPassword,
+      });
       setSuccess(true);
       setTimeout(() => router.push('/login'), 2500);
-    }, 1000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to reset password';
+      setErrors({ form: msg });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const styles = {
@@ -111,6 +126,16 @@ const ResetPassword = () => {
               </p>
 
               <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                {errors.form && (
+                  <p className="text-red-500 text-[13px] font-medium text-center -mt-2">
+                    {errors.form}
+                  </p>
+                )}
+                {errors.token && (
+                  <p className="text-red-500 text-[13px] font-medium text-center -mt-2">
+                    {errors.token}
+                  </p>
+                )}
                 {/* New Password */}
                 <div className="space-y-1">
                   <Label className={styles.label}>New Password</Label>
