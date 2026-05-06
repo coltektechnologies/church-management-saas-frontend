@@ -77,6 +77,14 @@ import { getSessionUserDisplayName } from '@/lib/treasurySessionIdentity';
 import type { ExpenseApprovalChain } from '@/lib/treasuryApi';
 import { formatCurrency } from '@/services/treasuryService';
 
+function localTodayString(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 const formSchema = z
   .object({
     date: z.string().min(1, 'Date is required'),
@@ -96,6 +104,15 @@ const formSchema = z
     linkedExpenseRequestId: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    const today = localTodayString();
+    if (data.date && data.date > today) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Date cannot be in the future',
+        path: ['date'],
+      });
+    }
+
     const pm = data.paymentMethod;
     if (pm === 'Cheque' && !(data.chequeNumber ?? '').trim()) {
       ctx.addIssue({
@@ -227,13 +244,7 @@ export default function RecordExpensePage({ backLink = '' }: { backLink: string 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const today = useMemo(() => {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }, []);
+  const today = useMemo(() => localTodayString(), []);
 
   const { data: categories = [], isLoading: catLoading } = useQuery({
     queryKey: ['treasury', 'expenses', 'categories'],
