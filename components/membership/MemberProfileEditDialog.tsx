@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { MemberDetail } from '@/lib/api';
 import { updateCurrentMemberProfile } from '@/lib/api';
-import { sanitizePersonNameInput } from '@/lib/signupValidation';
+import {
+  isValidSignupEmail,
+  sanitizeAlphanumericIdInput,
+  sanitizeCityNameInput,
+  sanitizeNoDigits,
+  sanitizePersonNameInput,
+  sanitizePhoneStripLetters,
+  stripDigits,
+} from '@/lib/signupValidation';
+import {
+  RegistrationEmailField,
+  type RegistrationEmailVerificationState,
+} from '@/components/forms/RegistrationEmailField';
 import { Loader2 } from 'lucide-react';
 
 const GENDERS = [
@@ -79,6 +91,17 @@ type Props = {
 export default function MemberProfileEditDialog({ open, onOpenChange, member, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailBaseline, setEmailBaseline] = useState('');
+  const [emailVerification, setEmailVerification] = useState<RegistrationEmailVerificationState>({
+    canProceedEmail: true,
+    checking: false,
+    remoteError: null,
+    flushVerify: () => {},
+  });
+
+  const onEmailVerificationState = useCallback((s: RegistrationEmailVerificationState) => {
+    setEmailVerification(s);
+  }, []);
 
   const [first_name, setFirstName] = useState('');
   const [middle_name, setMiddleName] = useState('');
@@ -118,12 +141,29 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
     setEmergencyRel(member.emergency_contact_relationship ?? '');
     setEmergencyPhone(member.emergency_contact_phone ?? '');
     setError(null);
+    setEmailBaseline((emptyLoc(member).email ?? '').trim());
   }, [open, member]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!member) {
       return;
+    }
+    const em = loc.email.trim();
+    if (em) {
+      if (!isValidSignupEmail(em)) {
+        setError('Enter a valid email address.');
+        return;
+      }
+      if (emailVerification.checking) {
+        emailVerification.flushVerify();
+        setError('Wait for email verification to finish.');
+        return;
+      }
+      if (!emailVerification.canProceedEmail) {
+        setError(emailVerification.remoteError || 'Email must pass server verification.');
+        return;
+      }
     }
     setSaving(true);
     setError(null);
@@ -194,7 +234,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-middle"
                   value={middle_name}
-                  onChange={(e) => setMiddleName(e.target.value)}
+                  onChange={(e) => setMiddleName(sanitizePersonNameInput(e.target.value))}
                 />
               </div>
               <div className="space-y-1.5">
@@ -252,7 +292,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-nid"
                   value={national_id}
-                  onChange={(e) => setNationalId(e.target.value)}
+                  onChange={(e) => setNationalId(sanitizeAlphanumericIdInput(e.target.value))}
                 />
               </div>
               <div className="space-y-1.5">
@@ -276,12 +316,16 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-occ"
                   value={occupation}
-                  onChange={(e) => setOccupation(e.target.value)}
+                  onChange={(e) => setOccupation(sanitizeNoDigits(e.target.value))}
                 />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="m-emp">Employer</Label>
-                <Input id="m-emp" value={employer} onChange={(e) => setEmployer(e.target.value)} />
+                <Input
+                  id="m-emp"
+                  value={employer}
+                  onChange={(e) => setEmployer(sanitizeNoDigits(e.target.value))}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="m-bap">Baptism</Label>
@@ -325,7 +369,12 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-phone"
                   value={loc.phone_primary}
-                  onChange={(e) => setLoc((s) => ({ ...s, phone_primary: e.target.value }))}
+                  onChange={(e) =>
+                    setLoc((s) => ({
+                      ...s,
+                      phone_primary: sanitizePhoneStripLetters(e.target.value),
+                    }))
+                  }
                 />
               </div>
               <div className="space-y-1.5">
@@ -333,16 +382,24 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-phone2"
                   value={loc.phone_secondary}
-                  onChange={(e) => setLoc((s) => ({ ...s, phone_secondary: e.target.value }))}
+                  onChange={(e) =>
+                    setLoc((s) => ({
+                      ...s,
+                      phone_secondary: sanitizePhoneStripLetters(e.target.value),
+                    }))
+                  }
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="m-email">Email</Label>
-                <Input
+                <RegistrationEmailField
                   id="m-email"
-                  type="email"
                   value={loc.email}
-                  onChange={(e) => setLoc((s) => ({ ...s, email: e.target.value }))}
+                  onChange={(v) => setLoc((s) => ({ ...s, email: v }))}
+                  scope="admin"
+                  baselineVerifiedEmail={emailBaseline}
+                  onVerificationState={onEmailVerificationState}
+                  inputClassName="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
@@ -358,7 +415,9 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-city"
                   value={loc.city}
-                  onChange={(e) => setLoc((s) => ({ ...s, city: e.target.value }))}
+                  onChange={(e) =>
+                    setLoc((s) => ({ ...s, city: sanitizeCityNameInput(e.target.value) }))
+                  }
                 />
               </div>
               <div className="space-y-1.5">
@@ -366,7 +425,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-region"
                   value={loc.region}
-                  onChange={(e) => setLoc((s) => ({ ...s, region: e.target.value }))}
+                  onChange={(e) => setLoc((s) => ({ ...s, region: stripDigits(e.target.value) }))}
                 />
               </div>
               <div className="space-y-1.5">
@@ -374,7 +433,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-country"
                   value={loc.country}
-                  onChange={(e) => setLoc((s) => ({ ...s, country: e.target.value }))}
+                  onChange={(e) => setLoc((s) => ({ ...s, country: stripDigits(e.target.value) }))}
                 />
               </div>
             </div>
@@ -388,7 +447,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-en"
                   value={emergency_contact_name}
-                  onChange={(e) => setEmergencyName(e.target.value)}
+                  onChange={(e) => setEmergencyName(sanitizePersonNameInput(e.target.value))}
                 />
               </div>
               <div className="space-y-1.5">
@@ -396,7 +455,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-er"
                   value={emergency_contact_relationship}
-                  onChange={(e) => setEmergencyRel(e.target.value)}
+                  onChange={(e) => setEmergencyRel(sanitizeNoDigits(e.target.value))}
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
@@ -404,7 +463,7 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 <Input
                   id="m-ep"
                   value={emergency_contact_phone}
-                  onChange={(e) => setEmergencyPhone(e.target.value)}
+                  onChange={(e) => setEmergencyPhone(sanitizePhoneStripLetters(e.target.value))}
                 />
               </div>
             </div>
@@ -416,7 +475,15 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
             </Button>
             <Button
               type="submit"
-              disabled={saving || !member}
+              disabled={
+                saving ||
+                !member ||
+                Boolean(
+                  loc.email.trim() &&
+                    isValidSignupEmail(loc.email.trim()) &&
+                    (emailVerification.checking || !emailVerification.canProceedEmail)
+                )
+              }
               className="bg-[#2FC4B2] hover:bg-[#28b0a0] text-white"
             >
               {saving ? (

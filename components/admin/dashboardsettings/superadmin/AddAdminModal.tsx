@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,16 @@ import {
   type ChurchGroupOption,
   type InviteStaffPayload,
 } from './adminManagementConfig';
+import {
+  RegistrationEmailField,
+  type RegistrationEmailVerificationState,
+} from '@/components/forms/RegistrationEmailField';
+import {
+  isValidSignupEmail,
+  sanitizePersonNameInput,
+  sanitizePhoneStripLetters,
+  sanitizeUsernameInput,
+} from '@/lib/signupValidation';
 
 export type { InviteStaffPayload };
 
@@ -73,9 +83,32 @@ export default function AddAdminModal({
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [emailVerification, setEmailVerification] = useState<RegistrationEmailVerificationState>({
+    canProceedEmail: true,
+    checking: false,
+    remoteError: null,
+    flushVerify: () => {},
+  });
+
+  const onEmailVerificationState = useCallback((s: RegistrationEmailVerificationState) => {
+    setEmailVerification(s);
+  }, []);
 
   const setField = <K extends keyof InviteStaffPayload>(key: K, value: InviteStaffPayload[K]) => {
-    setForm((p) => ({ ...p, [key]: value }));
+    let next = value;
+    if (
+      (key === 'first_name' || key === 'last_name') &&
+      typeof value === 'string'
+    ) {
+      next = sanitizePersonNameInput(value) as InviteStaffPayload[K];
+    }
+    if (key === 'phone' && typeof value === 'string') {
+      next = sanitizePhoneStripLetters(value) as InviteStaffPayload[K];
+    }
+    if (key === 'username' && typeof value === 'string') {
+      next = sanitizeUsernameInput(value) as InviteStaffPayload[K];
+    }
+    setForm((p) => ({ ...p, [key]: next }));
     setErrors((e) => ({ ...e, [key]: '' }));
   };
 
@@ -99,7 +132,7 @@ export default function AddAdminModal({
     }
     if (!form.email.trim()) {
       e.email = 'Required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    } else if (!isValidSignupEmail(form.email.trim())) {
       e.email = 'Invalid email';
     }
     if (form.password || form.password_confirm) {
@@ -119,12 +152,26 @@ export default function AddAdminModal({
       setErrors(e);
       return;
     }
+    const emailTrim = form.email.trim().toLowerCase();
+    if (emailVerification.checking) {
+      emailVerification.flushVerify();
+      toast.error('Wait for email verification', {
+        description: 'Finish verifying your email with the server before inviting.',
+      });
+      return;
+    }
+    if (!emailVerification.canProceedEmail) {
+      toast.error('Email not verified', {
+        description: emailVerification.remoteError || 'Complete server email verification first.',
+      });
+      return;
+    }
     setErrors({});
     const payload: InviteStaffPayload = {
       ...form,
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
-      email: form.email.trim().toLowerCase(),
+      email: emailTrim,
       phone: form.phone.trim(),
       username: form.username.trim(),
       address: form.address.trim(),
@@ -132,10 +179,10 @@ export default function AddAdminModal({
     setSubmitting(true);
     try {
       await onInvite(payload);
+      onClose();
       setForm(defaultPayload());
       setShowProfile(false);
       setShowPassword(false);
-      onClose();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Invite failed');
     } finally {
@@ -157,28 +204,28 @@ export default function AddAdminModal({
         }
       }}
     >
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto rounded-[28px] bg-[var(--admin-surface)] text-foreground border border-[var(--admin-border)] shadow-2xl p-6 sm:p-8 gap-0">
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto rounded-[28px] border border-slate-200 bg-white text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 p-6 sm:p-8 gap-0">
         <DialogHeader className="text-left space-y-1 pb-2">
-          <DialogTitle className="text-2xl font-black text-[#0B2A4A]">
+          <DialogTitle className="text-2xl font-black text-[#0B2A4A] dark:text-slate-50">
             Invite staff user
           </DialogTitle>
-          <DialogDescription className="text-sm text-slate-500 font-medium">
+          <DialogDescription className="text-sm font-medium text-slate-600 dark:text-slate-400">
             Creates a user via the API, assigns the selected role, and adds optional church groups.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <section className="space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Identity
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
                   First name <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.first_name ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${errors.first_name ? 'ring-2 ring-red-400' : ''}`}
                   value={form.first_name}
                   onChange={(ev) => setField('first_name', ev.target.value)}
                   placeholder="Kwame"
@@ -188,11 +235,11 @@ export default function AddAdminModal({
                 )}
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
                   Last name <span className="text-red-400">*</span>
                 </Label>
                 <Input
-                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.last_name ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${errors.last_name ? 'ring-2 ring-red-400' : ''}`}
                   value={form.last_name}
                   onChange={(ev) => setField('last_name', ev.target.value)}
                   placeholder="Mensah"
@@ -200,40 +247,44 @@ export default function AddAdminModal({
                 {errors.last_name && <p className="text-[10px] text-red-500">{errors.last_name}</p>}
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
                   Email <span className="text-red-400">*</span>
                 </Label>
-                <Input
-                  type="email"
-                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.email ? 'ring-2 ring-red-400' : ''}`}
+                <RegistrationEmailField
                   value={form.email}
-                  onChange={(ev) => setField('email', ev.target.value)}
+                  onChange={(v) => setField('email', v)}
+                  scope="admin"
+                  onVerificationState={onEmailVerificationState}
+                  pendingMessage="Verifying with the server… Invite stays disabled until this passes."
+                  inputClassName={`h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${errors.email ? 'ring-2 ring-red-400' : ''}`}
                   placeholder="staff@yourchurch.org"
+                  autoComplete="email"
+                  aria-invalid={!!errors.email}
                 />
                 {errors.email && <p className="text-[10px] text-red-500">{errors.email}</p>}
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
                   Phone
                 </Label>
                 <Input
-                  className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]"
+                  className="h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                   value={form.phone}
                   onChange={(ev) => setField('phone', ev.target.value)}
                   placeholder="+233 …"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
                   Username
                 </Label>
                 <Input
-                  className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]"
+                  className="h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                   value={form.username}
                   onChange={(ev) => setField('username', ev.target.value)}
                   placeholder="Leave blank to auto-generate"
                 />
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-slate-600 dark:text-slate-400">
                   Optional — API can derive from first and last name.
                 </p>
               </div>
@@ -241,14 +292,14 @@ export default function AddAdminModal({
           </section>
 
           <section className="space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Access</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Access</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 sm:col-span-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
                   Role
                 </Label>
                 <Select value={form.role_name} onValueChange={(v) => setField('role_name', v)}>
-                  <SelectTrigger className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]">
+                  <SelectTrigger className="h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl max-h-[280px]">
@@ -261,7 +312,7 @@ export default function AddAdminModal({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
                   Credential delivery
                 </Label>
                 <Select
@@ -273,7 +324,7 @@ export default function AddAdminModal({
                     )
                   }
                 >
-                  <SelectTrigger className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]">
+                  <SelectTrigger className="h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -283,20 +334,20 @@ export default function AddAdminModal({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/10 px-4 py-3">
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-600 dark:bg-slate-900">
                 <div>
-                  <p className="text-sm font-bold text-[#0B2A4A]">Send credentials</p>
-                  <p className="text-[10px] text-slate-500">Maps to send_credentials</p>
+                  <p className="text-sm font-bold text-[#0B2A4A] dark:text-slate-100">Send credentials</p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400">Maps to send_credentials</p>
                 </div>
                 <Switch
                   checked={form.send_credentials}
                   onCheckedChange={(c) => setField('send_credentials', c)}
                 />
               </div>
-              <div className="flex items-center justify-between rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/10 px-4 py-3 sm:col-span-2">
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 sm:col-span-2 dark:border-slate-600 dark:bg-slate-900">
                 <div>
-                  <p className="text-sm font-bold text-[#0B2A4A]">Active account</p>
-                  <p className="text-[10px] text-slate-500">Maps to is_active</p>
+                  <p className="text-sm font-bold text-[#0B2A4A] dark:text-slate-100">Active account</p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400">Maps to is_active</p>
                 </div>
                 <Switch
                   checked={form.is_active}
@@ -307,22 +358,22 @@ export default function AddAdminModal({
           </section>
 
           <section className="space-y-2">
-            <Label className="text-[10px] font-black uppercase text-slate-400 ml-0.5">
+            <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
               Church groups (optional)
             </Label>
-            <p className="text-xs text-slate-500 -mt-1 mb-2">
+            <p className="text-xs text-slate-600 dark:text-slate-400 -mt-1 mb-2">
               Open the dropdown to choose one or more groups. They are sent as{' '}
-              <code className="text-[10px] bg-muted dark:bg-white/10 px-1 rounded">
+              <code className="rounded bg-slate-100 px-1 text-[10px] text-slate-900 dark:bg-slate-800 dark:text-slate-100">
                 church_groups
               </code>{' '}
               when the user is created.
             </p>
             {groupsLoading ? (
-              <p className="text-sm text-slate-500 py-3">Loading groups…</p>
+              <p className="text-sm text-slate-600 py-3 dark:text-slate-400">Loading groups…</p>
             ) : churchGroups.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-3 rounded-xl border border-[var(--admin-border)] bg-muted/40 dark:bg-white/[0.06] px-4">
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
                 No church groups yet. Run{' '}
-                <code className="text-[10px] bg-muted dark:bg-white/10 px-1 rounded">
+                <code className="rounded bg-slate-100 px-1 text-[10px] text-slate-900 dark:bg-slate-800 dark:text-slate-100">
                   setup_initial_data
                 </code>{' '}
                 on the backend or create groups in church settings.
@@ -334,7 +385,7 @@ export default function AddAdminModal({
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full h-11 rounded-xl border-[var(--admin-border)] bg-muted/40 dark:bg-white/5 font-medium text-left justify-between text-[#0B2A4A] hover:bg-muted dark:bg-white/10/80"
+                      className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 font-medium text-left justify-between text-[#0B2A4A] hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
                     >
                       <span className="truncate">
                         {form.church_groups.length === 0
@@ -345,18 +396,18 @@ export default function AddAdminModal({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="p-0 rounded-xl border-[var(--admin-border)] shadow-lg w-[min(calc(100vw-2rem),28rem)]"
+                    className="w-[min(calc(100vw-2rem),28rem)] rounded-xl border border-slate-200 bg-white p-0 shadow-lg dark:border-slate-600 dark:bg-slate-950"
                     align="start"
                     sideOffset={6}
                   >
-                    <div className="border-b border-[var(--admin-border)] px-3 py-2 text-[10px] font-black uppercase text-slate-400">
+                    <div className="border-b border-slate-200 px-3 py-2 text-[10px] font-black uppercase text-slate-600 dark:border-slate-600 dark:text-slate-400">
                       {churchGroups.length} group{churchGroups.length === 1 ? '' : 's'} available
                     </div>
                     <div className="max-h-[min(50vh,320px)] overflow-y-auto p-2 space-y-0.5">
                       {churchGroups.map((g) => (
                         <label
                           key={g.id}
-                          className="flex items-start gap-3 rounded-lg px-2 py-2.5 cursor-pointer hover:bg-muted/40 dark:bg-white/5"
+                          className="flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <Checkbox
                             checked={form.church_groups.includes(g.id)}
@@ -364,10 +415,10 @@ export default function AddAdminModal({
                             className="mt-0.5"
                           />
                           <span className="min-w-0">
-                            <span className="text-sm font-semibold text-[#0B2A4A] block">
+                            <span className="block text-sm font-semibold text-[#0B2A4A] dark:text-slate-100">
                               {g.name}
                             </span>
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-[10px] text-slate-600 dark:text-slate-400">
                               Linked role: {g.roleHint ?? '—'}
                             </span>
                           </span>
@@ -384,7 +435,7 @@ export default function AddAdminModal({
                         <Badge
                           key={id}
                           variant="secondary"
-                          className="pl-2.5 pr-1 py-1 gap-1 text-[11px] font-semibold bg-muted dark:bg-white/10 text-slate-800"
+                          className="gap-1 py-1 pl-2.5 pr-1 text-[11px] font-semibold bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-100"
                         >
                           <span className="max-w-[200px] truncate">{g?.name ?? 'Group'}</span>
                           <button
@@ -407,7 +458,7 @@ export default function AddAdminModal({
           <button
             type="button"
             onClick={() => setShowProfile((s) => !s)}
-            className="flex items-center gap-2 text-xs font-bold text-[#0B2A4A] hover:underline"
+            className="flex items-center gap-2 text-xs font-bold text-[#0B2A4A] hover:underline dark:text-slate-100"
           >
             {showProfile ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             Profile (optional) — date of birth, gender, address
@@ -415,23 +466,23 @@ export default function AddAdminModal({
           {showProfile && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-1 border-l-2 border-[#2FC4B2]/40 ml-1">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
                   Date of birth
                 </Label>
                 <Input
                   type="date"
-                  className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]"
+                  className="h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
                   value={form.date_of_birth}
                   onChange={(ev) => setField('date_of_birth', ev.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Gender</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">Gender</Label>
                 <Select
                   value={form.gender || '__none__'}
                   onValueChange={(v) => setField('gender', v === '__none__' ? '' : v)}
                 >
-                  <SelectTrigger className="h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)]">
+                  <SelectTrigger className="h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -443,9 +494,9 @@ export default function AddAdminModal({
                 </Select>
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Address</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">Address</Label>
                 <Textarea
-                  className="rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] min-h-[80px] resize-none"
+                  className="min-h-[80px] resize-none rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                   value={form.address}
                   onChange={(ev) => setField('address', ev.target.value)}
                   placeholder="Residential address (optional)"
@@ -457,7 +508,7 @@ export default function AddAdminModal({
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
-            className="flex items-center gap-2 text-xs font-bold text-[#0B2A4A] hover:underline"
+            className="flex items-center gap-2 text-xs font-bold text-[#0B2A4A] hover:underline dark:text-slate-100"
           >
             {showPassword ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             Password (optional) — leave empty for auto-generated
@@ -465,10 +516,10 @@ export default function AddAdminModal({
           {showPassword && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-1 border-l-2 border-slate-200 ml-1">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Password</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">Password</Label>
                 <Input
                   type="password"
-                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.password ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${errors.password ? 'ring-2 ring-red-400' : ''}`}
                   value={form.password}
                   onChange={(ev) => setField('password', ev.target.value)}
                   placeholder="Min 8 characters"
@@ -477,10 +528,10 @@ export default function AddAdminModal({
                 {errors.password && <p className="text-[10px] text-red-500">{errors.password}</p>}
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400">Confirm</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">Confirm</Label>
                 <Input
                   type="password"
-                  className={`h-11 rounded-xl bg-muted/40 dark:bg-white/5 border-[var(--admin-border)] ${errors.password_confirm ? 'ring-2 ring-red-400' : ''}`}
+                  className={`h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${errors.password_confirm ? 'ring-2 ring-red-400' : ''}`}
                   value={form.password_confirm}
                   onChange={(ev) => setField('password_confirm', ev.target.value)}
                   placeholder="Repeat password"
@@ -505,7 +556,11 @@ export default function AddAdminModal({
           </Button>
           <Button
             onClick={() => void handleSubmit()}
-            disabled={submitting}
+            disabled={
+              submitting ||
+              (isValidSignupEmail(form.email.trim()) &&
+                (emailVerification.checking || !emailVerification.canProceedEmail))
+            }
             className="bg-[#2FC4B2] hover:bg-[#28b0a0] text-white rounded-xl font-bold px-8 w-full sm:w-auto"
           >
             {submitting ? 'Inviting…' : 'Invite staff'}

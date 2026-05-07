@@ -22,6 +22,7 @@ import type {
   BackendDepartmentActivity,
   BackendExpenseRequest,
   ActivityFeedItem,
+  AnnouncementStatsResponse,
 } from './dashboardApi';
 
 /** Map backend member to frontend Member */
@@ -63,9 +64,27 @@ export function mapBackendExpenseTransaction(b: BackendExpenseTransaction): Tran
   };
 }
 
+/** Map backend workflow status — do not collapse APPROVED/PENDING into Draft (breaks counts/UI). */
+function mapAnnouncementStatus(raw: string | undefined): Announcement['status'] {
+  const u = (raw || 'DRAFT').toUpperCase();
+  switch (u) {
+    case 'PUBLISHED':
+      return 'Published';
+    case 'DRAFT':
+      return 'Draft';
+    case 'PENDING_REVIEW':
+      return 'Pending';
+    case 'APPROVED':
+      return 'Approved';
+    case 'REJECTED':
+      return 'Rejected';
+    default:
+      return 'Draft';
+  }
+}
+
 /** Map backend announcement to frontend Announcement */
 export function mapBackendAnnouncement(b: BackendAnnouncement): Announcement {
-  const status = (b.status || 'DRAFT').toUpperCase();
   const priority = (b.priority || 'MEDIUM').toUpperCase();
   return {
     id: b.id,
@@ -75,8 +94,82 @@ export function mapBackendAnnouncement(b: BackendAnnouncement): Announcement {
     title: (b.title as string) || '',
     message: (b.content as string) || '',
     priority: priority === 'HIGH' ? 'High' : priority === 'LOW' ? 'Low' : 'Medium',
-    status: status === 'PUBLISHED' ? 'Published' : 'Draft',
+    status: mapAnnouncementStatus(b.status),
   };
+}
+
+/** Parse `by_status` whether API returns an annotated list or a status→count map. */
+function extractPublishedFromByStatus(byStatus: unknown): number | null {
+  if (byStatus === undefined || byStatus === null) {
+    return null;
+  }
+  if (Array.isArray(byStatus)) {
+    let n = 0;
+    for (const row of byStatus) {
+      if (!row || typeof row !== 'object') {
+        continue;
+      }
+      const st = String((row as { status?: unknown }).status ?? '').toUpperCase();
+      if (st === 'PUBLISHED') {
+        n += Number((row as { count?: unknown }).count) || 0;
+      }
+    }
+    return n;
+  }
+  if (typeof byStatus === 'object') {
+    const rec = byStatus as Record<string, unknown>;
+    const v = rec.PUBLISHED ?? rec.published;
+    if (typeof v === 'number' && !Number.isNaN(v)) {
+      return v;
+    }
+    if (typeof v === 'string') {
+      const p = parseInt(v, 10);
+      return Number.isNaN(p) ? null : p;
+    }
+  }
+  return null;
+}
+
+function extractPublishedFromAnnouncementStats(
+  stats: AnnouncementStatsResponse | null
+): number | null {
+  if (!stats || typeof stats !== 'object') {
+    return null;
+  }
+  const pubRaw = stats.published as unknown;
+  if (pubRaw !== undefined && pubRaw !== null) {
+    const n = typeof pubRaw === 'number' ? pubRaw : Number(pubRaw);
+    if (!Number.isNaN(n)) {
+      return n;
+    }
+  }
+  if ('by_status' in stats && stats.by_status !== undefined) {
+    return extractPublishedFromByStatus(stats.by_status);
+  }
+  return null;
+}
+
+/**
+ * Best-effort church-wide published total. Uses **Math.max** across sources so a mistaken
+ * `0` from analytics or an empty `by_status` cannot hide a non-zero paginated count or
+ * published rows visible in the loaded list slice.
+ */
+export function resolvePublishedAnnouncementTotal(
+  stats: AnnouncementStatsResponse | null,
+  paginatedPublishedTotal: number | null,
+  /** Count of Published rows in the announcements list response (up to page size). */
+  publishedInLoadedList: number
+): number {
+  const fromStats = extractPublishedFromAnnouncementStats(stats);
+  const parts: number[] = [];
+  if (fromStats !== null && !Number.isNaN(fromStats)) {
+    parts.push(fromStats);
+  }
+  if (paginatedPublishedTotal !== null && !Number.isNaN(paginatedPublishedTotal)) {
+    parts.push(paginatedPublishedTotal);
+  }
+  parts.push(publishedInLoadedList);
+  return Math.max(...parts, 0);
 }
 
 /** Map backend department activity to frontend EventItem */

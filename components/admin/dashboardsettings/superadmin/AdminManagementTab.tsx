@@ -147,7 +147,14 @@ export default function AdminManagementTab() {
     toast.success(
       `${`${payload.first_name} ${payload.last_name}`.trim() || payload.email} was invited.`
     );
-    await loadStaff();
+    void loadStaff().catch((err) => {
+      toast.warning('Could not refresh team list', {
+        description:
+          err instanceof Error
+            ? err.message
+            : 'The invite succeeded. Refresh the page to see the new user.',
+      });
+    });
   };
 
   const toggleSuspend = async (id: string) => {

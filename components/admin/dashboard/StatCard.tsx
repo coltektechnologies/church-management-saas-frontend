@@ -26,7 +26,7 @@ function useIsMounted(): boolean {
 const StatCard = ({
   title,
   value,
-  subtitle = 'Last month',
+  subtitle = 'Total',
   icon: Icon,
   onViewDetail,
   empty = false,

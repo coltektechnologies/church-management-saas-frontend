@@ -146,7 +146,9 @@ export interface FinanceTrendsResponse {
 
 export interface AnnouncementStatsResponse {
   total: number;
-  by_status: { status: string; count: number }[];
+  /** Church-wide count of PUBLISHED announcements (explicit for dashboards). */
+  published?: number;
+  by_status: { status: string; count: number }[] | Record<string, number>;
   by_priority: { priority: string; count: number }[];
   generated_at?: string;
 }
@@ -341,6 +343,42 @@ export async function getAnnouncementStats(): Promise<AnnouncementStatsResponse 
     undefined,
     null
   );
+}
+
+/** Parse DRF paginated JSON (`count` may be number or string). */
+function parsePaginatedCount(raw: unknown): number | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return null;
+  }
+  const c = (raw as { count?: unknown }).count;
+  if (typeof c === 'number' && !Number.isNaN(c)) {
+    return c;
+  }
+  if (typeof c === 'string') {
+    const n = parseInt(c, 10);
+    return Number.isNaN(n) ? null : n;
+  }
+  return null;
+}
+
+/**
+ * Published announcements total via paginated list `count` (same visibility rules as list).
+ * Tries `?status=PUBLISHED` then the `published/` list action.
+ */
+export async function getAnnouncementsPublishedTotal(): Promise<number | null> {
+  const base = getApiBaseUrl();
+  const urls = [
+    `${base}/announcements/?status=PUBLISHED&page_size=1`,
+    `${base}/announcements/published/?page_size=1`,
+  ];
+  for (const url of urls) {
+    const raw = await fetchAuthSafe<unknown>(url, undefined, null);
+    const n = parsePaginatedCount(raw);
+    if (n !== null) {
+      return n;
+    }
+  }
+  return null;
 }
 
 /**

@@ -32,7 +32,8 @@ export interface Announcement {
   title: string;
   message: string;
   priority: 'High' | 'Medium' | 'Low';
-  status: 'Published' | 'Draft';
+  /** Mirrors backend announcement workflow */
+  status: 'Published' | 'Draft' | 'Pending' | 'Approved' | 'Rejected';
 }
 
 export interface EventItem {
@@ -133,6 +134,8 @@ interface AppDataContextType {
   monthlyIncome: number;
   pendingAnnouncements: number;
   publishedAnnouncements: number;
+  /** All announcements (every status) — from GET /api/analytics/dashboard/admin/ `announcements_total` when available. */
+  totalAnnouncements: number;
   totalEvents: number;
   pendingApprovals: number;
   averageAttendance: number;
@@ -157,6 +160,12 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [activityLog, setActivityLog] = useState<ActivityLogItem[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [useMockData, setUseMockData] = useState(false);
+  /** Aggregated published total (analytics + paginated count + list slice max). */
+  const [publishedAnnouncementTotal, setPublishedAnnouncementTotal] = useState<number | null>(
+    null
+  );
+  /** GET /api/analytics/dashboard/admin/ → `announcements_total` (fallback: announcements stats `total`). */
+  const [announcementsTotalFromApi, setAnnouncementsTotalFromApi] = useState<number | null>(null);
 
   /* ── Dashboard API sync (fetches from backend when authenticated) ── */
   const {
@@ -171,6 +180,8 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     setDepartments,
     setApprovals,
     setActivityLog,
+    setPublishedAnnouncementTotal,
+    setAnnouncementsTotalFromApi,
   });
 
   const refetchDashboard = useCallback(async () => {
@@ -333,47 +344,30 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
     [logActivity]
   );
 
-  /* ── Date-range filter helper ── */
-  const inRange = useCallback(
-    (dateStr: string) => {
-      if (!dateRange.from && !dateRange.to) {
-        return true;
-      }
-      const d = new Date(dateStr);
-      if (dateRange.from && d < dateRange.from) {
-        return false;
-      }
-      if (dateRange.to) {
-        const end = new Date(dateRange.to);
-        end.setHours(23, 59, 59, 999);
-        if (d > end) {
-          return false;
-        }
-      }
-      return true;
-    },
-    [dateRange]
-  );
-
   /* ── Derived stats — recomputed whenever source data changes ── */
   const derived = useMemo(() => {
-    const filteredTxns = transactions.filter((t) => inRange(t.date));
-
     const totalMembers = members.length;
     const activeMembers = members.filter((m) => m.status === 'Active').length;
     const inactiveMembers = members.filter((m) => m.status === 'Inactive').length;
 
-    const totalIncome = filteredTxns
+    const totalIncome = transactions
       .filter((t) => t.type === 'Income')
       .reduce((s, t) => s + t.amount, 0);
-    const totalExpense = filteredTxns
+    const totalExpense = transactions
       .filter((t) => t.type === 'Expense')
       .reduce((s, t) => s + t.amount, 0);
     const netBalance = totalIncome - totalExpense;
-    const monthlyIncome = totalIncome; // scoped by date range
+    const monthlyIncome = totalIncome;
 
-    const pendingAnnouncements = announcements.filter((a) => a.status === 'Draft').length;
-    const publishedAnnouncements = announcements.filter((a) => a.status === 'Published').length;
+    const pendingAnnouncements = announcements.filter((a) =>
+      ['Draft', 'Pending', 'Approved'].includes(a.status)
+    ).length;
+    const publishedFromList = announcements.filter((a) => a.status === 'Published').length;
+    const publishedAnnouncements =
+      publishedAnnouncementTotal !== null ? publishedAnnouncementTotal : publishedFromList;
+
+    const totalAnnouncements =
+      announcementsTotalFromApi !== null ? announcementsTotalFromApi : announcements.length;
 
     const totalEvents = events.length;
     const pendingApprovals = approvals.filter((a) => a.status === 'Pending').length;
@@ -405,13 +399,23 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
       monthlyIncome,
       pendingAnnouncements,
       publishedAnnouncements,
+      totalAnnouncements,
       totalEvents,
       pendingApprovals,
       averageAttendance,
       newMembersThisWeek,
       departmentCount,
     };
-  }, [members, transactions, announcements, events, approvals, departments, inRange]);
+  }, [
+    members,
+    transactions,
+    announcements,
+    events,
+    approvals,
+    departments,
+    publishedAnnouncementTotal,
+    announcementsTotalFromApi,
+  ]);
 
   return (
     <AppDataContext.Provider

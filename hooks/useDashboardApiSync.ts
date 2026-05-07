@@ -30,6 +30,10 @@ export interface UseDashboardApiSyncOptions {
   setDepartments: (v: Dept[] | ((prev: Dept[]) => Dept[])) => void;
   setApprovals: (v: Approval[] | ((prev: Approval[]) => Approval[])) => void;
   setActivityLog: (v: ActivityLogItem[] | ((prev: ActivityLogItem[]) => ActivityLogItem[])) => void;
+  /** Church-wide published count from analytics (list fetch is capped). */
+  setPublishedAnnouncementTotal: (v: number | null) => void;
+  /** All announcements total from GET /analytics/dashboard/admin/ (fallback: announcements stats `total`). */
+  setAnnouncementsTotalFromApi: (v: number | null) => void;
 }
 
 export interface UseDashboardApiSyncResult {
@@ -52,6 +56,8 @@ export function useDashboardApiSync(
     setDepartments,
     setApprovals,
     setActivityLog,
+    setPublishedAnnouncementTotal,
+    setAnnouncementsTotalFromApi,
   } = options;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -76,6 +82,9 @@ export function useDashboardApiSync(
         expenseRequestsRes,
         activityRes,
         upcomingRes,
+        announcementStatsRes,
+        publishedAnnouncementsTotalRes,
+        dashboardAdminRes,
       ] = await Promise.all([
         dashboardApi.getMembersList(100),
         dashboardApi.getIncomeTransactions(100),
@@ -85,6 +94,9 @@ export function useDashboardApiSync(
         dashboardApi.getExpenseRequests(50),
         dashboardApi.getActivityFeed(30),
         dashboardApi.getUpcomingActivities(),
+        dashboardApi.getAnnouncementStats(),
+        dashboardApi.getAnnouncementsPublishedTotal(),
+        dashboardApi.getDashboardAdmin(),
       ]);
 
       setMembers(membersRes.map(mappers.mapBackendMember));
@@ -93,7 +105,32 @@ export function useDashboardApiSync(
       const expenseTxns = expenseRes.map(mappers.mapBackendExpenseTransaction);
       setTransactions([...incomeTxns, ...expenseTxns].sort((a, b) => b.date.localeCompare(a.date)));
 
-      setAnnouncements(announcementsRes.map(mappers.mapBackendAnnouncement));
+      const mappedAnnouncements = announcementsRes.map(mappers.mapBackendAnnouncement);
+      setAnnouncements(mappedAnnouncements);
+      const publishedInList = mappedAnnouncements.filter((a) => a.status === 'Published').length;
+      setPublishedAnnouncementTotal(
+        mappers.resolvePublishedAnnouncementTotal(
+          announcementStatsRes,
+          publishedAnnouncementsTotalRes,
+          publishedInList
+        )
+      );
+
+      const coerceCount = (v: unknown): number | null => {
+        if (v === null || v === undefined) {
+          return null;
+        }
+        const n = typeof v === 'number' ? v : Number(v);
+        return Number.isNaN(n) ? null : n;
+      };
+      const totalFromAdmin = dashboardAdminRes
+        ? coerceCount(dashboardAdminRes.announcements_total)
+        : null;
+      const totalFromAnnouncementStats = announcementStatsRes
+        ? coerceCount(announcementStatsRes.total)
+        : null;
+      setAnnouncementsTotalFromApi(totalFromAdmin ?? totalFromAnnouncementStats ?? null);
+
       setDepartments(departmentsRes.map(mappers.mapBackendDepartment));
 
       const pendingRequests = expenseRequestsRes.filter((r) =>
@@ -124,6 +161,8 @@ export function useDashboardApiSync(
     setDepartments,
     setApprovals,
     setActivityLog,
+    setPublishedAnnouncementTotal,
+    setAnnouncementsTotalFromApi,
   ]);
 
   useEffect(() => {

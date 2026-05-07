@@ -30,6 +30,9 @@ import {
 import {
   sanitizePersonNameInput,
   sanitizeNoDigits,
+  sanitizeCityNameInput,
+  sanitizeAlphanumericIdInput,
+  sanitizePhoneStripLetters,
   resolveCountryToIsoAlpha2,
   getSignupPhoneError,
   isValidSignupEmail,
@@ -289,6 +292,18 @@ export default function AddMemberPage() {
     if (key === 'occupation' && typeof value === 'string') {
       next = sanitizeNoDigits(value);
     }
+    if (key === 'national_id' && typeof value === 'string') {
+      next = sanitizeAlphanumericIdInput(value);
+    }
+    if (key === 'city' && typeof value === 'string') {
+      next = sanitizeCityNameInput(value);
+    }
+    if (
+      (key === 'phone_number' || key === 'emergency_contact_phone') &&
+      typeof value === 'string'
+    ) {
+      next = sanitizePhoneStripLetters(value);
+    }
     setForm((prev) => ({ ...prev, [key]: next }));
     setError('');
   };
@@ -370,6 +385,21 @@ export default function AddMemberPage() {
       setError(msg);
       toast.error('Invalid email', { description: msg });
       return;
+    }
+    if (emailTrim && isValidSignupEmail(emailTrim)) {
+      if (emailChecking) {
+        flushEmailVerify();
+        const msg = 'Wait for email verification to finish.';
+        setError(msg);
+        toast.error('Email verification in progress', { description: msg });
+        return;
+      }
+      if (!canProceedEmail) {
+        const msg = emailRemoteError || 'Email must pass server verification.';
+        setError(msg);
+        toast.error('Email not verified', { description: msg });
+        return;
+      }
     }
     if (emailTrim) {
       const check = await checkRegistrationEmail(emailTrim, 'admin');

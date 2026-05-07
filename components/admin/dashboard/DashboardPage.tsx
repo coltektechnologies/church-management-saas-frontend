@@ -39,7 +39,7 @@ export default function DashboardPage() {
     totalMembers,
     newMembersThisWeek,
     totalIncome,
-    publishedAnnouncements,
+    totalAnnouncements,
     pendingAnnouncements,
     averageAttendance,
     apiLoading,
@@ -134,36 +134,36 @@ export default function DashboardPage() {
         </span>
       </div>
 
-      {/* Stat Cards — reference: white tiles, title | icon, divider, value, Last month | View detail */}
+      {/* Stat cards — all-time totals */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         <StatCard
           title="Total Members"
           value={totalMembers.toLocaleString()}
-          subtitle="Last month"
+          subtitle="Total"
           icon={Users2}
           empty={totalMembers === 0}
           onViewDetail={() => router.push('/admin/members')}
         />
         <StatCard
-          title="Monthly Income"
+          title="Total Income"
           value={`GHS${totalIncome.toLocaleString()}`}
-          subtitle="Last month"
+          subtitle="Total"
           icon={CircleDollarSign}
           empty={totalIncome === 0}
           onViewDetail={() => router.push('/admin/treasury')}
         />
         <StatCard
           title="Announcements"
-          value={publishedAnnouncements.toLocaleString()}
-          subtitle="Last month"
+          value={totalAnnouncements.toLocaleString()}
+          subtitle="Total"
           icon={Megaphone}
-          empty={publishedAnnouncements === 0}
+          empty={totalAnnouncements === 0}
           onViewDetail={() => router.push('/admin/announcements')}
         />
         <StatCard
           title="Attendance"
           value={averageAttendance.toLocaleString()}
-          subtitle="Last month"
+          subtitle="Average"
           icon={PersonStanding}
           empty={averageAttendance === 0}
           onViewDetail={() => router.push('/admin/members')}

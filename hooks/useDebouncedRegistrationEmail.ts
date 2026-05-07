@@ -10,13 +10,19 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
+export type DebouncedRegistrationEmailOptions = {
+  /** If the field still matches this saved email (normalized), skip uniqueness API (profile edit). */
+  baselineVerifiedEmail?: string | null;
+};
+
 /**
  * Calls `/auth/registration/validate-email/` after typing pauses + on blur.
  * Continue stays disabled until the server returns OK for the **current** email (deliverability + uniqueness).
  */
 export function useDebouncedRegistrationEmail(
   value: string | undefined,
-  scope: 'church' | 'admin'
+  scope: 'church' | 'admin',
+  options?: DebouncedRegistrationEmailOptions
 ) {
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -25,6 +31,8 @@ export function useDebouncedRegistrationEmail(
   const verifiedRef = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seqRef = useRef(0);
+
+  const baselineNorm = (options?.baselineVerifiedEmail ?? '').trim().toLowerCase();
 
   const normalized = normalizeEmail(value ?? '');
 
@@ -37,6 +45,15 @@ export function useDebouncedRegistrationEmail(
           setRemoteError(null);
           setVerifiedEmail(null);
           verifiedRef.current = null;
+          setChecking(false);
+        }
+        return;
+      }
+      if (baselineNorm && norm === baselineNorm) {
+        if (seq === seqRef.current) {
+          verifiedRef.current = norm;
+          setVerifiedEmail(norm);
+          setRemoteError(null);
           setChecking(false);
         }
         return;
@@ -75,7 +92,7 @@ export function useDebouncedRegistrationEmail(
         }
       }
     },
-    [scope]
+    [scope, baselineNorm]
   );
 
   useEffect(() => {
@@ -105,6 +122,14 @@ export function useDebouncedRegistrationEmail(
     }
 
     const norm = normalizeEmail(trimmed);
+    if (baselineNorm && norm === baselineNorm) {
+      seqRef.current += 1;
+      verifiedRef.current = norm;
+      setVerifiedEmail(norm);
+      setRemoteError(null);
+      setChecking(false);
+      return;
+    }
     if (verifiedRef.current === norm) {
       return;
     }
@@ -120,7 +145,7 @@ export function useDebouncedRegistrationEmail(
         timerRef.current = null;
       }
     };
-  }, [value, executeCheck]);
+  }, [value, executeCheck, baselineNorm]);
 
   const flushVerify = useCallback(() => {
     if (timerRef.current) {

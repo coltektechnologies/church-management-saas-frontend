@@ -23,7 +23,14 @@ import { useDeptTheme } from '@/components/departments/contexts/DeptThemeProvide
 import type { DepartmentMember, MemberRole, MemberStatus } from './membersDummyData';
 import { ALL_DEPARTMENTS } from './membersDummyData';
 import MemberRegistrationSuccess from './MemberRegistrationSuccess';
-import { sanitizePersonNameInput } from '@/lib/signupValidation';
+import {
+  sanitizeAlphanumericIdInput,
+  sanitizeCityNameInput,
+  sanitizeNoDigits,
+  sanitizePersonNameInput,
+  sanitizePhoneStripLetters,
+  isValidSignupEmail,
+} from '@/lib/signupValidation';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -52,16 +59,11 @@ function isValidPhone(value: string): boolean {
   return digits.length >= 7 && /^[+\d\s\-().]+$/.test(trimmed);
 }
 
-/**
- * Email validation (optional field):
- * Returns true when empty (field is optional).
- * Returns true when it matches a standard email pattern.
- */
 function isValidEmail(value: string): boolean {
   if (!value.trim()) {
     return true;
   }
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim());
+  return isValidSignupEmail(value.trim());
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -393,8 +395,32 @@ export default function AddMemberPage({
   // ── Field setters ──────────────────────────────────────────────────────────
   const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
     let nextValue: FormState[K] = value;
-    if ((key === 'firstName' || key === 'lastName') && typeof value === 'string') {
+    if (
+      (key === 'firstName' || key === 'middleName' || key === 'lastName') &&
+      typeof value === 'string'
+    ) {
       nextValue = sanitizePersonNameInput(value) as FormState[K];
+    }
+    if (key === 'nationalId' && typeof value === 'string') {
+      nextValue = sanitizeAlphanumericIdInput(value) as FormState[K];
+    }
+    if (key === 'occupation' && typeof value === 'string') {
+      nextValue = sanitizeNoDigits(value) as FormState[K];
+    }
+    if (key === 'city' && typeof value === 'string') {
+      nextValue = sanitizeCityNameInput(value) as FormState[K];
+    }
+    if (
+      (key === 'phone' || key === 'emergencyPhone') &&
+      typeof value === 'string'
+    ) {
+      nextValue = sanitizePhoneStripLetters(value) as FormState[K];
+    }
+    if (key === 'emergencyName' && typeof value === 'string') {
+      nextValue = sanitizePersonNameInput(value) as FormState[K];
+    }
+    if (key === 'emergencyRelationship' && typeof value === 'string') {
+      nextValue = sanitizeNoDigits(value) as FormState[K];
     }
     setForm((prev) => {
       const next = { ...prev, [key]: nextValue };

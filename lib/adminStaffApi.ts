@@ -20,12 +20,42 @@ function authHeaders(): Record<string, string> {
   return h;
 }
 
+function parseJsonBody(text: string): Record<string, unknown> {
+  if (!text.trim()) {
+    return {};
+  }
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function extractCreatedUserId(data: Record<string, unknown>): string {
+  const raw = data.id ?? data.pk ?? data.user_id;
+  if (raw !== undefined && raw !== null && String(raw).length > 0) {
+    return String(raw);
+  }
+  return '';
+}
+
 async function fetchAuthJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: { ...authHeaders(), ...init?.headers },
-  });
-  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: { ...authHeaders(), ...init?.headers },
+    });
+  } catch (e) {
+    const raw = e instanceof Error ? e.message : String(e);
+    const hint =
+      raw.includes('Failed to fetch') || raw.includes('NetworkError')
+        ? ' Cannot reach the API (check NEXT_PUBLIC_API_URL, CORS, and that the backend is running).'
+        : '';
+    throw new Error(`Network error: ${raw}.${hint}`);
+  }
+  const text = await res.text();
+  const data = parseJsonBody(text) as Record<string, unknown>;
   if (!res.ok) {
     const msg =
       (typeof data?.detail === 'string' ? data.detail : null) ||
@@ -142,11 +172,11 @@ export async function inviteStaffUser(
     body.password_confirm = payload.password_confirm;
   }
 
-  const created = await fetchAuthJson<{ id?: string }>(`${getApiBaseUrl()}/auth/users/`, {
+  const created = await fetchAuthJson<Record<string, unknown>>(`${getApiBaseUrl()}/auth/users/`, {
     method: 'POST',
     body: JSON.stringify(body),
   });
-  const userId = created.id !== undefined && created.id !== null ? String(created.id) : '';
+  const userId = extractCreatedUserId(created);
   if (!userId) {
     throw new Error('Server did not return a user id.');
   }

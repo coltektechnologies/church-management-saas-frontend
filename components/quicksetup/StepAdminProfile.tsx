@@ -1,6 +1,11 @@
 'use client';
 
 import { User, X } from 'lucide-react';
+import {
+  sanitizeNoDigits,
+  sanitizePersonNameInput,
+  sanitizePhoneStripLetters,
+} from '@/lib/signupValidation';
 import Image from 'next/image';
 
 interface StepAdminProfileProps {
@@ -72,7 +77,7 @@ const StepAdminProfile = ({
           <input
             type="text"
             value={firstName}
-            onChange={(e) => onFirstNameChange(e.target.value)}
+            onChange={(e) => onFirstNameChange(sanitizePersonNameInput(e.target.value))}
             placeholder="First name"
             className="form-input-od"
           />
@@ -82,7 +87,7 @@ const StepAdminProfile = ({
           <input
             type="text"
             value={lastName}
-            onChange={(e) => onLastNameChange(e.target.value)}
+            onChange={(e) => onLastNameChange(sanitizePersonNameInput(e.target.value))}
             placeholder="Last name"
             className="form-input-od"
           />
@@ -94,7 +99,7 @@ const StepAdminProfile = ({
         <input
           type="text"
           value={role}
-          onChange={(e) => onRoleChange(e.target.value)}
+          onChange={(e) => onRoleChange(sanitizeNoDigits(e.target.value))}
           placeholder="e.g. Senior Pastor"
           className="form-input-od"
         />
@@ -105,7 +110,7 @@ const StepAdminProfile = ({
         <input
           type="tel"
           value={phone}
-          onChange={(e) => onPhoneChange(e.target.value)}
+          onChange={(e) => onPhoneChange(sanitizePhoneStripLetters(e.target.value))}
           placeholder="+233 00 000 0000"
           className="form-input-od"
         />

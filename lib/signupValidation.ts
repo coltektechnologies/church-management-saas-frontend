@@ -12,6 +12,36 @@ export function sanitizeNoDigits(value: string): string {
   return value.replace(/\d/g, '');
 }
 
+/** Letters, spaces, apostrophe, hyphen — no digits (city names). */
+export function sanitizeCityNameInput(value: string): string {
+  return value.replace(/[^A-Za-z\s\-']/g, '');
+}
+
+/** Remove digits only; keeps letters (incl. unicode), spaces, punctuation. */
+export function stripDigits(value: string): string {
+  return value.replace(/\d/g, '');
+}
+
+/** Phone / numeric lines: digits only (no letters). */
+export function sanitizePhoneDigitsOnly(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
+/** Phone input: remove letters; keeps digits, +, spaces (paste-safe). */
+export function sanitizePhoneStripLetters(value: string): string {
+  return value.replace(/[A-Za-z]/g, '');
+}
+
+/** National ID / tax IDs: letters and digits only. */
+export function sanitizeAlphanumericIdInput(value: string): string {
+  return value.replace(/[^A-Za-z0-9]/g, '');
+}
+
+/** Username-style fields: letters, digits, dot, underscore, hyphen. */
+export function sanitizeUsernameInput(value: string): string {
+  return value.replace(/[^A-Za-z0-9._-]/g, '');
+}
+
 /**
  * Map church `country` from API (often ISO alpha-2 or English name) to ISO alpha-2 for libphonenumber.
  * Defaults to GH when unknown so phone validation still runs.
