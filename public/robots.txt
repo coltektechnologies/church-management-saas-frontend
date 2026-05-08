@@ -1,0 +1,79 @@
+# Church Management SAAS - Robots.txt
+# Allow search engines to crawl public pages, block protected areas
+
+# Default rules for all bots
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /signup
+Allow: /pricing
+Allow: /features
+Allow: /contact
+Allow: /developers
+Allow: /start
+
+# Disallow protected/authenticated areas
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /secretary
+Disallow: /treasurer
+Disallow: /membership
+Disallow: /departments
+Disallow: /announcements
+
+# Disallow API endpoints
+Disallow: /api/
+
+# Disallow internal paths
+Disallow: /_next/
+Disallow: /public/
+Disallow: /*.json$
+
+# Google-specific rules
+User-agent: Googlebot
+Allow: /
+Allow: /login
+Allow: /signup
+Allow: /pricing
+Allow: /features
+Allow: /contact
+Allow: /developers
+Allow: /start
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /secretary
+Disallow: /treasurer
+Disallow: /api/
+
+# Bingbot rules
+User-agent: Bingbot
+Allow: /
+Allow: /login
+Allow: /signup
+Allow: /pricing
+Allow: /features
+Allow: /contact
+Allow: /developers
+Allow: /start
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /secretary
+Disallow: /treasurer
+Disallow: /api/
+
+# Block bad bots
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+# Sitemap location
+Sitemap: https://opendoor-xi.vercel.app/sitemap.xml
+
+# Crawl delay (in seconds) - adjust based on server capacity
+Crawl-delay: 1
+Request-rate: 1/1s
