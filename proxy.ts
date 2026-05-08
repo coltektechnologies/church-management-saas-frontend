@@ -98,8 +98,21 @@ function isNextOrStaticAsset(pathname: string): boolean {
   );
 }
 
+
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+   /** =========================
+   * ✅ GOOGLE FIX (ONLY ADDITION)
+   * ========================= */
+  if (
+    pathname === '/googlee5e060dc13b2e1c4.html' ||
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml'
+  ) {
+    return NextResponse.next();
+  }
 
   /** Dev proxy / optional same-origin API — must not respond with HTML login redirect */
   if (pathname.startsWith('/api')) {
