@@ -51,7 +51,13 @@ const MyProfileTab = () => {
       adminPhone: profile.adminPhone || '',
       avatarUrl: profile.avatarUrl as string | null,
     });
-  }, [profile.adminName, profile.adminEmail, profile.adminRole, profile.adminPhone, profile.avatarUrl]);
+  }, [
+    profile.adminName,
+    profile.adminEmail,
+    profile.adminRole,
+    profile.adminPhone,
+    profile.avatarUrl,
+  ]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -209,9 +215,7 @@ const MyProfileTab = () => {
             className="h-12 bg-slate-50 border-none font-bold rounded-xl focus:ring-2 focus:ring-primary/20"
             value={form.adminRole}
             placeholder="Admin / Senior Pastor"
-            onChange={(e) =>
-              setForm({ ...form, adminRole: sanitizeNoDigits(e.target.value) })
-            }
+            onChange={(e) => setForm({ ...form, adminRole: sanitizeNoDigits(e.target.value) })}
           />
         </div>
 

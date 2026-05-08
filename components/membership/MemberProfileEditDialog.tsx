@@ -480,8 +480,8 @@ export default function MemberProfileEditDialog({ open, onOpenChange, member, on
                 !member ||
                 Boolean(
                   loc.email.trim() &&
-                    isValidSignupEmail(loc.email.trim()) &&
-                    (emailVerification.checking || !emailVerification.canProceedEmail)
+                  isValidSignupEmail(loc.email.trim()) &&
+                  (emailVerification.checking || !emailVerification.canProceedEmail)
                 )
               }
               className="bg-[#2FC4B2] hover:bg-[#28b0a0] text-white"

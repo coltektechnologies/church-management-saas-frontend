@@ -161,9 +161,7 @@ export const AppDataProvider = ({ children }: { children: ReactNode }) => {
   const [dateRange, setDateRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [useMockData, setUseMockData] = useState(false);
   /** Aggregated published total (analytics + paginated count + list slice max). */
-  const [publishedAnnouncementTotal, setPublishedAnnouncementTotal] = useState<number | null>(
-    null
-  );
+  const [publishedAnnouncementTotal, setPublishedAnnouncementTotal] = useState<number | null>(null);
   /** GET /api/analytics/dashboard/admin/ → `announcements_total` (fallback: announcements stats `total`). */
   const [announcementsTotalFromApi, setAnnouncementsTotalFromApi] = useState<number | null>(null);
 

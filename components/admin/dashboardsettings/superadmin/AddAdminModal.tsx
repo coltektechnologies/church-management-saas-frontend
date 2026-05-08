@@ -96,10 +96,7 @@ export default function AddAdminModal({
 
   const setField = <K extends keyof InviteStaffPayload>(key: K, value: InviteStaffPayload[K]) => {
     let next = value;
-    if (
-      (key === 'first_name' || key === 'last_name') &&
-      typeof value === 'string'
-    ) {
+    if ((key === 'first_name' || key === 'last_name') && typeof value === 'string') {
       next = sanitizePersonNameInput(value) as InviteStaffPayload[K];
     }
     if (key === 'phone' && typeof value === 'string') {
@@ -292,7 +289,9 @@ export default function AddAdminModal({
           </section>
 
           <section className="space-y-3">
-            <p className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">Access</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Access
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 sm:col-span-2">
                 <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ml-0.5">
@@ -336,8 +335,12 @@ export default function AddAdminModal({
               </div>
               <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-600 dark:bg-slate-900">
                 <div>
-                  <p className="text-sm font-bold text-[#0B2A4A] dark:text-slate-100">Send credentials</p>
-                  <p className="text-[10px] text-slate-600 dark:text-slate-400">Maps to send_credentials</p>
+                  <p className="text-sm font-bold text-[#0B2A4A] dark:text-slate-100">
+                    Send credentials
+                  </p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                    Maps to send_credentials
+                  </p>
                 </div>
                 <Switch
                   checked={form.send_credentials}
@@ -346,8 +349,12 @@ export default function AddAdminModal({
               </div>
               <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 sm:col-span-2 dark:border-slate-600 dark:bg-slate-900">
                 <div>
-                  <p className="text-sm font-bold text-[#0B2A4A] dark:text-slate-100">Active account</p>
-                  <p className="text-[10px] text-slate-600 dark:text-slate-400">Maps to is_active</p>
+                  <p className="text-sm font-bold text-[#0B2A4A] dark:text-slate-100">
+                    Active account
+                  </p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                    Maps to is_active
+                  </p>
                 </div>
                 <Switch
                   checked={form.is_active}
@@ -477,7 +484,9 @@ export default function AddAdminModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">Gender</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
+                  Gender
+                </Label>
                 <Select
                   value={form.gender || '__none__'}
                   onValueChange={(v) => setField('gender', v === '__none__' ? '' : v)}
@@ -494,7 +503,9 @@ export default function AddAdminModal({
                 </Select>
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">Address</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
+                  Address
+                </Label>
                 <Textarea
                   className="min-h-[80px] resize-none rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
                   value={form.address}
@@ -516,7 +527,9 @@ export default function AddAdminModal({
           {showPassword && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-1 border-l-2 border-slate-200 ml-1">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">Password</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
+                  Password
+                </Label>
                 <Input
                   type="password"
                   className={`h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${errors.password ? 'ring-2 ring-red-400' : ''}`}
@@ -528,7 +541,9 @@ export default function AddAdminModal({
                 {errors.password && <p className="text-[10px] text-red-500">{errors.password}</p>}
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">Confirm</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400">
+                  Confirm
+                </Label>
                 <Input
                   type="password"
                   className={`h-11 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${errors.password_confirm ? 'ring-2 ring-red-400' : ''}`}

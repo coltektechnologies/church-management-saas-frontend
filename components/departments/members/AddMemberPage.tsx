@@ -410,10 +410,7 @@ export default function AddMemberPage({
     if (key === 'city' && typeof value === 'string') {
       nextValue = sanitizeCityNameInput(value) as FormState[K];
     }
-    if (
-      (key === 'phone' || key === 'emergencyPhone') &&
-      typeof value === 'string'
-    ) {
+    if ((key === 'phone' || key === 'emergencyPhone') && typeof value === 'string') {
       nextValue = sanitizePhoneStripLetters(value) as FormState[K];
     }
     if (key === 'emergencyName' && typeof value === 'string') {
