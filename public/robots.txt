@@ -72,7 +72,7 @@ User-agent: SemrushBot
 Crawl-delay: 10
 
 # Sitemap location
-Sitemap: https://opendoor-xi.vercel.app/sitemap.xml
+Sitemap: https://open-door.site/sitemap.xml
 
 # Crawl delay (in seconds) - adjust based on server capacity
 Crawl-delay: 1
