@@ -98,12 +98,10 @@ function isNextOrStaticAsset(pathname: string): boolean {
   );
 }
 
-
-
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-   /** =========================
+  /** =========================
    * ✅ GOOGLE FIX (ONLY ADDITION)
    * ========================= */
   if (
