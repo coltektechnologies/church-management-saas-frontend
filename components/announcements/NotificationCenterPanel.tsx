@@ -503,17 +503,6 @@ export function NotificationCenterPanel({
             </ul>
           )}
         </div>
-
-        <div className="shrink-0 border-t border-border bg-muted/30 px-5 py-3">
-          <p className="text-center text-[11px] leading-relaxed text-muted-foreground">
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">
-              /api/notifications/notifications/
-            </code>
-            <span className="mt-1 block text-[10px]">
-              send-bulk · batches · recurring-schedules
-            </span>
-          </p>
-        </div>
       </aside>
 
       {modals}

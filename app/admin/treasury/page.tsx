@@ -57,14 +57,41 @@ export default function TreasuryPage() {
   const rejectMutation = useRejectExpenseRequest();
 
   /* ─── Data hooks ─── */
-  const { data: summary, isLoading: loadingSummary } = useTreasurySummary(filters);
-  const { data: trend, isLoading: loadingTrend } = useMonthlyTrend(filters);
-  const { data: transactions, isLoading: loadingTxns } = useRecentTransactions(filters);
-  const { data: incomeBreakdown, isLoading: loadingIncome } = useIncomeBreakdown(filters);
+  const {
+    data: summary,
+    isLoading: loadingSummary,
+    refetch: refetchSummary,
+  } = useTreasurySummary(filters);
+  const { data: trend, isLoading: loadingTrend, refetch: refetchTrend } = useMonthlyTrend(filters);
+  const {
+    data: transactions,
+    isLoading: loadingTxns,
+    refetch: refetchTransactions,
+  } = useRecentTransactions(filters);
+  const {
+    data: incomeBreakdown,
+    isLoading: loadingIncome,
+    refetch: refetchIncomeBreakdown,
+  } = useIncomeBreakdown(filters);
   const { data: expenseBreakdown, isLoading: loadingExpense } = useExpenseBreakdown(filters);
-  const { data: memberContribs, isLoading: loadingMembers } = useMemberContributions(filters);
+  const {
+    data: memberContribs,
+    isLoading: loadingMembers,
+    refetch: refetchMemberContribs,
+  } = useMemberContributions(filters);
   const { data: deptBudgets, isLoading: loadingBudgets } = useDepartmentBudgets();
   const { data: expenseRequests, isLoading: loadingRequests } = usePendingExpenseRequests();
+
+  const handleIncomeRecorded = async (_receiptNumber: string) => {
+    // Refetch data to reflect the new income
+    await Promise.all([
+      refetchSummary(),
+      refetchTrend(),
+      refetchTransactions(),
+      refetchIncomeBreakdown(),
+      refetchMemberContribs(),
+    ]);
+  };
 
   return (
     <div className="flex flex-col gap-6 pb-12">
@@ -183,7 +210,11 @@ export default function TreasuryPage() {
         />
       </div>
 
-      <RecordIncomeModal open={isRecordIncomeModalOpen} onOpenChange={setIsRecordIncomeModalOpen} />
+      <RecordIncomeModal
+        open={isRecordIncomeModalOpen}
+        onOpenChange={setIsRecordIncomeModalOpen}
+        onSuccess={handleIncomeRecorded}
+      />
     </div>
   );
 }

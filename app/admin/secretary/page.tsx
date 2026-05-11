@@ -67,13 +67,6 @@ export default function AdminSecretaryPage() {
           >
             Secretariat
           </h1>
-          <p
-            className="mt-1 text-sm max-w-2xl"
-            style={{ color: 'var(--admin-text-muted, #6b7280)' }}
-          >
-            Same announcement cards as Church Announcements. Filters and counts stay in sync when
-            you switch between this page and the full hub.
-          </p>
         </div>
         <Button
           variant="outline"

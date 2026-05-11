@@ -7,7 +7,7 @@ import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   fetchDepartmentExpenseAllocations,
@@ -137,12 +137,6 @@ export default function AdminTreasuryBudgetAllocationPage() {
           <CardTitle className="text-lg sm:text-xl leading-snug">
             Allocate department budgets (top-down)
           </CardTitle>
-          <CardDescription className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
-            Set an expense envelope per department for the selected year. When filled in, the
-            treasury dashboard uses this amount as &quot;allocated&quot; instead of rolling up
-            program budgets. Leaving a field empty falls back to program-based totals (nothing is
-            deleted from department programs).
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 px-4 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
