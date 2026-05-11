@@ -94,8 +94,8 @@ export function RecordIncomeModal({ open, onOpenChange, onSuccess }: RecordIncom
         setMembers(
           membersList.map((m) => ({
             id: m.id,
-            first_name: m.first_name,
-            last_name: m.last_name,
+            first_name: m.first_name ?? '',
+            last_name: m.last_name ?? '',
           }))
         );
 
