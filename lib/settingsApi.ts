@@ -391,6 +391,7 @@ export function mapChurchToProfile(church: ChurchApiResponse | null): Record<str
     mission: church.mission ?? '',
     website: church.website ?? '',
     subscriptionStatus: normalizeSubscriptionStatus(church),
+    subscriptionPlan: church.subscription_plan ?? '',
     darkMode: church.dark_mode ?? false,
     theme: church.dark_mode ? 'dark' : 'light',
   };

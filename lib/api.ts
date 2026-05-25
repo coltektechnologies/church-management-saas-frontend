@@ -955,6 +955,23 @@ export async function deleteMember(id: string): Promise<void> {
   }
 }
 
+/** DELETE /members/members/:id/hard-delete/ — permanently removes the member row from the database. */
+export async function hardDeleteMember(id: string): Promise<void> {
+  const base = getApiBaseUrl();
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('You must be logged in to delete a member');
+  }
+  const res = await fetch(`${base}/members/members/${id}/hard-delete/`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    throw new Error(messageFromApiErrorJson(data, 'Failed to permanently delete member'));
+  }
+}
+
 export interface SendNotificationSmsPayload {
   phone_number: string;
   message: string;

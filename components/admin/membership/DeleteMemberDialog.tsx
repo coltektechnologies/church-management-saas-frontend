@@ -14,22 +14,22 @@ import {
   memberModalContentClassName,
   memberModalListClassName,
 } from '@/components/admin/membership/memberDialogStyles';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Trash2 } from 'lucide-react';
 
 export interface DeleteMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   names: string[];
-  loading?: boolean;
-  onConfirm: () => void | Promise<void>;
+  hardLoading?: boolean;
+  onHardDelete: () => void | Promise<void>;
 }
 
 export function DeleteMemberDialog({
   open,
   onOpenChange,
   names,
-  loading,
-  onConfirm,
+  hardLoading,
+  onHardDelete,
 }: DeleteMemberDialogProps) {
   const count = names.length;
   const title = count === 1 ? 'Remove this member?' : `Remove ${count} members?`;
@@ -45,8 +45,8 @@ export function DeleteMemberDialog({
             {title}
           </DialogTitle>
           <DialogDescription className="text-center text-sm text-slate-600 dark:text-slate-300">
-            They will be removed from your directory (soft delete). Contact support if you need to
-            restore a record.
+            This will permanently remove {count === 1 ? 'this member' : `these ${count} members`}.
+            This cannot be undone.
           </DialogDescription>
           {names.length > 0 ? (
             <ul
@@ -63,23 +63,42 @@ export function DeleteMemberDialog({
             </ul>
           ) : null}
         </DialogHeader>
-        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-center sm:gap-3">
+
+        <div className="space-y-3 pt-1">
+          <div className="rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/50 dark:bg-red-950/20 p-4">
+            <div className="flex items-start gap-3">
+              <Trash2 className="h-5 w-5 mt-0.5 shrink-0 text-red-600" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-red-700 dark:text-red-400">
+                  Permanently delete
+                </p>
+                <p className="text-xs text-red-600/80 dark:text-red-400/70 mt-0.5">
+                  Removes the record from the database entirely. This cannot be undone — you can add
+                  the person again as a new member afterwards.
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="destructive"
+              className="mt-3 w-full"
+              disabled={hardLoading}
+              onClick={() => void onHardDelete()}
+            >
+              {hardLoading ? 'Deleting permanently...' : 'Permanently delete'}
+            </Button>
+          </div>
+        </div>
+
+        <DialogFooter className="pt-1">
           <Button
             type="button"
             variant="outline"
-            className="w-full border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900 sm:w-auto"
+            className="w-full border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900"
             onClick={() => onOpenChange(false)}
-            disabled={loading}
+            disabled={hardLoading}
           >
             Cancel
-          </Button>
-          <Button
-            type="button"
-            className="w-full bg-[#0B2A4A] text-white hover:bg-[#0B2A4A]/90 dark:bg-teal-600 dark:hover:bg-teal-600/90 sm:w-auto"
-            disabled={loading}
-            onClick={() => void onConfirm()}
-          >
-            {loading ? 'Removing...' : 'Remove'}
           </Button>
         </DialogFooter>
       </DialogContent>

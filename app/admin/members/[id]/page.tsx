@@ -373,8 +373,8 @@ export default function MemberDetailPage() {
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         names={[fullName]}
-        loading={deleting}
-        onConfirm={handleDeleteConfirm}
+        hardLoading={deleting}
+        onHardDelete={handleDeleteConfirm}
       />
     </div>
   );

@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Plus,
   Trash2,
+  Archive,
   Users,
   Search,
   Shield,
@@ -40,6 +41,7 @@ import { fetchRolesList } from '@/lib/rolesApi';
 import { updateUser } from '@/lib/settingsApi';
 import {
   deleteStaffUser,
+  hardDeleteStaffUser,
   fetchChurchGroupsSelect,
   fetchStaffUserList,
   inviteStaffUser,
@@ -180,17 +182,41 @@ export default function AdminManagementTab() {
     }
     if (
       !window.confirm(
-        `Remove ${staffDisplayName(admin)}? They will lose access (soft delete on the server).`
+        `Archive ${staffDisplayName(admin)}? They will lose access. Their record is preserved (soft delete) and can be restored by support.`
       )
     ) {
       return;
     }
     try {
       await deleteStaffUser(id);
-      toast.success('User removed');
+      toast.success('User archived');
       await loadStaff();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not remove user');
+      toast.error(e instanceof Error ? e.message : 'Could not archive user');
+    }
+  };
+
+  const handleHardRemove = async (id: string) => {
+    const admin = staff.find((a) => a.id === id);
+    if (!admin || admin.isOwner) {
+      toast.error('This account cannot be removed here.');
+      return;
+    }
+    if (
+      !window.confirm(
+        `Permanently delete ${staffDisplayName(admin)}? This cannot be undone — their record will be removed from the database entirely. You can add them again as a new user afterwards.`
+      )
+    ) {
+      return;
+    }
+    try {
+      await hardDeleteStaffUser(id);
+      toast.success('User permanently deleted', {
+        description: 'Record removed. You can add them again as a new user.',
+      });
+      await loadStaff();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not permanently delete user');
     }
   };
 
@@ -426,8 +452,18 @@ export default function AdminManagementTab() {
                           variant="ghost"
                           size="icon"
                           onClick={() => void handleRemove(s.id)}
+                          className="h-9 w-9 text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                          title="Archive user (soft delete — recoverable)"
+                        >
+                          <Archive size={16} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => void handleHardRemove(s.id)}
                           className="h-9 w-9 text-red-400 hover:text-red-600 hover:bg-red-50"
-                          title="Remove user"
+                          title="Permanently delete user (irreversible)"
                         >
                           <Trash2 size={16} />
                         </Button>
