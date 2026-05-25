@@ -1024,9 +1024,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
           }
         }}
         names={deleteDialogNames}
-        loading={deleteBusy}
         hardLoading={hardDeleteLoading}
-        onConfirm={runDelete}
         onHardDelete={runHardDelete}
       />
       <SendSmsDialog open={smsOpen} onOpenChange={setSmsOpen} recipients={smsRecipients} />
