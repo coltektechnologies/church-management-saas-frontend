@@ -1,14 +1,5 @@
-/**
- * useDashboardApiSync
- *
- * Fetches dashboard data from the backend API and syncs it to AppDataContext.
- * Runs when the user is authenticated (has access token). Handles loading and
- * error states.
- *
- * @module hooks/useDashboardApiSync
- */
-
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { getAccessToken } from '@/lib/api';
 import * as dashboardApi from '@/lib/dashboardApi';
 import * as mappers from '@/lib/dashboardMappers';
@@ -30,9 +21,7 @@ export interface UseDashboardApiSyncOptions {
   setDepartments: (v: Dept[] | ((prev: Dept[]) => Dept[])) => void;
   setApprovals: (v: Approval[] | ((prev: Approval[]) => Approval[])) => void;
   setActivityLog: (v: ActivityLogItem[] | ((prev: ActivityLogItem[]) => ActivityLogItem[])) => void;
-  /** Church-wide published count from analytics (list fetch is capped). */
   setPublishedAnnouncementTotal: (v: number | null) => void;
-  /** All announcements total from GET /analytics/dashboard/admin/ (fallback: announcements stats `total`). */
   setAnnouncementsTotalFromApi: (v: number | null) => void;
 }
 
@@ -42,9 +31,53 @@ export interface UseDashboardApiSyncResult {
   refetch: () => Promise<void>;
 }
 
-/**
- * Fetches all dashboard data from API and populates context setters.
- */
+export const DASHBOARD_QUERY_KEY = ['dashboard', 'full'] as const;
+
+async function fetchAllDashboardData() {
+  const token = getAccessToken();
+  if (!token) {return null;}
+
+  const [
+    membersRes,
+    incomeRes,
+    expenseRes,
+    announcementsRes,
+    departmentsRes,
+    expenseRequestsRes,
+    activityRes,
+    upcomingRes,
+    announcementStatsRes,
+    publishedAnnouncementsTotalRes,
+    dashboardAdminRes,
+  ] = await Promise.all([
+    dashboardApi.getMembersList(100),
+    dashboardApi.getIncomeTransactions(100),
+    dashboardApi.getExpenseTransactions(100),
+    dashboardApi.getAnnouncementsList(100),
+    dashboardApi.getDepartmentsList(100),
+    dashboardApi.getExpenseRequests(50),
+    dashboardApi.getActivityFeed(30),
+    dashboardApi.getUpcomingActivities(),
+    dashboardApi.getAnnouncementStats(),
+    dashboardApi.getAnnouncementsPublishedTotal(),
+    dashboardApi.getDashboardAdmin(),
+  ]);
+
+  return {
+    membersRes,
+    incomeRes,
+    expenseRes,
+    announcementsRes,
+    departmentsRes,
+    expenseRequestsRes,
+    activityRes,
+    upcomingRes,
+    announcementStatsRes,
+    publishedAnnouncementsTotalRes,
+    dashboardAdminRes,
+  };
+}
+
 export function useDashboardApiSync(
   options: UseDashboardApiSyncOptions
 ): UseDashboardApiSyncResult {
@@ -60,100 +93,83 @@ export function useDashboardApiSync(
     setAnnouncementsTotalFromApi,
   } = options;
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    isLoading,
+    error,
+    refetch: queryRefetch,
+    data,
+  } = useQuery({
+    queryKey: DASHBOARD_QUERY_KEY,
+    queryFn: fetchAllDashboardData,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    enabled: typeof window !== 'undefined' && !!getAccessToken(),
+    retry: 1,
+  });
 
-  const fetchAndSync = useCallback(async () => {
-    const token = getAccessToken();
-    if (!token) {
-      return;
-    }
+  useEffect(() => {
+    if (!data) {return;}
 
-    setIsLoading(true);
-    setError(null);
+    const {
+      membersRes,
+      incomeRes,
+      expenseRes,
+      announcementsRes,
+      departmentsRes,
+      expenseRequestsRes,
+      activityRes,
+      upcomingRes,
+      announcementStatsRes,
+      publishedAnnouncementsTotalRes,
+      dashboardAdminRes,
+    } = data;
 
-    try {
-      const [
-        membersRes,
-        incomeRes,
-        expenseRes,
-        announcementsRes,
-        departmentsRes,
-        expenseRequestsRes,
-        activityRes,
-        upcomingRes,
+    setMembers(membersRes.map(mappers.mapBackendMember));
+
+    const incomeTxns = incomeRes.map(mappers.mapBackendIncomeTransaction);
+    const expenseTxns = expenseRes.map(mappers.mapBackendExpenseTransaction);
+    setTransactions([...incomeTxns, ...expenseTxns].sort((a, b) => b.date.localeCompare(a.date)));
+
+    const mappedAnnouncements = announcementsRes.map(mappers.mapBackendAnnouncement);
+    setAnnouncements(mappedAnnouncements);
+    const publishedInList = mappedAnnouncements.filter((a) => a.status === 'Published').length;
+    setPublishedAnnouncementTotal(
+      mappers.resolvePublishedAnnouncementTotal(
         announcementStatsRes,
         publishedAnnouncementsTotalRes,
-        dashboardAdminRes,
-      ] = await Promise.all([
-        dashboardApi.getMembersList(100),
-        dashboardApi.getIncomeTransactions(100),
-        dashboardApi.getExpenseTransactions(100),
-        dashboardApi.getAnnouncementsList(100),
-        dashboardApi.getDepartmentsList(100),
-        dashboardApi.getExpenseRequests(50),
-        dashboardApi.getActivityFeed(30),
-        dashboardApi.getUpcomingActivities(),
-        dashboardApi.getAnnouncementStats(),
-        dashboardApi.getAnnouncementsPublishedTotal(),
-        dashboardApi.getDashboardAdmin(),
-      ]);
+        publishedInList
+      )
+    );
 
-      setMembers(membersRes.map(mappers.mapBackendMember));
+    const coerceCount = (v: unknown): number | null => {
+      if (v === null || v === undefined) {return null;}
+      const n = typeof v === 'number' ? v : Number(v);
+      return Number.isNaN(n) ? null : n;
+    };
+    const totalFromAdmin = dashboardAdminRes ? coerceCount(dashboardAdminRes.announcements_total) : null;
+    const totalFromAnnouncementStats = announcementStatsRes
+      ? coerceCount(announcementStatsRes.total)
+      : null;
+    setAnnouncementsTotalFromApi(totalFromAdmin ?? totalFromAnnouncementStats ?? null);
 
-      const incomeTxns = incomeRes.map(mappers.mapBackendIncomeTransaction);
-      const expenseTxns = expenseRes.map(mappers.mapBackendExpenseTransaction);
-      setTransactions([...incomeTxns, ...expenseTxns].sort((a, b) => b.date.localeCompare(a.date)));
+    setDepartments(departmentsRes.map(mappers.mapBackendDepartment));
 
-      const mappedAnnouncements = announcementsRes.map(mappers.mapBackendAnnouncement);
-      setAnnouncements(mappedAnnouncements);
-      const publishedInList = mappedAnnouncements.filter((a) => a.status === 'Published').length;
-      setPublishedAnnouncementTotal(
-        mappers.resolvePublishedAnnouncementTotal(
-          announcementStatsRes,
-          publishedAnnouncementsTotalRes,
-          publishedInList
-        )
-      );
+    const pendingRequests = expenseRequestsRes.filter((r) =>
+      [
+        'SUBMITTED',
+        'DEPT_HEAD_APPROVED',
+        'FIRST_ELDER_APPROVED',
+        'TREASURER_APPROVED',
+        'APPROVED',
+      ].includes((r.status || '').toUpperCase())
+    );
+    setApprovals(pendingRequests.map(mappers.mapBackendExpenseRequestToApproval));
 
-      const coerceCount = (v: unknown): number | null => {
-        if (v === null || v === undefined) {
-          return null;
-        }
-        const n = typeof v === 'number' ? v : Number(v);
-        return Number.isNaN(n) ? null : n;
-      };
-      const totalFromAdmin = dashboardAdminRes
-        ? coerceCount(dashboardAdminRes.announcements_total)
-        : null;
-      const totalFromAnnouncementStats = announcementStatsRes
-        ? coerceCount(announcementStatsRes.total)
-        : null;
-      setAnnouncementsTotalFromApi(totalFromAdmin ?? totalFromAnnouncementStats ?? null);
+    setActivityLog(activityRes.map(mappers.mapBackendActivityToLogItem));
 
-      setDepartments(departmentsRes.map(mappers.mapBackendDepartment));
-
-      const pendingRequests = expenseRequestsRes.filter((r) =>
-        [
-          'SUBMITTED',
-          'DEPT_HEAD_APPROVED',
-          'FIRST_ELDER_APPROVED',
-          'TREASURER_APPROVED',
-          'APPROVED',
-        ].includes((r.status || '').toUpperCase())
-      );
-      setApprovals(pendingRequests.map(mappers.mapBackendExpenseRequestToApproval));
-
-      setActivityLog(activityRes.map(mappers.mapBackendActivityToLogItem));
-
-      setEvents(upcomingRes.map(mappers.mapBackendActivityToEvent));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
+    setEvents(upcomingRes.map(mappers.mapBackendActivityToEvent));
   }, [
+    data,
     setMembers,
     setTransactions,
     setAnnouncements,
@@ -165,11 +181,11 @@ export function useDashboardApiSync(
     setAnnouncementsTotalFromApi,
   ]);
 
-  useEffect(() => {
-    if (getAccessToken()) {
-      fetchAndSync();
-    }
-  }, [fetchAndSync]);
-
-  return { isLoading, error, refetch: fetchAndSync };
+  return {
+    isLoading,
+    error: error instanceof Error ? error.message : error ? String(error) : null,
+    refetch: async () => {
+      await queryRefetch();
+    },
+  };
 }

@@ -210,6 +210,20 @@ export async function deleteStaffUser(userId: string): Promise<void> {
   throw new Error(messageFromApiErrorJson(data, 'Could not remove user.'));
 }
 
+/** DELETE …/auth/users/:id/hard-delete/ — permanently removes the user row from the database. */
+export async function hardDeleteStaffUser(userId: string): Promise<void> {
+  const base = getApiBaseUrl();
+  const res = await fetch(`${base}/auth/users/${userId}/hard-delete/`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (res.status === 204 || res.ok) {
+    return;
+  }
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  throw new Error(messageFromApiErrorJson(data, 'Could not permanently delete user.'));
+}
+
 export interface ChurchGroupMemberRow {
   id: string;
   user: string;

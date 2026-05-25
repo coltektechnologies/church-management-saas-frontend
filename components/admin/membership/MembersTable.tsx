@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { getMembers, deleteMember, type MemberListItem } from '@/lib/api';
+import { getMembers, deleteMember, hardDeleteMember, type MemberListItem } from '@/lib/api';
 import { toast } from 'sonner';
 import { DeleteMemberDialog } from '@/components/admin/membership/DeleteMemberDialog';
 import { SendSmsDialog } from '@/components/admin/membership/SendSmsDialog';
@@ -223,6 +223,7 @@ export default function MembersTable({ filters }: MembersTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTargetIds, setDeleteTargetIds] = useState<string[]>([]);
   const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+  const [hardDeleteLoading, setHardDeleteLoading] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -363,6 +364,43 @@ export default function MembersTable({ filters }: MembersTableProps) {
     if (failed > 0) {
       toast.error(
         failed === 1 ? 'One member could not be deleted' : `${failed} members could not be deleted`
+      );
+    }
+  };
+
+  const runHardDelete = async () => {
+    const ids = deleteTargetIds;
+    if (ids.length === 0) {return;}
+    setHardDeleteLoading(true);
+    let ok = 0;
+    let failed = 0;
+    for (const delId of ids) {
+      try {
+        await hardDeleteMember(delId);
+        setMembers((prev) => prev.filter((m) => m.id !== delId));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(delId);
+          return next;
+        });
+        ok += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setHardDeleteLoading(false);
+    setDeleteDialogOpen(false);
+    setDeleteTargetIds([]);
+    if (ok > 0) {
+      toast.success(ok === 1 ? 'Member permanently deleted' : `${ok} members permanently deleted`, {
+        description: 'Record removed from the database. You can add them again as a new member.',
+      });
+    }
+    if (failed > 0) {
+      toast.error(
+        failed === 1
+          ? 'One member could not be permanently deleted'
+          : `${failed} members could not be permanently deleted`
       );
     }
   };
@@ -985,7 +1023,9 @@ export default function MembersTable({ filters }: MembersTableProps) {
         }}
         names={deleteDialogNames}
         loading={deleteBusy}
+        hardLoading={hardDeleteLoading}
         onConfirm={runDelete}
+        onHardDelete={runHardDelete}
       />
       <SendSmsDialog open={smsOpen} onOpenChange={setSmsOpen} recipients={smsRecipients} />
       <SendEmailDialog open={emailOpen} onOpenChange={setEmailOpen} recipients={emailRecipients} />

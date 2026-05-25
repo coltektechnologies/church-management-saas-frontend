@@ -24,6 +24,7 @@ import type { IncomeRecord } from './IncomeReceipt';
 import { todayDMY, nowString, DUMMY_MEMBERS, type Member } from './recordIncomeData';
 import { getOptions, type DropdownOption as StoredDropdownOption } from './dropdownOptions';
 import { getTreasuryMemberPledges, type TreasuryMemberPledgeRow } from '@/lib/treasuryApi';
+import { useChurchProfile } from '@/components/admin/dashboard/contexts/ChurchProfileContext';
 
 // ── Static option lists (payment method details) ──────────
 const MOMO_NETWORKS = [
@@ -596,6 +597,8 @@ export default function RecordIncomeForm({
   disabled = false,
 }: RecordIncomeFormProps) {
   const uid = useId();
+  const { profile: churchProfile } = useChurchProfile();
+  const isFreePlan = churchProfile.subscriptionPlan.toUpperCase() === 'FREE';
 
   // ── Live options — re-read from localStorage on every render ─────────────
   const incomeTypeOptions = incomeCategoryOptions ?? getOptions('income_types');
@@ -1569,6 +1572,22 @@ export default function RecordIncomeForm({
               accentColor={accentColor}
               borderColor={borderColor}
             />
+            {isFreePlan && (
+              <p
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontSize: '11px',
+                  color: '#F59E0B',
+                  margin: '4px 0 0',
+                }}
+              >
+                <AlertTriangle size={12} />
+                SMS &amp; email notifications are not available on the Free plan. Upgrade to send
+                member notifications.
+              </p>
+            )}
           </Field>
 
           {/* ── Actions ── */}

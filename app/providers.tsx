@@ -18,7 +18,8 @@ export function Providers({ children }: ProvidersProps) {
         defaultOptions: {
           queries: {
             retry: 1,
-            staleTime: 1000 * 30,
+            staleTime: 1000 * 60 * 5, // 5 minutes — survives page navigation
+            gcTime: 1000 * 60 * 10,   // keep unused data in cache 10 minutes
           },
         },
       })

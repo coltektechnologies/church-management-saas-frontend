@@ -34,6 +34,8 @@ export interface ChurchProfile {
   sidebarColor: string;
   backgroundColor: string;
   subscriptionStatus: SubscriptionStatus;
+  /** Raw plan name from backend, e.g. 'FREE' | 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'TRIAL' */
+  subscriptionPlan: string;
   address: string;
   mission: string;
   website: string;
@@ -55,6 +57,7 @@ const DEFAULT: ChurchProfile = {
   sidebarColor: '#0B2A4A',
   backgroundColor: '#F8FAFC',
   subscriptionStatus: 'trial',
+  subscriptionPlan: '',
   address: '',
   mission: '',
   website: '',
