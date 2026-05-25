@@ -50,8 +50,7 @@ export function DeleteMemberDialog({
             {title}
           </DialogTitle>
           <DialogDescription className="text-center text-sm text-slate-600 dark:text-slate-300">
-            Choose how to remove{' '}
-            {count === 1 ? 'this member' : `these ${count} members`}.
+            Choose how to remove {count === 1 ? 'this member' : `these ${count} members`}.
           </DialogDescription>
           {names.length > 0 ? (
             <ul
@@ -79,8 +78,8 @@ export function DeleteMemberDialog({
                   Archive (soft delete)
                 </p>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Hides the record from your directory. The data is preserved and can be
-                  recovered by support if needed.
+                  Hides the record from your directory. The data is preserved and can be recovered
+                  by support if needed.
                 </p>
               </div>
             </div>
@@ -102,8 +101,8 @@ export function DeleteMemberDialog({
                   Permanently delete
                 </p>
                 <p className="text-xs text-red-600/80 dark:text-red-400/70 mt-0.5">
-                  Removes the record from the database entirely. This cannot be undone —
-                  you can add the person again as a new member afterwards.
+                  Removes the record from the database entirely. This cannot be undone — you can add
+                  the person again as a new member afterwards.
                 </p>
               </div>
             </div>

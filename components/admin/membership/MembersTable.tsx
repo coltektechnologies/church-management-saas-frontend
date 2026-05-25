@@ -370,7 +370,9 @@ export default function MembersTable({ filters }: MembersTableProps) {
 
   const runHardDelete = async () => {
     const ids = deleteTargetIds;
-    if (ids.length === 0) {return;}
+    if (ids.length === 0) {
+      return;
+    }
     setHardDeleteLoading(true);
     let ok = 0;
     let failed = 0;

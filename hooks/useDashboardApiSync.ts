@@ -35,7 +35,9 @@ export const DASHBOARD_QUERY_KEY = ['dashboard', 'full'] as const;
 
 async function fetchAllDashboardData() {
   const token = getAccessToken();
-  if (!token) {return null;}
+  if (!token) {
+    return null;
+  }
 
   const [
     membersRes,
@@ -108,7 +110,9 @@ export function useDashboardApiSync(
   });
 
   useEffect(() => {
-    if (!data) {return;}
+    if (!data) {
+      return;
+    }
 
     const {
       membersRes,
@@ -142,11 +146,15 @@ export function useDashboardApiSync(
     );
 
     const coerceCount = (v: unknown): number | null => {
-      if (v === null || v === undefined) {return null;}
+      if (v === null || v === undefined) {
+        return null;
+      }
       const n = typeof v === 'number' ? v : Number(v);
       return Number.isNaN(n) ? null : n;
     };
-    const totalFromAdmin = dashboardAdminRes ? coerceCount(dashboardAdminRes.announcements_total) : null;
+    const totalFromAdmin = dashboardAdminRes
+      ? coerceCount(dashboardAdminRes.announcements_total)
+      : null;
     const totalFromAnnouncementStats = announcementStatsRes
       ? coerceCount(announcementStatsRes.total)
       : null;
