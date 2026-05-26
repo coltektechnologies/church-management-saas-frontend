@@ -116,7 +116,7 @@ function StartPageInner() {
                 applies to deployed builds; for <strong>localhost:3000</strong> set{' '}
                 <code className="text-xs">.env.local</code> to your API, e.g.{' '}
                 <code className="text-xs break-all">
-                  NEXT_PUBLIC_API_URL=https://church-management-saas-backend.onrender.com/api
+                  NEXT_PUBLIC_API_URL=https://api.open-door.site
                 </code>
                 , then restart <code className="text-xs">npm run dev</code>.
               </>

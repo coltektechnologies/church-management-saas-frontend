@@ -39,7 +39,7 @@ const Step5Review = ({
 
   const baseRows = [
     { label: 'Church Name', value: data.churchName },
-    { label: 'Subdomain', value: data.subdomain ? `${data.subdomain}.opendoor.com` : '' },
+    { label: 'Subdomain', value: data.subdomain ? `${data.subdomain}.open-door.site` : '' },
     { label: 'Full Name', value: getAdminFullNameForReview(data) },
     { label: 'Admin Email', value: data.adminEmail },
     {

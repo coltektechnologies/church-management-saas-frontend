@@ -248,7 +248,7 @@ const Step1ChurchInfo = ({ data, onChange, onNext, loading = false }: StepChurch
               onChange={(e) => onChange('subdomain', e.target.value)}
               className={`${styles.inputField} pr-28 ${errors.subdomain ? 'border-red-500' : ''}`}
             />
-            <span className={styles.subdomainSuffix}>.opendoor.com</span>
+            <span className={styles.subdomainSuffix}>.open-door.site</span>
           </div>
           {errors.subdomain && <p className={styles.errorText}>{errors.subdomain}</p>}
         </div>
