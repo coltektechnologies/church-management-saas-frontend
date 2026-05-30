@@ -101,8 +101,16 @@ const Signup = () => {
 
   useRedirectIfAuthenticated();
 
-  // Restore draft (sessionId, formData, step) on mount so back navigation / refresh preserves progress
+  // Restore draft (sessionId, formData, step) on mount so back navigation / refresh preserves progress.
+  // Also: when Paystack redirects users back here with ?reference=REG_..._..., forward to
+  // /signup/success so the verify-payment + account-creation flow can run. This guards against
+  // Paystack dashboards that override the API-supplied callback_url with a saved default URL.
   useEffect(() => {
+    const reference = searchParams?.get('reference') || '';
+    if (reference.startsWith('REG_')) {
+      router.replace(`/signup/success?reference=${encodeURIComponent(reference)}`);
+      return;
+    }
     const restart = searchParams?.get('restart') === '1';
     if (restart) {
       clearStoredRegistrationSessionId();
@@ -118,7 +126,7 @@ const Signup = () => {
       setSessionId(storedSession);
     }
     setHydrated(true);
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   // Persist draft whenever state changes so back/refresh preserves progress
   useEffect(() => {
