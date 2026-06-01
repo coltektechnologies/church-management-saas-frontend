@@ -13,6 +13,7 @@ Allow: /developers
 Allow: /start
 
 # Disallow protected/authenticated areas
+
 Disallow: /dashboard
 Disallow: /admin
 Disallow: /secretary
