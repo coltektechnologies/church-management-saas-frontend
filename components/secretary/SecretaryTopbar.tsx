@@ -189,9 +189,11 @@ export default function SecretaryTopbar() {
 
   // Avatar info
   const avatarUrl = userReady ? (user.avatarUrl ?? null) : null;
-  const adminName = userReady ? user.adminName || 'User' : 'User';
+  const adminName = userReady && user.adminName ? user.adminName : 'User';
   const triggerName = userReady
-    ? user.preferredName?.trim() || adminName.split(' ').filter(Boolean).slice(-1)[0] || 'User'
+    ? user.preferredName?.trim() ||
+      (user.adminName ? user.adminName.split(' ').filter(Boolean).slice(-1)[0] : '') ||
+      'User'
     : 'User';
   const initials = adminName
     .split(' ')

@@ -108,11 +108,12 @@ export default function SecretaryDashboard() {
   const activitySummary = useActivitySummary(dash);
   const { loadErrors, refetch, status } = dash;
 
-  const firstName = isReady
-    ? profile.preferredName?.trim() ||
-      profile.adminName?.split(' ').filter(Boolean).pop() ||
-      'there'
-    : 'there';
+  const firstName =
+    isReady && profile.adminName
+      ? profile.preferredName?.trim() ||
+        profile.adminName.split(' ').filter(Boolean).pop() ||
+        'User'
+      : 'User';
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">

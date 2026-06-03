@@ -59,7 +59,7 @@ export default function SecretarySidebar() {
     ? church.tagline || "You don't have to have it all figured out to come to church."
     : "You don't have to have it all figured out to come to church.";
 
-  const userName = userReady ? user.adminName || 'Ps Owusu William' : 'Ps Owusu William';
+  const userName = userReady ? user.adminName || 'User' : 'User';
   const userRole = userReady ? user.adminRole || 'Secretary' : 'Secretary';
   const avatarUrl = userReady ? (user.avatarUrl ?? null) : null;
   const isDark = userReady ? user.darkMode : false;
