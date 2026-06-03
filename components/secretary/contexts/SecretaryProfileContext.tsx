@@ -9,6 +9,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react';
+import { getUser, getStoredUser } from '@/lib/settingsApi';
 
 export interface SecretaryProfile {
   adminName: string;
@@ -134,12 +135,6 @@ export function SecretaryProfileProvider({ children }: { children: ReactNode }) 
     () => false
   );
 
-  useEffect(() => {
-    if (isReady) {
-      applyTheme(profile);
-    }
-  }, [profile, isReady]);
-
   const updateProfile = useCallback((partial: Partial<SecretaryProfile>) => {
     setProfile((prev) => {
       const next = { ...prev, ...partial };
@@ -151,6 +146,40 @@ export function SecretaryProfileProvider({ children }: { children: ReactNode }) 
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    if (isReady) {
+      applyTheme(profile);
+    }
+  }, [profile, isReady]);
+
+  // Fetch user data from API on mount and populate profile
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const storedUser = getStoredUser();
+        if (!storedUser?.id) {
+          return;
+        }
+        const userData = await getUser(storedUser.id);
+        if (userData) {
+          updateProfile({
+            adminName:
+              userData.full_name ||
+              `${userData.first_name || ''} ${userData.last_name || ''}`.trim() ||
+              '',
+            adminEmail: userData.email || '',
+            adminPhone: userData.phone || '',
+            avatarUrl: userData.profile_image_url || userData.profile_image || null,
+          });
+        }
+      } catch {
+        // Silently fail — profile will use defaults from localStorage or DEFAULT
+      }
+    };
+
+    fetchUserData();
+  }, [updateProfile]);
 
   const toggleDarkMode = useCallback(() => {
     setProfile((prev) => {
